@@ -3,13 +3,15 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
 
-  BNB_RPC_URL: z.string().url().min(1),
+  BNB_RPC_URL: z.string().url(),
 
   TXSENTRY_DEMO_NFT: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
 
-  OPENAI_API_KEY: z.string().min(1),
+  AI_PROVIDER: z.enum(["gemini", "openrouter", "openai"]),
 
-  OPENAI_MODEL: z.string().default("gpt-5.6"),
+  AI_API_KEY: z.string().min(1),
+
+  AI_MODEL: z.string().min(1),
 });
 
 export const env = envSchema.parse({
@@ -19,7 +21,9 @@ export const env = envSchema.parse({
 
   TXSENTRY_DEMO_NFT: Bun.env.TXSENTRY_DEMO_NFT,
 
-  OPENAI_API_KEY: Bun.env.OPENAI_API_KEY,
+  AI_PROVIDER: Bun.env.AI_PROVIDER,
 
-  OPENAI_MODEL: Bun.env.OPENAI_MODEL,
+  AI_API_KEY: Bun.env.AI_API_KEY,
+
+  AI_MODEL: Bun.env.AI_MODEL,
 });

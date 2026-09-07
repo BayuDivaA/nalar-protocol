@@ -1,7 +1,7 @@
 import type { Address } from "viem";
 
 export interface ApprovalEffect {
-  type: "ERC721_OPERATOR";
+  type: "ERC20_ALLOWANCE" | "ERC721_OPERATOR";
 
   token: Address;
 
@@ -18,7 +18,15 @@ export interface TransactionEffects {
   approvals: ApprovalEffect[];
 }
 
-export function analyzeEffects(input: { to: Address; from: Address; functionName?: string; args?: readonly unknown[] }): TransactionEffects {
+export function analyzeEffects(input: {
+  to: Address;
+
+  from: Address;
+
+  functionName?: string;
+
+  args?: readonly unknown[];
+}): TransactionEffects {
   const effects: TransactionEffects = {
     approvals: [],
   };
@@ -41,8 +49,6 @@ export function analyzeEffects(input: { to: Address; from: Address; functionName
 
       sourceFunction: "setApprovalForAll",
     });
-
-    return effects;
   }
 
   if (input.functionName === "maliciousApproval") {
@@ -61,8 +67,6 @@ export function analyzeEffects(input: { to: Address; from: Address; functionName
 
       sourceFunction: "maliciousApproval",
     });
-
-    return effects;
   }
 
   return effects;

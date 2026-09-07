@@ -1,4 +1,8 @@
 import { Hono } from "hono";
+import { z } from "zod";
+
+import { parseUserIntent } from "../services/intent-engine";
+
 import { getAddress, isAddress, type Hex } from "viem";
 
 import { transactionRequestSchema } from "../types/transaction";
@@ -19,8 +23,13 @@ import { resolveEffectState } from "../services/effect-state";
 
 import { calculateRisk } from "../services/risk-engine";
 
+import { normalizeIntent } from "../services/intent-normalizer";
+
+import { compareIntent } from "../services/intent-comparator";
+
 export const transactionRoute = new Hono();
 
+// ANALYZE ENDPOINT
 transactionRoute.post("/analyze", async (c) => {
   try {
     const body = await c.req.json();
@@ -216,6 +225,157 @@ transactionRoute.post("/analyze", async (c) => {
         error: "INVALID_REQUEST",
       },
       400,
+    );
+  }
+});
+
+// INTENT ENDPOINT
+transactionRoute.post("/intent", async (c) => {
+  try {
+    const body = await c.req.json();
+
+    const schema = z.object({
+      message: z.string().min(1).max(2000),
+    });
+
+    const parsed = schema.safeParse(body);
+
+    if (!parsed.success) {
+      return c.json(
+        {
+          ok: false,
+          error: "INVALID_INTENT_REQUEST",
+          details: parsed.error.flatten(),
+        },
+        400,
+      );
+    }
+
+    const intent = await parseUserIntent(parsed.data.message);
+
+    return c.json({
+      ok: true,
+      input: parsed.data.message,
+      intent,
+    });
+  } catch (error) {
+    console.error("Intent parsing failed:", error);
+
+    return c.json(
+      {
+        ok: false,
+        error: "INTENT_ANALYSIS_FAILED",
+      },
+      500,
+    );
+  }
+});
+
+// COMPARE ENDPOINT
+transactionRoute.post("/compare", async (c) => {
+  try {
+    const body = await c.req.json();
+
+    const schema = z.object({
+      intent: z.string().min(1),
+
+      transaction: z.object({
+        from: z.string(),
+        to: z.string(),
+        value: z.string(),
+        data: z.string(),
+      }),
+    });
+
+    const parsed = schema.safeParse(body);
+
+    if (!parsed.success) {
+      return c.json(
+        {
+          ok: false,
+          error: "INVALID_COMPARE_REQUEST",
+        },
+        400,
+      );
+    }
+
+    const input = parsed.data;
+
+    /**
+     * AI understands human intent.
+     */
+    const rawIntent = await parseUserIntent(input.intent);
+
+    /**
+     * Convert BNB → wei.
+     */
+    const normalizedIntent = normalizeIntent(rawIntent);
+
+    const from = getAddress(input.transaction.from);
+
+    const to = getAddress(input.transaction.to);
+
+    const value = BigInt(input.transaction.value);
+
+    const data = input.transaction.data as Hex;
+
+    /**
+     * Decode transaction.
+     */
+    const decoded = decodeTransactionData(data);
+
+    /**
+     * Extract semantic effects.
+     */
+    const effects = analyzeEffects({
+      from,
+      to,
+      functionName: decoded.functionName,
+      args: decoded.args,
+    });
+
+    /**
+     * Compare human intent
+     * against actual transaction.
+     */
+    const comparison = compareIntent(normalizedIntent, effects, value);
+
+    return c.json({
+      ok: true,
+
+      intent: {
+        action: normalizedIntent.action,
+
+        quantity: normalizedIntent.quantity,
+
+        maxValueNative: normalizedIntent.maxValueNative,
+
+        maxValueWei: normalizedIntent.maxValueWei?.toString() ?? null,
+
+        allowApproval: normalizedIntent.allowApproval,
+      },
+
+      actual: {
+        action: decoded.classification.action,
+
+        functionName: decoded.functionName ?? null,
+
+        value: value.toString(),
+      },
+
+      effects: serializeBigInt(effects),
+
+      comparison,
+    });
+  } catch (error) {
+    console.error("[INTENT ROUTE] ERROR:", error);
+
+    return c.json(
+      {
+        ok: false,
+        error: "INTENT_ANALYSIS_FAILED",
+      },
+      500,
     );
   }
 });

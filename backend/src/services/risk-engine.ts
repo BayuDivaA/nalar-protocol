@@ -8,15 +8,31 @@ export interface RiskResult {
   reasons: string[];
 }
 
-export function calculateRisk(effects: ApprovalStateDiff[]): RiskResult {
+export function calculateRisk(effects: ApprovalStateDiff[], action?: string): RiskResult {
   let score = 0;
 
   const reasons: string[] = [];
 
+  /**
+   * Transaction-level security signal.
+   *
+   * Even when the previous state cannot
+   * be read, the decoded action itself
+   * can indicate a dangerous permission.
+   */
+  if (action === "NFT_APPROVAL") {
+    score = Math.max(score, 90);
+
+    reasons.push("Transaction requests NFT operator approval.");
+  }
+
+  /**
+   * State-based security analysis.
+   */
   for (const effect of effects) {
     if (effect.type === "ERC721_OPERATOR") {
       if (effect.after === true) {
-        score += 90;
+        score = Math.max(score, 90);
 
         if (effect.before === false) {
           reasons.push("NFT operator approval changes from disabled to enabled.");
@@ -29,6 +45,9 @@ export function calculateRisk(effects: ApprovalStateDiff[]): RiskResult {
     }
   }
 
+  /**
+   * Prevent score from exceeding 100.
+   */
   score = Math.min(score, 100);
 
   let level: RiskLevel = "LOW";

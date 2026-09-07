@@ -1,0 +1,38 @@
+                     USER
+                       │
+                       ▼
+                 NEXT.JS APP
+                       │
+                Connect Wallet
+                       │
+                       ▼
+             Create Unsigned TX
+                       │
+                       ▼
+               SHIELD BACKEND
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+       VIEM/RPC    Simulation    Intelligence
+          │            │            │
+          └────────────┼────────────┘
+                       ▼
+                  RISK ENGINE
+                       │
+                       ▼
+                   OCI AI
+                       │
+                       ▼
+                 WARNING UI
+                       │
+                       ▼
+                  USER DECIDES
+                       │
+                       ▼
+                  WALLET SIGN
+                       │
+                       ▼
+                  BNB CHAIN
+                       │
+                       ▼
+              DEMO SMART CONTRACT

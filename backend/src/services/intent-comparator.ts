@@ -1,6 +1,7 @@
 import type { NormalizedIntent } from "./intent-normalizer";
 
 import type { TransactionEffects } from "./effect-analyzer";
+import type { TransactionAction } from "../lib/classifier";
 
 export interface IntentComparison {
   matches: boolean;
@@ -8,13 +9,7 @@ export interface IntentComparison {
   mismatches: string[];
 }
 
-export function compareIntent(
-  intent: NormalizedIntent,
-
-  effects: TransactionEffects,
-
-  value: bigint,
-): IntentComparison {
+export function compareIntent(intent: NormalizedIntent, actualAction: TransactionAction, effects: TransactionEffects, value: bigint): IntentComparison {
   const mismatches: string[] = [];
 
   /**
@@ -25,7 +20,20 @@ export function compareIntent(
   }
 
   /**
-   * 2. Check approval side effects.
+   * 2. Check semantic action.
+   *
+   * Example:
+   * Intent  : MINT
+   * Actual  : NFT_APPROVAL
+   *
+   * This is an intent mismatch.
+   */
+  if (intent.action !== "UNKNOWN" && intent.action !== actualAction) {
+    mismatches.push([`User intended to ${intent.action.toLowerCase()}.`, `Transaction actually performs ${actualAction.toLowerCase()}.`].join(" "));
+  }
+
+  /**
+   * 3. Check approval side effects.
    */
   const hasApproval = effects.approvals.length > 0;
 
@@ -34,7 +42,10 @@ export function compareIntent(
   }
 
   /**
-   * 3. Specific protection for mint intent.
+   * 4. Specific protection for mint intent.
+   *
+   * Minting should not silently introduce
+   * approval side effects.
    */
   if (intent.action === "MINT" && hasApproval) {
     mismatches.push("User intended to mint an NFT, but the transaction includes an approval effect.");
@@ -42,7 +53,6 @@ export function compareIntent(
 
   return {
     matches: mismatches.length === 0,
-
     mismatches,
   };
 }

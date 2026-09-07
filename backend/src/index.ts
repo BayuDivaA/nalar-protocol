@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 
 import { env } from "./config/env";
 import { healthRoute } from "./routes/health";
@@ -6,6 +7,15 @@ import { transactionRoute } from "./routes/transactions";
 import { securityRoute } from "./routes/security";
 
 const app = new Hono();
+
+app.use(
+  "/api/*",
+  cors({
+    origin: "http://localhost:3000",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type"],
+  }),
+);
 
 app.get("/", (c) => {
   return c.json({

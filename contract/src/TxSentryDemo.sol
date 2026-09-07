@@ -58,6 +58,7 @@ contract TxSentryDemo is ERC721 {
     {
         return MINT_PRICE;
     }
+    
 
     receive() external payable {
         revert DirectBNBTransferNotAllowed();

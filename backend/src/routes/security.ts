@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { z } from "zod";
-
 import { getAddress, isAddress, type Hex } from "viem";
 
 import { parseUserIntent } from "../services/intent-engine";
@@ -24,6 +23,10 @@ import { compareIntent } from "../services/intent-comparator";
 import { makeSecurityDecision } from "../services/security-decision";
 
 import { generateSecurityExplanation } from "../services/explanation-engine";
+
+import { defaultPolicy, evaluatePolicy } from "../services/policy";
+
+import { analyzeTransactionIntelligence } from "../services/transaction-intelligence";
 
 export const securityRoute = new Hono();
 
@@ -63,20 +66,22 @@ securityRoute.post("/", async (c) => {
     const { intent: intentText, transaction } = parsed.data;
 
     /**
-     * Chain validation
+     * BNB Testnet only for MVP
      */
     if (transaction.chainId !== 97) {
       return c.json(
         {
           ok: false,
           error: "UNSUPPORTED_CHAIN",
+          expectedChainId: 97,
+          receivedChainId: transaction.chainId,
         },
         400,
       );
     }
 
     /**
-     * Address validation
+     * Validate addresses
      */
     if (!isAddress(transaction.from)) {
       return c.json(
@@ -107,22 +112,37 @@ securityRoute.post("/", async (c) => {
     const data = transaction.data as Hex;
 
     /**
-     * 1. AI understands user intent.
+     * STEP 1
+     *
+     * Understand user intent.
      */
     const rawIntent = await parseUserIntent(intentText);
 
     /**
-     * 2. Normalize intent.
+     * STEP 2
+     *
+     * Normalize human-readable values
+     * into blockchain units.
      */
     const intent = normalizeIntent(rawIntent);
 
     /**
-     * 3. Decode actual transaction.
+     * STEP 3
+     *
+     * Decode transaction.
      */
-    const decoded = decodeTransactionData(data);
+    const intelligence = await analyzeTransactionIntelligence({
+      chainId: transaction.chainId,
+      to,
+      data: transaction.data as Hex,
+    });
+
+    const decoded = intelligence;
 
     /**
-     * 4. Simulate transaction.
+     * STEP 4
+     *
+     * Simulate transaction.
      */
     const simulation = await simulateTransaction({
       from,
@@ -132,10 +152,20 @@ securityRoute.post("/", async (c) => {
     });
 
     /**
-     * 5. Stop immediately on
-     * simulation failure.
+     * Simulation failure is an immediate
+     * security failure.
      */
     if (!simulation.success) {
+      const explanation = {
+        title: "Transaction blocked",
+
+        summary: "The transaction could not be safely simulated.",
+
+        details: [simulation.error ?? "Simulation reverted."],
+
+        recommendedAction: "CANCEL" as const,
+      };
+
       return c.json({
         ok: true,
 
@@ -147,28 +177,76 @@ securityRoute.post("/", async (c) => {
 
         intentMatch: false,
 
-        reason: "SIMULATION_REVERTED",
+        intent: {
+          action: intent.action,
 
-        intent: serializeBigInt(intent),
+          quantity: intent.quantity,
+
+          maxValueNative: intent.maxValueNative,
+
+          nativeCurrency: intent.nativeCurrency,
+
+          maxValueWei: intent.maxValueWei?.toString() ?? null,
+
+          allowApproval: intent.allowApproval,
+
+          targetAddress: intent.targetAddress,
+
+          description: intent.description,
+        },
 
         actual: {
           action: decoded.classification.action,
 
           functionName: decoded.functionName ?? null,
 
+          selector: decoded.selector ?? null,
+
           value: value.toString(),
+
+          description: decoded.classification.description,
         },
 
         simulation: {
           success: false,
 
+          gasEstimate: simulation.gasEstimate,
+
           error: simulation.error,
         },
+
+        effects: null,
+
+        stateDiff: null,
+
+        comparison: {
+          matches: false,
+
+          mismatches: ["Transaction simulation failed."],
+        },
+
+        contract: {
+          address: intelligence.to,
+          abiSource: intelligence.abiSource,
+          verified: intelligence.contractVerified,
+        },
+
+        transaction: {
+          selector: intelligence.selector ?? null,
+          functionName: intelligence.functionName ?? null,
+          action: intelligence.classification.action,
+        },
+
+        reasons: ["Transaction simulation failed."],
+
+        explanation,
       });
     }
 
     /**
-     * 6. Analyze transaction effects.
+     * STEP 5
+     *
+     * Analyze semantic effects.
      */
     const effects = analyzeEffects({
       from,
@@ -178,23 +256,36 @@ securityRoute.post("/", async (c) => {
     });
 
     /**
-     * 7. Read predicted state.
+     * STEP 6
+     *
+     * Read current blockchain state.
      */
     const stateDiff = await resolveEffectState(effects);
 
     /**
-     * 8. Calculate deterministic risk.
+     * STEP 7
+     *
+     * Deterministic risk analysis.
      */
     const risk = calculateRisk(stateDiff, decoded.classification.action);
 
     /**
-     * 9. Compare human intent
+     * STEP 8
+     *
+     * Compare user intent
      * with actual effects.
      */
-    const comparison = compareIntent(intent, effects, value);
+    const comparison = compareIntent(intent, decoded.classification.action, effects, value);
+
+    const policyEvaluation = evaluatePolicy({
+      policy: defaultPolicy,
+      action: decoded.classification.action,
+      value,
+    });
 
     /**
-     * 10. Final security decision.
+     * Final deterministic
+     * security decision.
      */
     const decision = makeSecurityDecision({
       simulationSuccess: simulation.success,
@@ -204,8 +295,15 @@ securityRoute.post("/", async (c) => {
       comparison,
 
       effects,
+
+      policy: policyEvaluation,
     });
 
+    /**
+     * STEP 10
+     *
+     * AI explains the result.
+     */
     let explanation;
 
     try {
@@ -227,7 +325,7 @@ securityRoute.post("/", async (c) => {
         reasons: decision.reasons,
       });
     } catch (error) {
-      console.error("Explanation generation failed:", error);
+      console.error("[EXPLANATION]", error);
 
       explanation = {
         title: decision.decision === "BLOCK" ? "Transaction blocked" : decision.decision === "REVIEW" ? "Transaction needs review" : "Transaction appears safe",
@@ -236,7 +334,7 @@ securityRoute.post("/", async (c) => {
 
         details: decision.reasons,
 
-        recommendedAction: decision.decision === "BLOCK" ? "CANCEL" : decision.decision === "REVIEW" ? "REVIEW" : "PROCEED",
+        recommendedAction: decision.decision === "BLOCK" ? ("CANCEL" as const) : decision.decision === "REVIEW" ? ("REVIEW" as const) : ("PROCEED" as const),
       };
     }
 
@@ -289,6 +387,24 @@ securityRoute.post("/", async (c) => {
         error: simulation.error,
       },
 
+      policy: {
+        maxSpendBNB: defaultPolicy.maxSpendBNB,
+
+        allowedActions: defaultPolicy.allowedActions,
+
+        forbiddenActions: defaultPolicy.forbiddenActions,
+
+        requireReviewAboveBNB: defaultPolicy.requireReviewAboveBNB,
+
+        evaluation: {
+          allowed: policyEvaluation.allowed,
+
+          requiresReview: policyEvaluation.requiresReview,
+
+          reasons: policyEvaluation.reasons,
+        },
+      },
+
       effects: serializeBigInt(effects),
 
       stateDiff: serializeBigInt(stateDiff),
@@ -296,6 +412,7 @@ securityRoute.post("/", async (c) => {
       comparison,
 
       reasons: decision.reasons,
+
       explanation,
     });
   } catch (error) {

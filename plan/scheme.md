@@ -79,3 +79,29 @@ Code → menentukan aman atau tidak
 
 Explanation Engine
 AI → menjelaskan kenapa transaksi diblokir
+
+Simulation tells us whether a transaction can execute. TxSentry determines whether it should execute
+
+┌──────────────────────────┐
+│ Intent Comparison │
+│ "Apakah melakukan hal │
+│ yang diminta user?" │
+└────────────┬─────────────┘
+│
+▼
+intentMatch
+
+┌──────────────────────────┐
+│ Simulation │
+│ "Apakah transaksi dapat │
+│ dieksekusi?" │
+└────────────┬─────────────┘
+│
+▼
+simulation.success
+
+┌──────────────────────────┐
+│ Security Decision │
+│ "Boleh diteruskan atau │
+│ harus diblokir?" │
+└──────────────────────────┘

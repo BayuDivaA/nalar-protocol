@@ -184,4 +184,12 @@ export const securityAbi = [
     ],
     outputs: [],
   },
+
+  {
+    type: "function",
+    name: "safeMint",
+    stateMutability: "payable",
+    inputs: [],
+    outputs: [],
+  },
 ] as const;

@@ -1,8 +1,9 @@
-import { decodeFunctionData, type Hex } from "viem";
+import { decodeFunctionData, type Abi, type Address, type Hex } from "viem";
 
 import { securityAbi } from "./abis";
-
 import { classifyAction, type ClassifiedAction } from "./classifier";
+
+import { resolveContractAbi } from "../services/contract-resolver";
 
 export interface DecodedTransaction {
   decoded: boolean;
@@ -14,12 +15,43 @@ export interface DecodedTransaction {
   selector?: string;
 
   classification: ClassifiedAction;
+
+  abiSource?: "local" | "sourcify" | "unknown";
+
+  contractVerified?: boolean;
 }
 
-export function decodeTransactionData(data: Hex): DecodedTransaction {
+function decodeWithAbi(
+  abi: Abi,
+  data: Hex,
+): {
+  functionName: string;
+  args: readonly unknown[];
+} | null {
+  try {
+    const decoded = decodeFunctionData({
+      abi,
+      data,
+    });
+
+    return {
+      functionName: decoded.functionName,
+      args: decoded.args ?? [],
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function decodeTransactionData(
+  data: Hex,
+  input?: {
+    chainId: number;
+    to: Address;
+  },
+): Promise<DecodedTransaction> {
   /**
-   * No calldata means this is a native
-   * BNB transfer.
+   * Native BNB transfer.
    */
   if (data === "0x") {
     return {
@@ -30,55 +62,85 @@ export function decodeTransactionData(data: Hex): DecodedTransaction {
         riskLevel: "LOW",
         description: "Native BNB transfer with no contract calldata.",
       },
+
+      abiSource: "unknown",
+      contractVerified: false,
     };
   }
 
   /**
    * First 4 bytes = function selector.
-   *
-   * Example:
-   * 0x095ea7b3 = approve(address,uint256)
    */
   const selector = data.slice(0, 10);
 
-  try {
-    const decoded = decodeFunctionData({
-      abi: securityAbi,
-      data,
-    });
+  /**
+   * ----------------------------------------------------
+   * 1. Try local ABI first
+   * ----------------------------------------------------
+   */
+  const localDecoded = decodeWithAbi(securityAbi, data);
 
-    const classification = classifyAction(decoded.functionName, decoded.args);
+  if (localDecoded) {
+    const classification = classifyAction(localDecoded.functionName, localDecoded.args);
 
     return {
       decoded: true,
-
-      functionName: decoded.functionName,
-
-      args: decoded.args,
-
+      functionName: localDecoded.functionName,
+      args: localDecoded.args,
       selector,
-
       classification,
-    };
-  } catch (error) {
-    /**
-     * Unknown function selector.
-     *
-     * IMPORTANT:
-     * Unknown does NOT mean safe.
-     */
-    return {
-      decoded: false,
-
-      selector,
-
-      classification: {
-        action: "UNKNOWN",
-
-        riskLevel: "MEDIUM",
-
-        description: "Function selector is not recognized by the current ABI registry.",
-      },
+      abiSource: "local",
+      contractVerified: true,
     };
   }
+
+  /**
+   * ----------------------------------------------------
+   * 2. Try external verified ABI
+   * ----------------------------------------------------
+   */
+  if (input) {
+    const resolution = await resolveContractAbi({
+      chainId: input.chainId,
+      address: input.to,
+    });
+
+    if (resolution.found && resolution.contract) {
+      const externalDecoded = decodeWithAbi(resolution.contract.abi, data);
+
+      if (externalDecoded) {
+        const classification = classifyAction(externalDecoded.functionName, externalDecoded.args);
+
+        return {
+          decoded: true,
+          functionName: externalDecoded.functionName,
+          args: externalDecoded.args,
+          selector,
+          classification,
+          abiSource: "sourcify",
+          contractVerified: resolution.contract.verified,
+        };
+      }
+    }
+  }
+
+  /**
+   * ----------------------------------------------------
+   * 3. Unknown function
+   * ----------------------------------------------------
+   */
+  return {
+    decoded: false,
+
+    selector,
+
+    classification: {
+      action: "UNKNOWN",
+      riskLevel: "MEDIUM",
+      description: "Function selector is not recognized by the available ABI registries.",
+    },
+
+    abiSource: "unknown",
+    contractVerified: false,
+  };
 }

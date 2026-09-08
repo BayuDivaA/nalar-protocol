@@ -3,7 +3,7 @@
   "name": "Nalar Protocol",
   "version": "0.1.0",
   "description": "Nalar transaction protection powered by TxSentry.",
-  "permissions": ["storage"],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": ["http://localhost:3001/*"],
   "background": {
     "service_worker": "background.js"

@@ -85,15 +85,23 @@
 
       let intent = await getStoredIntent();
 
-      if (typeof intent !== "string" || !intent.trim()) {
-        intent = await showIntentOverlay();
+      /**
+       * Always let the user confirm or edit
+       * the intent before a transaction is analyzed.
+       *
+       * This prevents a previous intent from
+       * silently being reused for a different
+       * transaction.
+       */
+      const confirmedIntent = await showIntentOverlay(intent);
 
-        if (!intent) {
-          throw new Error("[Nalar] Transaction cancelled because no intent was provided.");
-        }
-
-        await saveIntent(intent);
+      if (!confirmedIntent) {
+        throw new Error("[Nalar] Transaction cancelled because no intent was provided.");
       }
+
+      intent = confirmedIntent;
+
+      await saveIntent(intent);
 
       if (!transaction) {
         throw new Error("[Nalar] Missing transaction request.");
@@ -165,7 +173,7 @@
            * BLOCK
            */
           if (security.decision === "BLOCK") {
-            showNalarMessage(`Nalar blocked this transaction. Risk: ${security.riskLevel}.`, "block");
+            showSecurityExplanationOverlay(security);
 
             reject(new Error("[Nalar] Transaction blocked by TxSentry."));
 
@@ -207,20 +215,33 @@
           /**
            * ALLOW
            */
-          showNalarMessage("Nalar approved the transaction. Opening wallet...");
+          /**
+           * ALLOW
+           */
+          showAllowOverlay(
+            security,
 
-          originalRequest({
-            ...args,
+            () => {
+              showNalarMessage("Nalar approved the transaction. Opening wallet...");
 
-            params: [
-              {
-                ...transaction,
-                from: transaction.from,
-              },
-            ],
-          })
-            .then(resolve)
-            .catch(reject);
+              originalRequest({
+                ...args,
+
+                params: [
+                  {
+                    ...transaction,
+                    from: transaction.from,
+                  },
+                ],
+              })
+                .then(resolve)
+                .catch(reject);
+            },
+
+            () => {
+              reject(new Error("[Nalar] Transaction cancelled by user."));
+            },
+          );
         }
 
         /**
@@ -255,12 +276,498 @@
     return true;
   }
 
+  function showSecurityExplanationOverlay(security) {
+    const existing = document.getElementById("__nalar_explanation_overlay__");
+
+    if (existing) {
+      existing.remove();
+    }
+
+    const overlay = document.createElement("div");
+
+    overlay.id = "__nalar_explanation_overlay__";
+
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "2147483647",
+      background: "rgba(0,0,0,.68)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "24px",
+      boxSizing: "border-box",
+    });
+
+    const modal = document.createElement("div");
+
+    Object.assign(modal.style, {
+      width: "min(520px, 100%)",
+      background: "#09090b",
+      color: "#fff",
+      border: "1px solid #3f3f46",
+      borderRadius: "20px",
+      padding: "26px",
+      fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      boxShadow: "0 30px 100px rgba(0,0,0,.65)",
+    });
+
+    const explanation = security.explanation ?? {};
+
+    const title = explanation.title ?? "Transaction blocked";
+
+    const summary = explanation.summary ?? "Nalar stopped this transaction because it did not match your intended action.";
+
+    const details = Array.isArray(explanation.details) ? explanation.details : [];
+
+    const risk = `${security.riskLevel ?? "UNKNOWN"} — ${security.riskScore ?? 0}/100`;
+
+    modal.innerHTML = `
+    <div
+      style="
+        font-size:11px;
+        letter-spacing:.2em;
+        color:#71717a;
+        text-transform:uppercase;
+      "
+    >
+      NALAR PROTOCOL
+    </div>
+
+    <h2
+      style="
+        margin:12px 0 0;
+        font-size:25px;
+        line-height:1.2;
+        font-weight:650;
+      "
+    >
+      ${escapeHtml(title)}
+    </h2>
+
+    <div
+      style="
+        margin-top:18px;
+        padding:16px;
+        border-radius:14px;
+        background:#120808;
+        border:1px solid #3f1515;
+      "
+    >
+      <div
+        style="
+          font-size:11px;
+          color:#a1a1aa;
+          text-transform:uppercase;
+          letter-spacing:.12em;
+        "
+      >
+        Risk
+      </div>
+
+      <div
+        style="
+          margin-top:6px;
+          font-size:15px;
+          font-weight:650;
+          color:#fecaca;
+        "
+      >
+        ${escapeHtml(risk)}
+      </div>
+    </div>
+
+    <p
+      style="
+        margin:20px 0 0;
+        font-size:15px;
+        line-height:1.65;
+        color:#e4e4e7;
+      "
+    >
+      ${escapeHtml(summary)}
+    </p>
+
+    ${
+      details.length
+        ? `
+      <div
+        style="
+          margin-top:18px;
+          padding:16px;
+          border-radius:14px;
+          background:#111113;
+          border:1px solid #27272a;
+        "
+      >
+        <div
+          style="
+            font-size:11px;
+            color:#71717a;
+            text-transform:uppercase;
+            letter-spacing:.12em;
+          "
+        >
+          Why Nalar stopped it
+        </div>
+
+        <div
+          style="
+            margin-top:10px;
+            font-size:13px;
+            line-height:1.7;
+            color:#d4d4d8;
+          "
+        >
+          ${details.map((detail) => `<div style="margin-bottom:9px;">• ${escapeHtml(detail)}</div>`).join("")}
+        </div>
+      </div>
+    `
+        : ""
+    }
+
+    <div
+      style="
+        margin-top:22px;
+        font-size:12px;
+        line-height:1.6;
+        color:#71717a;
+      "
+    >
+      The transaction was stopped before your wallet was asked
+      to sign it.
+    </div>
+
+    <button
+      id="__nalar_explanation_close"
+      style="
+        width:100%;
+        margin-top:20px;
+        padding:13px;
+        border-radius:12px;
+        border:1px solid #52525b;
+        background:#fff;
+        color:#000;
+        cursor:pointer;
+        font-size:13px;
+        font-weight:650;
+      "
+    >
+      Close
+    </button>
+  `;
+
+    overlay.appendChild(modal);
+
+    document.documentElement.appendChild(overlay);
+
+    document.getElementById("__nalar_explanation_close")?.addEventListener("click", () => {
+      overlay.remove();
+    });
+  }
+
+  function showAllowOverlay(security, onContinue, onCancel) {
+    const existing = document.getElementById("__nalar_allow_overlay__");
+
+    if (existing) {
+      existing.remove();
+    }
+
+    const overlay = document.createElement("div");
+
+    overlay.id = "__nalar_allow_overlay__";
+
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "2147483647",
+      background: "rgba(0,0,0,.58)",
+      backdropFilter: "blur(5px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "24px",
+      boxSizing: "border-box",
+    });
+
+    const modal = document.createElement("div");
+
+    Object.assign(modal.style, {
+      width: "min(500px, 100%)",
+      background: "#09090b",
+      color: "#fff",
+      border: "1px solid #27272a",
+      borderRadius: "20px",
+      padding: "26px",
+      fontFamily: "Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      boxShadow: "0 30px 100px rgba(0,0,0,.55)",
+    });
+
+    const explanation = security.explanation ?? {};
+
+    const title = explanation.title ?? "Transaction looks safe";
+
+    const summary = explanation.summary ?? "Nalar found that this transaction matches what you asked it to do.";
+
+    const details = Array.isArray(explanation.details) ? explanation.details : [];
+
+    const riskLevel = security.riskLevel ?? "LOW";
+    const riskScore = security.riskScore ?? 0;
+
+    const intentDescription = security.intent?.description ?? "Your requested transaction";
+
+    const actualAction = security.actual?.functionName ?? security.actual?.action ?? "Unknown";
+
+    modal.innerHTML = `
+    <div
+      style="
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:16px;
+      "
+    >
+      <div>
+        <div
+          style="
+            font-size:11px;
+            letter-spacing:.2em;
+            color:#71717a;
+            text-transform:uppercase;
+          "
+        >
+          NALAR PROTOCOL
+        </div>
+
+        <h2
+          style="
+            margin:12px 0 0;
+            font-size:25px;
+            line-height:1.2;
+            font-weight:650;
+          "
+        >
+          ${escapeHtml(title)}
+        </h2>
+      </div>
+
+      <div
+        style="
+          width:34px;
+          height:34px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          border-radius:50%;
+          border:1px solid #36543f;
+          background:#0d1711;
+          color:#8fca9f;
+          font-size:17px;
+          flex:0 0 auto;
+        "
+      >
+        ✓
+      </div>
+    </div>
+
+    <div
+      style="
+        margin-top:20px;
+        padding:16px;
+        border-radius:14px;
+        background:#0c120e;
+        border:1px solid #1d3022;
+      "
+    >
+      <div
+        style="
+          font-size:10px;
+          letter-spacing:.13em;
+          text-transform:uppercase;
+          color:#737b75;
+        "
+      >
+        Security status
+      </div>
+
+      <div
+        style="
+          margin-top:7px;
+          font-size:15px;
+          font-weight:650;
+          color:#9ed3aa;
+        "
+      >
+        ${escapeHtml(riskLevel)} · ${escapeHtml(riskScore)}/100
+      </div>
+    </div>
+
+    <div
+      style="
+        margin-top:18px;
+        padding:16px;
+        border:1px solid #27272a;
+        border-radius:14px;
+        background:#000;
+      "
+    >
+      <div
+        style="
+          font-size:10px;
+          letter-spacing:.13em;
+          text-transform:uppercase;
+          color:#71717a;
+        "
+      >
+        Your intent
+      </div>
+
+      <div
+        style="
+          margin-top:7px;
+          font-size:14px;
+          line-height:1.55;
+          color:#e4e4e7;
+        "
+      >
+        ${escapeHtml(intentDescription)}
+      </div>
+
+      <div
+        style="
+          margin-top:15px;
+          font-size:10px;
+          letter-spacing:.13em;
+          text-transform:uppercase;
+          color:#71717a;
+        "
+      >
+        Transaction
+      </div>
+
+      <div
+        style="
+          margin-top:7px;
+          font-size:13px;
+          color:#a1a1aa;
+        "
+      >
+        ${escapeHtml(actualAction)}
+      </div>
+    </div>
+
+    <p
+      style="
+        margin:18px 0 0;
+        font-size:14px;
+        line-height:1.65;
+        color:#d4d4d8;
+      "
+    >
+      ${escapeHtml(summary)}
+    </p>
+
+    ${
+      details.length
+        ? `
+      <div
+        style="
+          margin-top:16px;
+          font-size:12px;
+          line-height:1.65;
+          color:#a1a1aa;
+        "
+      >
+        ${details
+          .slice(0, 3)
+          .map((detail) => `<div style="margin-bottom:6px;">• ${escapeHtml(detail)}</div>`)
+          .join("")}
+      </div>
+      `
+        : ""
+    }
+
+    <div
+      style="
+        margin-top:18px;
+        font-size:11px;
+        line-height:1.5;
+        color:#62626b;
+      "
+    >
+      Nalar has completed the security check.
+      Your wallet will ask you to confirm the transaction next.
+    </div>
+
+    <div
+      style="
+        display:flex;
+        gap:10px;
+        margin-top:22px;
+      "
+    >
+      <button
+        id="__nalar_allow_cancel"
+        style="
+          flex:1;
+          padding:13px;
+          border-radius:12px;
+          border:1px solid #3f3f46;
+          background:#18181b;
+          color:#e4e4e7;
+          cursor:pointer;
+          font-size:13px;
+        "
+      >
+        Cancel
+      </button>
+
+      <button
+        id="__nalar_allow_continue"
+        style="
+          flex:1;
+          padding:13px;
+          border-radius:12px;
+          border:1px solid #fff;
+          background:#fff;
+          color:#000;
+          cursor:pointer;
+          font-size:13px;
+          font-weight:650;
+        "
+      >
+        Continue to wallet
+      </button>
+    </div>
+  `;
+
+    overlay.appendChild(modal);
+
+    document.documentElement.appendChild(overlay);
+
+    document.getElementById("__nalar_allow_cancel")?.addEventListener("click", () => {
+      overlay.remove();
+      onCancel();
+    });
+
+    document.getElementById("__nalar_allow_continue")?.addEventListener("click", () => {
+      overlay.remove();
+      onContinue();
+    });
+  }
+
   function showReviewOverlay(security, onConfirm, onCancel) {
     const existing = document.getElementById("__nalar_review_overlay");
 
     if (existing) {
       existing.remove();
     }
+
+    const explanation = security.explanation ?? {};
+
+    const summary = explanation.summary ?? "This transaction requires your attention before signing.";
+
+    const details = Array.isArray(explanation.details) ? explanation.details : [];
 
     const overlay = document.createElement("div");
 
@@ -293,6 +800,12 @@
 
     const intent = security.intent?.description ?? "Unknown transaction";
 
+    const explanationTitle = explanation.title ?? "Review required";
+
+    const explanationSummary = explanation.summary ?? "This transaction requires your attention before signing.";
+
+    const explanationDetails = Array.isArray(explanation.details) ? explanation.details : [];
+
     const risk = `${security.riskLevel} — ${security.riskScore}/100`;
 
     const reasons = [...(security.reasons ?? []), ...(security.policy?.evaluation?.reasons ?? [])].filter(Boolean).filter((reason, index, array) => array.indexOf(reason) === index);
@@ -316,7 +829,7 @@
         line-height:1.2;
       "
     >
-      Review Required
+      ${escapeHtml(explanationTitle)}
     </h2>
 
     <p
@@ -327,9 +840,7 @@
         font-size:14px;
       "
     >
-      TxSentry found a transaction that is
-      allowed by policy but requires your
-      attention before signing.
+       ${escapeHtml(explanationSummary)}
     </p>
 
     <div
@@ -404,6 +915,38 @@
       >
         ${escapeHtml(security.actual?.functionName ?? security.actual?.action ?? "Unknown")}
       </div>
+
+      ${
+        explanationDetails.length > 0
+          ? `
+      <div
+        style="
+          margin-top:16px;
+          font-size:11px;
+          color:#71717a;
+          text-transform:uppercase;
+          letter-spacing:.12em;
+        "
+      >
+        Nalar's explanation
+      </div>
+
+      <div
+        style="
+          margin-top:9px;
+          color:#d4d4d8;
+          font-size:13px;
+          line-height:1.65;
+        "
+      >
+        ${explanationDetails
+          .slice(0, 4)
+          .map((detail) => `<div style="margin-bottom:7px;">• ${escapeHtml(detail)}</div>`)
+          .join("")}
+      </div>
+    `
+          : ""
+      }
 
       ${
         reasons.length > 0
@@ -593,7 +1136,7 @@
     });
   }
 
-  function showIntentOverlay() {
+  function showIntentOverlay(existingIntent = "") {
     return new Promise((resolve) => {
       const existing = document.getElementById("__nalar_intent_overlay__");
       if (existing) {
@@ -1044,7 +1587,10 @@
       inputLabel.textContent = "Your intent";
 
       const textarea = document.createElement("textarea");
+
       textarea.placeholder = "Example: I want to mint 1 NFT for 0.02 BNB";
+
+      textarea.value = typeof existingIntent === "string" ? existingIntent : "";
 
       const securityNote = document.createElement("div");
       securityNote.className = "nalar-security-note";

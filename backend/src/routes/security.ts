@@ -323,7 +323,21 @@ securityRoute.post("/", async (c) => {
 
         actualFunction: decoded.functionName ?? null,
 
+        actualValueNative: `${Number(value) / 1e18} BNB`,
+
         reasons: decision.reasons,
+
+        effects: serializeBigInt(effects),
+
+        comparison,
+
+        policy: {
+          allowed: policyEvaluation.allowed,
+
+          requiresReview: policyEvaluation.requiresReview,
+
+          reasons: policyEvaluation.reasons,
+        },
       });
     } catch (error) {
       console.error("[EXPLANATION]", error);

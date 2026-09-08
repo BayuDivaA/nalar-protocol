@@ -1,19 +1,43 @@
 const intentInput = document.getElementById("intent");
-
 const saveButton = document.getElementById("save");
-
 const status = document.getElementById("status");
 
 const protectionToggle = document.getElementById("protectionToggle");
-
-const toggleIndicator = document.getElementById("toggleIndicator");
-
 const toggleLabel = document.getElementById("toggleLabel");
 
-async function loadSettings() {
-  const result = await chrome.storage.local.get(["intent", "protectionEnabled"]);
+let currentOrigin = null;
 
-  intentInput.value = result.intent ?? "";
+async function getCurrentOrigin() {
+  const tabs = await chrome.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+
+  const tab = tabs[0];
+
+  if (!tab?.url) {
+    return null;
+  }
+
+  try {
+    return new URL(tab.url).origin;
+  } catch {
+    return null;
+  }
+}
+
+async function loadSettings() {
+  currentOrigin = await getCurrentOrigin();
+
+  const result = await chrome.storage.local.get(["intents", "protectionEnabled"]);
+
+  const intents = result.intents ?? {};
+
+  if (currentOrigin) {
+    intentInput.value = intents[currentOrigin] ?? "";
+  } else {
+    intentInput.value = "";
+  }
 
   const enabled = result.protectionEnabled !== false;
 
@@ -57,12 +81,22 @@ saveButton.addEventListener("click", async () => {
 
   if (!intent) {
     status.textContent = "Intent cannot be empty.";
-
     return;
   }
 
+  if (!currentOrigin) {
+    status.textContent = "Unable to determine current website.";
+    return;
+  }
+
+  const result = await chrome.storage.local.get(["intents"]);
+
+  const intents = result.intents ?? {};
+
+  intents[currentOrigin] = intent;
+
   await chrome.storage.local.set({
-    intent,
+    intents,
   });
 
   status.textContent = "Intent saved.";
@@ -72,4 +106,8 @@ saveButton.addEventListener("click", async () => {
   }, 1600);
 });
 
-loadSettings();
+loadSettings().catch((error) => {
+  console.error("[Nalar] Failed to load settings:", error);
+
+  status.textContent = "Failed to load Nalar settings.";
+});

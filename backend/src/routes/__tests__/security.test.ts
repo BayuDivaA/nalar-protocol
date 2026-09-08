@@ -1,5 +1,65 @@
 import { describe, expect, test, mock } from "bun:test";
 
+type SecurityCheckResponse = {
+  ok: boolean;
+
+  decision: "ALLOW" | "REVIEW" | "BLOCK";
+
+  riskScore: number;
+
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+  intentMatch: boolean;
+
+  actual: {
+    action: string;
+    functionName: string | null;
+    selector: string | null;
+    value: string;
+    description: string;
+  };
+
+  simulation: {
+    success: boolean;
+    gasEstimate: string | null;
+    error: string | null;
+  };
+
+  policy: {
+    evaluation: {
+      allowed: boolean;
+      requiresReview: boolean;
+      reasons: string[];
+    };
+  };
+
+  effects: {
+    approvals: {
+      type: "ERC20_ALLOWANCE" | "ERC721_OPERATOR";
+      token: string;
+      owner: string;
+      operator: string;
+      approved: boolean;
+      sourceFunction: string;
+    }[];
+  };
+
+  stateDiff: {
+    type: "ERC721_OPERATOR";
+    token: string;
+    owner: string;
+    operator: string;
+    before: boolean | null;
+    after: boolean;
+    sourceFunction: string;
+  }[];
+
+  comparison: {
+    matches: boolean;
+    mismatches: string[];
+  };
+};
+
 mock.module("../../services/intent-engine", () => ({
   parseUserIntent: async (_input: string) => {
     return {
@@ -10,6 +70,20 @@ mock.module("../../services/intent-engine", () => ({
       allowApproval: false,
       targetAddress: null,
       description: "Mint 1 NFT for 0.02 BNB",
+    };
+  },
+}));
+
+mock.module("../../services/explanation-engine", () => ({
+  generateSecurityExplanation: async (input: { intent: string; decision: string; riskLevel: string; riskScore: number; intentMatch: boolean; actualAction: string; actualFunction: string | null; reasons: string[] }) => {
+    return {
+      title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
+
+      summary: input.decision === "BLOCK" ? "Transaction blocked by deterministic security rules." : input.decision === "REVIEW" ? "Transaction requires additional review." : "Transaction allowed by deterministic security rules.",
+
+      details: [`Intent: ${input.intent}`, `Actual action: ${input.actualAction}`, `Risk: ${input.riskLevel} (${input.riskScore}/100)`],
+
+      recommendedAction: input.decision === "BLOCK" ? "CANCEL" : input.decision === "REVIEW" ? "REVIEW" : "PROCEED",
     };
   },
 }));
@@ -102,11 +176,13 @@ describe("POST /api/transactions/security-check", () => {
 
     expect(body.effects.approvals).toHaveLength(1);
 
-    expect(body.effects.approvals[0].approved).toBe(true);
+    expect(body.effects.approvals).toHaveLength(1);
+
+    expect(body.effects.approvals[0]!.approved).toBe(true);
 
     expect(body.stateDiff).toHaveLength(1);
-    expect(body.stateDiff[0].before).toBe(false);
-    expect(body.stateDiff[0].after).toBe(true);
+    expect(body.stateDiff[0]!.before).toBe(false);
+    expect(body.stateDiff[0]!.after).toBe(true);
 
     expect(body.comparison.matches).toBe(false);
   });

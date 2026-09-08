@@ -4,15 +4,16 @@ import { securityCheck, type SecurityCheckResponse } from "@/src/lib/api";
 
 import { sendTransaction } from "@/src/lib/wallet";
 
+export interface TransactionRequest {
+  chainId: number;
+  to: Address;
+  value: bigint;
+  data: Hex;
+}
+
 export interface GuardedTransaction {
   intent: string;
-
-  transaction: {
-    chainId: number;
-    to: Address;
-    value: bigint;
-    data: Hex;
-  };
+  transaction: TransactionRequest;
 }
 
 export interface GuardedTransactionResult {
@@ -20,80 +21,94 @@ export interface GuardedTransactionResult {
   txHash?: Hex;
 }
 
+/**
+ * Analyze a transaction before it reaches the wallet.
+ *
+ * IMPORTANT:
+ * - BLOCK never reaches wallet signing.
+ * - REVIEW stops before signing.
+ * - ALLOW is the only automatic signing path.
+ */
 export async function guardedSendTransaction(input: GuardedTransaction): Promise<GuardedTransactionResult> {
+  const from = await getConnectedAccount();
+
   if (input.transaction.chainId !== 97) {
     throw new Error("Only BNB Testnet transactions are supported.");
   }
 
-  const ethereum = getEthereum();
-
-  const accounts = (await ethereum.request({
-    method: "eth_requestAccounts",
-  })) as string[];
-
-  if (accounts.length === 0) {
-    throw new Error("No wallet account selected.");
-  }
-
-  const from = accounts[0] as Address;
-
-  /**
-   * Security inspection happens BEFORE signing.
-   */
   const security = await securityCheck({
     intent: input.intent,
 
     transaction: {
       chainId: input.transaction.chainId,
+
       from,
+
       to: input.transaction.to,
+
       value: input.transaction.value.toString(),
+
       data: input.transaction.data,
     },
   });
 
-  /**
-   * BLOCK:
-   * never reach the wallet signing flow.
-   */
   if (security.decision === "BLOCK") {
     return {
       security,
     };
   }
 
-  /**
-   * REVIEW:
-   * never silently proceed.
-   *
-   * The UI must explicitly ask the user
-   * before a transaction can continue.
-   */
   if (security.decision === "REVIEW") {
     return {
       security,
     };
   }
 
-  /**
-   * ALLOW:
-   * only now can the transaction
-   * reach the wallet.
-   */
   const txHash = await sendTransaction({
     account: from,
+
     to: input.transaction.to,
+
     value: input.transaction.value,
+
     data: input.transaction.data,
   });
 
   return {
     security,
+
     txHash,
   };
 }
 
-function getEthereum() {
+/**
+ * Sign a transaction that has previously
+ * received a REVIEW verdict and was explicitly
+ * confirmed by the user.
+ */
+export async function confirmAndSendTransaction(input: {
+  security: SecurityCheckResponse;
+
+  transaction: TransactionRequest;
+}): Promise<Hex> {
+  if (input.security.decision !== "REVIEW") {
+    throw new Error("Only REVIEW transactions can be confirmed.");
+  }
+
+  const from = await getConnectedAccount();
+
+  return sendTransaction({
+    account: from,
+
+    to: input.transaction.to,
+
+    value: input.transaction.value,
+
+    data: input.transaction.data,
+  });
+}
+
+async function getConnectedAccount(): Promise<Address> {
   if (typeof window === "undefined") {
     throw new Error("Wallet is only available in the browser.");
   }
@@ -107,29 +122,8 @@ function getEthereum() {
   ).ethereum;
 
   if (!ethereum) {
-    throw new Error("No injected wallet found.");
+    throw new Error("No injected wallet found. Please install MetaMask.");
   }
-
-  return ethereum;
-}
-
-export async function confirmAndSendTransaction(input: {
-  security: SecurityCheckResponse;
-  transaction: {
-    to: Address;
-    value: bigint;
-    data: Hex;
-  };
-}): Promise<Hex> {
-  if (input.security.decision !== "REVIEW") {
-    throw new Error("Only REVIEW transactions can be manually confirmed.");
-  }
-
-  if (!input.security.explanation || input.security.explanation.recommendedAction !== "REVIEW") {
-    throw new Error("Transaction does not require manual review.");
-  }
-
-  const ethereum = getEthereum();
 
   const accounts = (await ethereum.request({
     method: "eth_requestAccounts",
@@ -139,10 +133,5 @@ export async function confirmAndSendTransaction(input: {
     throw new Error("No wallet account selected.");
   }
 
-  return sendTransaction({
-    account: accounts[0] as Address,
-    to: input.transaction.to,
-    value: input.transaction.value,
-    data: input.transaction.data,
-  });
+  return accounts[0] as Address;
 }

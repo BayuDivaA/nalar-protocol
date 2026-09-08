@@ -1,6 +1,6 @@
 import type { Address } from "viem";
 
-export type TransactionAction = "TOKEN_APPROVAL" | "NFT_APPROVAL" | "TOKEN_TRANSFER" | "TOKEN_TRANSFER_FROM" | "NFT_TRANSFER" | "MINT" | "SWAP" | "STAKE" | "DEPOSIT" | "WITHDRAW" | "CLAIM" | "REGISTER" | "UNKNOWN";
+export type TransactionAction = "TOKEN_APPROVAL" | "NFT_APPROVAL" | "TOKEN_TRANSFER" | "TOKEN_TRANSFER_FROM" | "NFT_TRANSFER" | "MINT" | "SWAP" | "STAKE" | "DEPOSIT" | "WITHDRAW" | "CLAIM" | "REGISTER" | "PAYMENT" | "UNKNOWN";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -155,6 +155,14 @@ export function classifyAction(functionName: string, args: readonly unknown[]): 
         action: "REGISTER",
         riskLevel: "MEDIUM",
         description: "Transaction registers the caller with an external contract.",
+      };
+    }
+
+    case "payableAction": {
+      return {
+        action: "PAYMENT",
+        riskLevel: "LOW",
+        description: "Native BNB payment transaction.",
       };
     }
 

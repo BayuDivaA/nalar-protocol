@@ -1,0 +1,25 @@
+[✓] Backend security engine
+[✓] ABI resolver
+[✓] Simulation
+[✓] Intent parser
+[✓] Intent comparison
+[✓] Risk engine
+[✓] Policy engine
+[✓] ALLOW / REVIEW / BLOCK
+[✓] Frontend
+[✓] Extension interception
+[✓] Intent capture
+[✓] ACTIVE / PAUSED
+[✓] Security overlay
+
+[→] Request binding
+[→] Account binding
+[→] Replay / duplicate protection
+[→] Fail-closed & error handling
+[→] Backend deployment
+[→] Frontend deployment
+[→] Production extension config
+[→] Final security UI polish
+[→] Architecture diagram
+[→] README
+[→] 2-minute hackathon demo

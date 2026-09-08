@@ -48,6 +48,12 @@ export function makeSecurityDecision(input: { simulationSuccess: boolean; risk: 
       reasons.add(mismatch);
     }
 
+    if (input.policy.requiresReview) {
+      for (const reason of input.policy.reasons) {
+        reasons.add(reason);
+      }
+    }
+
     if (input.risk.level === "HIGH") {
       return {
         decision: "BLOCK",

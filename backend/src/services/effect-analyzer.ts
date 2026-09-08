@@ -1,7 +1,23 @@
 import type { Address } from "viem";
 
-export interface ApprovalEffect {
-  type: "ERC20_ALLOWANCE" | "ERC721_OPERATOR";
+export interface ERC20AllowanceEffect {
+  type: "ERC20_ALLOWANCE";
+
+  token: Address;
+
+  owner: Address;
+
+  spender: Address;
+
+  amount: bigint;
+
+  unlimited: boolean;
+
+  sourceFunction: "approve";
+}
+
+export interface ERC721ApprovalEffect {
+  type: "ERC721_OPERATOR";
 
   token: Address;
 
@@ -11,12 +27,16 @@ export interface ApprovalEffect {
 
   approved: boolean;
 
-  sourceFunction: string;
+  sourceFunction: "setApprovalForAll" | "maliciousApproval";
 }
+
+export type ApprovalEffect = ERC20AllowanceEffect | ERC721ApprovalEffect;
 
 export interface TransactionEffects {
   approvals: ApprovalEffect[];
 }
+
+const MAX_UINT256 = 2n ** 256n - 1n;
 
 export function analyzeEffects(input: {
   to: Address;
@@ -31,42 +51,85 @@ export function analyzeEffects(input: {
     approvals: [],
   };
 
-  if (input.functionName === "setApprovalForAll") {
-    const operator = input.args?.[0] as Address;
+  /**
+   * --------------------------------------------------
+   * ERC20 approve(address,uint256)
+   * --------------------------------------------------
+   */
+  if (input.functionName === "approve") {
+    const spender = input.args?.[0] as Address | undefined;
 
-    const approved = input.args?.[1] as boolean;
+    const amount = input.args?.[1] as bigint | undefined;
 
-    effects.approvals.push({
-      type: "ERC721_OPERATOR",
+    if (spender && amount !== undefined) {
+      effects.approvals.push({
+        type: "ERC20_ALLOWANCE",
 
-      token: input.to,
+        token: input.to,
 
-      owner: input.from,
+        owner: input.from,
 
-      operator,
+        spender,
 
-      approved,
+        amount,
 
-      sourceFunction: "setApprovalForAll",
-    });
+        unlimited: amount === MAX_UINT256,
+
+        sourceFunction: "approve",
+      });
+    }
   }
 
+  /**
+   * --------------------------------------------------
+   * ERC721 setApprovalForAll(address,bool)
+   * --------------------------------------------------
+   */
+  if (input.functionName === "setApprovalForAll") {
+    const operator = input.args?.[0] as Address | undefined;
+
+    const approved = input.args?.[1] as boolean | undefined;
+
+    if (operator && approved !== undefined) {
+      effects.approvals.push({
+        type: "ERC721_OPERATOR",
+
+        token: input.to,
+
+        owner: input.from,
+
+        operator,
+
+        approved,
+
+        sourceFunction: "setApprovalForAll",
+      });
+    }
+  }
+
+  /**
+   * --------------------------------------------------
+   * Demo malicious approval
+   * --------------------------------------------------
+   */
   if (input.functionName === "maliciousApproval") {
-    const operator = input.args?.[0] as Address;
+    const operator = input.args?.[0] as Address | undefined;
 
-    effects.approvals.push({
-      type: "ERC721_OPERATOR",
+    if (operator) {
+      effects.approvals.push({
+        type: "ERC721_OPERATOR",
 
-      token: input.to,
+        token: input.to,
 
-      owner: input.from,
+        owner: input.from,
 
-      operator,
+        operator,
 
-      approved: true,
+        approved: true,
 
-      sourceFunction: "maliciousApproval",
-    });
+        sourceFunction: "maliciousApproval",
+      });
+    }
   }
 
   return effects;

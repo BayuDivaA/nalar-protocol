@@ -1,4 +1,5 @@
 import { getAddress, type Abi, type Address } from "viem";
+import { findProtocolContract } from "../lib/protocols";
 
 const SOURCIFY_BASE_URL = "https://sourcify.dev/server/v2";
 
@@ -6,7 +7,7 @@ export interface ResolvedContractAbi {
   address: Address;
   chainId: number;
   abi: Abi;
-  source: "sourcify";
+  source: "protocol" | "sourcify";
   verified: boolean;
 }
 
@@ -25,6 +26,24 @@ interface SourcifyResponse {
 
 export async function resolveContractAbi(input: { chainId: number; address: Address }): Promise<ContractAbiResolution> {
   const normalizedAddress = getAddress(input.address);
+
+  const protocolContract = findProtocolContract({
+    chainId: input.chainId,
+    address: normalizedAddress,
+  });
+
+  if (protocolContract) {
+    return {
+      found: true,
+      contract: {
+        address: normalizedAddress,
+        chainId: input.chainId,
+        abi: protocolContract.abi,
+        source: "protocol",
+        verified: true,
+      },
+    };
+  }
 
   const url = `${SOURCIFY_BASE_URL}/contract/` + `${input.chainId}/${normalizedAddress}?fields=abi`;
 

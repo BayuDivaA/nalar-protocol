@@ -2,29 +2,17 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { parseUserIntent } from "../services/intent-engine";
-
 import { getAddress, isAddress, type Hex } from "viem";
-
 import { transactionRequestSchema } from "../types/transaction";
-
 import { decodeTransactionData } from "../lib/decoder";
-
 import { serializeBigInt } from "../lib/serialize";
-
 import { simulateTransaction } from "../services/simulator";
-
 import { analyzeBasicImpact } from "../services/impact-analyzer";
-
 import { analyzeStateDiff } from "../services/state-diff";
-
 import { analyzeEffects } from "../services/effect-analyzer";
-
 import { resolveEffectState } from "../services/effect-state";
-
 import { calculateRisk } from "../services/risk-engine";
-
 import { normalizeIntent } from "../services/intent-normalizer";
-
 import { compareIntent } from "../services/intent-comparator";
 
 export const transactionRoute = new Hono();
@@ -113,7 +101,11 @@ transactionRoute.post("/analyze", async (c) => {
     /**
      * Decode calldata
      */
-    const decoded = decodeTransactionData(tx.data as Hex);
+    const decoded = await decodeTransactionData({
+      chainId: tx.chainId,
+      to: tx.to,
+      data: tx.data as Hex,
+    });
 
     const effects = analyzeEffects({
       from,
@@ -322,7 +314,11 @@ transactionRoute.post("/compare", async (c) => {
     /**
      * Decode transaction.
      */
-    const decoded = decodeTransactionData(data);
+    const decoded = await decodeTransactionData({
+      chainId: 97,
+      to,
+      data,
+    });
 
     /**
      * Extract semantic effects.
@@ -338,7 +334,7 @@ transactionRoute.post("/compare", async (c) => {
      * Compare human intent
      * against actual transaction.
      */
-    const comparison = compareIntent(normalizedIntent, effects, value);
+    const comparison = compareIntent(normalizedIntent, decoded.classification.action, effects, value);
 
     return c.json({
       ok: true,

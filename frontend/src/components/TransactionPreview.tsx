@@ -1,45 +1,65 @@
+"use client";
+
+import type { Hex } from "viem";
+
 interface TransactionPreviewProps {
-  address: string;
+  transaction: {
+    chainId: number;
+    to: string;
+    value: bigint;
+    data: Hex;
+  };
+
+  functionName?: string | null;
+  action?: string | null;
 }
 
-export default function TransactionPreview({ address }: TransactionPreviewProps) {
-  return (
-    <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-zinc-600">Demo Transaction</p>
+export default function TransactionPreview({ transaction, functionName, action }: TransactionPreviewProps) {
+  const valueInBNB = Number(transaction.value) / 1e18;
 
-          <h2 className="mt-2 text-lg font-medium text-white">Safe NFT Mint</h2>
+  return (
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-950 p-6 sm:p-8">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-600">03 / Transaction Preview</p>
+
+          <h2 className="mt-2 text-xl font-medium">What will be sent?</h2>
         </div>
 
-        <div className="rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-400">BNB Testnet</div>
+        <span className="rounded-full border border-zinc-800 px-3 py-1 text-xs text-zinc-500">BNB Testnet</span>
       </div>
 
-      <div className="mt-6 space-y-4">
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-sm text-zinc-500">Action</span>
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <InfoCard label="Action" value={action ?? "Not analyzed"} />
 
-          <span className="font-mono text-sm text-white">MINT</span>
-        </div>
+        <InfoCard label="Function" value={functionName ?? "Not decoded"} />
+      </div>
 
-        <div className="flex items-center justify-between gap-6">
-          <span className="text-sm text-zinc-500">Amount</span>
+      <div className="mt-3">
+        <InfoCard label="Value" value={`${valueInBNB} BNB`} />
+      </div>
 
-          <span className="font-mono text-sm text-white">0.02 BNB</span>
-        </div>
+      <div className="mt-3 rounded-2xl border border-zinc-800 bg-black p-4">
+        <p className="text-xs text-zinc-600">Contract</p>
 
-        <div>
-          <p className="text-sm text-zinc-500">From</p>
+        <p className="mt-2 break-all font-mono text-xs leading-5 text-zinc-400">{transaction.to}</p>
+      </div>
 
-          <p className="mt-1 break-all font-mono text-xs text-zinc-300">{address}</p>
-        </div>
+      <div className="mt-3 rounded-2xl border border-zinc-800 bg-black p-4">
+        <p className="text-xs text-zinc-600">Calldata</p>
 
-        <div>
-          <p className="text-sm text-zinc-500">Contract</p>
-
-          <p className="mt-1 break-all font-mono text-xs text-zinc-300">0x4ACCcd7a3d2e2a7c99BE0ea035B40cE03C7A14d1</p>
-        </div>
+        <p className="mt-2 break-all font-mono text-xs leading-5 text-zinc-500">{transaction.data}</p>
       </div>
     </section>
+  );
+}
+
+function InfoCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+      <p className="text-xs text-zinc-600">{label}</p>
+
+      <p className="mt-2 font-mono text-sm text-white">{value}</p>
+    </div>
   );
 }

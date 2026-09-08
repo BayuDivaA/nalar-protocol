@@ -8,9 +8,10 @@ export interface TransactionIntelligence extends DecodedTransaction {
 }
 
 export async function analyzeTransactionIntelligence(input: { chainId: number; to: Address; data: Hex }): Promise<TransactionIntelligence> {
-  const decoded = await decodeTransactionData(input.data, {
+  const decoded = await decodeTransactionData({
     chainId: input.chainId,
     to: input.to,
+    data: input.data,
   });
 
   return {

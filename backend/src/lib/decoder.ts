@@ -16,9 +16,15 @@ export interface DecodedTransaction {
 
   classification: ClassifiedAction;
 
-  abiSource?: "local" | "sourcify" | "unknown";
+  abiSource?: "local" | "sourcify" | "protocol" | "unknown";
 
   contractVerified?: boolean;
+}
+
+interface DecodeInput {
+  chainId: number;
+  to: Address;
+  data: Hex;
 }
 
 function decodeWithAbi(
@@ -43,15 +49,11 @@ function decodeWithAbi(
   }
 }
 
-export async function decodeTransactionData(
-  data: Hex,
-  input?: {
-    chainId: number;
-    to: Address;
-  },
-): Promise<DecodedTransaction> {
+export async function decodeTransactionData(input: DecodeInput): Promise<DecodedTransaction> {
+  const { chainId, to, data } = input;
+
   /**
-   * Native BNB transfer.
+   * No calldata means native BNB transfer.
    */
   if (data === "0x") {
     return {
@@ -68,15 +70,12 @@ export async function decodeTransactionData(
     };
   }
 
-  /**
-   * First 4 bytes = function selector.
-   */
   const selector = data.slice(0, 10);
 
   /**
-   * ----------------------------------------------------
-   * 1. Try local ABI first
-   * ----------------------------------------------------
+   * --------------------------------------------------
+   * 1. Try local security ABI first.
+   * --------------------------------------------------
    */
   const localDecoded = decodeWithAbi(securityAbi, data);
 
@@ -95,52 +94,50 @@ export async function decodeTransactionData(
   }
 
   /**
-   * ----------------------------------------------------
-   * 2. Try external verified ABI
-   * ----------------------------------------------------
+   * --------------------------------------------------
+   * 2. Fallback to Sourcify.
+   * --------------------------------------------------
    */
-  if (input) {
-    const resolution = await resolveContractAbi({
-      chainId: input.chainId,
-      address: input.to,
-    });
+  const resolved = await resolveContractAbi({
+    chainId,
+    address: to,
+  });
 
-    if (resolution.found && resolution.contract) {
-      const externalDecoded = decodeWithAbi(resolution.contract.abi, data);
+  if (resolved.found && resolved.contract) {
+    const externalDecoded = decodeWithAbi(resolved.contract.abi, data);
 
-      if (externalDecoded) {
-        const classification = classifyAction(externalDecoded.functionName, externalDecoded.args);
+    if (externalDecoded) {
+      const classification = classifyAction(externalDecoded.functionName, externalDecoded.args);
 
-        return {
-          decoded: true,
-          functionName: externalDecoded.functionName,
-          args: externalDecoded.args,
-          selector,
-          classification,
-          abiSource: "sourcify",
-          contractVerified: resolution.contract.verified,
-        };
-      }
+      return {
+        decoded: true,
+        functionName: externalDecoded.functionName,
+        args: externalDecoded.args,
+        selector,
+        classification,
+        abiSource: resolved.contract.source,
+        contractVerified: resolved.contract.verified,
+      };
     }
   }
 
   /**
-   * ----------------------------------------------------
-   * 3. Unknown function
-   * ----------------------------------------------------
+   * --------------------------------------------------
+   * 3. Unknown selector.
+   * --------------------------------------------------
    */
   return {
     decoded: false,
-
     selector,
 
     classification: {
       action: "UNKNOWN",
       riskLevel: "MEDIUM",
-      description: "Function selector is not recognized by the available ABI registries.",
+      description: "Function selector is not recognized by the available ABI sources.",
     },
 
-    abiSource: "unknown",
-    contractVerified: false,
+    abiSource: resolved.found ? (resolved.contract?.source ?? "unknown") : "unknown",
+
+    contractVerified: resolved.contract?.verified ?? false,
   };
 }

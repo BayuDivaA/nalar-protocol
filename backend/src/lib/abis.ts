@@ -192,4 +192,12 @@ export const securityAbi = [
     inputs: [],
     outputs: [],
   },
+
+  {
+    type: "function",
+    name: "payableAction",
+    stateMutability: "payable",
+    inputs: [],
+    outputs: [],
+  },
 ] as const;

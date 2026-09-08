@@ -6,8 +6,6 @@ import { parseUserIntent } from "../services/intent-engine";
 
 import { normalizeIntent } from "../services/intent-normalizer";
 
-import { decodeTransactionData } from "../lib/decoder";
-
 import { serializeBigInt } from "../lib/serialize";
 
 import { simulateTransaction } from "../services/simulator";
@@ -267,7 +265,7 @@ securityRoute.post("/", async (c) => {
      *
      * Deterministic risk analysis.
      */
-    const risk = calculateRisk(stateDiff, decoded.classification.action);
+    const risk = calculateRisk(stateDiff, decoded.classification.action, effects.approvals);
 
     /**
      * STEP 8

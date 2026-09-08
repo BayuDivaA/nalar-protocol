@@ -1,92 +1,85 @@
-import type {
-  Address,
-  Hex,
-} from 'viem'
+import type { Address, Hex } from "viem";
 
-import { env } from '../config/env'
+import { env } from "../config/env";
 
 interface TraceInput {
-  from: Address
-  to: Address
-  value: bigint
-  data: Hex
+  from: Address;
+  to: Address;
+  value: bigint;
+  data: Hex;
 }
 
 interface TraceResult {
-  success: boolean
-  error: string | null
-  structLogs: unknown[]
+  success: boolean;
+  error: string | null;
+  structLogs: unknown[];
 }
 
-export async function traceTransaction(
-  tx: TraceInput,
-): Promise<TraceResult> {
+export async function traceTransaction(tx: TraceInput): Promise<TraceResult> {
   try {
-    const response = await fetch(
-      env.BNB_RPC_URL,
-      {
-        method: 'POST',
+    const response = await fetch(env.BNB_RPC_URL, {
+      method: "POST",
 
-        headers: {
-          'Content-Type': 'application/json',
-        },
-
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'debug_traceCall',
-          params: [
-            {
-              from: tx.from,
-              to: tx.to,
-              value: `0x${tx.value.toString(16)}`,
-              data: tx.data,
-            },
-            'latest',
-            {
-              tracer: 'callTracer',
-              timeout: '10s',
-            },
-          ],
-        }),
+      headers: {
+        "Content-Type": "application/json",
       },
-    )
+
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "debug_traceCall",
+        params: [
+          {
+            from: tx.from,
+            to: tx.to,
+            value: `0x${tx.value.toString(16)}`,
+            data: tx.data,
+          },
+          "latest",
+          {
+            tracer: "callTracer",
+            timeout: "10s",
+          },
+        ],
+      }),
+    });
 
     if (!response.ok) {
       return {
         success: false,
         error: `RPC returned ${response.status}`,
         structLogs: [],
-      }
+      };
     }
 
-    const json = await response.json()
+    const json = (await response.json()) as {
+      error?: {
+        message?: string;
+        code?: number;
+        data?: unknown;
+      };
+
+      result?: unknown;
+    };
 
     if (json.error) {
       return {
         success: false,
-        error:
-          json.error.message ??
-          'Trace request failed.',
+        error: json.error.message ?? "Trace request failed.",
         structLogs: [],
-      }
+      };
     }
 
     return {
       success: true,
       error: null,
-      structLogs: json.result
-        ? [json.result]
-        : [],
-    }
+      structLogs: json.result ? [json.result as Record<string, unknown>] : [],
+    };
   } catch (error) {
     return {
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Trace request failed.',
+      error: error instanceof Error ? error.message : "Trace request failed.",
       structLogs: [],
-    }
+    };
   }
 }

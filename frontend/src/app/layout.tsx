@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TxSentry",
-  description: "AI-powered transaction intent firewall for Web3",
+  title: "Nalar Protocol",
+  description: "Understand what you are signing before it reaches your wallet.",
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-black text-white antialiased">{children}</body>
     </html>
   );
 }

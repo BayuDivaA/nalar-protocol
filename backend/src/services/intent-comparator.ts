@@ -22,13 +22,14 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   /**
    * 2. Check semantic action.
    *
-   * Example:
-   * Intent  : MINT
-   * Actual  : NFT_APPROVAL
+   * Some user-level actions map to a more
+   * specific blockchain-level action.
    *
-   * This is an intent mismatch.
+   * TRANSFER ↔ PAYMENT
    */
-  if (intent.action !== "UNKNOWN" && intent.action !== actualAction) {
+  const actualMatchesIntent = intent.action === "UNKNOWN" || intent.action === actualAction || (intent.action === "TRANSFER" && actualAction === "PAYMENT");
+
+  if (!actualMatchesIntent) {
     mismatches.push([`User intended to ${intent.action.toLowerCase()}.`, `Transaction actually performs ${actualAction.toLowerCase()}.`].join(" "));
   }
 

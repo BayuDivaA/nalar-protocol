@@ -1,3 +1,4 @@
+import type { ApprovalEffect } from "./effect-analyzer";
 import type { ApprovalStateDiff } from "./effect-state";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
@@ -8,17 +9,15 @@ export interface RiskResult {
   reasons: string[];
 }
 
-export function calculateRisk(effects: ApprovalStateDiff[], action?: string): RiskResult {
+export function calculateRisk(effects: ApprovalStateDiff[], action?: string, approvalEffects: ApprovalEffect[] = []): RiskResult {
   let score = 0;
 
   const reasons: string[] = [];
 
   /**
-   * Transaction-level security signal.
-   *
-   * Even when the previous state cannot
-   * be read, the decoded action itself
-   * can indicate a dangerous permission.
+   * --------------------------------------------------
+   * NFT approval
+   * --------------------------------------------------
    */
   if (action === "NFT_APPROVAL") {
     score = Math.max(score, 90);
@@ -27,20 +26,51 @@ export function calculateRisk(effects: ApprovalStateDiff[], action?: string): Ri
   }
 
   /**
-   * State-based security analysis.
+   * --------------------------------------------------
+   * ERC20 approval
+   * --------------------------------------------------
+   *
+   * ERC20 approve() creates an allowance for a spender.
+   *
+   * Unlimited allowance is a stronger security signal
+   * because the spender can potentially use the entire
+   * token balance allowed by the approval.
+   */
+  for (const approval of approvalEffects) {
+    if (approval.type !== "ERC20_ALLOWANCE") {
+      continue;
+    }
+
+    if (approval.unlimited) {
+      score = Math.max(score, 90);
+
+      reasons.push("Transaction requests an unlimited ERC20 token allowance.");
+    } else {
+      score = Math.max(score, 60);
+
+      reasons.push("Transaction grants an ERC20 token allowance to another address.");
+    }
+  }
+
+  /**
+   * --------------------------------------------------
+   * NFT approval state analysis
+   * --------------------------------------------------
    */
   for (const effect of effects) {
-    if (effect.type === "ERC721_OPERATOR") {
-      if (effect.after === true) {
-        score = Math.max(score, 90);
+    if (effect.type !== "ERC721_OPERATOR") {
+      continue;
+    }
 
-        if (effect.before === false) {
-          reasons.push("NFT operator approval changes from disabled to enabled.");
-        } else if (effect.before === null) {
-          reasons.push("NFT operator approval is requested, but the previous approval state could not be verified.");
-        } else {
-          reasons.push("NFT operator approval is enabled.");
-        }
+    if (effect.after === true) {
+      score = Math.max(score, 90);
+
+      if (effect.before === false) {
+        reasons.push("NFT operator approval changes from disabled to enabled.");
+      } else if (effect.before === null) {
+        reasons.push("NFT operator approval is requested, but the previous approval state could not be verified.");
+      } else {
+        reasons.push("NFT operator approval is enabled.");
       }
     }
   }

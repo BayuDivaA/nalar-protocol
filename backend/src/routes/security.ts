@@ -191,6 +191,8 @@ securityRoute.post("/", async (c) => {
           targetAddress: intent.targetAddress,
 
           description: intent.description,
+          tokenIn: intent.tokenIn,
+          tokenOut: intent.tokenOut,
         },
 
         actual: {
@@ -251,6 +253,7 @@ securityRoute.post("/", async (c) => {
       to,
       functionName: decoded.functionName,
       args: decoded.args,
+      protocol: decoded.protocol,
     });
 
     /**

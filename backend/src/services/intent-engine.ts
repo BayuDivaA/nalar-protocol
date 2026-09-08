@@ -2,10 +2,12 @@ import { ai } from "../lib/ai-config";
 import { env } from "../config/env";
 
 import { userIntentSchema, type UserIntent } from "../types/intent";
+
 import { parseAIJson } from "../lib/parse-ai-json";
 
 export async function parseUserIntent(userInput: string): Promise<UserIntent> {
   console.log("[AI] Starting intent parsing...");
+
   console.log("[AI] Input:", userInput);
 
   try {
@@ -45,6 +47,10 @@ Required structure:
 
   "quantity": number | null,
 
+  "tokenIn": string | null,
+
+  "tokenOut": string | null,
+
   "maxValueNative": string | null,
 
   "nativeCurrency": "BNB" | null,
@@ -60,14 +66,28 @@ Rules:
 
 1. Never invent an amount.
 2. Never invent an address.
-3. If the user does not specify a maximum spend,
+3. Never invent a token.
+4. If the user does not specify a quantity,
    use null.
-4. If the user wants to mint or buy an NFT and
-   did not explicitly request approval,
-   allowApproval must be false.
-5. If the intent is ambiguous,
-   use UNKNOWN.
-6. Return JSON only.
+5. If the user does not specify the input token,
+   use null.
+6. If the user does not specify the output token,
+   use null.
+7. If the user does not specify a maximum spend,
+   use null.
+8. For SWAP:
+   - tokenIn = token being sold.
+   - tokenOut = token being received.
+   - quantity = amount of tokenIn when explicitly stated.
+9. For non-SWAP actions:
+   - tokenIn should normally be null.
+   - tokenOut should normally be null.
+10. If the user wants to mint or buy an NFT and
+    did not explicitly request approval,
+    allowApproval must be false.
+11. If the intent is ambiguous,
+    use UNKNOWN.
+12. Return JSON only.
 `,
         },
 
@@ -88,24 +108,6 @@ Rules:
 
     console.log("[AI] Raw output:", raw);
 
-    /**
-     * Models sometimes wrap JSON in Markdown fences:
-     *
-     * ```json
-     * {...}
-     * ```
-     *
-     * Remove those fences before parsing.
-     */
-    const cleaned = raw
-      .trim()
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
-
-    console.log("[AI] Cleaned output:", cleaned);
-
     const json = parseAIJson(raw);
 
     const parsed = userIntentSchema.safeParse(json);
@@ -116,9 +118,12 @@ Rules:
       throw new Error("AI returned an invalid intent schema.");
     }
 
+    console.log("[AI] Parsed intent:", parsed.data);
+
     return parsed.data;
   } catch (error) {
     console.error("[AI] Request failed:");
+
     console.error(error);
 
     throw error;

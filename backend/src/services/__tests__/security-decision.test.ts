@@ -31,6 +31,7 @@ describe("TxSentry Security Decision", () => {
 
       effects: {
         approvals: [],
+        swaps: [],
       },
 
       policy,
@@ -65,6 +66,7 @@ describe("TxSentry Security Decision", () => {
 
       effects: {
         approvals: [],
+        swaps: [],
       },
 
       policy,
@@ -108,6 +110,7 @@ describe("TxSentry Security Decision", () => {
             sourceFunction: "maliciousApproval",
           },
         ],
+        swaps: [],
       },
 
       policy,
@@ -139,6 +142,7 @@ describe("TxSentry Security Decision", () => {
 
       effects: {
         approvals: [],
+        swaps: [],
       },
 
       policy,

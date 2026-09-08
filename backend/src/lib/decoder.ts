@@ -16,9 +16,11 @@ export interface DecodedTransaction {
 
   classification: ClassifiedAction;
 
-  abiSource?: "local" | "sourcify" | "protocol" | "unknown";
+  abiSource?: "local" | "protocol" | "sourcify" | "unknown";
 
   contractVerified?: boolean;
+
+  protocol?: "PancakeSwap";
 }
 
 interface DecodeInput {
@@ -111,12 +113,20 @@ export async function decodeTransactionData(input: DecodeInput): Promise<Decoded
 
       return {
         decoded: true,
+
         functionName: externalDecoded.functionName,
+
         args: externalDecoded.args,
+
         selector,
+
         classification,
+
         abiSource: resolved.contract.source,
+
         contractVerified: resolved.contract.verified,
+
+        protocol: resolved.contract.protocol,
       };
     }
   }
@@ -137,6 +147,7 @@ export async function decodeTransactionData(input: DecodeInput): Promise<Decoded
     },
 
     abiSource: resolved.found ? (resolved.contract?.source ?? "unknown") : "unknown",
+    protocol: resolved.contract?.protocol,
 
     contractVerified: resolved.contract?.verified ?? false,
   };

@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === "CHECK_TRANSACTION") {
-    handleSecurityCheck(message.transaction, message.chainId)
+    handleSecurityCheck(message.transaction, message.chainId, message.origin)
       .then((security) => {
         sendResponse({
           security,
@@ -113,11 +113,7 @@ async function saveIntent(origin, intent) {
   });
 }
 
-async function handleSecurityCheck(transaction, chainId) {
-  const stored = await chrome.storage.local.get(["intent"]);
-
-  const intent = stored.intent?.trim();
-
+async function handleSecurityCheck(transaction, chainId, origin) {
   if (typeof chainId !== "string" || !/^0x[0-9a-fA-F]+$/.test(chainId)) {
     throw new Error("Invalid wallet chain ID.");
   }
@@ -128,8 +124,22 @@ async function handleSecurityCheck(transaction, chainId) {
     throw new Error(`[Nalar] Unsupported network. Expected BNB Testnet (97), received ${numericChainId}.`);
   }
 
+  if (typeof origin !== "string" || !origin) {
+    throw new Error("Transaction origin is missing.");
+  }
+
+  /**
+   * Get intent belonging to the
+   * current dApp origin.
+   */
+  const intent = await getIntent(origin);
+
   if (!intent) {
     throw new Error("Set your transaction intent in the Nalar extension popup first.");
+  }
+
+  if (!transaction) {
+    throw new Error("Transaction request is missing.");
   }
 
   const from = transaction.from;

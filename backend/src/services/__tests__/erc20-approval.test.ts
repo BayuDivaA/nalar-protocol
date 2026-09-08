@@ -42,6 +42,11 @@ describe("ERC20 Approval Security", () => {
     const approval = effects.approvals[0]!;
 
     expect(approval.type).toBe("ERC20_ALLOWANCE");
+
+    if (approval.type !== "ERC20_ALLOWANCE") {
+      throw new Error("Expected ERC20 allowance effect.");
+    }
+
     expect(approval.spender).toBe(SPENDER);
     expect(approval.amount).toBe(amount);
     expect(approval.unlimited).toBe(false);
@@ -75,6 +80,11 @@ describe("ERC20 Approval Security", () => {
     const approval = effects.approvals[0]!;
 
     expect(approval.type).toBe("ERC20_ALLOWANCE");
+
+    if (approval.type !== "ERC20_ALLOWANCE") {
+      throw new Error("Expected ERC20 allowance effect.");
+    }
+
     expect(approval.spender).toBe(SPENDER);
     expect(approval.amount).toBe(MAX_UINT256);
     expect(approval.unlimited).toBe(true);

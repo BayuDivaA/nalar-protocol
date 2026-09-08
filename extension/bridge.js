@@ -61,10 +61,10 @@
         const response = await chrome.runtime.sendMessage({
           type: "CHECK_TRANSACTION",
           id: message.id,
+          origin: window.location.origin,
           chainId: message.chainId,
           transaction: message.transaction,
         });
-
         window.postMessage(
           {
             source: "NALAR_EXTENSION",

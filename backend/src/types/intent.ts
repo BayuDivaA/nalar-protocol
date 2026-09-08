@@ -5,6 +5,22 @@ export const userIntentSchema = z.object({
 
   quantity: z.number().nullable(),
 
+  /**
+   * Token the user wants to spend.
+   *
+   * Example:
+   * "USDT"
+   */
+  tokenIn: z.string().nullable(),
+
+  /**
+   * Token the user wants to receive.
+   *
+   * Example:
+   * "BNB"
+   */
+  tokenOut: z.string().nullable(),
+
   maxValueNative: z.string().nullable(),
 
   nativeCurrency: z.enum(["BNB"]).nullable(),

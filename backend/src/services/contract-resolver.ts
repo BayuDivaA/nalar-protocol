@@ -1,32 +1,53 @@
 import { getAddress, type Abi, type Address } from "viem";
+
 import { findProtocolContract } from "../lib/protocols";
 
 const SOURCIFY_BASE_URL = "https://sourcify.dev/server/v2";
 
 export interface ResolvedContractAbi {
   address: Address;
+
   chainId: number;
+
   abi: Abi;
+
   source: "protocol" | "sourcify";
+
   verified: boolean;
+
+  protocol?: "PancakeSwap";
 }
 
 export interface ContractAbiResolution {
   found: boolean;
+
   contract?: ResolvedContractAbi;
+
   error?: string;
 }
 
 interface SourcifyResponse {
   abi?: unknown;
+
   match?: string;
+
   address?: string;
+
   chainId?: string;
 }
 
-export async function resolveContractAbi(input: { chainId: number; address: Address }): Promise<ContractAbiResolution> {
+export async function resolveContractAbi(input: {
+  chainId: number;
+
+  address: Address;
+}): Promise<ContractAbiResolution> {
   const normalizedAddress = getAddress(input.address);
 
+  /**
+   * --------------------------------------------------
+   * 1. Protocol registry
+   * --------------------------------------------------
+   */
   const protocolContract = findProtocolContract({
     chainId: input.chainId,
     address: normalizedAddress,
@@ -35,17 +56,29 @@ export async function resolveContractAbi(input: { chainId: number; address: Addr
   if (protocolContract) {
     return {
       found: true,
+
       contract: {
         address: normalizedAddress,
+
         chainId: input.chainId,
+
         abi: protocolContract.abi,
+
         source: "protocol",
+
         verified: true,
+
+        protocol: protocolContract.protocol,
       },
     };
   }
 
-  const url = `${SOURCIFY_BASE_URL}/contract/` + `${input.chainId}/${normalizedAddress}?fields=abi`;
+  /**
+   * --------------------------------------------------
+   * 2. Sourcify
+   * --------------------------------------------------
+   */
+  const url = `${SOURCIFY_BASE_URL}/contract/` + `${input.chainId}/${normalizedAddress}` + `?fields=abi`;
 
   try {
     const response = await fetch(url, {
@@ -57,6 +90,7 @@ export async function resolveContractAbi(input: { chainId: number; address: Addr
     if (response.status === 404) {
       return {
         found: false,
+
         error: "Contract ABI was not found in Sourcify.",
       };
     }
@@ -64,6 +98,7 @@ export async function resolveContractAbi(input: { chainId: number; address: Addr
     if (!response.ok) {
       return {
         found: false,
+
         error: `Sourcify returned HTTP ${response.status}.`,
       };
     }
@@ -73,23 +108,30 @@ export async function resolveContractAbi(input: { chainId: number; address: Addr
     if (!Array.isArray(data.abi)) {
       return {
         found: false,
+
         error: "Sourcify returned a contract without a valid ABI.",
       };
     }
 
     return {
       found: true,
+
       contract: {
         address: normalizedAddress,
+
         chainId: input.chainId,
+
         abi: data.abi as Abi,
+
         source: "sourcify",
+
         verified: data.match === "exact_match" || data.match === "match",
       },
     };
   } catch (error) {
     return {
       found: false,
+
       error: error instanceof Error ? error.message : "Unknown Sourcify error.",
     };
   }

@@ -1,8 +1,10 @@
-import { isHex, type Address, type Hex } from "viem";
+import { decodeAbiParameters, decodeFunctionData, isHex, type Address, type Hex } from "viem";
 
 import { analyzeUniversalRouterCommands } from "./universal-router-analyzer";
 
 import { decodeV3SwapExactIn } from "./universal-router-swap-decoder";
+import { decodeV2SwapExactIn } from "./universal-router-v2-swap-decoder";
+import { securityAbi } from "../lib/abis";
 
 /**
  * ==================================================
@@ -22,7 +24,7 @@ export interface ERC20AllowanceEffect {
 
   unlimited: boolean;
 
-  sourceFunction: "approve";
+  sourceFunction: "approve" | "permit" | "permit2";
 }
 
 /**
@@ -162,12 +164,60 @@ function isHexArray(value: unknown): value is readonly Hex[] {
   return Array.isArray(value) && value.every((item) => isHex(item));
 }
 
+function decodePermit2Single(input: Hex): { token: Address; spender: Address; amount: bigint } | null {
+  try {
+    const [permit] = decodeAbiParameters(
+      [
+        {
+          type: "tuple",
+          components: [
+            { name: "details", type: "tuple", components: [{ name: "token", type: "address" }, { name: "amount", type: "uint160" }, { name: "expiration", type: "uint48" }, { name: "nonce", type: "uint48" }] },
+            { name: "spender", type: "address" },
+            { name: "sigDeadline", type: "uint256" },
+          ],
+        },
+        { type: "bytes" },
+      ],
+      input,
+    );
+
+    const decoded = permit as { details: { token: Address; amount: bigint }; spender: Address };
+    return { token: decoded.details.token, spender: decoded.spender, amount: decoded.details.amount };
+  } catch {
+    return null;
+  }
+}
+
+function decodePermit2Batch(input: Hex): { token: Address; spender: Address; amount: bigint }[] {
+  try {
+    const [permit] = decodeAbiParameters(
+      [
+        {
+          type: "tuple",
+          components: [
+            { name: "details", type: "tuple[]", components: [{ name: "token", type: "address" }, { name: "amount", type: "uint160" }, { name: "expiration", type: "uint48" }, { name: "nonce", type: "uint48" }] },
+            { name: "spender", type: "address" },
+            { name: "sigDeadline", type: "uint256" },
+          ],
+        },
+        { type: "bytes" },
+      ],
+      input,
+    );
+
+    const decoded = permit as { details: readonly { token: Address; amount: bigint }[]; spender: Address };
+    return decoded.details.map((detail) => ({ token: detail.token, spender: decoded.spender, amount: detail.amount }));
+  } catch {
+    return [];
+  }
+}
+
 /**
  * ==================================================
  * MAIN EFFECT ANALYZER
  * ==================================================
  */
-export function analyzeEffects(input: AnalyzeEffectsInput): TransactionEffects {
+export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): TransactionEffects {
   const effects: TransactionEffects = {
     approvals: [],
     swaps: [],
@@ -199,6 +249,30 @@ export function analyzeEffects(input: AnalyzeEffectsInput): TransactionEffects {
 
         sourceFunction: "approve",
       });
+    }
+  }
+
+  /** EIP-2612 permit authorizes the same allowance as approve without an on-chain approve call. */
+  if (input.functionName === "permit") {
+    const owner = getAddressArgument(input.args?.[0]);
+    const spender = getAddressArgument(input.args?.[1]);
+    const amount = getBigIntArgument(input.args?.[2]);
+
+    if (owner !== undefined && spender !== undefined && amount !== undefined) {
+      effects.approvals.push({ type: "ERC20_ALLOWANCE", token: input.to, owner, spender, amount, unlimited: amount === MAX_UINT256, sourceFunction: "permit" });
+    }
+  }
+
+  /** Decode standard bytes[] multicalls only two levels deep to avoid hostile recursive calldata. */
+  if (input.functionName === "multicall" && depth < 2 && isHexArray(input.args?.[0])) {
+    for (const call of input.args[0]) {
+      try {
+        const decoded = decodeFunctionData({ abi: securityAbi, data: call });
+        const nested = analyzeEffects({ ...input, functionName: decoded.functionName, args: decoded.args ?? [] }, depth + 1);
+        effects.approvals.push(...nested.approvals);
+      } catch {
+        // An unknown nested call remains subject to the outer transaction's fail-safe classifier.
+      }
     }
   }
 
@@ -327,6 +401,66 @@ export function analyzeEffects(input: AnalyzeEffectsInput): TransactionEffects {
                * this into an UNKNOWN / REVIEW signal.
                */
               console.error("[SWAP ANALYZER]", error);
+            }
+          }
+
+          /**
+           * --------------------------------------------
+           * V2 exact input swap
+           * --------------------------------------------
+           */
+          if (command.command === "V2_SWAP_EXACT_IN") {
+            try {
+              const swap = decodeV2SwapExactIn(command.input);
+
+              effects.swaps.push({
+                type: "SWAP",
+
+                protocol: "PancakeSwap",
+
+                tokenIn: swap.tokenIn,
+
+                tokenOut: swap.tokenOut,
+
+                amountIn: swap.amountIn,
+
+                amountOutMin: swap.amountOutMin,
+
+                recipient: swap.recipient,
+
+                payerIsUser: swap.payerIsUser,
+
+                /**
+                 * V2 does not use the packed V3 path format.
+                 *
+                 * We keep a stable hex representation here so
+                 * TransactionEffects remains compatible.
+                 */
+                path: command.input,
+
+                hopTokens: swap.hopTokens,
+
+                /**
+                 * V2 has no pool-fee values encoded like V3.
+                 */
+                fees: [],
+              });
+            } catch (error) {
+              console.error("[V2 SWAP ANALYZER]", error);
+            }
+          }
+
+          if (command.command === "PERMIT2_PERMIT") {
+            const permit = decodePermit2Single(command.input);
+
+            if (permit) {
+              effects.approvals.push({ type: "ERC20_ALLOWANCE", token: permit.token, owner: input.from, spender: permit.spender, amount: permit.amount, unlimited: permit.amount === MAX_UINT256, sourceFunction: "permit2" });
+            }
+          }
+
+          if (command.command === "PERMIT2_PERMIT_BATCH") {
+            for (const permit of decodePermit2Batch(command.input)) {
+              effects.approvals.push({ type: "ERC20_ALLOWANCE", token: permit.token, owner: input.from, spender: permit.spender, amount: permit.amount, unlimited: permit.amount === MAX_UINT256, sourceFunction: "permit2" });
             }
           }
         }

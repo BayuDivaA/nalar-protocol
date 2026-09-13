@@ -1,5 +1,6 @@
 import type { ApprovalEffect } from "./effect-analyzer";
 import type { ApprovalStateDiff } from "./effect-state";
+import type { ScamRiskResult } from "./scam/scam-risk-engine";
 
 export type RiskLevel = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 
@@ -8,6 +9,13 @@ export interface RiskResult {
   level: RiskLevel;
   reasons: string[];
 }
+
+const RISK_RANK: Record<RiskLevel, number> = {
+  LOW: 0,
+  MEDIUM: 1,
+  HIGH: 2,
+  CRITICAL: 3,
+};
 
 export function calculateRisk(effects: ApprovalStateDiff[], action?: string, approvalEffects: ApprovalEffect[] = []): RiskResult {
   let score = 0;
@@ -94,5 +102,17 @@ export function calculateRisk(effects: ApprovalStateDiff[], action?: string, app
     score,
     level,
     reasons,
+  };
+}
+
+export function mergeScamRisk(risk: RiskResult, scamRisk: ScamRiskResult | null): RiskResult {
+  if (!scamRisk) return risk;
+
+  const level = RISK_RANK[risk.level] >= RISK_RANK[scamRisk.level] ? risk.level : scamRisk.level;
+
+  return {
+    score: Math.max(risk.score, scamRisk.score),
+    level,
+    reasons: [...new Set([...risk.reasons, ...scamRisk.reasons])],
   };
 }

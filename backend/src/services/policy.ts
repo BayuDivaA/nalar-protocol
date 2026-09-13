@@ -6,7 +6,7 @@ import type { Policy, PolicyEvaluation } from "../types/policy";
 export const defaultPolicy: Policy = {
   maxSpendBNB: "1",
 
-  allowedActions: ["MINT", "TOKEN_TRANSFER", "NFT_TRANSFER", "PAYMENT", "TRANSFER"],
+  allowedActions: ["MINT", "TOKEN_TRANSFER", "NFT_TRANSFER", "SWAP", "PAYMENT", "TRANSFER"],
 
   forbiddenActions: ["TOKEN_APPROVAL", "NFT_APPROVAL", "TOKEN_TRANSFER_FROM", "UNKNOWN"],
 

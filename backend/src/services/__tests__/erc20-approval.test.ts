@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { encodeFunctionData } from "viem";
+import { encodeAbiParameters, encodeFunctionData } from "viem";
 
 import { securityAbi } from "../../lib/abis";
 import { analyzeEffects } from "../effect-analyzer";
@@ -93,5 +93,47 @@ describe("ERC20 Approval Security", () => {
 
     expect(risk.level).toBe("CRITICAL");
     expect(risk.score).toBe(90);
+  });
+
+  test("permit grants the same allowance evidence as approve", () => {
+    const effects = analyzeEffects({
+      to: TOKEN,
+      from: USER,
+      functionName: "permit",
+      args: [USER, SPENDER, MAX_UINT256, 1n, 27, "0x" + "00".repeat(32), "0x" + "00".repeat(32)],
+    });
+
+    expect(effects.approvals).toHaveLength(1);
+    expect(effects.approvals[0]).toMatchObject({ type: "ERC20_ALLOWANCE", owner: USER, spender: SPENDER, unlimited: true, sourceFunction: "permit" });
+  });
+
+  test("finds a hidden approval inside multicall bytes", () => {
+    const approvalCall = encodeFunctionData({ abi: securityAbi, functionName: "approve", args: [SPENDER, MAX_UINT256] });
+    const effects = analyzeEffects({ to: TOKEN, from: USER, functionName: "multicall", args: [[approvalCall]] });
+
+    expect(effects.approvals).toHaveLength(1);
+    expect(effects.approvals[0]).toMatchObject({ type: "ERC20_ALLOWANCE", spender: SPENDER, unlimited: true });
+  });
+
+  test("finds Permit2 approval hidden inside Universal Router execution", () => {
+    const permitInput = encodeAbiParameters(
+      [
+        {
+          type: "tuple",
+          components: [
+            { name: "details", type: "tuple", components: [{ name: "token", type: "address" }, { name: "amount", type: "uint160" }, { name: "expiration", type: "uint48" }, { name: "nonce", type: "uint48" }] },
+            { name: "spender", type: "address" },
+            { name: "sigDeadline", type: "uint256" },
+          ],
+        },
+        { type: "bytes" },
+      ],
+      [{ details: { token: TOKEN, amount: 2n ** 160n - 1n, expiration: 0, nonce: 0 }, spender: SPENDER, sigDeadline: 1n }, "0x"],
+    );
+
+    const effects = analyzeEffects({ to: SPENDER, from: USER, functionName: "execute", protocol: "PancakeSwap", args: ["0x0a", [permitInput]] });
+
+    expect(effects.approvals).toHaveLength(1);
+    expect(effects.approvals[0]).toMatchObject({ type: "ERC20_ALLOWANCE", token: TOKEN, spender: SPENDER, sourceFunction: "permit2" });
   });
 });

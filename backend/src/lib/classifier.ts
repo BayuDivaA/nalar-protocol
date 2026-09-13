@@ -37,6 +37,20 @@ export function classifyAction(functionName: string, args: readonly unknown[]): 
       };
     }
 
+    case "permit": {
+      const spender = args[1] as Address;
+      const amount = args[2] as bigint;
+      const isUnlimited = amount === 2n ** 256n - 1n;
+
+      return {
+        action: "TOKEN_APPROVAL",
+        riskLevel: isUnlimited ? "CRITICAL" : "HIGH",
+        description: isUnlimited ? "Unlimited token permission granted by permit." : "Token spending permission granted by permit.",
+        spender,
+        amount: amount.toString(),
+      };
+    }
+
     case "setApprovalForAll": {
       const operator = args[0] as Address;
       const approved = args[1] as boolean;

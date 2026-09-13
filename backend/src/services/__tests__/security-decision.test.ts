@@ -4,6 +4,25 @@ import { defaultPolicy, evaluatePolicy } from "../policy";
 
 import { makeSecurityDecision } from "../security-decision";
 
+const criticalScamAnalysis = {
+  token: "0x1111111111111111111111111111111111111111" as const,
+  riskScore: 95,
+  riskLevel: "CRITICAL" as const,
+  honeypot: true,
+  findings: [
+    {
+      code: "SELL_SIMULATION_FAILED" as const,
+      severity: "CRITICAL" as const,
+      title: "Sell simulation failed.",
+      description: "A simulated sell reverted.",
+      source: "SIMULATION" as const,
+    },
+  ],
+  sellSimulation: { attempted: true, success: false, error: "sell reverted" },
+  contract: { verified: true, proxy: false, implementation: null },
+  agentAnalysis: { available: false, summary: null },
+};
+
 describe("TxSentry Security Decision", () => {
   test("ALLOW — safe mint under policy threshold", () => {
     const policy = evaluatePolicy({
@@ -150,5 +169,41 @@ describe("TxSentry Security Decision", () => {
 
     expect(decision.decision).toBe("BLOCK");
     expect(decision.reasons).toContain("Transaction simulation reverted.");
+  });
+
+  test("BLOCK — deterministic critical scam evidence", () => {
+    const policy = evaluatePolicy({ policy: defaultPolicy, action: "SWAP", value: 0n });
+    const decision = makeSecurityDecision({
+      simulationSuccess: true,
+      risk: { score: 0, level: "LOW", reasons: [] },
+      comparison: { matches: true, mismatches: [] },
+      effects: { approvals: [], swaps: [] },
+      policy,
+      scamAnalysis: criticalScamAnalysis,
+    });
+
+    expect(decision.decision).toBe("BLOCK");
+    expect(decision.reasons).toContain("Sell simulation failed.");
+  });
+
+  test("does not block solely because contract verification is unavailable", () => {
+    const policy = evaluatePolicy({ policy: defaultPolicy, action: "SWAP", value: 0n });
+    const decision = makeSecurityDecision({
+      simulationSuccess: true,
+      risk: { score: 35, level: "MEDIUM", reasons: ["Contract source is unverified"] },
+      comparison: { matches: true, mismatches: [] },
+      effects: { approvals: [], swaps: [] },
+      policy,
+      scamAnalysis: {
+        ...criticalScamAnalysis,
+        riskScore: 35,
+        riskLevel: "MEDIUM",
+        honeypot: false,
+        findings: [{ code: "UNVERIFIED_CONTRACT", severity: "MEDIUM", title: "Contract source is unverified", description: "No verified ABI is available.", source: "CONTRACT" }],
+        sellSimulation: { attempted: false, success: null, error: null },
+      },
+    });
+
+    expect(decision.decision).toBe("ALLOW");
   });
 });

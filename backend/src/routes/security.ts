@@ -1,30 +1,22 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { getAddress, isAddress, type Hex } from "viem";
-
 import { parseUserIntent } from "../services/intent-engine";
-
 import { normalizeIntent } from "../services/intent-normalizer";
-
 import { serializeBigInt } from "../lib/serialize";
-
 import { simulateTransaction } from "../services/simulator";
-
 import { analyzeEffects } from "../services/effect-analyzer";
-
 import { resolveEffectState } from "../services/effect-state";
-
-import { calculateRisk } from "../services/risk-engine";
-
+import { calculateRisk, mergeScamRisk } from "../services/risk-engine";
 import { compareIntent } from "../services/intent-comparator";
-
 import { makeSecurityDecision } from "../services/security-decision";
-
 import { generateSecurityExplanation } from "../services/explanation-engine";
-
 import { defaultPolicy, evaluatePolicy } from "../services/policy";
-
 import { analyzeTransactionIntelligence } from "../services/transaction-intelligence";
+import { translateTransaction } from "../services/transaction-translator";
+import { enrichSwapEffect } from "../services/enrich-swap";
+import { auditSwapTokens } from "../services/scam/token-auditor";
+import { calculateScamRisk } from "../services/scam/scam-risk-engine";
 
 export const securityRoute = new Hono();
 
@@ -137,6 +129,17 @@ securityRoute.post("/", async (c) => {
 
     const decoded = intelligence;
 
+    const baseAction = decoded.classification.action;
+
+    console.log("[SWAP DEBUG][INTELLIGENCE]", {
+      to,
+      protocol: decoded.protocol,
+      functionName: decoded.functionName,
+      selector: decoded.selector,
+      args: decoded.args,
+      classification: decoded.classification,
+    });
+
     /**
      * STEP 4
      *
@@ -196,7 +199,7 @@ securityRoute.post("/", async (c) => {
         },
 
         actual: {
-          action: decoded.classification.action,
+          action: baseAction,
 
           functionName: decoded.functionName ?? null,
 
@@ -256,19 +259,62 @@ securityRoute.post("/", async (c) => {
       protocol: decoded.protocol,
     });
 
+    const enrichedSwaps = await Promise.all(effects.swaps.map((swap) => enrichSwapEffect(swap)));
+
+    const analyzedEffects = {
+      ...effects,
+      swaps: enrichedSwaps,
+    };
+
+    const actualAction = analyzedEffects.swaps.length > 0 ? "SWAP" : decoded.classification.action;
+
+    console.log("[SWAP DEBUG][EFFECTS]", {
+      protocol: decoded.protocol,
+      functionName: decoded.functionName,
+      swapCount: effects.swaps.length,
+      swaps: effects.swaps,
+      approvals: effects.approvals,
+    });
+
+    const transactionSummary = translateTransaction({
+      from,
+      to,
+      value,
+
+      action: actualAction,
+
+      functionName: decoded.functionName ?? null,
+
+      args: decoded.args ?? [],
+
+      effects: analyzedEffects,
+
+      intentDescription: intent.description,
+    });
     /**
      * STEP 6
      *
      * Read current blockchain state.
      */
-    const stateDiff = await resolveEffectState(effects);
+    const stateDiff = await resolveEffectState(analyzedEffects);
+
+    const scamAnalyses = await auditSwapTokens({
+      chainId: transaction.chainId,
+      owner: from,
+      router: to,
+      swaps: analyzedEffects.swaps,
+    });
+
+    const scamAnalysis = scamAnalyses[0] ?? null;
+
+    const scamRisk = scamAnalyses.length === 0 ? null : calculateScamRisk(scamAnalyses.flatMap((analysis) => analysis.findings));
 
     /**
      * STEP 7
      *
      * Deterministic risk analysis.
      */
-    const risk = calculateRisk(stateDiff, decoded.classification.action, effects.approvals);
+    const risk = mergeScamRisk(calculateRisk(stateDiff, actualAction, analyzedEffects.approvals), scamRisk);
 
     /**
      * STEP 8
@@ -276,11 +322,11 @@ securityRoute.post("/", async (c) => {
      * Compare user intent
      * with actual effects.
      */
-    const comparison = compareIntent(intent, decoded.classification.action, effects, value);
+    const comparison = compareIntent(intent, actualAction, analyzedEffects, value);
 
     const policyEvaluation = evaluatePolicy({
       policy: defaultPolicy,
-      action: decoded.classification.action,
+      action: actualAction,
       value,
     });
 
@@ -295,9 +341,11 @@ securityRoute.post("/", async (c) => {
 
       comparison,
 
-      effects,
+      effects: analyzedEffects,
 
       policy: policyEvaluation,
+
+      scamAnalysis,
     });
 
     /**
@@ -319,7 +367,7 @@ securityRoute.post("/", async (c) => {
 
         intentMatch: comparison.matches,
 
-        actualAction: decoded.classification.action,
+        actualAction: actualAction,
 
         actualFunction: decoded.functionName ?? null,
 
@@ -383,7 +431,7 @@ securityRoute.post("/", async (c) => {
       },
 
       actual: {
-        action: decoded.classification.action,
+        action: actualAction,
 
         functionName: decoded.functionName ?? null,
 
@@ -393,6 +441,8 @@ securityRoute.post("/", async (c) => {
 
         description: decoded.classification.description,
       },
+
+      transactionSummary,
 
       simulation: {
         success: simulation.success,
@@ -420,7 +470,11 @@ securityRoute.post("/", async (c) => {
         },
       },
 
-      effects: serializeBigInt(effects),
+      effects: serializeBigInt(analyzedEffects),
+
+      scamAnalysis: serializeBigInt(scamAnalysis),
+
+      scamAnalyses: serializeBigInt(scamAnalyses),
 
       stateDiff: serializeBigInt(stateDiff),
 

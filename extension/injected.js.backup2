@@ -1,0 +1,1001 @@
+(() => {
+  "use strict";
+
+  if (window.__NALAR_TXSENTRY_INSTALLED__) {
+    return;
+  }
+
+  window.__NALAR_TXSENTRY_INSTALLED__ = true;
+
+  let requestId = 0;
+
+  const IDS = {
+    intent: "__nalar_intent_overlay__",
+    decision: "__nalar_decision_overlay__",
+    banner: "__nalar_banner__",
+  };
+
+  // Font stack bergaya code/terminal
+  const FONT_CODE = "ui-monospace, SFMono-Regular, 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace";
+
+  /**
+   * ============================================================
+   * ETHEREUM PROVIDER
+   * ============================================================
+   */
+
+  function getEthereum() {
+    return window.ethereum;
+  }
+
+  /**
+   * ============================================================
+   * SMALL STATUS BANNER
+   * ============================================================
+   */
+
+  function showNalarMessage(message, type = "info") {
+    const existing = document.getElementById(IDS.banner);
+
+    if (existing) {
+      existing.remove();
+    }
+
+    const banner = document.createElement("div");
+    banner.id = IDS.banner;
+
+    Object.assign(banner.style, {
+      position: "fixed",
+      left: "24px", // Pindah ke kiri bawah seperti terminal log
+      bottom: "24px",
+      zIndex: "2147483647",
+      maxWidth: "400px",
+      padding: "12px 16px",
+      background: "#000000",
+      color: type === "block" ? "#ff4444" : "#ffffff",
+      border: "1px solid #333333",
+      borderLeft: type === "block" ? "4px solid #ff4444" : "4px solid #ffffff",
+      borderRadius: "0px", // Sudut tajam
+      fontFamily: FONT_CODE,
+      fontSize: "12px",
+      lineHeight: "1.4",
+      pointerEvents: "none",
+      boxShadow: "4px 4px 0px rgba(255,255,255,0.05)", // Hard shadow ala retro/tech
+    });
+
+    banner.textContent = `>_ ${message}`;
+
+    document.documentElement.appendChild(banner);
+
+    setTimeout(() => {
+      banner.remove();
+    }, 3200);
+  }
+
+  /**
+   * ============================================================
+   * INSTALL INTERCEPTOR
+   * ============================================================
+   */
+
+  function install() {
+    const ethereum = getEthereum();
+
+    if (!ethereum) {
+      return false;
+    }
+
+    const originalRequest = ethereum.request?.bind(ethereum);
+
+    if (!originalRequest) {
+      return false;
+    }
+
+    const pendingRequests = new Map();
+
+    ethereum.request = async function (args) {
+      if (!args || args.method !== "eth_sendTransaction") {
+        return originalRequest(args);
+      }
+
+      const protectionEnabled = await getProtectionStatus();
+
+      if (!protectionEnabled) {
+        console.info("[Nalar] Protection paused. Forwarding transaction directly.");
+        return originalRequest(args);
+      }
+
+      const transaction = args.params?.[0];
+
+      if (!transaction) {
+        throw new Error("[Nalar] Missing transaction request.");
+      }
+
+      if (!transaction.to) {
+        throw new Error("[Nalar] Transaction target is missing.");
+      }
+
+      const storedIntent = await getStoredIntent();
+      const confirmedIntent = await showIntentOverlay(storedIntent);
+
+      if (typeof confirmedIntent !== "string" || !confirmedIntent.trim()) {
+        throw new Error("[Nalar] Transaction cancelled because no intent was provided.");
+      }
+
+      const intent = confirmedIntent.trim();
+
+      await saveIntent(intent);
+
+      const chainId = await originalRequest({
+        method: "eth_chainId",
+      });
+
+      const id = ++requestId;
+
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("[Nalar] Security check timed out."));
+        }, 30_000);
+
+        function cleanup() {
+          clearTimeout(timeout);
+          pendingRequests.delete(id);
+          window.removeEventListener("message", handleMessage);
+        }
+
+        async function continueToWallet() {
+          showNalarMessage("SYSTEM::TX_CLEARED. Routing to wallet...");
+          try {
+            const result = await originalRequest({
+              ...args,
+              params: [
+                {
+                  ...transaction,
+                  from: transaction.from,
+                },
+              ],
+            });
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        }
+
+        function cancelTransaction(message) {
+          reject(new Error(message ?? "[Nalar] Transaction cancelled by user."));
+        }
+
+        function handleMessage(event) {
+          if (event.source !== window) {
+            return;
+          }
+
+          const message = event.data;
+
+          if (!message || message.source !== "NALAR_EXTENSION") {
+            return;
+          }
+
+          if (message.type !== "TX_RESULT") {
+            return;
+          }
+
+          if (message.id !== id || !pendingRequests.has(id)) {
+            return;
+          }
+
+          cleanup();
+
+          const security = message.security;
+
+          if (!security) {
+            reject(new Error("[Nalar] Invalid security response."));
+            return;
+          }
+
+          if (security.decision === "BLOCK") {
+            showDecisionOverlay(security, "BLOCK", null, () => {
+              cancelTransaction("[Nalar] Transaction blocked by TxSentry.");
+            });
+            return;
+          }
+
+          if (security.decision === "REVIEW") {
+            showDecisionOverlay(security, "REVIEW", continueToWallet, () => {
+              cancelTransaction("[Nalar] Transaction cancelled during review.");
+            });
+            return;
+          }
+
+          showDecisionOverlay(security, "ALLOW", continueToWallet, () => {
+            cancelTransaction("[Nalar] Transaction cancelled by user.");
+          });
+        }
+
+        pendingRequests.set(id, {
+          transaction,
+          chainId,
+          intent,
+        });
+
+        window.addEventListener("message", handleMessage);
+
+        window.postMessage(
+          {
+            source: "NALAR_PAGE",
+            type: "TX_REQUEST",
+            id,
+            chainId,
+            transaction,
+          },
+          "*",
+        );
+      });
+    };
+
+    console.info("[Nalar] TxSentry interceptor installed.");
+    return true;
+  }
+
+  /**
+   * ============================================================
+   * DECISION OVERLAY
+   * ============================================================
+   */
+
+  function showDecisionOverlay(security, decision, onContinue, onCancel) {
+    const existing = document.getElementById(IDS.decision);
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = IDS.decision;
+
+    Object.assign(overlay.style, {
+      position: "fixed",
+      inset: "0",
+      zIndex: "2147483647",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "20px",
+      background: "rgba(0, 0, 0, 0.85)", // Lebih solid
+      backdropFilter: "blur(2px)",
+      fontFamily: FONT_CODE,
+      boxSizing: "border-box",
+    });
+
+    const modal = document.createElement("div");
+    Object.assign(modal.style, {
+      width: "min(600px, 100%)",
+      maxHeight: "calc(100vh - 40px)",
+      overflowY: "auto",
+      background: "#000000", // Pitch black
+      color: "#ffffff",
+      border: decision === "BLOCK" ? "1px solid #ff3333" : "1px solid #444444",
+      borderRadius: "0px", // Tajam
+      boxShadow: decision === "BLOCK" ? "0 0 20px rgba(255, 51, 51, 0.1)" : "8px 8px 0px rgba(255,255,255,0.05)",
+      boxSizing: "border-box",
+    });
+
+    const explanation = security.explanation ?? {};
+    const transactionSummary = security.transactionSummary ?? {};
+    const intent = security.intent?.description ?? security.intent?.raw ?? "No intent description available.";
+    const actualAction = security.actual?.functionName ?? security.actual?.action ?? "Unknown";
+    const riskScore = security.riskScore ?? 0;
+    const summary = explanation.summary ?? getFallbackSummary(security, decision);
+    const details = Array.isArray(explanation.details) ? explanation.details : [];
+    const reasons = dedupe([...(security.reasons ?? []), ...(security.comparison?.mismatches ?? []), ...(security.policy?.evaluation?.reasons ?? [])]);
+    const status = getDecisionStatus(decision);
+    const title = explanation.title ?? status.title;
+    const actionLabel = transactionSummary.title ?? transactionSummary.action ?? actualAction;
+    const actionDescription = transactionSummary.description ?? security.actual?.description ?? "Nalar analyzed this transaction.";
+    const transactionDetails = Array.isArray(transactionSummary.details) ? transactionSummary.details : [];
+    const recipient = transactionSummary.target ?? null;
+
+    /** HEADER */
+    const header = document.createElement("div");
+    Object.assign(header.style, {
+      padding: "24px",
+      borderBottom: decision === "BLOCK" ? "1px dashed #ff3333" : "1px dashed #333333",
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: "20px",
+      background: decision === "BLOCK" ? "rgba(255, 51, 51, 0.05)" : "#050505",
+    });
+
+    const headerLeft = document.createElement("div");
+
+    const eyebrow = document.createElement("div");
+    eyebrow.textContent = `[ NALAR :: TX_SENTRY // ${decision} ]`;
+    Object.assign(eyebrow.style, {
+      fontSize: "10px",
+      letterSpacing: "0.1em",
+      color: decision === "BLOCK" ? "#ff4444" : "#888888",
+    });
+
+    const heading = document.createElement("h2");
+    heading.textContent = `> ${title}`;
+    Object.assign(heading.style, {
+      margin: "16px 0 0",
+      fontSize: "20px",
+      fontWeight: "normal",
+      letterSpacing: "-0.02em",
+      color: "#ffffff",
+    });
+
+    const statusText = document.createElement("div");
+    statusText.textContent = `STATUS: ${status.label}`;
+    Object.assign(statusText.style, {
+      marginTop: "8px",
+      fontSize: "11px",
+      color: "#aaaaaa",
+    });
+
+    headerLeft.appendChild(eyebrow);
+    headerLeft.appendChild(heading);
+    headerLeft.appendChild(statusText);
+
+    const score = document.createElement("div");
+    Object.assign(score.style, {
+      minWidth: "70px",
+      padding: "8px 12px",
+      border: "1px solid #333",
+      background: "#000",
+      textAlign: "right",
+    });
+
+    const scoreLabel = document.createElement("div");
+    scoreLabel.textContent = "RISK_LVL";
+    Object.assign(scoreLabel.style, {
+      fontSize: "9px",
+      color: "#666",
+    });
+
+    const scoreValue = document.createElement("div");
+    scoreValue.textContent = `${riskScore}/100`;
+    Object.assign(scoreValue.style, {
+      marginTop: "4px",
+      fontSize: "16px",
+      color: riskScore > 70 ? "#ff4444" : riskScore > 30 ? "#ffbb00" : "#ffffff",
+    });
+
+    score.appendChild(scoreLabel);
+    score.appendChild(scoreValue);
+
+    header.appendChild(headerLeft);
+    header.appendChild(score);
+
+    /** BODY */
+    const body = document.createElement("div");
+    Object.assign(body.style, { padding: "24px" });
+
+    // Intent block
+    body.appendChild(createSection("USER_INTENT", createTextBlock(`"${intent}"`)));
+
+    // Actual transaction
+    const actionContent = document.createElement("div");
+
+    const actionTitle = document.createElement("div");
+    actionTitle.textContent = `EXEC :: ${actionLabel}`;
+    Object.assign(actionTitle.style, {
+      fontSize: "14px",
+      color: "#ffffff",
+      marginBottom: "8px",
+    });
+
+    const actionDescriptionElement = document.createElement("div");
+    actionDescriptionElement.textContent = actionDescription;
+    Object.assign(actionDescriptionElement.style, {
+      fontSize: "12px",
+      lineHeight: "1.5",
+      color: "#888888",
+    });
+
+    actionContent.appendChild(actionTitle);
+    actionContent.appendChild(actionDescriptionElement);
+
+    if (transactionDetails.length > 0) {
+      const detailList = document.createElement("div");
+      Object.assign(detailList.style, {
+        marginTop: "12px",
+        padding: "12px",
+        background: "#080808",
+        borderLeft: "2px solid #333",
+      });
+
+      transactionDetails.slice(0, 5).forEach((detail) => {
+        const row = document.createElement("div");
+        row.textContent = `[+] ${detail}`;
+        Object.assign(row.style, {
+          marginBottom: "6px",
+          fontSize: "11px",
+          color: "#aaaaaa",
+        });
+        detailList.appendChild(row);
+      });
+      actionContent.appendChild(detailList);
+    }
+
+    if (recipient) {
+      const target = document.createElement("div");
+      target.textContent = `TARGET => ${formatAddress(recipient)}`;
+      Object.assign(target.style, {
+        marginTop: "12px",
+        fontSize: "12px",
+        color: "#ffffff",
+        background: "#111",
+        padding: "6px 8px",
+        display: "inline-block",
+        border: "1px solid #333",
+      });
+      actionContent.appendChild(target);
+    }
+
+    body.appendChild(createSection("SYSTEM_TRANSACTION", actionContent));
+
+    // Explanation
+    const explanationContent = document.createElement("div");
+    const summaryElement = document.createElement("div");
+    summaryElement.textContent = summary;
+    Object.assign(summaryElement.style, {
+      fontSize: "13px",
+      lineHeight: "1.6",
+      color: decision === "BLOCK" ? "#ff8888" : "#cccccc",
+    });
+    explanationContent.appendChild(summaryElement);
+
+    const combinedDetails = dedupe([...details, ...(decision === "BLOCK" ? reasons : [])]);
+
+    if (combinedDetails.length > 0) {
+      const list = document.createElement("div");
+      Object.assign(list.style, {
+        marginTop: "12px",
+        padding: "12px",
+        background: decision === "BLOCK" ? "rgba(255,51,51,0.05)" : "#080808",
+        borderLeft: decision === "BLOCK" ? "2px solid #ff4444" : "2px solid #333",
+      });
+
+      combinedDetails.slice(0, 5).forEach((detail) => {
+        const item = document.createElement("div");
+        item.textContent = `ERR: ${detail}`;
+        Object.assign(item.style, {
+          marginBottom: "8px",
+          fontSize: "11px",
+          lineHeight: "1.4",
+          color: decision === "BLOCK" ? "#ffaaaa" : "#888888",
+        });
+        list.appendChild(item);
+      });
+      explanationContent.appendChild(list);
+    }
+
+    body.appendChild(createSection(decision === "BLOCK" ? "SECURITY_HALT_REASON" : "ANALYSIS_RESULT", explanationContent));
+
+    /** FOOTER */
+    const footer = document.createElement("div");
+    Object.assign(footer.style, {
+      padding: "0 24px 24px",
+    });
+
+    const footerNote = document.createElement("div");
+    footerNote.textContent = `// ${getFooterNote(decision)}`;
+    Object.assign(footerNote.style, {
+      marginBottom: "20px",
+      fontSize: "10px",
+      color: "#555555",
+    });
+    footer.appendChild(footerNote);
+
+    const actions = document.createElement("div");
+    Object.assign(actions.style, {
+      display: "grid",
+      gridTemplateColumns: decision === "BLOCK" ? "1fr" : "1fr 1fr",
+      gap: "12px",
+    });
+
+    const cancelButton = document.createElement("button");
+    cancelButton.textContent = decision === "BLOCK" ? "[ ABORT ]" : "[ CANCEL_TX ]";
+    styleButton(cancelButton, false);
+    cancelButton.addEventListener("click", () => {
+      overlay.remove();
+      if (onCancel) onCancel();
+    });
+    actions.appendChild(cancelButton);
+
+    if (decision !== "BLOCK") {
+      const continueButton = document.createElement("button");
+      continueButton.textContent = decision === "ALLOW" ? "[ PROCEED_TO_SIGN ]" : "[ OVERRIDE_WARNING ]";
+      styleButton(continueButton, true);
+      continueButton.addEventListener("click", () => {
+        overlay.remove();
+        if (onContinue) onContinue();
+      });
+      actions.appendChild(continueButton);
+    }
+
+    footer.appendChild(actions);
+
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(footer);
+    overlay.appendChild(modal);
+    document.documentElement.appendChild(overlay);
+
+    function handleEscape(event) {
+      if (event.key !== "Escape") return;
+      document.removeEventListener("keydown", handleEscape);
+      overlay.remove();
+      if (onCancel) onCancel();
+    }
+    document.addEventListener("keydown", handleEscape);
+  }
+
+  /**
+   * ============================================================
+   * SECTION HELPER
+   * ============================================================
+   */
+
+  function createSection(label, content) {
+    const section = document.createElement("section");
+    Object.assign(section.style, {
+      paddingBottom: "24px",
+      marginBottom: "24px",
+      borderBottom: "1px dashed #222222",
+    });
+
+    const labelElement = document.createElement("div");
+    labelElement.textContent = `// ${label}`;
+    Object.assign(labelElement.style, {
+      marginBottom: "12px",
+      fontSize: "10px",
+      letterSpacing: "0.1em",
+      color: "#666666",
+    });
+
+    section.appendChild(labelElement);
+    section.appendChild(content);
+
+    return section;
+  }
+
+  function createTextBlock(text) {
+    const element = document.createElement("div");
+    element.textContent = text;
+    Object.assign(element.style, {
+      fontSize: "13px",
+      lineHeight: "1.5",
+      color: "#00ff66", // Sedikit aksen terminal green untuk User Intent
+      background: "#050505",
+      padding: "12px",
+      border: "1px solid #1a1a1a",
+      borderLeft: "2px solid #00ff66",
+    });
+    return element;
+  }
+
+  /**
+   * ============================================================
+   * BUTTON STYLE (Code/Minimalist/Terminal)
+   * ============================================================
+   */
+
+  function styleButton(button, primary) {
+    Object.assign(button.style, {
+      minHeight: "44px",
+      padding: "0 16px",
+      borderRadius: "0px", // Tajam
+      border: primary ? "1px solid #ffffff" : "1px solid #444444",
+      background: primary ? "#ffffff" : "#000000",
+      color: primary ? "#000000" : "#aaaaaa",
+      fontFamily: FONT_CODE,
+      fontSize: "12px",
+      letterSpacing: "0.05em",
+      cursor: "pointer",
+      transition: "all 0.1s linear",
+    });
+
+    button.addEventListener("mouseenter", () => {
+      if (primary) {
+        button.style.background = "#000000";
+        button.style.color = "#ffffff";
+      } else {
+        button.style.background = "#1a1a1a";
+        button.style.color = "#ffffff";
+        button.style.borderColor = "#666666";
+      }
+    });
+
+    button.addEventListener("mouseleave", () => {
+      if (primary) {
+        button.style.background = "#ffffff";
+        button.style.color = "#000000";
+      } else {
+        button.style.background = "#000000";
+        button.style.color = "#aaaaaa";
+        button.style.borderColor = "#444444";
+      }
+    });
+  }
+
+  /**
+   * ============================================================
+   * DECISION STATUS
+   * ============================================================
+   */
+
+  function getDecisionStatus(decision) {
+    switch (decision) {
+      case "ALLOW":
+        return { title: "TX_SAFE", label: "PASSED_SECURITY_CHECK" };
+      case "REVIEW":
+        return { title: "TX_FLAGGED", label: "MANUAL_VERIFICATION_REQUIRED" };
+      case "BLOCK":
+        return { title: "TX_INTERCEPTED", label: "CRITICAL_THREAT_DETECTED" };
+      default:
+        return { title: "TX_ANALYZED", label: "ANALYSIS_COMPLETE" };
+    }
+  }
+
+  function getFallbackSummary(security, decision) {
+    if (decision === "BLOCK") {
+      if (security.intentMatch === false) return "Intent mismatch detected. Execution halted safely.";
+      return "Security violation found. Transaction sequence aborted.";
+    }
+    if (decision === "REVIEW") return "Anomalies detected. Manual override required to proceed.";
+    return "Transaction parameters align with stated intent. Clear to proceed.";
+  }
+
+  function getFooterNote(decision) {
+    if (decision === "BLOCK") return "Execution halted at proxy layer. Wallet unaffected.";
+    if (decision === "REVIEW") return "Awaiting manual override to push payload to wallet.";
+    return "Analysis OK. Payload ready for wallet signature.";
+  }
+
+  function dedupe(values) {
+    return [
+      ...new Set(
+        values
+          .filter((value) => typeof value === "string")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    ];
+  }
+
+  function formatAddress(address) {
+    if (typeof address !== "string") return String(address);
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) return address;
+    return `${address.slice(0, 6)}…${address.slice(-4)}`;
+  }
+
+  /**
+   * ============================================================
+   * INTENT OVERLAY
+   * ============================================================
+   */
+
+  function showIntentOverlay(existingIntent = "") {
+    return new Promise((resolve) => {
+      const existing = document.getElementById(IDS.intent);
+      if (existing) existing.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = IDS.intent;
+
+      Object.assign(overlay.style, {
+        position: "fixed",
+        inset: "0",
+        zIndex: "2147483647",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "20px",
+        background: "rgba(0, 0, 0, 0.85)",
+        backdropFilter: "blur(2px)",
+        fontFamily: FONT_CODE,
+        boxSizing: "border-box",
+      });
+
+      const modal = document.createElement("div");
+      Object.assign(modal.style, {
+        width: "min(540px, 100%)",
+        background: "#000000",
+        border: "1px solid #444444",
+        borderRadius: "0px",
+        color: "#ffffff",
+        boxShadow: "8px 8px 0px rgba(255,255,255,0.05)",
+        boxSizing: "border-box",
+      });
+
+      /** Header */
+      const header = document.createElement("div");
+      Object.assign(header.style, {
+        padding: "24px",
+        borderBottom: "1px dashed #333333",
+        background: "#050505",
+      });
+
+      const eyebrow = document.createElement("div");
+      eyebrow.textContent = "[ NALAR :: TX_SENTRY_INIT ]";
+      Object.assign(eyebrow.style, {
+        fontSize: "10px",
+        letterSpacing: "0.1em",
+        color: "#888888",
+      });
+
+      const title = document.createElement("h2");
+      title.textContent = "> DECLARE_INTENT";
+      Object.assign(title.style, {
+        margin: "16px 0 0",
+        fontSize: "20px",
+        fontWeight: "normal",
+        letterSpacing: "-0.02em",
+        color: "#ffffff",
+      });
+
+      const description = document.createElement("p");
+      description.textContent = "Provide natural language parameters for the upcoming transaction.";
+      Object.assign(description.style, {
+        margin: "8px 0 0",
+        fontSize: "11px",
+        color: "#666666",
+      });
+
+      header.appendChild(eyebrow);
+      header.appendChild(title);
+      header.appendChild(description);
+
+      /** Body */
+      const body = document.createElement("div");
+      Object.assign(body.style, { padding: "24px" });
+
+      const originLabel = document.createElement("div");
+      originLabel.textContent = "HOST_ORIGIN";
+      Object.assign(originLabel.style, {
+        fontSize: "10px",
+        color: "#666666",
+      });
+
+      const origin = document.createElement("div");
+      origin.textContent = window.location.hostname || "localhost";
+      Object.assign(origin.style, {
+        marginTop: "6px",
+        padding: "8px",
+        border: "1px solid #222222",
+        background: "#080808",
+        fontSize: "12px",
+        color: "#aaaaaa",
+      });
+
+      body.appendChild(originLabel);
+      body.appendChild(origin);
+
+      const intentLabel = document.createElement("div");
+      intentLabel.textContent = "INTENT_INPUT";
+      Object.assign(intentLabel.style, {
+        marginTop: "24px",
+        marginBottom: "6px",
+        fontSize: "10px",
+        color: "#666666",
+      });
+
+      const textarea = document.createElement("textarea");
+      textarea.value = typeof existingIntent === "string" ? existingIntent : "";
+      textarea.placeholder = "// e.g. Mint 1 NFT for 0.02 BNB";
+
+      Object.assign(textarea.style, {
+        display: "block",
+        width: "100%",
+        minHeight: "100px",
+        padding: "12px",
+        resize: "vertical",
+        border: "1px solid #444444",
+        borderRadius: "0px",
+        outline: "none",
+        background: "#050505",
+        color: "#00ff66", // Kesan terminal input
+        fontFamily: FONT_CODE,
+        fontSize: "13px",
+        lineHeight: "1.5",
+        boxSizing: "border-box",
+      });
+
+      textarea.addEventListener("focus", () => {
+        textarea.style.border = "1px solid #ffffff";
+      });
+      textarea.addEventListener("blur", () => {
+        textarea.style.border = "1px solid #444444";
+      });
+
+      body.appendChild(intentLabel);
+      body.appendChild(textarea);
+
+      const note = document.createElement("div");
+      note.textContent = "System will cross-reference input against smart contract payload.";
+      Object.assign(note.style, {
+        marginTop: "12px",
+        fontSize: "10px",
+        color: "#555555",
+      });
+      body.appendChild(note);
+
+      /** Footer */
+      const footer = document.createElement("div");
+      Object.assign(footer.style, {
+        padding: "0 24px 24px",
+      });
+
+      const actions = document.createElement("div");
+      Object.assign(actions.style, {
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: "12px",
+      });
+
+      const cancelButton = document.createElement("button");
+      cancelButton.textContent = "[ ABORT ]";
+      styleButton(cancelButton, false);
+      cancelButton.addEventListener("click", () => {
+        overlay.remove();
+        resolve(null);
+      });
+
+      const continueButton = document.createElement("button");
+      continueButton.textContent = "[ RUN_ANALYSIS ]";
+      styleButton(continueButton, true);
+      continueButton.addEventListener("click", () => {
+        const intent = textarea.value.trim();
+        if (!intent) {
+          textarea.style.border = "1px solid #ff4444";
+          note.textContent = "ERR: Input cannot be empty.";
+          note.style.color = "#ff4444";
+          textarea.focus();
+          return;
+        }
+        overlay.remove();
+        resolve(intent);
+      });
+
+      actions.appendChild(cancelButton);
+      actions.appendChild(continueButton);
+      footer.appendChild(actions);
+
+      modal.appendChild(header);
+      modal.appendChild(body);
+      modal.appendChild(footer);
+      overlay.appendChild(modal);
+      document.documentElement.appendChild(overlay);
+
+      setTimeout(() => {
+        textarea.focus();
+        try {
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        } catch {}
+      }, 0);
+
+      function onKeydown(event) {
+        if (event.key === "Escape") {
+          document.removeEventListener("keydown", onKeydown);
+          overlay.remove();
+          resolve(null);
+          return;
+        }
+        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+          event.preventDefault();
+          continueButton.click();
+        }
+      }
+      document.addEventListener("keydown", onKeydown);
+    });
+  }
+
+  /**
+   * ============================================================
+   * GET STORED INTENT, SAVE INTENT, PROTECTION STATUS
+   * ============================================================
+   * (Logika di bawah tidak diubah sama sekali sesuai instruksi)
+   */
+
+  async function getStoredIntent() {
+    const id = `intent-${Date.now()}-${Math.random()}`;
+    return new Promise((resolve) => {
+      let completed = false;
+      const timeout = setTimeout(() => {
+        if (completed) return;
+        completed = true;
+        window.removeEventListener("message", handleMessage);
+        resolve(null);
+      }, 3000);
+
+      function handleMessage(event) {
+        if (completed || event.source !== window) return;
+        const message = event.data;
+        if (!message || message.source !== "NALAR_EXTENSION") return;
+        if (message.type !== "INTENT_RESULT" || message.id !== id) return;
+        completed = true;
+        clearTimeout(timeout);
+        window.removeEventListener("message", handleMessage);
+        resolve(typeof message.intent === "string" ? message.intent : null);
+      }
+      window.addEventListener("message", handleMessage);
+      window.postMessage({ source: "NALAR_PAGE", type: "GET_INTENT", id }, "*");
+    });
+  }
+
+  async function saveIntent(intent) {
+    const id = `save-intent-${Date.now()}-${Math.random()}`;
+    return new Promise((resolve, reject) => {
+      let completed = false;
+      const timeout = setTimeout(() => {
+        if (completed) return;
+        completed = true;
+        window.removeEventListener("message", handleMessage);
+        reject(new Error("Saving intent timed out."));
+      }, 3000);
+
+      function handleMessage(event) {
+        if (completed || event.source !== window) return;
+        const message = event.data;
+        if (!message || message.source !== "NALAR_EXTENSION") return;
+        if (message.type !== "INTENT_SAVED" || message.id !== id) return;
+        completed = true;
+        clearTimeout(timeout);
+        window.removeEventListener("message", handleMessage);
+        if (message.ok) {
+          resolve(true);
+          return;
+        }
+        reject(new Error(message.error ?? "Failed to save intent."));
+      }
+      window.addEventListener("message", handleMessage);
+      window.postMessage({ source: "NALAR_PAGE", type: "SET_INTENT", id, intent }, "*");
+    });
+  }
+
+  async function getProtectionStatus() {
+    const id = `protection-${Date.now()}-${Math.random()}`;
+    return new Promise((resolve, reject) => {
+      let completed = false;
+      const timeout = setTimeout(() => {
+        if (completed) return;
+        completed = true;
+        window.removeEventListener("message", handleMessage);
+        reject(new Error("[Nalar] Unable to determine protection status."));
+      }, 3000);
+
+      function handleMessage(event) {
+        if (completed || event.source !== window) return;
+        const message = event.data;
+        if (!message || message.source !== "NALAR_EXTENSION") return;
+        if (message.type !== "PROTECTION_STATUS" || message.id !== id) return;
+        completed = true;
+        clearTimeout(timeout);
+        window.removeEventListener("message", handleMessage);
+        if (message.error) {
+          reject(new Error(message.error));
+          return;
+        }
+        resolve(message.enabled === true);
+      }
+      window.addEventListener("message", handleMessage);
+      window.postMessage({ source: "NALAR_PAGE", type: "GET_PROTECTION_STATUS", id }, "*");
+    });
+  }
+
+  let attempts = 0;
+  const maxAttempts = 100;
+  const timer = setInterval(() => {
+    attempts += 1;
+    if (install()) {
+      clearInterval(timer);
+      return;
+    }
+    if (attempts >= maxAttempts) {
+      clearInterval(timer);
+      console.warn("[Nalar] Wallet provider was not detected.");
+    }
+  }, 50);
+})();

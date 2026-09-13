@@ -11,7 +11,14 @@ export interface SecurityDecisionResult {
   reasons: string[];
 }
 
-export function makeSecurityDecision(input: { simulationSuccess: boolean; risk: RiskResult; comparison: IntentComparison; effects: TransactionEffects; policy: PolicyEvaluation; scamAnalysis?: TokenScamAnalysis | null }): SecurityDecisionResult {
+export function makeSecurityDecision(input: {
+  simulationSuccess: boolean;
+  risk: RiskResult;
+  comparison: IntentComparison;
+  effects: TransactionEffects;
+  policy: PolicyEvaluation;
+  scamAnalyses?: readonly TokenScamAnalysis[];
+}): SecurityDecisionResult {
   const reasons = new Set<string>();
 
   if (!input.simulationSuccess) {
@@ -33,12 +40,21 @@ export function makeSecurityDecision(input: { simulationSuccess: boolean; risk: 
     };
   }
 
-  if (input.scamAnalysis?.riskLevel === "CRITICAL") {
-    for (const finding of input.scamAnalysis.findings) {
-      if (finding.severity === "CRITICAL") reasons.add(finding.title);
+  const criticalScamAnalyses = input.scamAnalyses?.filter((analysis) => analysis.riskLevel === "CRITICAL") ?? [];
+
+  if (criticalScamAnalyses.length > 0) {
+    for (const analysis of criticalScamAnalyses) {
+      for (const finding of analysis.findings) {
+        if (finding.severity === "CRITICAL") {
+          reasons.add(`${analysis.token}: ${finding.title}`);
+        }
+      }
     }
 
-    return { decision: "BLOCK", reasons: [...reasons] };
+    return {
+      decision: "BLOCK",
+      reasons: [...reasons],
+    };
   }
 
   if (input.risk.level === "CRITICAL") {

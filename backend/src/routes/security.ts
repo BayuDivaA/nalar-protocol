@@ -17,6 +17,7 @@ import { translateTransaction } from "../services/transaction-translator";
 import { enrichSwapEffect } from "../services/enrich-swap";
 import { auditSwapTokens } from "../services/scam/token-auditor";
 import { calculateScamRisk } from "../services/scam/scam-risk-engine";
+import { buildTransactionScamContext } from "../services/scam/transaction-scam-context";
 
 export const securityRoute = new Hono();
 
@@ -305,9 +306,11 @@ securityRoute.post("/", async (c) => {
       swaps: analyzedEffects.swaps,
     });
 
+    const transactionScamContext = buildTransactionScamContext(scamAnalyses);
+
     const scamAnalysis = scamAnalyses[0] ?? null;
 
-    const scamRisk = scamAnalyses.length === 0 ? null : calculateScamRisk(scamAnalyses.flatMap((analysis) => analysis.findings));
+    const scamRisk = transactionScamContext.risk;
 
     /**
      * STEP 7
@@ -336,16 +339,11 @@ securityRoute.post("/", async (c) => {
      */
     const decision = makeSecurityDecision({
       simulationSuccess: simulation.success,
-
       risk,
-
       comparison,
-
       effects: analyzedEffects,
-
       policy: policyEvaluation,
-
-      scamAnalysis,
+      scamAnalyses,
     });
 
     /**
@@ -475,6 +473,8 @@ securityRoute.post("/", async (c) => {
       scamAnalysis: serializeBigInt(scamAnalysis),
 
       scamAnalyses: serializeBigInt(scamAnalyses),
+
+      transactionScamContext: serializeBigInt(transactionScamContext),
 
       stateDiff: serializeBigInt(stateDiff),
 

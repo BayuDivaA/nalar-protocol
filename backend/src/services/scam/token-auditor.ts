@@ -6,6 +6,7 @@ import type { BlockchainEvidenceProvider, ContractCapability, ContractEvidence, 
 import type { ScamFinding, SellSimulation, TokenScamAnalysis } from "./findings";
 import { analyzePrivilegeEvidence } from "./privilege-analysis";
 import { calculateScamRisk } from "./scam-risk-engine";
+import { correlateSecurityEvidence } from "./evidence-correlation";
 
 function unavailableEvidence(): ContractEvidence {
   return {
@@ -18,15 +19,7 @@ function unavailableEvidence(): ContractEvidence {
   };
 }
 
-export async function auditToken(input: {
-  chainId: number;
-  token: Address;
-  owner: Address;
-  router: Address;
-  swap?: SwapEffect;
-  provider?: BlockchainEvidenceProvider;
-  investigator?: ScamInvestigator;
-}): Promise<TokenScamAnalysis> {
+export async function auditToken(input: { chainId: number; token: Address; owner: Address; router: Address; swap?: SwapEffect; provider?: BlockchainEvidenceProvider; investigator?: ScamInvestigator }): Promise<TokenScamAnalysis> {
   const provider: BlockchainEvidenceProvider = input.provider ?? bscEvidenceProvider;
   const findings: ScamFinding[] = [];
 
@@ -45,31 +38,84 @@ export async function auditToken(input: {
   }
 
   if (!inspectionUnavailable && (evidence.verified === null || evidence.codeAvailable === null)) {
-    findings.push({ code: "CONTRACT_EVIDENCE_UNAVAILABLE", severity: "MEDIUM", title: "Contract evidence is incomplete", description: "Verification or bytecode evidence is unavailable; this is not evidence that the token is safe.", source: "ONCHAIN" });
+    findings.push({
+      code: "CONTRACT_EVIDENCE_UNAVAILABLE",
+      severity: "MEDIUM",
+      title: "Contract evidence is incomplete",
+      description: "Verification or bytecode evidence is unavailable; this is not evidence that the token is safe.",
+      source: "ONCHAIN",
+    });
   }
 
   if (evidence.proxy === true) {
-    findings.push({ code: "UPGRADEABLE_CONTRACT", severity: "MEDIUM", title: "Upgradeable proxy detected", description: "The contract uses a discovered proxy implementation slot and its behavior can change after deployment.", source: "ONCHAIN" });
+    findings.push({
+      code: "UPGRADEABLE_CONTRACT",
+      severity: "MEDIUM",
+      title: "Upgradeable proxy detected",
+      description: "The contract uses a discovered proxy implementation slot and its behavior can change after deployment.",
+      source: "ONCHAIN",
+    });
 
     if (evidence.implementation === null) {
-      findings.push({ code: "PROXY_IMPLEMENTATION_UNKNOWN", severity: "MEDIUM", title: "Proxy implementation is unknown", description: "The contract appears to be upgradeable, but its implementation address could not be resolved.", source: "ONCHAIN" });
+      findings.push({
+        code: "PROXY_IMPLEMENTATION_UNKNOWN",
+        severity: "MEDIUM",
+        title: "Proxy implementation is unknown",
+        description: "The contract appears to be upgradeable, but its implementation address could not be resolved.",
+        source: "ONCHAIN",
+      });
     }
   }
 
   const accessControl = evidence.accessControl ?? [];
   const state = evidence.state ?? [];
-  findings.push(...analyzePrivilegeEvidence({ capabilities: evidence.capabilities, accessControl, state }));
+
+  findings.push(
+    ...analyzePrivilegeEvidence({
+      capabilities: evidence.capabilities,
+      accessControl,
+      state,
+    }),
+  );
+
+  findings.push(
+    ...correlateSecurityEvidence({
+      findings,
+      state,
+    }),
+  );
 
   if (evidence.market?.liquidity?.level === "LOW") {
-    findings.push({ code: "LIQUIDITY_LOW", severity: "MEDIUM", title: "Liquidity is low", description: "The configured market-data provider reported low available liquidity.", evidence: `${evidence.market.liquidity.threshold}${evidence.market.liquidity.evidence ? `: ${evidence.market.liquidity.evidence}` : ""}`, source: "ONCHAIN" });
+    findings.push({
+      code: "LIQUIDITY_LOW",
+      severity: "MEDIUM",
+      title: "Liquidity is low",
+      description: "The configured market-data provider reported low available liquidity.",
+      evidence: `${evidence.market.liquidity.threshold}${evidence.market.liquidity.evidence ? `: ${evidence.market.liquidity.evidence}` : ""}`,
+      source: "ONCHAIN",
+    });
   }
 
   if (evidence.market?.holderConcentration?.level === "HIGH") {
-    findings.push({ code: "HOLDER_CONCENTRATION_HIGH", severity: "MEDIUM", title: "Token ownership is concentrated", description: "The configured market-data provider reported high holder concentration.", evidence: `${evidence.market.holderConcentration.threshold}${evidence.market.holderConcentration.evidence ? `: ${evidence.market.holderConcentration.evidence}` : ""}`, source: "ONCHAIN" });
+    findings.push({
+      code: "HOLDER_CONCENTRATION_HIGH",
+      severity: "MEDIUM",
+      title: "Token ownership is concentrated",
+      description: "The configured market-data provider reported high holder concentration.",
+      evidence: `${evidence.market.holderConcentration.threshold}${evidence.market.holderConcentration.evidence ? `: ${evidence.market.holderConcentration.evidence}` : ""}`,
+      source: "ONCHAIN",
+    });
   }
 
   if (evidence.identity?.status === "UNKNOWN") {
-    findings.push({ code: "TOKEN_IDENTITY_UNKNOWN", severity: "INFO", title: "Token identity is unknown", description: "No configured registry could establish a known token identity for this address.", evidence: evidence.identity.evidence, source: "REPUTATION" });
+    findings.push({
+      code: "TOKEN_IDENTITY_UNKNOWN",
+      severity: "INFO",
+      title: "Token identity is unknown",
+      description: "No configured registry could establish a known token identity for this address.",
+      evidence: evidence.identity.evidence,
+      source: "REPUTATION",
+    });
   }
 
   let sellSimulation: SellSimulation = { attempted: false, success: null, error: null };
@@ -83,9 +129,23 @@ export async function auditToken(input: {
   }
 
   if (sellSimulation.attempted && sellSimulation.success === false) {
-    findings.push({ code: "SELL_SIMULATION_FAILED", severity: "CRITICAL", title: "Sell simulation failed.", description: "A read-only attempt to sell the received token reverted.", evidence: sellSimulation.error ?? undefined, source: "SIMULATION" });
+    findings.push({
+      code: "SELL_SIMULATION_FAILED",
+      severity: "CRITICAL",
+      title: "Sell simulation failed.",
+      description: "A read-only attempt to sell the received token reverted.",
+      evidence: sellSimulation.error ?? undefined,
+      source: "SIMULATION",
+    });
   } else if (sellSimulation.success === null) {
-    findings.push({ code: "SELL_SIMULATION_UNAVAILABLE", severity: "INFO", title: "Sell simulation is unavailable", description: "No nested-state sell simulation was available, so sellability remains unknown.", evidence: sellSimulation.error ?? undefined, source: "SIMULATION" });
+    findings.push({
+      code: "SELL_SIMULATION_UNAVAILABLE",
+      severity: "INFO",
+      title: "Sell simulation is unavailable",
+      description: "No nested-state sell simulation was available, so sellability remains unknown.",
+      evidence: sellSimulation.error ?? undefined,
+      source: "SIMULATION",
+    });
   }
 
   let agentAnalysis: { available: boolean; summary: string | null } = { available: false, summary: null };
@@ -114,6 +174,46 @@ export async function auditToken(input: {
   };
 }
 
-export async function auditSwapTokens(input: { chainId: number; owner: Address; router: Address; swaps: readonly SwapEffect[] }): Promise<TokenScamAnalysis[]> {
-  return Promise.all(input.swaps.map((swap) => auditToken({ chainId: input.chainId, token: swap.tokenOut, owner: input.owner, router: input.router, swap })));
+export async function auditSwapTokens(input: { chainId: number; owner: Address; router: Address; swaps: readonly SwapEffect[]; provider?: BlockchainEvidenceProvider; investigator?: ScamInvestigator }): Promise<TokenScamAnalysis[]> {
+  const uniqueTokens = new Map<
+    string,
+    {
+      token: Address;
+      swap?: SwapEffect;
+    }
+  >();
+
+  for (const swap of input.swaps) {
+    const tokenInKey = swap.tokenIn.toLowerCase();
+
+    if (!uniqueTokens.has(tokenInKey)) {
+      uniqueTokens.set(tokenInKey, {
+        token: swap.tokenIn,
+        swap,
+      });
+    }
+
+    const tokenOutKey = swap.tokenOut.toLowerCase();
+
+    if (!uniqueTokens.has(tokenOutKey)) {
+      uniqueTokens.set(tokenOutKey, {
+        token: swap.tokenOut,
+        swap,
+      });
+    }
+  }
+
+  return Promise.all(
+    [...uniqueTokens.values()].map(({ token, swap }) =>
+      auditToken({
+        chainId: input.chainId,
+        token,
+        owner: input.owner,
+        router: input.router,
+        swap,
+        provider: input.provider,
+        investigator: input.investigator,
+      }),
+    ),
+  );
 }

@@ -49,7 +49,10 @@ export type ScamFindingCode =
   | "PUBLIC_MINT"
   | "PUBLIC_BLACKLIST"
   | "PRIVILEGED_CAPABILITY"
-  | "CURRENT_SELL_TAX";
+  | "CURRENT_SELL_TAX"
+  | "OWNER_CONTROLLED_EXCESSIVE_SELL_TAX"
+  | "TRADING_CURRENTLY_DISABLED"
+  | "OWNER_CONTROLLED_UPGRADE";
 
 export interface ScamFinding {
   code: ScamFindingCode;

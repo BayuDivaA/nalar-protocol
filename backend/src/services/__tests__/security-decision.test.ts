@@ -179,11 +179,11 @@ describe("TxSentry Security Decision", () => {
       comparison: { matches: true, mismatches: [] },
       effects: { approvals: [], swaps: [] },
       policy,
-      scamAnalysis: criticalScamAnalysis,
+      scamAnalyses: [criticalScamAnalysis],
     });
 
     expect(decision.decision).toBe("BLOCK");
-    expect(decision.reasons).toContain("Sell simulation failed.");
+    expect(decision.reasons.some((reason) => reason.includes("Sell simulation failed."))).toBe(true);
   });
 
   test("does not block solely because contract verification is unavailable", () => {
@@ -194,14 +194,16 @@ describe("TxSentry Security Decision", () => {
       comparison: { matches: true, mismatches: [] },
       effects: { approvals: [], swaps: [] },
       policy,
-      scamAnalysis: {
-        ...criticalScamAnalysis,
-        riskScore: 35,
-        riskLevel: "MEDIUM",
-        honeypot: false,
-        findings: [{ code: "UNVERIFIED_CONTRACT", severity: "MEDIUM", title: "Contract source is unverified", description: "No verified ABI is available.", source: "CONTRACT" }],
-        sellSimulation: { attempted: false, success: null, error: null },
-      },
+      scamAnalyses: [
+        {
+          ...criticalScamAnalysis,
+          riskScore: 35,
+          riskLevel: "MEDIUM",
+          honeypot: false,
+          findings: [{ code: "UNVERIFIED_CONTRACT", severity: "MEDIUM", title: "Contract source is unverified", description: "No verified ABI is available.", source: "CONTRACT" }],
+          sellSimulation: { attempted: false, success: null, error: null },
+        },
+      ],
     });
 
     expect(decision.decision).toBe("ALLOW");

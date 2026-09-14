@@ -67,9 +67,59 @@ export async function auditToken(input: { chainId: number; token: Address; owner
     }
   }
 
+  // ------------------------------------------------------------
+  // BNB investigator enrichment
+  // ------------------------------------------------------------
+  let agentAnalysis: {
+    available: boolean;
+    summary: string | null;
+  } = {
+    available: false,
+    summary: null,
+  };
+
+  if (input.investigator) {
+    try {
+      const observation = await input.investigator.investigate({
+        chainId: input.chainId,
+        token: input.token,
+        evidence,
+      });
+
+      agentAnalysis = {
+        available: true,
+        summary: observation.summary,
+      };
+
+      // MCP investigator is an evidence provider only.
+      // It may enrich deterministic state, but it never directly
+      // produces ALLOW/BLOCK decisions.
+      if (observation.state?.length) {
+        evidence = {
+          ...evidence,
+          state: [...(evidence.state ?? []), ...observation.state],
+        };
+      }
+
+      if (!evidence.owner && observation.owner) {
+        evidence = {
+          ...evidence,
+          owner: observation.owner,
+        };
+      }
+    } catch {
+      // Investigator failure is intentionally non-authoritative.
+      // Deterministic evidence must continue normally.
+    }
+  }
+
   const accessControl = evidence.accessControl ?? [];
+
   const state = evidence.state ?? [];
 
+  // ------------------------------------------------------------
+  // Deterministic analysis AFTER MCP enrichment
+  // ------------------------------------------------------------
   findings.push(
     ...analyzePrivilegeEvidence({
       capabilities: evidence.capabilities,
@@ -146,17 +196,6 @@ export async function auditToken(input: { chainId: number; token: Address; owner
       evidence: sellSimulation.error ?? undefined,
       source: "SIMULATION",
     });
-  }
-
-  let agentAnalysis: { available: boolean; summary: string | null } = { available: false, summary: null };
-
-  if (input.investigator) {
-    try {
-      const observation = await input.investigator.investigate({ chainId: input.chainId, token: input.token, evidence });
-      agentAnalysis = { available: true, summary: observation.summary };
-    } catch {
-      // Agent failure is intentionally non-authoritative and cannot fail open.
-    }
   }
 
   const risk = calculateScamRisk(findings);

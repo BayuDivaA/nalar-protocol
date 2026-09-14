@@ -103,5 +103,23 @@ export interface BlockchainEvidenceProvider {
 }
 
 export interface ScamInvestigator {
-  investigate(input: { chainId: number; token: Address; evidence: ContractEvidence }): Promise<{ summary: string | null }>;
+  investigate(input: { chainId: number; token: Address; evidence: ContractEvidence }): Promise<{
+    summary: string | null;
+
+    /**
+     * Optional deterministic evidence discovered by the investigator.
+     *
+     * This must only contain read-only on-chain observations.
+     * The caller remains responsible for deciding how this evidence
+     * participates in the security decision.
+     */
+    state?: ContractStateEvidence[];
+
+    /**
+     * Optional owner discovered by the investigator.
+     * This is enrichment only and must not override stronger
+     * deterministic evidence without validation.
+     */
+    owner?: Address | null;
+  }>;
 }

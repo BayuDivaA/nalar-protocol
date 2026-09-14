@@ -580,6 +580,8 @@
 
     const riskScore = security.riskScore ?? 0;
 
+    const scamAnalyses = Array.isArray(security.scamAnalyses) ? security.scamAnalyses : [];
+
     const status = getDecisionStatus(decision);
 
     const title = explanation.title ?? status.title;

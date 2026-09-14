@@ -1,8 +1,13 @@
 import type { Address } from "viem";
 
-import type { ContractEvidence, ScamInvestigator } from "./evidence-provider";
+import type { ContractEvidence, ContractCapability, ContractStateEvidence, ScamInvestigator } from "./evidence-provider";
 
 import { BnbChainMcpClient, type BnbMcpClient } from "./bnb-mcp-client";
+
+type ContractReadObservation = {
+  functionName: string;
+  result: unknown;
+};
 
 export class BnbAgentInvestigator implements ScamInvestigator {
   private readonly mcp: BnbMcpClient;
@@ -13,6 +18,8 @@ export class BnbAgentInvestigator implements ScamInvestigator {
 
   async investigate(input: { chainId: number; token: Address; evidence: ContractEvidence }): Promise<{
     summary: string | null;
+    state?: ContractStateEvidence[];
+    owner?: Address | null;
   }> {
     const network = input.chainId === 97 ? "bsc-testnet" : input.chainId === 56 ? "bsc" : `chain-${input.chainId}`;
 
@@ -26,14 +33,241 @@ export class BnbAgentInvestigator implements ScamInvestigator {
 
       observations.push(`BNB MCP token information retrieved for ${input.token}.`);
 
+      const probes = this.buildProbeList(input.evidence.capabilities);
+
+      const contractReads = await Promise.all(
+        probes.map((functionName) =>
+          this.readOptionalContractState({
+            address: input.token,
+            network,
+            functionName,
+          }),
+        ),
+      );
+
+      const successfulReads = contractReads.filter((item): item is ContractReadObservation => item !== null);
+
+      const state = successfulReads.map((observation) => this.toStateEvidence(observation)).filter((item): item is ContractStateEvidence => item !== null);
+
+      let owner: Address | null = null;
+
+      for (const observation of successfulReads) {
+        if (observation.functionName !== "owner") {
+          continue;
+        }
+
+        const extracted = this.extractPrimitiveValue(observation.result);
+
+        if (typeof extracted === "string" && /^0x[a-fA-F0-9]{40}$/.test(extracted)) {
+          owner = extracted as Address;
+        }
+      }
+
+      for (const observation of successfulReads) {
+        observations.push(`MCP contract state ${observation.functionName}(): ${this.summarizeUnknown(observation.result)}`);
+      }
+
       return {
-        summary: this.buildSummary(input, tokenInfo, observations),
+        summary: this.buildSummary(input, tokenInfo, observations, probes),
+        state,
+        owner,
       };
     } catch (error) {
       return {
         summary: error instanceof Error ? `BNB investigator could not enrich this token: ${error.message}` : "BNB investigator enrichment failed.",
       };
     }
+  }
+
+  private buildProbeList(capabilities: ContractCapability[]): string[] {
+    const codes = new Set(capabilities.map((capability) => capability.code));
+
+    const probes = new Set<string>();
+
+    if (codes.has("OWNERSHIP_CAPABILITY")) {
+      probes.add("owner");
+    }
+
+    if (codes.has("PAUSE_CAPABILITY")) {
+      probes.add("paused");
+    }
+
+    if (codes.has("TRADING_CAPABILITY")) {
+      probes.add("tradingEnabled");
+    }
+
+    if (codes.has("TAX_CAPABILITY")) {
+      probes.add("buyTax");
+      probes.add("sellTax");
+    }
+
+    if (codes.has("LIMITS_CAPABILITY")) {
+      probes.add("maxTx");
+      probes.add("maxWallet");
+    }
+
+    return [...probes];
+  }
+
+  private async readOptionalContractState(input: { address: Address; network: string; functionName: string }): Promise<ContractReadObservation | null> {
+    try {
+      const result = await this.mcp.readContract({
+        contractAddress: input.address,
+        functionName: input.functionName,
+        args: [],
+        network: input.network,
+      });
+
+      return {
+        functionName: input.functionName,
+        result,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private toStateEvidence(observation: ContractReadObservation): ContractStateEvidence | null {
+    const primitive = this.extractPrimitiveValue(observation.result);
+
+    switch (observation.functionName) {
+      case "sellTax":
+        return this.makeStateEvidence("CURRENT_SELL_TAX", "sellTax", primitive, "PERCENT");
+
+      case "buyTax":
+        return this.makeStateEvidence("CURRENT_BUY_TAX", "buyTax", primitive, "PERCENT");
+
+      case "paused":
+        if (typeof primitive !== "boolean") {
+          return null;
+        }
+
+        return {
+          code: "PAUSED",
+          label: "paused",
+          value: primitive,
+          unit: "BOOLEAN",
+          status: "KNOWN",
+          evidenceSource: "ONCHAIN",
+          evidence: "Read from BNB MCP read_contract().",
+        };
+
+      case "tradingEnabled":
+        if (typeof primitive !== "boolean") {
+          return null;
+        }
+
+        return {
+          code: "TRADING_ENABLED",
+          label: "tradingEnabled",
+          value: primitive,
+          unit: "BOOLEAN",
+          status: "KNOWN",
+          evidenceSource: "ONCHAIN",
+          evidence: "Read from BNB MCP read_contract().",
+        };
+
+      case "maxTx":
+        return this.makeStateEvidence("MAX_TX", "maxTx", primitive, "RAW");
+
+      case "maxWallet":
+        return this.makeStateEvidence("MAX_WALLET", "maxWallet", primitive, "RAW");
+
+      default:
+        return null;
+    }
+  }
+
+  private makeStateEvidence(code: ContractStateEvidence["code"], label: string, value: unknown, unit: ContractStateEvidence["unit"]): ContractStateEvidence | null {
+    const normalized = this.normalizeStateValue(value);
+
+    if (normalized === null) {
+      return null;
+    }
+
+    return {
+      code,
+      label,
+      value: normalized,
+      unit,
+      status: "KNOWN",
+      evidenceSource: "ONCHAIN",
+      evidence: "Read from BNB MCP read_contract().",
+    };
+  }
+
+  private normalizeStateValue(value: unknown): string | boolean | bigint | null {
+    if (typeof value === "string" || typeof value === "boolean" || typeof value === "bigint") {
+      return value;
+    }
+
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return String(value);
+    }
+
+    return null;
+  }
+
+  private extractPrimitiveValue(value: unknown): unknown {
+    if (typeof value === "string" || typeof value === "boolean" || typeof value === "number" || typeof value === "bigint") {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 1) {
+        return this.extractPrimitiveValue(value[0]);
+      }
+
+      return null;
+    }
+
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    const object = value as Record<string, unknown>;
+
+    const priorityKeys = ["value", "result", "output", "data", "structuredContent"];
+
+    for (const key of priorityKeys) {
+      if (key in object) {
+        const extracted = this.extractPrimitiveValue(object[key]);
+
+        if (extracted !== null) {
+          return extracted;
+        }
+      }
+    }
+
+    if ("content" in object && Array.isArray(object.content)) {
+      for (const item of object.content) {
+        if (item && typeof item === "object" && "text" in item && typeof item.text === "string") {
+          const text = item.text;
+
+          try {
+            const parsed = JSON.parse(text);
+            const extracted = this.extractPrimitiveValue(parsed);
+
+            if (extracted !== null) {
+              return extracted;
+            }
+          } catch {
+            if (text === "true") return true;
+            if (text === "false") return false;
+
+            if (/^\d+$/.test(text)) {
+              return text;
+            }
+
+            if (/^0x[a-fA-F0-9]{40}$/.test(text)) {
+              return text;
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   private buildSummary(
@@ -44,6 +278,7 @@ export class BnbAgentInvestigator implements ScamInvestigator {
     },
     tokenInfo: unknown,
     observations: string[],
+    probes: string[],
   ): string {
     const capabilityCount = input.evidence.capabilities.length;
 
@@ -58,6 +293,7 @@ export class BnbAgentInvestigator implements ScamInvestigator {
       `Deterministic capabilities observed: ${capabilityCount}`,
       `Access-control evidence entries: ${accessCount}`,
       `On-chain state evidence entries: ${stateCount}`,
+      `MCP contract probes attempted: ${probes.length}`,
       ...observations,
       `MCP token metadata: ${this.summarizeUnknown(tokenInfo)}`,
     ].join(" ");

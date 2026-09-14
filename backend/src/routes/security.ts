@@ -18,6 +18,7 @@ import { enrichSwapEffect } from "../services/enrich-swap";
 import { auditSwapTokens } from "../services/scam/token-auditor";
 import { calculateScamRisk } from "../services/scam/scam-risk-engine";
 import { buildTransactionScamContext } from "../services/scam/transaction-scam-context";
+import { BnbAgentInvestigator } from "../services/scam/bnb-agent-investigator";
 
 export const securityRoute = new Hono();
 
@@ -36,6 +37,11 @@ const securityCheckSchema = z.object({
     data: z.string().regex(/^0x([a-fA-F0-9]{2})*$/),
   }),
 });
+
+export const bnbAgentInvestigator =
+  process.env.BNB_INVESTIGATOR_ENABLED === "true"
+    ? new BnbAgentInvestigator()
+    : undefined;
 
 securityRoute.post("/", async (c) => {
   try {
@@ -304,6 +310,7 @@ securityRoute.post("/", async (c) => {
       owner: from,
       router: to,
       swaps: analyzedEffects.swaps,
+  investigator: bnbAgentInvestigator,
     });
 
     const transactionScamContext = buildTransactionScamContext(scamAnalyses);

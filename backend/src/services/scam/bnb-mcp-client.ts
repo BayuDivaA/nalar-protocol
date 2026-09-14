@@ -9,7 +9,7 @@ export interface BnbMcpClient {
 
   getErc20TokenInfo(input: { address: string; network: string }): Promise<unknown>;
 
-  readContract(input: { contractAddress: string; functionName: string; args?: unknown[]; network: string }): Promise<unknown>;
+  readContract(input: { contractAddress: string; abi: unknown[]; functionName: string; args?: unknown[]; network: string }): Promise<unknown>;
 }
 
 export class BnbChainMcpClient implements BnbMcpClient {
@@ -70,13 +70,19 @@ export class BnbChainMcpClient implements BnbMcpClient {
       arguments: args,
     });
 
-    if (result.isError) {
-      const text = result.content
-        ?.filter((item) => item.type === "text")
-        .map((item) => item.text)
-        .join("\n");
+    const text = result.content
+      ?.filter((item) => item.type === "text")
+      .map((item) => item.text)
+      .join("\n");
 
+    // MCP can report a logical contract-read failure inside
+    // a successful tool response as plain text.
+    if (result.isError) {
       throw new Error(text || `BNB MCP tool failed: ${name}`);
+    }
+
+    if (text && /Error reading contract:/i.test(text)) {
+      throw new Error(text);
     }
 
     return result;
@@ -89,9 +95,10 @@ export class BnbChainMcpClient implements BnbMcpClient {
     });
   }
 
-  async readContract(input: { contractAddress: string; functionName: string; args?: unknown[]; network: string }): Promise<unknown> {
+  async readContract(input: { contractAddress: string; abi: unknown[]; functionName: string; args?: unknown[]; network: string }): Promise<unknown> {
     return this.callTool("read_contract", {
       contractAddress: input.contractAddress,
+      abi: input.abi,
       functionName: input.functionName,
       args: input.args ?? [],
       network: input.network,

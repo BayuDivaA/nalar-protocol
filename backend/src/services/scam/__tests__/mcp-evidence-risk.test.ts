@@ -117,6 +117,6 @@ describe("MCP evidence security reasoning", () => {
       investigator,
     });
 
-    expect(result.contractPrivileges.state.some((state) => state.code === "CURRENT_SELL_TAX" && state.status === "KNOWN" && state.value === "98")).toBe(true);
+    expect((result.contractPrivileges?.state ?? []).some((state) => state.code === "CURRENT_SELL_TAX" && state.status === "KNOWN" && state.value === "98")).toBe(true);
   });
 });

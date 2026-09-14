@@ -512,6 +512,195 @@
 
   /**
    * ============================================================
+   * SCAM INTELLIGENCE UI
+   * ============================================================
+   */
+
+  function createScamIntelligenceSection(security) {
+    const analyses = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : [];
+
+    if (analyses.length === 0) {
+      return null;
+    }
+
+    const content = document.createElement("div");
+
+    Object.assign(content.style, {
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+    });
+
+    analyses.slice(0, 4).forEach((analysis) => {
+      const card = document.createElement("div");
+
+      Object.assign(card.style, {
+        padding: "13px 14px",
+        border: `1px solid ${UI.border}`,
+        borderRadius: "8px",
+        background: UI.surface,
+        boxSizing: "border-box",
+      });
+
+      // --------------------------------------------------------
+      // Token header
+      // --------------------------------------------------------
+
+      const tokenHeader = document.createElement("div");
+
+      Object.assign(tokenHeader.style, {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: "10px",
+      });
+
+      const tokenName = document.createElement("div");
+
+      tokenName.textContent = formatAddress(analysis.token ?? "");
+
+      Object.assign(tokenName.style, {
+        fontSize: "12px",
+        color: UI.text,
+        fontWeight: "600",
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+      });
+
+      const riskBadge = document.createElement("div");
+
+      const riskLevel = analysis.riskLevel ?? "UNKNOWN";
+
+      const riskScore = typeof analysis.riskScore === "number" ? analysis.riskScore : null;
+
+      riskBadge.textContent = riskScore === null ? riskLevel : `${riskLevel} · ${riskScore}`;
+
+      Object.assign(riskBadge.style, {
+        padding: "4px 7px",
+        border: `1px solid ${UI.borderStrong}`,
+        borderRadius: "5px",
+        fontSize: "9px",
+        letterSpacing: ".06em",
+        fontWeight: "650",
+        color: UI.textSecondary,
+        whiteSpace: "nowrap",
+      });
+
+      tokenHeader.appendChild(tokenName);
+      tokenHeader.appendChild(riskBadge);
+
+      card.appendChild(tokenHeader);
+
+      // --------------------------------------------------------
+      // Findings
+      // --------------------------------------------------------
+
+      const findings = Array.isArray(analysis.findings) ? analysis.findings : [];
+
+      if (findings.length > 0) {
+        const findingsContainer = document.createElement("div");
+
+        Object.assign(findingsContainer.style, {
+          marginTop: "11px",
+          paddingTop: "10px",
+          borderTop: "1px solid #202020",
+        });
+
+        findings.slice(0, 5).forEach((finding) => {
+          const row = document.createElement("div");
+
+          Object.assign(row.style, {
+            display: "flex",
+            gap: "8px",
+            marginBottom: "7px",
+            fontSize: "11px",
+            lineHeight: "1.5",
+          });
+
+          const marker = document.createElement("span");
+
+          marker.textContent = finding.severity === "CRITICAL" || finding.severity === "HIGH" ? "!" : "·";
+
+          Object.assign(marker.style, {
+            width: "14px",
+            flex: "0 0 14px",
+            color: UI.text,
+            fontWeight: "700",
+          });
+
+          const text = document.createElement("div");
+
+          text.textContent = finding.title ?? finding.description ?? finding.code ?? "Security finding";
+
+          Object.assign(text.style, {
+            color: UI.textSecondary,
+          });
+
+          row.appendChild(marker);
+          row.appendChild(text);
+
+          findingsContainer.appendChild(row);
+        });
+
+        card.appendChild(findingsContainer);
+      }
+
+      // --------------------------------------------------------
+      // BNB Intelligence
+      // --------------------------------------------------------
+
+      const agentAvailable = analysis.agentAnalysis?.available === true;
+
+      if (agentAvailable) {
+        const agentRow = document.createElement("div");
+
+        Object.assign(agentRow.style, {
+          marginTop: "10px",
+          paddingTop: "10px",
+          borderTop: "1px solid #202020",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "10px",
+        });
+
+        const agentLabel = document.createElement("div");
+
+        agentLabel.textContent = "BNB Intelligence";
+
+        Object.assign(agentLabel.style, {
+          fontSize: "10px",
+          color: UI.textMuted,
+          letterSpacing: ".03em",
+        });
+
+        const agentBadge = document.createElement("div");
+
+        agentBadge.textContent = "ON-CHAIN EVIDENCE";
+
+        Object.assign(agentBadge.style, {
+          padding: "4px 6px",
+          border: `1px solid ${UI.border}`,
+          borderRadius: "4px",
+          fontSize: "8px",
+          letterSpacing: ".08em",
+          fontWeight: "650",
+          color: UI.textSecondary,
+        });
+
+        agentRow.appendChild(agentLabel);
+        agentRow.appendChild(agentBadge);
+
+        card.appendChild(agentRow);
+      }
+
+      content.appendChild(card);
+    });
+
+    return createSection("SCAM INTELLIGENCE", content);
+  }
+
+  /**
+   * ============================================================
    * DECISION OVERLAY
    * ============================================================
    */
@@ -931,6 +1120,12 @@
     }
 
     body.appendChild(createSection(decision === "BLOCK" ? "WHY IT WAS STOPPED" : "NALAR'S READING", explanationContent));
+
+    const scamIntelligence = createScamIntelligenceSection(security);
+
+    if (scamIntelligence) {
+      body.appendChild(scamIntelligence);
+    }
 
     /**
      * ----------------------------------------------------------

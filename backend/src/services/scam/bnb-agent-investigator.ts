@@ -4,6 +4,45 @@ import type { ContractEvidence, ContractCapability, ContractStateEvidence, ScamI
 
 import { BnbChainMcpClient, type BnbMcpClient } from "./bnb-mcp-client";
 
+function viewFunctionAbi(name: string, outputType: string): unknown[] {
+  return [
+    {
+      type: "function",
+      name,
+      inputs: [],
+      outputs: [
+        {
+          name: "",
+          type: outputType,
+        },
+      ],
+      stateMutability: "view",
+    },
+  ];
+}
+
+function buildViewAbi(functionName: string, outputType: string): unknown[] {
+  return [
+    {
+      type: "function",
+      name: functionName,
+      inputs: [],
+      outputs: [
+        {
+          name: "",
+          type: outputType,
+        },
+      ],
+      stateMutability: "view",
+    },
+  ];
+}
+
+type ContractProbe = {
+  functionName: string;
+  abi: unknown[];
+};
+
 type ContractReadObservation = {
   functionName: string;
   result: unknown;
@@ -36,11 +75,12 @@ export class BnbAgentInvestigator implements ScamInvestigator {
       const probes = this.buildProbeList(input.evidence.capabilities);
 
       const contractReads = await Promise.all(
-        probes.map((functionName) =>
+        probes.map((probe) =>
           this.readOptionalContractState({
             address: input.token,
             network,
-            functionName,
+            functionName: probe.functionName,
+            abi: probe.abi,
           }),
         ),
       );
@@ -68,7 +108,12 @@ export class BnbAgentInvestigator implements ScamInvestigator {
       }
 
       return {
-        summary: this.buildSummary(input, tokenInfo, observations, probes),
+        summary: this.buildSummary(
+          input,
+          tokenInfo,
+          observations,
+          probes.map((probe) => probe.functionName),
+        ),
         state,
         owner,
       };
@@ -79,40 +124,63 @@ export class BnbAgentInvestigator implements ScamInvestigator {
     }
   }
 
-  private buildProbeList(capabilities: ContractCapability[]): string[] {
-    const codes = new Set(capabilities.map((capability) => capability.code));
+  private buildProbeList(capabilities: ContractCapability[]): ContractProbe[] {
+    const codes = new Set(capabilities.map((capability) => capability.code).filter(Boolean));
 
-    const probes = new Set<string>();
+    const probes = new Map<string, ContractProbe>();
+
+    const addProbe = (functionName: string, outputType: string) => {
+      if (probes.has(functionName)) {
+        return;
+      }
+
+      probes.set(functionName, {
+        functionName,
+        abi: buildViewAbi(functionName, outputType),
+      });
+    };
 
     if (codes.has("OWNERSHIP_CAPABILITY")) {
-      probes.add("owner");
+      addProbe("owner", "address");
     }
 
     if (codes.has("PAUSE_CAPABILITY")) {
-      probes.add("paused");
+      addProbe("paused", "bool");
     }
 
     if (codes.has("TRADING_CAPABILITY")) {
-      probes.add("tradingEnabled");
+      addProbe("tradingEnabled", "bool");
     }
 
     if (codes.has("TAX_CAPABILITY")) {
-      probes.add("buyTax");
-      probes.add("sellTax");
+      addProbe("buyTax", "uint256");
+      addProbe("sellTax", "uint256");
     }
 
     if (codes.has("LIMITS_CAPABILITY")) {
-      probes.add("maxTx");
-      probes.add("maxWallet");
+      addProbe("maxTx", "uint256");
+      addProbe("maxWallet", "uint256");
     }
 
-    return [...probes];
+    // Fallback for contracts with no usable ABI/capability evidence.
+    if (probes.size === 0) {
+      addProbe("owner", "address");
+      addProbe("sellTax", "uint256");
+      addProbe("buyTax", "uint256");
+      addProbe("paused", "bool");
+      addProbe("tradingEnabled", "bool");
+      addProbe("maxTx", "uint256");
+      addProbe("maxWallet", "uint256");
+    }
+
+    return [...probes.values()];
   }
 
-  private async readOptionalContractState(input: { address: Address; network: string; functionName: string }): Promise<ContractReadObservation | null> {
+  private async readOptionalContractState(input: { address: Address; network: string; functionName: string; abi: unknown[] }): Promise<ContractReadObservation | null> {
     try {
       const result = await this.mcp.readContract({
         contractAddress: input.address,
+        abi: input.abi,
         functionName: input.functionName,
         args: [],
         network: input.network,
@@ -122,7 +190,9 @@ export class BnbAgentInvestigator implements ScamInvestigator {
         functionName: input.functionName,
         result,
       };
-    } catch {
+    } catch (error) {
+      console.debug(`[BNB MCP] ${input.functionName}() unavailable:`, error instanceof Error ? error.message : String(error));
+
       return null;
     }
   }

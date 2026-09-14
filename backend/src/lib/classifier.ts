@@ -20,7 +20,11 @@ export interface ClassifiedAction {
   operator?: Address;
 }
 
-export function classifyAction(functionName: string, args: readonly unknown[]): ClassifiedAction {
+export function classifyAction(
+  functionName: string,
+  args: readonly unknown[],
+  protocol?: string,
+): ClassifiedAction {
   switch (functionName) {
     case "approve": {
       const spender = args[0] as Address;
@@ -179,6 +183,22 @@ export function classifyAction(functionName: string, args: readonly unknown[]): 
         description: "Native BNB payment transaction.",
       };
     }
+
+    case "execute": {
+  if (protocol === "PancakeSwap") {
+    return {
+      action: "SWAP",
+      riskLevel: "MEDIUM",
+      description: "PancakeSwap Universal Router transaction.",
+    };
+  }
+
+  return {
+    action: "UNKNOWN",
+    riskLevel: "MEDIUM",
+    description: "Unknown contract function.",
+  };
+}
 
     default: {
       return {

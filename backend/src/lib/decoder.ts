@@ -4,6 +4,7 @@ import { securityAbi } from "./abis";
 import { classifyAction, type ClassifiedAction } from "./classifier";
 
 import { resolveContractAbi } from "../services/contract-resolver";
+import { findProtocolContract } from "../lib/protocols";
 
 export interface DecodedTransaction {
   decoded: boolean;
@@ -81,19 +82,29 @@ export async function decodeTransactionData(input: DecodeInput): Promise<Decoded
    */
   const localDecoded = decodeWithAbi(securityAbi, data);
 
-  if (localDecoded) {
-    const classification = classifyAction(localDecoded.functionName, localDecoded.args);
+if (localDecoded) {
+  const protocolContract = findProtocolContract({
+    chainId,
+    address: to,
+  });
 
-    return {
-      decoded: true,
-      functionName: localDecoded.functionName,
-      args: localDecoded.args,
-      selector,
-      classification,
-      abiSource: "local",
-      contractVerified: true,
-    };
-  }
+  const classification = classifyAction(
+    localDecoded.functionName,
+    localDecoded.args,
+    protocolContract?.protocol,
+  );
+
+  return {
+    decoded: true,
+    functionName: localDecoded.functionName,
+    args: localDecoded.args,
+    selector,
+    classification,
+    abiSource: "local",
+    contractVerified: true,
+    protocol: protocolContract?.protocol,
+  };
+}
 
   /**
    * --------------------------------------------------
@@ -109,7 +120,11 @@ export async function decodeTransactionData(input: DecodeInput): Promise<Decoded
     const externalDecoded = decodeWithAbi(resolved.contract.abi, data);
 
     if (externalDecoded) {
-      const classification = classifyAction(externalDecoded.functionName, externalDecoded.args);
+      const classification = classifyAction(
+  externalDecoded.functionName,
+  externalDecoded.args,
+  resolved.contract.protocol,
+);
 
       return {
         decoded: true,

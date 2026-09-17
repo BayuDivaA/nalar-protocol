@@ -1,215 +1,145 @@
-const BACKEND_URL = "http://localhost:3001";
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message?.type === "GET_PROTECTION_STATUS") {
-    chrome.storage.local
-      .get(["protectionEnabled"])
-      .then((result) => {
-        const enabled = result.protectionEnabled !== false;
-
-        console.log("[Nalar] Protection status:", enabled ? "ACTIVE" : "PAUSED");
-
-        sendResponse({
-          enabled,
-        });
-      })
-      .catch((error) => {
-        console.error("[Nalar] Failed to read protection status:", error);
-
-        sendResponse({
-          enabled: false,
-          error: "Unable to determine protection status.",
-        });
+(() => {
+  // src/background/background.js
+  var BACKEND_URL = "http://localhost:3001";
+  chrome.runtime.onInstalled.addListener(async () => {
+    const existing = await chrome.storage.local.get(["nalarProtectionEnabled"]);
+    if (typeof existing.nalarProtectionEnabled !== "boolean") {
+      await chrome.storage.local.set({
+        nalarProtectionEnabled: true
       });
-
-    return true;
-  }
-
-  if (message?.type === "GET_INTENT") {
-    getIntent(message.origin)
-      .then((intent) => {
-        sendResponse({
-          intent,
-        });
-      })
-      .catch((error) => {
-        sendResponse({
-          intent: null,
-          error: error instanceof Error ? error.message : "Failed to get intent.",
-        });
-      });
-
-    return true;
-  }
-
-  if (message?.type === "SET_INTENT") {
-    saveIntent(message.origin, message.intent)
-      .then(() => {
-        sendResponse({
-          ok: true,
-        });
-      })
-      .catch((error) => {
-        sendResponse({
-          ok: false,
-          error: error instanceof Error ? error.message : "Failed to save intent.",
-        });
-      });
-
-    return true;
-  }
-
-  if (message?.type === "CHECK_TRANSACTION") {
-    handleSecurityCheck(message.transaction, message.chainId, message.origin)
-      .then((security) => {
-        sendResponse({
-          security,
-        });
-      })
-      .catch((error) => {
-        console.error("[Nalar] Security check failed:", error);
-
-        sendResponse({
-          security: null,
-          error: error instanceof Error ? error.message : "Security check failed.",
-        });
-      });
-
-    return true;
-  }
-
-  return false;
-});
-
-async function getIntent(origin) {
-  if (!origin) {
-    return null;
-  }
-
-  const stored = await chrome.storage.local.get(["intents"]);
-
-  const intents = stored.intents ?? {};
-
-  return intents[origin] ?? null;
-}
-
-async function saveIntent(origin, intent) {
-  if (!origin) {
-    throw new Error("Origin is required.");
-  }
-
-  if (typeof intent !== "string" || !intent.trim()) {
-    throw new Error("Intent cannot be empty.");
-  }
-
-  const stored = await chrome.storage.local.get(["intents"]);
-
-  const intents = stored.intents ?? {};
-
-  intents[origin] = intent.trim();
-
-  await chrome.storage.local.set({
-    intents,
-  });
-}
-
-async function handleSecurityCheck(transaction, chainId, origin) {
-  if (typeof chainId !== "string" || !/^0x[0-9a-fA-F]+$/.test(chainId)) {
-    throw new Error("Invalid wallet chain ID.");
-  }
-
-  const numericChainId = Number.parseInt(chainId, 16);
-
-  if (numericChainId !== 97) {
-    throw new Error(`[Nalar] Unsupported network. Expected BNB Testnet (97), received ${numericChainId}.`);
-  }
-
-  if (typeof origin !== "string" || !origin) {
-    throw new Error("Transaction origin is missing.");
-  }
-
-  /**
-   * Get intent belonging to the
-   * current dApp origin.
-   */
-  const intent = await getIntent(origin);
-
-  if (!intent) {
-    throw new Error("Set your transaction intent in the Nalar extension popup first.");
-  }
-
-  if (!transaction) {
-    throw new Error("Transaction request is missing.");
-  }
-
-  const from = transaction.from;
-
-  if (!from) {
-    throw new Error("Transaction does not include a wallet address.");
-  }
-
-  const response = await fetch(`${BACKEND_URL}/api/transactions/security-check`, {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({
-      intent,
-
-      transaction: {
-        chainId: numericChainId,
-
-        from: transaction.from,
-
-        to: transaction.to,
-
-        value: hexToDecimal(transaction.value ?? "0x0"),
-
-        data: transaction.data ?? "0x",
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-
-    throw new Error(`TxSentry returned ${response.status}: ${text}`);
-  }
-
-  return response.json();
-}
-
-async function getChainId() {
-  try {
-    const response = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-
-    const tab = response[0];
-
-    if (!tab?.id) {
-      return 97;
     }
-
-    return await chrome.tabs.sendMessage(tab.id, {
-      type: "GET_CHAIN_ID",
+  });
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message?.type !== "NALAR_SECURITY_CHECK") {
+      return;
+    }
+    handleSecurityCheck(message).then((security) => {
+      sendResponse({
+        ok: true,
+        security
+      });
+    }).catch((error) => {
+      console.error("[Nalar Background] Security check failed:", error);
+      sendResponse({
+        ok: false,
+        error: error?.message || "Security check failed."
+      });
     });
-  } catch {
-    return 97;
+    return true;
+  });
+  async function handleSecurityCheck(message) {
+    const normalized = normalizeSecurityRequest(message);
+    console.log("[Nalar Background] Normalized security payload:", normalized);
+    const response = await fetch(`${BACKEND_URL}/api/transactions/security-check`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(normalized)
+    });
+    const raw = await response.text();
+    console.log("[Nalar Background] Backend status:", response.status);
+    console.log("[Nalar Background] Backend response:", raw);
+    if (!response.ok) {
+      throw new Error(`Security API failed: ${response.status} ${raw}`);
+    }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      throw new Error("Backend returned invalid JSON.");
+    }
   }
-}
-
-function hexToDecimal(value) {
-  if (typeof value !== "string") {
-    return "0";
+  function normalizeSecurityRequest(message) {
+    const original = message?.transaction;
+    if (!original || typeof original !== "object") {
+      throw new Error("[Nalar] Invalid transaction object.");
+    }
+    const chainId = normalizeChainId(original.chainId ?? message.chainId);
+    const from = normalizeAddress(original.from);
+    const to = normalizeAddress(original.to);
+    const value = normalizeQuantity(original.value);
+    const data = normalizeData(original.data);
+    const intent = typeof message.intent === "string" ? message.intent.trim() : "";
+    if (!intent) {
+      throw new Error("[Nalar] Transaction intent is empty.");
+    }
+    return {
+      intent,
+      transaction: {
+        chainId,
+        from,
+        to,
+        value,
+        data
+      }
+    };
   }
-
-  if (value.startsWith("0x")) {
-    return BigInt(value).toString();
+  function normalizeChainId(value) {
+    if (typeof value === "number") {
+      if (!Number.isInteger(value) || value <= 0) {
+        throw new Error(`[Nalar] Invalid numeric chain ID: ${value}`);
+      }
+      return value;
+    }
+    if (typeof value === "string") {
+      if (value.startsWith("0x")) {
+        const parsed = Number.parseInt(value, 16);
+        if (!Number.isInteger(parsed) || parsed <= 0) {
+          throw new Error(`[Nalar] Invalid hex chain ID: ${value}`);
+        }
+        return parsed;
+      }
+      if (/^\d+$/.test(value)) {
+        const parsed = Number(value);
+        if (!Number.isInteger(parsed) || parsed <= 0) {
+          throw new Error(`[Nalar] Invalid decimal chain ID: ${value}`);
+        }
+        return parsed;
+      }
+    }
+    throw new Error(`[Nalar] Unsupported chain ID: ${String(value)}`);
   }
-
-  return value;
-}
+  function normalizeAddress(value) {
+    if (typeof value !== "string" || !/^0x[a-fA-F0-9]{40}$/.test(value)) {
+      throw new Error(`[Nalar] Invalid address: ${String(value)}`);
+    }
+    return value;
+  }
+  function normalizeQuantity(value) {
+    if (value === void 0 || value === null || value === "") {
+      return "0";
+    }
+    if (typeof value === "number") {
+      if (!Number.isFinite(value) || value < 0) {
+        throw new Error(`[Nalar] Invalid transaction value: ${value}`);
+      }
+      return Math.trunc(value).toString();
+    }
+    if (typeof value !== "string") {
+      throw new Error(`[Nalar] Invalid transaction value: ${String(value)}`);
+    }
+    if (value.startsWith("0x")) {
+      try {
+        return BigInt(value).toString();
+      } catch {
+        throw new Error(`[Nalar] Invalid hexadecimal transaction value: ${value}`);
+      }
+    }
+    if (/^\d+$/.test(value)) {
+      return value;
+    }
+    throw new Error(`[Nalar] Unsupported transaction value: ${value}`);
+  }
+  function normalizeData(value) {
+    if (value === void 0 || value === null || value === "") {
+      return "0x";
+    }
+    if (typeof value !== "string") {
+      throw new Error("[Nalar] Transaction data must be a string.");
+    }
+    if (!/^0x([a-fA-F0-9]{2})*$/.test(value)) {
+      throw new Error(`[Nalar] Invalid transaction data: ${value}`);
+    }
+    return value;
+  }
+})();

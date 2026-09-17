@@ -1,26 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "Nalar Protocol",
-  "version": "0.1.0",
-  "description": "Nalar transaction protection powered by TxSentry.",
-  "permissions": ["storage", "activeTab"],
-  "host_permissions": ["http://localhost:3001/*"],
+  "name": "Nalar TxSentry",
+  "version": "1.0.0",
+  "description": "Nalar Web3 transaction security firewall.",
+  "permissions": ["storage"],
+  "host_permissions": ["<all_urls>", "http://localhost:3000/*"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Nalar Protocol",
-    "default_popup": "popup.html"
+    "default_title": "Nalar TxSentry",
+    "default_popup": "src/popup/popup.html"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["bridge.js"],
+      "js": ["content.js"],
       "run_at": "document_start"
     },
     {
       "matches": ["<all_urls>"],
-      "js": ["injected.js"],
+      "js": ["dist/injected.js"],
       "run_at": "document_start",
       "world": "MAIN"
     }

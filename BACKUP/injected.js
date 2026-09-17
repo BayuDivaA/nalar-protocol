@@ -8,13 +8,7 @@
    *
    * Browser-side transaction security interceptor.
    *
-   * Supported provider paths:
-   *
-   * 1. Legacy window.ethereum
-   * 2. window.rabby
-   * 3. EIP-6963 announced providers
-   *
-   * Security flow:
+   * Flow:
    *
    * DApp
    *   ↓
@@ -64,27 +58,11 @@
     black: "#000000",
   };
 
-  /**
-   * ============================================================
-   * PROVIDER REGISTRY
-   * ============================================================
-   */
-
   const wrappedProviders = new WeakSet();
 
   /**
-   * Provider references can appear through:
-   *
-   * - window.ethereum
-   * - window.rabby
-   * - EIP-6963
-   *
-   * WeakSet prevents wrapping the same provider twice.
-   */
-
-  /**
    * ============================================================
-   * BASIC PROVIDER ACCESS
+   * BASIC ACCESS
    * ============================================================
    */
 
@@ -92,18 +70,22 @@
     return window.ethereum;
   }
 
+  function removeElement(id) {
+    const element = document.getElementById(id);
+
+    if (element) {
+      element.remove();
+    }
+  }
+
   /**
    * ============================================================
-   * SMALL TRANSITION MESSAGE
+   * STATUS BANNER
    * ============================================================
    */
 
   function showNalarMessage(message) {
-    const existing = document.getElementById(IDS.banner);
-
-    if (existing) {
-      existing.remove();
-    }
+    removeElement(IDS.banner);
 
     const banner = document.createElement("div");
 
@@ -150,7 +132,7 @@
 
   /**
    * ============================================================
-   * GENERIC PROVIDER WRAPPER
+   * PROVIDER WRAPPER
    * ============================================================
    */
 
@@ -168,16 +150,11 @@
     const wrappedRequest = async function (args) {
       console.log("[Nalar] PROVIDER REQUEST:", label, args?.method);
 
-      /**
-       * Everything except transaction submission
-       * continues untouched.
-       */
       if (!args || args.method !== "eth_sendTransaction") {
         return originalRequest(args);
       }
 
       return handleTransactionRequest({
-        provider,
         originalRequest,
         args,
         providerLabel: label,
@@ -192,12 +169,6 @@
       return false;
     }
 
-    /**
-     * Some providers can expose a getter/setter
-     * that silently refuses replacement.
-     *
-     * Verify the wrapper actually stuck.
-     */
     try {
       if (provider.request !== wrappedRequest) {
         console.warn("[Nalar] Provider request could not be replaced:", label);
@@ -217,22 +188,13 @@
 
   /**
    * ============================================================
-   * EIP-6963 PROVIDER DISCOVERY
+   * EIP-6963
    * ============================================================
    */
 
   function installEip6963() {
-    /**
-     * Important:
-     *
-     * Listener must be registered before requesting
-     * provider announcements.
-     */
     window.addEventListener("eip6963:announceProvider", handleEip6963Provider);
 
-    /**
-     * Ask all injected wallets to announce themselves.
-     */
     window.dispatchEvent(new Event("eip6963:requestProvider"));
 
     console.info("[Nalar] EIP-6963 provider discovery enabled.");
@@ -249,35 +211,22 @@
 
     const walletName = detail?.info?.name ?? detail?.info?.rdns ?? "Unknown Wallet";
 
-    const rdns = detail?.info?.rdns ?? "";
-
-    console.info("[Nalar] EIP-6963 provider announced:", {
-      name: walletName,
-      rdns,
-    });
-
     wrapProvider(provider, `EIP-6963:${walletName}`);
   }
 
   /**
    * ============================================================
-   * DIRECT PROVIDER DISCOVERY
+   * DIRECT PROVIDERS
    * ============================================================
    */
 
   function installDirectProviders() {
     let wrapped = false;
 
-    /**
-     * Legacy provider.
-     */
     if (wrapProvider(window.ethereum, "window.ethereum")) {
       wrapped = true;
     }
 
-    /**
-     * Rabby may expose its own provider.
-     */
     if (wrapProvider(window.rabby, "window.rabby")) {
       wrapped = true;
     }
@@ -291,13 +240,7 @@
    * ============================================================
    */
 
-  async function handleTransactionRequest({ provider, originalRequest, args, providerLabel }) {
-    /**
-     * ----------------------------------------------------------
-     * Protection state
-     * ----------------------------------------------------------
-     */
-
+  async function handleTransactionRequest({ originalRequest, args, providerLabel }) {
     const protectionEnabled = await getProtectionStatus();
 
     if (!protectionEnabled) {
@@ -305,12 +248,6 @@
 
       return originalRequest(args);
     }
-
-    /**
-     * ----------------------------------------------------------
-     * Transaction validation
-     * ----------------------------------------------------------
-     */
 
     const transaction = args.params?.[0];
 
@@ -324,7 +261,7 @@
 
     /**
      * ----------------------------------------------------------
-     * Intent
+     * INTENT
      * ----------------------------------------------------------
      */
 
@@ -342,7 +279,7 @@
 
     /**
      * ----------------------------------------------------------
-     * Chain
+     * CHAIN
      * ----------------------------------------------------------
      */
 
@@ -352,9 +289,11 @@
 
     const id = ++requestId;
 
+    const analysisOverlay = showAnalysisOverlay();
+
     /**
      * ----------------------------------------------------------
-     * Security request
+     * SECURITY CHECK
      * ----------------------------------------------------------
      */
 
@@ -373,7 +312,7 @@
 
       /**
        * ------------------------------------------------------
-       * Send approved transaction to wallet
+       * CONTINUE TO WALLET
        * ------------------------------------------------------
        */
 
@@ -400,7 +339,7 @@
 
       /**
        * ------------------------------------------------------
-       * Cancel
+       * CANCEL
        * ------------------------------------------------------
        */
 
@@ -410,7 +349,7 @@
 
       /**
        * ------------------------------------------------------
-       * Security response
+       * SECURITY RESPONSE
        * ------------------------------------------------------
        */
 
@@ -429,9 +368,6 @@
           return;
         }
 
-        /**
-         * Each request has a unique id.
-         */
         if (message.id !== id) {
           return;
         }
@@ -447,11 +383,10 @@
         }
 
         /**
-         * ----------------------------------------------------
          * BLOCK
-         * ----------------------------------------------------
          *
-         * Never call originalRequest.
+         * CRITICAL:
+         * Never call wallet.
          */
 
         if (security.decision === "BLOCK") {
@@ -463,9 +398,7 @@
         }
 
         /**
-         * ----------------------------------------------------
          * REVIEW
-         * ----------------------------------------------------
          */
 
         if (security.decision === "REVIEW") {
@@ -477,9 +410,7 @@
         }
 
         /**
-         * ----------------------------------------------------
          * ALLOW
-         * ----------------------------------------------------
          */
 
         showDecisionOverlay(security, "ALLOW", continueToWallet, () => {
@@ -488,215 +419,22 @@
       }
 
       /**
-       * Register listener BEFORE requesting
-       * the security result.
+       * Register listener before sending request.
        */
+
       window.addEventListener("message", handleMessage);
 
       window.postMessage(
         {
           source: "NALAR_PAGE",
-
           type: "TX_REQUEST",
-
           id,
-
           chainId,
-
           transaction,
         },
         "*",
       );
     });
-  }
-
-  /**
-   * ============================================================
-   * SCAM INTELLIGENCE UI
-   * ============================================================
-   */
-
-  function createScamIntelligenceSection(security) {
-    const analyses = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : [];
-
-    if (analyses.length === 0) {
-      return null;
-    }
-
-    const content = document.createElement("div");
-
-    Object.assign(content.style, {
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-    });
-
-    analyses.slice(0, 4).forEach((analysis) => {
-      const card = document.createElement("div");
-
-      Object.assign(card.style, {
-        padding: "13px 14px",
-        border: `1px solid ${UI.border}`,
-        borderRadius: "8px",
-        background: UI.surface,
-        boxSizing: "border-box",
-      });
-
-      // --------------------------------------------------------
-      // Token header
-      // --------------------------------------------------------
-
-      const tokenHeader = document.createElement("div");
-
-      Object.assign(tokenHeader.style, {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: "10px",
-      });
-
-      const tokenName = document.createElement("div");
-
-      tokenName.textContent = formatAddress(analysis.token ?? "");
-
-      Object.assign(tokenName.style, {
-        fontSize: "12px",
-        color: UI.text,
-        fontWeight: "600",
-        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-      });
-
-      const riskBadge = document.createElement("div");
-
-      const riskLevel = analysis.riskLevel ?? "UNKNOWN";
-
-      const riskScore = typeof analysis.riskScore === "number" ? analysis.riskScore : null;
-
-      riskBadge.textContent = riskScore === null ? riskLevel : `${riskLevel} · ${riskScore}`;
-
-      Object.assign(riskBadge.style, {
-        padding: "4px 7px",
-        border: `1px solid ${UI.borderStrong}`,
-        borderRadius: "5px",
-        fontSize: "9px",
-        letterSpacing: ".06em",
-        fontWeight: "650",
-        color: UI.textSecondary,
-        whiteSpace: "nowrap",
-      });
-
-      tokenHeader.appendChild(tokenName);
-      tokenHeader.appendChild(riskBadge);
-
-      card.appendChild(tokenHeader);
-
-      // --------------------------------------------------------
-      // Findings
-      // --------------------------------------------------------
-
-      const findings = Array.isArray(analysis.findings) ? analysis.findings : [];
-
-      if (findings.length > 0) {
-        const findingsContainer = document.createElement("div");
-
-        Object.assign(findingsContainer.style, {
-          marginTop: "11px",
-          paddingTop: "10px",
-          borderTop: "1px solid #202020",
-        });
-
-        findings.slice(0, 5).forEach((finding) => {
-          const row = document.createElement("div");
-
-          Object.assign(row.style, {
-            display: "flex",
-            gap: "8px",
-            marginBottom: "7px",
-            fontSize: "11px",
-            lineHeight: "1.5",
-          });
-
-          const marker = document.createElement("span");
-
-          marker.textContent = finding.severity === "CRITICAL" || finding.severity === "HIGH" ? "!" : "·";
-
-          Object.assign(marker.style, {
-            width: "14px",
-            flex: "0 0 14px",
-            color: UI.text,
-            fontWeight: "700",
-          });
-
-          const text = document.createElement("div");
-
-          text.textContent = finding.title ?? finding.description ?? finding.code ?? "Security finding";
-
-          Object.assign(text.style, {
-            color: UI.textSecondary,
-          });
-
-          row.appendChild(marker);
-          row.appendChild(text);
-
-          findingsContainer.appendChild(row);
-        });
-
-        card.appendChild(findingsContainer);
-      }
-
-      // --------------------------------------------------------
-      // BNB Intelligence
-      // --------------------------------------------------------
-
-      const agentAvailable = analysis.agentAnalysis?.available === true;
-
-      if (agentAvailable) {
-        const agentRow = document.createElement("div");
-
-        Object.assign(agentRow.style, {
-          marginTop: "10px",
-          paddingTop: "10px",
-          borderTop: "1px solid #202020",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "10px",
-        });
-
-        const agentLabel = document.createElement("div");
-
-        agentLabel.textContent = "BNB Intelligence";
-
-        Object.assign(agentLabel.style, {
-          fontSize: "10px",
-          color: UI.textMuted,
-          letterSpacing: ".03em",
-        });
-
-        const agentBadge = document.createElement("div");
-
-        agentBadge.textContent = "ON-CHAIN EVIDENCE";
-
-        Object.assign(agentBadge.style, {
-          padding: "4px 6px",
-          border: `1px solid ${UI.border}`,
-          borderRadius: "4px",
-          fontSize: "8px",
-          letterSpacing: ".08em",
-          fontWeight: "650",
-          color: UI.textSecondary,
-        });
-
-        agentRow.appendChild(agentLabel);
-        agentRow.appendChild(agentBadge);
-
-        card.appendChild(agentRow);
-      }
-
-      content.appendChild(card);
-    });
-
-    return createSection("SCAM INTELLIGENCE", content);
   }
 
   /**
@@ -727,7 +465,6 @@
       background: "rgba(0,0,0,.76)",
 
       backdropFilter: "blur(3px)",
-
       WebkitBackdropFilter: "blur(3px)",
 
       fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
@@ -738,14 +475,13 @@
     const modal = document.createElement("div");
 
     Object.assign(modal.style, {
-      width: "min(540px, 100%)",
+      width: "min(560px, 100%)",
 
       maxHeight: "calc(100vh - 40px)",
 
       overflowY: "auto",
 
       background: UI.background,
-
       color: UI.text,
 
       border: `1px solid ${UI.borderStrong}`,
@@ -757,43 +493,59 @@
       boxSizing: "border-box",
     });
 
-    const explanation = security.explanation ?? {};
+    const explanation = security?.explanation ?? {};
 
-    const summary = security.transactionSummary ?? {};
+    const txSummary = security?.transactionSummary ?? {};
 
-    const intent = security.intent?.description ?? "No intent description available.";
+    const intent = security?.intent?.description ?? "No intent description available.";
 
-    const action = security.actual?.action ?? "UNKNOWN";
+    const action = security?.actual?.action ?? "UNKNOWN";
 
-    const functionName = security.actual?.functionName ?? null;
+    const functionName = security?.actual?.functionName ?? null;
 
-    const riskScore = security.riskScore ?? 0;
+    const riskLevel = security?.riskLevel ?? "UNKNOWN";
 
-    const scamAnalyses = Array.isArray(security.scamAnalyses) ? security.scamAnalyses : [];
+    const riskScore = security?.riskScore ?? 0;
+
+    /**
+     * IMPORTANT:
+     * Single declaration only.
+     *
+     * Prefer scamAnalyses from backend.
+     * Fallback to transactionScamContext.analyses.
+     */
+
+    const tokenReports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
 
     const status = getDecisionStatus(decision);
 
-    const title = explanation.title ?? status.title;
+    const title = decision === "BLOCK" ? "Transaction blocked" : decision === "REVIEW" ? "Review required" : decision === "ALLOW" ? "Transaction looks safe" : (explanation.title ?? status.title);
 
     const explanationSummary = explanation.summary ?? getFallbackSummary(security, decision);
 
     const explanationDetails = Array.isArray(explanation.details) ? explanation.details : [];
 
-    const reasons = dedupe([...(security.reasons ?? []), ...(security.comparison?.mismatches ?? []), ...(security.policy?.evaluation?.reasons ?? [])]);
+    const reasons = dedupe([
+      ...(Array.isArray(security?.reasons) ? security.reasons : []),
 
-    const summaryTitle = summary.title ?? summary.action ?? humanizeAction(action);
+      ...(Array.isArray(security?.comparison?.mismatches) ? security.comparison.mismatches : []),
 
-    const summaryDescription = summary.description ?? "Nalar analyzed this transaction before signing.";
+      ...(Array.isArray(security?.policy?.evaluation?.reasons) ? security.policy.evaluation.reasons : []),
+    ]);
 
-    const summaryDetails = Array.isArray(summary.details) ? summary.details : [];
+    const summaryTitle = txSummary.title ?? txSummary.action ?? humanizeAction(action);
 
-    const valueNative = summary.valueNative ?? null;
+    const summaryDescription = txSummary.description ?? "Nalar analyzed this transaction before signing.";
 
-    const target = summary.target ?? null;
+    const summaryDetails = Array.isArray(txSummary.details) ? txSummary.details : [];
+
+    const valueNative = txSummary.valueNative ?? null;
+
+    const target = txSummary.target ?? null;
 
     /**
      * ----------------------------------------------------------
-     * Header
+     * HEADER
      * ----------------------------------------------------------
      */
 
@@ -871,7 +623,7 @@
 
     /**
      * ----------------------------------------------------------
-     * Risk
+     * RISK
      * ----------------------------------------------------------
      */
 
@@ -880,7 +632,7 @@
     Object.assign(risk.style, {
       flex: "0 0 auto",
 
-      minWidth: "74px",
+      minWidth: "92px",
 
       padding: "9px 10px",
 
@@ -907,12 +659,12 @@
 
     const riskValue = document.createElement("div");
 
-    riskValue.textContent = `${riskScore}/100`;
+    riskValue.textContent = `${riskLevel} · ${riskScore}`;
 
     Object.assign(riskValue.style, {
       marginTop: "5px",
 
-      fontSize: "13px",
+      fontSize: "12px",
 
       lineHeight: "1",
 
@@ -931,7 +683,7 @@
 
     /**
      * ----------------------------------------------------------
-     * Body
+     * BODY
      * ----------------------------------------------------------
      */
 
@@ -942,13 +694,13 @@
     });
 
     /**
-     * User intent.
+     * USER REQUEST
      */
 
     body.appendChild(createSection("YOUR REQUEST", createTextBlock(intent)));
 
     /**
-     * Actual transaction.
+     * ACTUAL TRANSACTION
      */
 
     const actionContent = document.createElement("div");
@@ -961,8 +713,6 @@
       fontSize: "16px",
 
       lineHeight: "1.3",
-
-      letterSpacing: "-.01em",
 
       fontWeight: "600",
 
@@ -1069,7 +819,7 @@
 
     /**
      * ----------------------------------------------------------
-     * Explanation
+     * EXPLANATION
      * ----------------------------------------------------------
      */
 
@@ -1077,7 +827,7 @@
 
     const explanationMain = document.createElement("div");
 
-    explanationMain.textContent = explanationSummary;
+    explanationMain.textContent = decision === "BLOCK" ? "Nalar menghentikan transaksi sebelum wallet diminta menandatanganinya." : explanationSummary;
 
     Object.assign(explanationMain.style, {
       fontSize: "14px",
@@ -1101,7 +851,7 @@
       usefulDetails.slice(0, 5).forEach((detail) => {
         const row = document.createElement("div");
 
-        row.textContent = detail;
+        row.textContent = `• ${detail}`;
 
         Object.assign(row.style, {
           marginBottom: "7px",
@@ -1119,17 +869,21 @@
       explanationContent.appendChild(list);
     }
 
-    body.appendChild(createSection(decision === "BLOCK" ? "WHY IT WAS STOPPED" : "NALAR'S READING", explanationContent));
+    body.appendChild(createSection(decision === "BLOCK" ? "WHY NALAR STOPPED IT" : "NALAR'S READING", explanationContent));
 
-    const scamIntelligence = createScamIntelligenceSection(security);
+    /**
+     * ----------------------------------------------------------
+     * SCAM INTELLIGENCE
+     * ----------------------------------------------------------
+     */
 
-    if (scamIntelligence) {
-      body.appendChild(scamIntelligence);
+    if (tokenReports.length > 0) {
+      body.appendChild(createScamIntelligenceSection(tokenReports));
     }
 
     /**
      * ----------------------------------------------------------
-     * Technical reference
+     * TECHNICAL REFERENCE
      * ----------------------------------------------------------
      */
 
@@ -1153,7 +907,7 @@
 
     /**
      * ----------------------------------------------------------
-     * Footer
+     * FOOTER
      * ----------------------------------------------------------
      */
 
@@ -1197,6 +951,7 @@
 
     cancel.addEventListener("click", () => {
       cleanupDecision();
+
       overlay.remove();
 
       if (onCancel) {
@@ -1215,6 +970,7 @@
 
       continueButton.addEventListener("click", () => {
         cleanupDecision();
+
         overlay.remove();
 
         if (onContinue) {
@@ -1256,6 +1012,288 @@
     }
 
     document.addEventListener("keydown", handleEscape);
+  }
+
+  /**
+   * ============================================================
+   * SCAM INTELLIGENCE UI
+   * ============================================================
+   */
+
+  function createScamIntelligenceSection(tokenReports) {
+    const content = document.createElement("div");
+
+    tokenReports.forEach((analysis) => {
+      const card = document.createElement("div");
+
+      Object.assign(card.style, {
+        marginTop: "10px",
+
+        padding: "14px",
+
+        border: `1px solid ${UI.border}`,
+
+        borderRadius: "8px",
+
+        background: "#070707",
+      });
+
+      /**
+       * HEADER
+       */
+
+      const cardHeader = document.createElement("div");
+
+      Object.assign(cardHeader.style, {
+        display: "flex",
+
+        justifyContent: "space-between",
+
+        alignItems: "center",
+
+        gap: "12px",
+      });
+
+      const tokenAddress = document.createElement("div");
+
+      tokenAddress.textContent = formatAddress(analysis?.token ?? "Unknown token");
+
+      Object.assign(tokenAddress.style, {
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+
+        fontSize: "12px",
+
+        fontWeight: "600",
+
+        color: UI.text,
+      });
+
+      const risk = document.createElement("div");
+
+      risk.textContent = `${analysis?.riskLevel ?? "UNKNOWN"} · ${analysis?.riskScore ?? 0}`;
+
+      Object.assign(risk.style, {
+        padding: "5px 7px",
+
+        border: `1px solid ${UI.border}`,
+
+        borderRadius: "6px",
+
+        fontSize: "9px",
+
+        fontWeight: "600",
+
+        color: UI.textSecondary,
+
+        whiteSpace: "nowrap",
+      });
+
+      cardHeader.appendChild(tokenAddress);
+
+      cardHeader.appendChild(risk);
+
+      card.appendChild(cardHeader);
+
+      /**
+       * FINDINGS
+       */
+
+      const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
+
+      if (findings.length > 0) {
+        const findingsContainer = document.createElement("div");
+
+        Object.assign(findingsContainer.style, {
+          marginTop: "13px",
+
+          paddingTop: "12px",
+
+          borderTop: "1px solid #202020",
+        });
+
+        findings.slice(0, 5).forEach((finding) => {
+          const row = document.createElement("div");
+
+          const severity = String(finding?.severity ?? "INFO").toUpperCase();
+
+          const marker = severity === "CRITICAL" || severity === "HIGH" ? "!" : "•";
+
+          row.textContent = `${marker}  ${finding?.title ?? finding?.code ?? "Security finding"}`;
+
+          Object.assign(row.style, {
+            marginBottom: "7px",
+
+            fontSize: "11px",
+
+            lineHeight: "1.5",
+
+            color: severity === "CRITICAL" ? UI.text : UI.textSecondary,
+          });
+
+          findingsContainer.appendChild(row);
+        });
+
+        card.appendChild(findingsContainer);
+      }
+
+      /**
+       * ON-CHAIN STATE
+       */
+
+      const stateEntries = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
+
+      if (stateEntries.length > 0) {
+        const stateContainer = document.createElement("div");
+
+        Object.assign(stateContainer.style, {
+          marginTop: "13px",
+
+          paddingTop: "12px",
+
+          borderTop: "1px solid #202020",
+        });
+
+        const stateLabel = document.createElement("div");
+
+        stateLabel.textContent = "ON-CHAIN STATE";
+
+        Object.assign(stateLabel.style, {
+          marginBottom: "9px",
+
+          fontSize: "8px",
+
+          letterSpacing: ".16em",
+
+          color: UI.textMuted,
+
+          fontWeight: "600",
+        });
+
+        stateContainer.appendChild(stateLabel);
+
+        stateEntries.slice(0, 6).forEach((entry) => {
+          const row = document.createElement("div");
+
+          Object.assign(row.style, {
+            display: "flex",
+
+            justifyContent: "space-between",
+
+            gap: "14px",
+
+            marginBottom: "7px",
+
+            fontSize: "11px",
+
+            lineHeight: "1.45",
+          });
+
+          const label = document.createElement("span");
+
+          label.textContent = entry?.label ?? entry?.code ?? "State";
+
+          label.style.color = UI.textMuted;
+
+          const value = document.createElement("span");
+
+          value.style.color = UI.textSecondary;
+
+          value.style.textAlign = "right";
+
+          let displayValue = entry?.value ?? "Unknown";
+
+          /**
+           * Backend evidence stores
+           * percent values in basis-like
+           * integer form:
+           *
+           * 9800 => 98.00%
+           */
+
+          if (entry?.code === "CURRENT_SELL_TAX" && entry?.unit === "PERCENT") {
+            const numeric = Number(displayValue);
+
+            if (Number.isFinite(numeric)) {
+              displayValue = `${(numeric / 100).toFixed(2)}%`;
+            }
+          }
+
+          value.textContent = String(displayValue);
+
+          row.appendChild(label);
+
+          row.appendChild(value);
+
+          stateContainer.appendChild(row);
+        });
+
+        card.appendChild(stateContainer);
+      }
+
+      /**
+       * BNB INTELLIGENCE
+       */
+
+      if (analysis?.agentAnalysis?.available === true) {
+        const source = document.createElement("div");
+
+        Object.assign(source.style, {
+          marginTop: "13px",
+
+          paddingTop: "11px",
+
+          borderTop: "1px solid #202020",
+
+          display: "flex",
+
+          justifyContent: "space-between",
+
+          alignItems: "center",
+
+          gap: "12px",
+        });
+
+        const label = document.createElement("div");
+
+        label.textContent = "BNB Intelligence";
+
+        Object.assign(label.style, {
+          fontSize: "10px",
+
+          color: UI.textMuted,
+        });
+
+        const badge = document.createElement("div");
+
+        badge.textContent = "ON-CHAIN EVIDENCE";
+
+        Object.assign(badge.style, {
+          padding: "5px 7px",
+
+          border: `1px solid ${UI.border}`,
+
+          borderRadius: "5px",
+
+          fontSize: "8px",
+
+          fontWeight: "600",
+
+          letterSpacing: ".05em",
+
+          color: UI.textSecondary,
+        });
+
+        source.appendChild(label);
+
+        source.appendChild(badge);
+
+        card.appendChild(source);
+      }
+
+      content.appendChild(card);
+    });
+
+    return createSection("SCAM INTELLIGENCE", content);
   }
 
   /**
@@ -1317,10 +1355,6 @@
 
         boxSizing: "border-box",
       });
-
-      /**
-       * Header
-       */
 
       const header = document.createElement("header");
 
@@ -1384,19 +1418,11 @@
 
       header.appendChild(description);
 
-      /**
-       * Body
-       */
-
       const body = document.createElement("div");
 
       Object.assign(body.style, {
         padding: "21px 22px 19px",
       });
-
-      /**
-       * Origin
-       */
 
       const originLabel = document.createElement("div");
 
@@ -1442,10 +1468,6 @@
 
       body.appendChild(origin);
 
-      /**
-       * Intent label
-       */
-
       const intentLabel = document.createElement("div");
 
       intentLabel.textContent = "YOUR INTENT";
@@ -1465,10 +1487,6 @@
       });
 
       body.appendChild(intentLabel);
-
-      /**
-       * Input
-       */
 
       const textarea = document.createElement("textarea");
 
@@ -1534,10 +1552,6 @@
 
       body.appendChild(note);
 
-      /**
-       * Footer
-       */
-
       const footer = document.createElement("footer");
 
       Object.assign(footer.style, {
@@ -1562,7 +1576,9 @@
 
       cancel.addEventListener("click", () => {
         cleanupIntent();
+
         overlay.remove();
+
         resolve(null);
       });
 
@@ -1640,7 +1656,7 @@
         try {
           textarea.setSelectionRange(textarea.value.length, textarea.value.length);
         } catch {
-          // Ignore selection failures.
+          // Ignore selection errors.
         }
       }, 0);
     });
@@ -1774,7 +1790,7 @@
 
   function getFallbackSummary(security, decision) {
     if (decision === "BLOCK") {
-      if (security.intentMatch === false) {
+      if (security?.intentMatch === false) {
         return "This transaction does not match what you asked to do, so Nalar stopped it before signing.";
       }
 
@@ -1828,6 +1844,8 @@
 
       PAYMENT: "Payment",
 
+      TRANSFER: "Transfer",
+
       UNKNOWN: "Unknown contract action",
     };
 
@@ -1857,24 +1875,14 @@
     return `${address.slice(0, 6)}…${address.slice(-4)}`;
   }
 
-  function removeElement(id) {
-    const element = document.getElementById(id);
-
-    if (element) {
-      element.remove();
-    }
-  }
-
   /**
    * ============================================================
-   * EXTENSION COMMUNICATION
+   * INTENT STORAGE
    * ============================================================
    */
 
   async function getStoredIntent() {
     const id = `intent-${Date.now()}-${Math.random()}`;
-
-    console.log("[Nalar] Getting stored intent:", id);
 
     return new Promise((resolve) => {
       let completed = false;
@@ -1887,8 +1895,6 @@
         completed = true;
 
         window.removeEventListener("message", handleMessage);
-
-        console.error("[Nalar] Stored intent request timed out:", id);
 
         resolve(null);
       }, 3000);
@@ -1908,8 +1914,6 @@
           return;
         }
 
-        console.log("[Nalar] Received INTENT_RESULT:", message);
-
         completed = true;
 
         clearTimeout(timeout);
@@ -1921,12 +1925,12 @@
 
       window.addEventListener("message", handleMessage);
 
-      console.log("[Nalar] Sending GET_INTENT:", id);
-
       window.postMessage(
         {
           source: "NALAR_PAGE",
+
           type: "GET_INTENT",
+
           id,
         },
         "*",
@@ -1999,10 +2003,14 @@
     });
   }
 
+  /**
+   * ============================================================
+   * PROTECTION STATUS
+   * ============================================================
+   */
+
   async function getProtectionStatus() {
     const id = `protection-${Date.now()}-${Math.random()}`;
-
-    console.log("[Nalar] Protection request:", id);
 
     return new Promise((resolve, reject) => {
       let completed = false;
@@ -2015,8 +2023,6 @@
         completed = true;
 
         window.removeEventListener("message", handleMessage);
-
-        console.error("[Nalar] Protection timeout:", id);
 
         reject(new Error("[Nalar] Unable to determine protection status."));
       }, 5000);
@@ -2042,8 +2048,6 @@
 
         window.removeEventListener("message", handleMessage);
 
-        console.log("[Nalar] Protection response:", message);
-
         if (message.error) {
           reject(new Error(message.error));
 
@@ -2055,12 +2059,12 @@
 
       window.addEventListener("message", handleMessage);
 
-      console.log("[Nalar] Sending protection request:", id);
-
       window.postMessage(
         {
           source: "NALAR_PAGE",
+
           type: "GET_PROTECTION_STATUS",
+
           id,
         },
         "*",
@@ -2075,31 +2079,13 @@
    */
 
   function installProviders() {
-    let installed = false;
-
-    if (installDirectProviders()) {
-      installed = true;
-    }
-
-    return installed;
+    installDirectProviders();
   }
 
-  /**
-   * Register EIP-6963 immediately.
-   *
-   * This must happen before the page requests
-   * wallet providers.
-   */
   installEip6963();
 
-  /**
-   * Try immediately.
-   */
   installProviders();
 
-  /**
-   * Wallet providers can appear later.
-   */
   let attempts = 0;
 
   const maxAttempts = 200;
@@ -2109,13 +2095,6 @@
 
     installProviders();
 
-    /**
-     * Keep listening to EIP-6963 for the
-     * lifetime of the page.
-     *
-     * Stop retrying direct providers after
-     * the timeout.
-     */
     if (attempts >= maxAttempts) {
       clearInterval(timer);
 
@@ -2127,3 +2106,165 @@
 
   console.info("[Nalar] TxSentry interceptor installed.");
 })();
+
+function showAnalysisOverlay() {
+  removeElement("__nalar_analysis_overlay__");
+
+  const overlay = document.createElement("div");
+
+  overlay.id = "__nalar_analysis_overlay__";
+
+  Object.assign(overlay.style, {
+    position: "fixed",
+    inset: "0",
+    zIndex: "2147483647",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+    background: "rgba(0,0,0,.76)",
+    backdropFilter: "blur(3px)",
+    WebkitBackdropFilter: "blur(3px)",
+    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+  });
+
+  const modal = document.createElement("div");
+
+  Object.assign(modal.style, {
+    width: "min(460px, 100%)",
+    padding: "24px",
+    background: UI.background,
+    border: `1px solid ${UI.borderStrong}`,
+    borderRadius: "10px",
+    color: UI.text,
+    boxShadow: "0 26px 80px rgba(0,0,0,.5)",
+  });
+
+  const eyebrow = document.createElement("div");
+  eyebrow.textContent = "NALAR / TXSENTRY";
+
+  Object.assign(eyebrow.style, {
+    fontSize: "9px",
+    letterSpacing: ".16em",
+    color: UI.textMuted,
+    fontWeight: "600",
+  });
+
+  const title = document.createElement("h2");
+  title.textContent = "Analyzing transaction...";
+
+  Object.assign(title.style, {
+    margin: "11px 0 0",
+    fontSize: "23px",
+    lineHeight: "1.2",
+    fontWeight: "600",
+    letterSpacing: "-.025em",
+  });
+
+  const subtitle = document.createElement("div");
+  subtitle.textContent = "Nalar is checking the transaction before your wallet is asked to sign.";
+
+  Object.assign(subtitle.style, {
+    marginTop: "8px",
+    fontSize: "12px",
+    lineHeight: "1.55",
+    color: UI.textSecondary,
+  });
+
+  const list = document.createElement("div");
+
+  Object.assign(list.style, {
+    marginTop: "22px",
+  });
+
+  const steps = ["Understanding intent", "Decoding transaction", "Simulating execution", "Inspecting contract", "Reading on-chain state", "Evaluating security"];
+
+  const rows = [];
+
+  steps.forEach((label, index) => {
+    const row = document.createElement("div");
+
+    Object.assign(row.style, {
+      display: "flex",
+      alignItems: "center",
+      gap: "10px",
+      padding: "8px 0",
+      fontSize: "12px",
+      color: UI.textSecondary,
+    });
+
+    const indicator = document.createElement("div");
+
+    indicator.textContent = index === 0 ? "●" : "○";
+
+    Object.assign(indicator.style, {
+      width: "16px",
+      textAlign: "center",
+      fontSize: "9px",
+      color: index === 0 ? UI.text : UI.textDim,
+      flex: "0 0 16px",
+    });
+
+    const text = document.createElement("div");
+    text.textContent = label;
+
+    row.appendChild(indicator);
+    row.appendChild(text);
+
+    list.appendChild(row);
+
+    rows.push({
+      row,
+      indicator,
+      text,
+    });
+  });
+
+  modal.appendChild(eyebrow);
+  modal.appendChild(title);
+  modal.appendChild(subtitle);
+  modal.appendChild(list);
+
+  overlay.appendChild(modal);
+
+  document.documentElement.appendChild(overlay);
+
+  let current = 0;
+
+  const interval = setInterval(() => {
+    if (!document.getElementById(overlay.id)) {
+      clearInterval(interval);
+      return;
+    }
+
+    if (current >= rows.length) {
+      clearInterval(interval);
+      return;
+    }
+
+    rows.forEach((item, index) => {
+      if (index < current) {
+        item.indicator.textContent = "✓";
+        item.indicator.style.color = UI.text;
+        item.text.style.color = UI.textSecondary;
+      } else if (index === current) {
+        item.indicator.textContent = "●";
+        item.indicator.style.color = UI.text;
+        item.text.style.color = UI.text;
+      } else {
+        item.indicator.textContent = "○";
+        item.indicator.style.color = UI.textDim;
+        item.text.style.color = UI.textDim;
+      }
+    });
+
+    current += 1;
+  }, 350);
+
+  return {
+    remove() {
+      clearInterval(interval);
+      overlay.remove();
+    },
+  };
+}

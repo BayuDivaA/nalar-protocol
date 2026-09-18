@@ -42,21 +42,236 @@
   };
 
   const UI = {
-    background: "#080808",
-    surface: "#0d0d0d",
-    surfaceRaised: "#111111",
+    background: "#121311",
+    surface: "#191b18",
+    surfaceRaised: "#20231f",
 
-    border: "#292929",
-    borderStrong: "#3a3a3a",
+    border: "#30332f",
+    borderStrong: "#454941",
 
-    text: "#f2f2f2",
-    textSecondary: "#a0a0a0",
-    textMuted: "#686868",
-    textDim: "#4e4e4e",
+    text: "#f1f0e9",
+    textSecondary: "#b8b8ae",
+    textMuted: "#7d8078",
+    textDim: "#5c6059",
 
-    white: "#ffffff",
-    black: "#000000",
+    white: "#f1f0e9",
+    black: "#121311",
+    accent: "#d47c5d",
+    safe: "#a9c4a3",
+    review: "#e0bb78",
+    danger: "#dd806d",
   };
+
+  function installOverlayStyles() {
+    if (document.getElementById("__nalar_overlay_styles__")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+
+    style.id = "__nalar_overlay_styles__";
+
+    style.textContent = `
+      @keyframes nalar-overlay-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes nalar-modal-in {
+        from { opacity: 0; transform: translateY(12px) scale(.985); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      @keyframes nalar-scan {
+        0%, 100% { opacity: .45; transform: scale(.9); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+
+      .nalar-overlay {
+        animation: nalar-overlay-in 180ms ease-out both;
+      }
+
+      .nalar-modal {
+        animation: nalar-modal-in 360ms cubic-bezier(.16, 1, .3, 1) both;
+        border-radius: 14px !important;
+        background: ${UI.background} !important;
+        border-color: ${UI.borderStrong} !important;
+        box-shadow: 0 28px 90px rgba(0, 0, 0, .48), 0 2px 0 rgba(255, 255, 255, .035) inset !important;
+      }
+
+      .nalar-decision-overlay,
+      .nalar-intent-overlay,
+      .nalar-analysis-overlay {
+        padding: 18px !important;
+        background: rgba(8, 9, 8, .78) !important;
+        backdrop-filter: blur(8px) saturate(.8) !important;
+        -webkit-backdrop-filter: blur(8px) saturate(.8) !important;
+      }
+
+      .nalar-decision-header {
+        display: grid !important;
+        grid-template-columns: 42px minmax(0, 1fr) auto !important;
+        align-items: center !important;
+        gap: 13px !important;
+        padding: 22px 24px 20px !important;
+        border-bottom-color: ${UI.border} !important;
+      }
+
+      .nalar-decision-mark {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border: 1px solid ${UI.borderStrong};
+        border-radius: 10px;
+        background: ${UI.surfaceRaised};
+        color: ${UI.text};
+        font-size: 19px;
+        font-weight: 700;
+      }
+
+      .nalar-decision-header-text { min-width: 0; }
+      .nalar-decision-header h2 { margin-top: 8px !important; font-size: 23px !important; }
+      .nalar-decision-state { margin-top: 6px !important; color: ${UI.textSecondary} !important; }
+
+      .nalar-decision-risk {
+        min-width: 104px !important;
+        padding: 10px 12px !important;
+        border-radius: 9px !important;
+        background: ${UI.surface} !important;
+        text-align: left !important;
+      }
+
+      .nalar-decision-risk-value {
+        margin-top: 5px;
+        color: ${UI.text} !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+      }
+
+      .nalar-decision-risk-score {
+        margin-top: 4px;
+        color: ${UI.textMuted} !important;
+        font-size: 10px !important;
+      }
+
+      .nalar-decision-overlay[data-decision="block"] .nalar-decision-mark,
+      .nalar-decision-overlay[data-decision="block"] .nalar-decision-risk-value { color: ${UI.danger} !important; }
+
+      .nalar-decision-overlay[data-decision="review"] .nalar-decision-mark,
+      .nalar-decision-overlay[data-decision="review"] .nalar-decision-risk-value { color: ${UI.review} !important; }
+
+      .nalar-decision-overlay[data-decision="allow"] .nalar-decision-mark,
+      .nalar-decision-overlay[data-decision="allow"] .nalar-decision-risk-value { color: ${UI.safe} !important; }
+
+      .nalar-decision-body { padding: 0 24px !important; }
+
+      .nalar-section {
+        padding: 18px 0 !important;
+        border-bottom-color: ${UI.border} !important;
+      }
+
+      .nalar-section-label {
+        margin-bottom: 10px !important;
+        color: ${UI.textMuted} !important;
+        font-size: 9px !important;
+        letter-spacing: .13em !important;
+      }
+
+      .nalar-text-block { color: ${UI.text} !important; font-size: 14px !important; }
+      .nalar-decision-summary { color: ${UI.text} !important; font-size: 14px !important; }
+      .nalar-decision-detail { color: ${UI.textSecondary} !important; }
+      .nalar-finding[data-severity="critical"],
+      .nalar-finding[data-severity="high"] { color: ${UI.danger} !important; }
+      .nalar-finding[data-severity="medium"] { color: ${UI.review} !important; }
+      .nalar-simulation-result { color: ${UI.text} !important; font-size: 13px !important; }
+      .nalar-simulation-meta { margin-top: 7px; color: ${UI.textMuted}; font-size: 11px; }
+      .nalar-simulation[data-success="false"] .nalar-simulation-result { color: ${UI.danger} !important; }
+      .nalar-intent-match {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid ${UI.border};
+        color: ${UI.textMuted};
+        font-size: 11px;
+      }
+      .nalar-intent-match strong { font-weight: 650; }
+      .nalar-intent-match[data-match="true"] strong { color: ${UI.safe}; }
+      .nalar-intent-match[data-match="false"] strong { color: ${UI.danger}; }
+      .nalar-evidence-card {
+        margin-top: 11px !important;
+        padding: 15px !important;
+        border-color: ${UI.border} !important;
+        border-radius: 10px !important;
+        background: ${UI.surface} !important;
+      }
+
+      .nalar-evidence-card > div { border-top-color: ${UI.border} !important; }
+      .nalar-evidence-card .nalar-evidence-badge { color: ${UI.textSecondary} !important; border-color: ${UI.borderStrong} !important; }
+      .nalar-evidence-heading { color: ${UI.text} !important; }
+
+      .nalar-decision-footer { padding: 18px 24px 24px !important; }
+      .nalar-decision-note { color: ${UI.textMuted} !important; }
+      .nalar-decision-actions { gap: 9px !important; }
+
+      .nalar-button {
+        min-height: 44px !important;
+        border-radius: 8px !important;
+        border-color: ${UI.borderStrong} !important;
+        background: ${UI.background} !important;
+        color: ${UI.text} !important;
+        transition: transform 150ms ease, border-color 150ms ease, background 150ms ease !important;
+      }
+
+      .nalar-button.nalar-button-primary {
+        border-color: ${UI.text} !important;
+        background: ${UI.text} !important;
+        color: ${UI.black} !important;
+      }
+
+      .nalar-button:hover { border-color: ${UI.accent} !important; }
+      .nalar-button:active { transform: translateY(1px); }
+      .nalar-button:focus-visible { outline: 2px solid ${UI.accent}; outline-offset: 3px; }
+
+      .nalar-intent-modal { width: min(540px, 100%) !important; }
+      .nalar-intent-header { padding: 24px 24px 20px !important; border-bottom-color: ${UI.border} !important; }
+      .nalar-intent-body { padding: 22px 24px 20px !important; }
+      .nalar-intent-footer { padding: 0 24px 24px !important; }
+      .nalar-intent-origin,
+      .nalar-intent-textarea { background: ${UI.surface} !important; border-color: ${UI.border} !important; border-radius: 9px !important; }
+      .nalar-intent-textarea:focus { border-color: ${UI.accent} !important; box-shadow: 0 0 0 3px rgba(212, 124, 93, .12); }
+
+      .nalar-analysis-modal { width: min(480px, 100%) !important; padding: 25px !important; }
+      .nalar-analysis-step { padding: 9px 0 !important; color: ${UI.textSecondary} !important; }
+      .nalar-analysis-indicator { color: ${UI.textMuted} !important; transition: color 180ms ease, background 180ms ease; }
+      .nalar-analysis-step[data-state="active"] .nalar-analysis-indicator { color: ${UI.accent} !important; animation: nalar-scan 1.1s ease-in-out infinite; }
+      .nalar-analysis-step[data-state="done"] .nalar-analysis-indicator { color: ${UI.safe} !important; }
+
+      @media (max-width: 640px) {
+        .nalar-overlay { align-items: flex-end !important; padding: 10px !important; }
+        .nalar-modal { width: 100% !important; max-height: calc(100vh - 20px) !important; border-radius: 14px 14px 10px 10px !important; }
+        .nalar-decision-header { grid-template-columns: 38px minmax(0, 1fr) !important; padding: 20px !important; }
+        .nalar-decision-mark { width: 38px; height: 38px; }
+        .nalar-decision-risk { grid-column: 2; min-width: 0 !important; width: max-content; }
+        .nalar-decision-body { padding: 0 20px !important; }
+        .nalar-decision-footer { padding: 17px 20px 20px !important; }
+        .nalar-decision-actions { grid-template-columns: 1fr !important; }
+        .nalar-intent-header { padding: 21px 20px 18px !important; }
+        .nalar-intent-body { padding: 20px 20px 18px !important; }
+        .nalar-intent-footer { padding: 0 20px 20px !important; }
+        .nalar-intent-actions { grid-template-columns: 1fr !important; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .nalar-overlay, .nalar-modal, .nalar-analysis-step[data-state="active"] .nalar-analysis-indicator { animation: none !important; }
+        .nalar-button { transition: none !important; }
+      }
+    `;
+
+    document.documentElement.appendChild(style);
+  }
 
   const wrappedProviders = new WeakSet();
 
@@ -86,10 +301,12 @@
 
   function showNalarMessage(message) {
     removeElement(IDS.banner);
+    installOverlayStyles();
 
     const banner = document.createElement("div");
 
     banner.id = IDS.banner;
+    banner.className = "nalar-status-banner";
 
     Object.assign(banner.style, {
       position: "fixed",
@@ -112,7 +329,7 @@
 
       boxShadow: "0 16px 40px rgba(0,0,0,.35)",
 
-      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
 
       fontSize: "12px",
       lineHeight: "1.4",
@@ -308,6 +525,8 @@
         clearTimeout(timeout);
 
         window.removeEventListener("message", handleMessage);
+
+        analysisOverlay?.remove();
       }
 
       /**
@@ -391,7 +610,7 @@
 
         if (security.decision === "BLOCK") {
           showDecisionOverlay(security, "BLOCK", null, () => {
-            cancelTransaction("[Nalar] Transaction blocked by TxSentry.");
+            cancelTransaction("[Nalar] Transaction blocked by the security policy.");
           });
 
           return;
@@ -445,10 +664,13 @@
 
   function showDecisionOverlay(security, decision, onContinue, onCancel) {
     removeElement(IDS.decision);
+    installOverlayStyles();
 
     const overlay = document.createElement("div");
 
     overlay.id = IDS.decision;
+    overlay.className = "nalar-overlay nalar-decision-overlay";
+    overlay.dataset.decision = decision.toLowerCase();
 
     Object.assign(overlay.style, {
       position: "fixed",
@@ -467,12 +689,13 @@
       backdropFilter: "blur(3px)",
       WebkitBackdropFilter: "blur(3px)",
 
-      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
 
       boxSizing: "border-box",
     });
 
     const modal = document.createElement("div");
+    modal.className = "nalar-modal nalar-decision-modal";
 
     Object.assign(modal.style, {
       width: "min(560px, 100%)",
@@ -519,7 +742,7 @@
 
     const status = getDecisionStatus(decision);
 
-    const title = decision === "BLOCK" ? "Transaction blocked" : decision === "REVIEW" ? "Review required" : decision === "ALLOW" ? "Transaction looks safe" : (explanation.title ?? status.title);
+    const title = decision === "BLOCK" ? "Transaction blocked" : decision === "REVIEW" ? "Review required" : decision === "ALLOW" ? "Transaction allowed" : (explanation.title ?? status.title);
 
     const explanationSummary = explanation.summary ?? getFallbackSummary(security, decision);
 
@@ -550,6 +773,7 @@
      */
 
     const header = document.createElement("header");
+    header.className = "nalar-decision-header";
 
     Object.assign(header.style, {
       padding: "20px 22px 17px",
@@ -566,10 +790,16 @@
     });
 
     const headerText = document.createElement("div");
+    headerText.className = "nalar-decision-header-text";
+
+    const decisionMark = document.createElement("div");
+    decisionMark.className = "nalar-decision-mark";
+    decisionMark.textContent = decision === "BLOCK" ? "!" : decision === "REVIEW" ? "?" : "✓";
+    decisionMark.setAttribute("aria-hidden", "true");
 
     const eyebrow = document.createElement("div");
 
-    eyebrow.textContent = "NALAR / TXSENTRY";
+    eyebrow.textContent = "NALAR PROTOCOL";
 
     Object.assign(eyebrow.style, {
       fontSize: "9px",
@@ -602,6 +832,7 @@
     });
 
     const state = document.createElement("div");
+    state.className = "nalar-decision-state";
 
     state.textContent = status.label;
 
@@ -628,6 +859,7 @@
      */
 
     const risk = document.createElement("div");
+    risk.className = "nalar-decision-risk";
 
     Object.assign(risk.style, {
       flex: "0 0 auto",
@@ -659,7 +891,8 @@
 
     const riskValue = document.createElement("div");
 
-    riskValue.textContent = `${riskLevel} · ${riskScore}`;
+    riskValue.className = "nalar-decision-risk-value";
+    riskValue.textContent = riskLevel;
 
     Object.assign(riskValue.style, {
       marginTop: "5px",
@@ -677,6 +910,12 @@
 
     risk.appendChild(riskValue);
 
+    const riskScoreValue = document.createElement("div");
+    riskScoreValue.className = "nalar-decision-risk-score";
+    riskScoreValue.textContent = `${riskScore}/100`;
+    risk.appendChild(riskScoreValue);
+
+    header.appendChild(decisionMark);
     header.appendChild(headerText);
 
     header.appendChild(risk);
@@ -688,6 +927,7 @@
      */
 
     const body = document.createElement("main");
+    body.className = "nalar-decision-body";
 
     Object.assign(body.style, {
       padding: "0 22px",
@@ -815,7 +1055,47 @@
       actionContent.appendChild(targetElement);
     }
 
+    if (typeof security?.intentMatch === "boolean") {
+      const match = document.createElement("div");
+      match.className = "nalar-intent-match";
+      match.dataset.match = String(security.intentMatch);
+
+      const matchLabel = document.createElement("span");
+      matchLabel.textContent = "Intent check";
+
+      const matchValue = document.createElement("strong");
+      matchValue.textContent = security.intentMatch ? "Matches your request" : "Needs your attention";
+
+      match.appendChild(matchLabel);
+      match.appendChild(matchValue);
+      actionContent.appendChild(match);
+    }
+
     body.appendChild(createSection("WHAT WILL HAPPEN", actionContent));
+
+    const simulation = security?.simulation;
+
+    if (simulation && typeof simulation.success === "boolean") {
+      const simulationContent = document.createElement("div");
+      simulationContent.className = "nalar-simulation";
+      simulationContent.dataset.success = String(simulation.success);
+
+      const simulationResult = document.createElement("div");
+      simulationResult.className = "nalar-simulation-result";
+      simulationResult.textContent = simulation.success
+        ? "The request completed in simulation."
+        : "The request could not complete in simulation.";
+      simulationContent.appendChild(simulationResult);
+
+      if (simulation.gasEstimate) {
+        const gas = document.createElement("div");
+        gas.className = "nalar-simulation-meta";
+        gas.textContent = `Estimated network fee: ${String(simulation.gasEstimate)}`;
+        simulationContent.appendChild(gas);
+      }
+
+      body.appendChild(createSection("SIMULATION", simulationContent));
+    }
 
     /**
      * ----------------------------------------------------------
@@ -827,7 +1107,8 @@
 
     const explanationMain = document.createElement("div");
 
-    explanationMain.textContent = decision === "BLOCK" ? "Nalar menghentikan transaksi sebelum wallet diminta menandatanganinya." : explanationSummary;
+    explanationMain.className = "nalar-decision-summary";
+    explanationMain.textContent = explanationSummary;
 
     Object.assign(explanationMain.style, {
       fontSize: "14px",
@@ -839,7 +1120,7 @@
 
     explanationContent.appendChild(explanationMain);
 
-    const usefulDetails = dedupe([...explanationDetails, ...(decision === "BLOCK" ? reasons : [])]);
+    const usefulDetails = dedupe([...explanationDetails, ...(decision !== "ALLOW" ? reasons : [])]);
 
     if (usefulDetails.length > 0) {
       const list = document.createElement("div");
@@ -850,6 +1131,7 @@
 
       usefulDetails.slice(0, 5).forEach((detail) => {
         const row = document.createElement("div");
+        row.className = "nalar-decision-detail";
 
         row.textContent = `• ${detail}`;
 
@@ -912,12 +1194,14 @@
      */
 
     const footer = document.createElement("footer");
+    footer.className = "nalar-decision-footer";
 
     Object.assign(footer.style, {
       padding: "0 22px 21px",
     });
 
     const note = document.createElement("div");
+    note.className = "nalar-decision-note";
 
     note.textContent = getFooterNote(decision);
 
@@ -934,6 +1218,7 @@
     footer.appendChild(note);
 
     const actions = document.createElement("div");
+    actions.className = "nalar-decision-actions";
 
     Object.assign(actions.style, {
       display: "grid",
@@ -1025,6 +1310,7 @@
 
     tokenReports.forEach((analysis) => {
       const card = document.createElement("div");
+      card.className = "nalar-evidence-card";
 
       Object.assign(card.style, {
         marginTop: "10px",
@@ -1043,6 +1329,7 @@
        */
 
       const cardHeader = document.createElement("div");
+      cardHeader.className = "nalar-evidence-heading";
 
       Object.assign(cardHeader.style, {
         display: "flex",
@@ -1115,6 +1402,9 @@
           const row = document.createElement("div");
 
           const severity = String(finding?.severity ?? "INFO").toUpperCase();
+
+          row.className = "nalar-finding";
+          row.dataset.severity = severity.toLowerCase();
 
           const marker = severity === "CRITICAL" || severity === "HIGH" ? "!" : "•";
 
@@ -1263,7 +1553,8 @@
           color: UI.textMuted,
         });
 
-        const badge = document.createElement("div");
+      const badge = document.createElement("div");
+        badge.className = "nalar-evidence-badge";
 
         badge.textContent = "ON-CHAIN EVIDENCE";
 
@@ -1293,7 +1584,7 @@
       content.appendChild(card);
     });
 
-    return createSection("SCAM INTELLIGENCE", content);
+    return createSection("ON-CHAIN EVIDENCE", content);
   }
 
   /**
@@ -1305,10 +1596,12 @@
   function showIntentOverlay(existingIntent = "") {
     return new Promise((resolve) => {
       removeElement(IDS.intent);
+      installOverlayStyles();
 
       const overlay = document.createElement("div");
 
       overlay.id = IDS.intent;
+      overlay.className = "nalar-overlay nalar-intent-overlay";
 
       Object.assign(overlay.style, {
         position: "fixed",
@@ -1331,12 +1624,13 @@
 
         WebkitBackdropFilter: "blur(3px)",
 
-        fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
 
         boxSizing: "border-box",
       });
 
       const modal = document.createElement("div");
+      modal.className = "nalar-modal nalar-intent-modal";
 
       Object.assign(modal.style, {
         width: "min(530px, 100%)",
@@ -1357,6 +1651,7 @@
       });
 
       const header = document.createElement("header");
+      header.className = "nalar-intent-header";
 
       Object.assign(header.style, {
         padding: "20px 22px 18px",
@@ -1366,7 +1661,7 @@
 
       const eyebrow = document.createElement("div");
 
-      eyebrow.textContent = "NALAR / TXSENTRY";
+      eyebrow.textContent = "NALAR PROTOCOL";
 
       Object.assign(eyebrow.style, {
         fontSize: "9px",
@@ -1419,6 +1714,7 @@
       header.appendChild(description);
 
       const body = document.createElement("div");
+      body.className = "nalar-intent-body";
 
       Object.assign(body.style, {
         padding: "21px 22px 19px",
@@ -1439,6 +1735,7 @@
       });
 
       const origin = document.createElement("div");
+      origin.className = "nalar-intent-origin";
 
       origin.textContent = window.location.hostname || "Current website";
 
@@ -1489,6 +1786,8 @@
       body.appendChild(intentLabel);
 
       const textarea = document.createElement("textarea");
+      textarea.className = "nalar-intent-textarea";
+      textarea.setAttribute("aria-label", "Your transaction intent");
 
       textarea.value = typeof existingIntent === "string" ? existingIntent : "";
 
@@ -1538,7 +1837,7 @@
 
       const note = document.createElement("div");
 
-      note.textContent = "Nalar uses this statement to compare your expectation with the transaction.";
+      note.textContent = "Nalar will compare this statement with the transaction it receives.";
 
       Object.assign(note.style, {
         marginTop: "10px",
@@ -1553,12 +1852,14 @@
       body.appendChild(note);
 
       const footer = document.createElement("footer");
+      footer.className = "nalar-intent-footer";
 
       Object.assign(footer.style, {
         padding: "0 22px 21px",
       });
 
       const actions = document.createElement("div");
+      actions.className = "nalar-intent-actions";
 
       Object.assign(actions.style, {
         display: "grid",
@@ -1670,6 +1971,7 @@
 
   function createSection(label, content) {
     const section = document.createElement("section");
+    section.className = "nalar-section";
 
     Object.assign(section.style, {
       padding: "16px 0",
@@ -1678,6 +1980,7 @@
     });
 
     const heading = document.createElement("div");
+    heading.className = "nalar-section-label";
 
     heading.textContent = label;
 
@@ -1702,6 +2005,7 @@
 
   function createTextBlock(text) {
     const element = document.createElement("div");
+    element.className = "nalar-text-block";
 
     element.textContent = text;
 
@@ -1719,6 +2023,8 @@
   }
 
   function styleButton(button, primary) {
+    button.classList.add("nalar-button");
+    button.classList.toggle("nalar-button-primary", primary);
     Object.assign(button.style, {
       minHeight: "43px",
 
@@ -1732,7 +2038,7 @@
 
       color: primary ? UI.black : "#d8d8d8",
 
-      fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+      fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
 
       fontSize: "12px",
 
@@ -1764,20 +2070,20 @@
     switch (decision) {
       case "ALLOW":
         return {
-          title: "Transaction looks safe",
-          label: "Security check passed",
+          title: "Transaction allowed",
+          label: "The security policy allows this request",
         };
 
       case "REVIEW":
         return {
           title: "Review required",
-          label: "Manual confirmation required",
+          label: "Read the evidence before continuing",
         };
 
       case "BLOCK":
         return {
           title: "Transaction blocked",
-          label: "Nalar stopped the request",
+          label: "Nalar stopped the request before signing",
         };
 
       default:
@@ -2110,9 +2416,19 @@
 function showAnalysisOverlay() {
   removeElement("__nalar_analysis_overlay__");
 
+  const analysisUI = {
+    background: "#121311",
+    borderStrong: "#454941",
+    text: "#f1f0e9",
+    textSecondary: "#b8b8ae",
+    textMuted: "#7d8078",
+    textDim: "#5c6059",
+  };
+
   const overlay = document.createElement("div");
 
   overlay.id = "__nalar_analysis_overlay__";
+  overlay.className = "nalar-overlay nalar-analysis-overlay";
 
   Object.assign(overlay.style, {
     position: "fixed",
@@ -2125,33 +2441,34 @@ function showAnalysisOverlay() {
     background: "rgba(0,0,0,.76)",
     backdropFilter: "blur(3px)",
     WebkitBackdropFilter: "blur(3px)",
-    fontFamily: "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
   });
 
   const modal = document.createElement("div");
+  modal.className = "nalar-modal nalar-analysis-modal";
 
   Object.assign(modal.style, {
     width: "min(460px, 100%)",
     padding: "24px",
-    background: UI.background,
-    border: `1px solid ${UI.borderStrong}`,
+    background: analysisUI.background,
+    border: `1px solid ${analysisUI.borderStrong}`,
     borderRadius: "10px",
-    color: UI.text,
+    color: analysisUI.text,
     boxShadow: "0 26px 80px rgba(0,0,0,.5)",
   });
 
   const eyebrow = document.createElement("div");
-  eyebrow.textContent = "NALAR / TXSENTRY";
+  eyebrow.textContent = "NALAR PROTOCOL";
 
   Object.assign(eyebrow.style, {
     fontSize: "9px",
     letterSpacing: ".16em",
-    color: UI.textMuted,
+    color: analysisUI.textMuted,
     fontWeight: "600",
   });
 
   const title = document.createElement("h2");
-  title.textContent = "Analyzing transaction...";
+  title.textContent = "Reading the transaction";
 
   Object.assign(title.style, {
     margin: "11px 0 0",
@@ -2162,13 +2479,13 @@ function showAnalysisOverlay() {
   });
 
   const subtitle = document.createElement("div");
-  subtitle.textContent = "Nalar is checking the transaction before your wallet is asked to sign.";
+  subtitle.textContent = "Nalar is checking the request before your wallet is asked to sign.";
 
   Object.assign(subtitle.style, {
     marginTop: "8px",
     fontSize: "12px",
     lineHeight: "1.55",
-    color: UI.textSecondary,
+    color: analysisUI.textSecondary,
   });
 
   const list = document.createElement("div");
@@ -2177,12 +2494,14 @@ function showAnalysisOverlay() {
     marginTop: "22px",
   });
 
-  const steps = ["Understanding intent", "Decoding transaction", "Simulating execution", "Inspecting contract", "Reading on-chain state", "Evaluating security"];
+  const steps = ["Reading your intent", "Decoding the wallet request", "Simulating execution", "Inspecting contract rules", "Checking on-chain state", "Applying security policy"];
 
   const rows = [];
 
   steps.forEach((label, index) => {
     const row = document.createElement("div");
+    row.className = "nalar-analysis-step";
+    row.dataset.state = index === 0 ? "active" : "pending";
 
     Object.assign(row.style, {
       display: "flex",
@@ -2190,10 +2509,11 @@ function showAnalysisOverlay() {
       gap: "10px",
       padding: "8px 0",
       fontSize: "12px",
-      color: UI.textSecondary,
+      color: analysisUI.textSecondary,
     });
 
     const indicator = document.createElement("div");
+    indicator.className = "nalar-analysis-indicator";
 
     indicator.textContent = index === 0 ? "●" : "○";
 
@@ -2201,7 +2521,7 @@ function showAnalysisOverlay() {
       width: "16px",
       textAlign: "center",
       fontSize: "9px",
-      color: index === 0 ? UI.text : UI.textDim,
+      color: index === 0 ? analysisUI.text : analysisUI.textDim,
       flex: "0 0 16px",
     });
 
@@ -2245,16 +2565,19 @@ function showAnalysisOverlay() {
     rows.forEach((item, index) => {
       if (index < current) {
         item.indicator.textContent = "✓";
-        item.indicator.style.color = UI.text;
-        item.text.style.color = UI.textSecondary;
+        item.row.dataset.state = "done";
+        item.indicator.style.color = analysisUI.text;
+        item.text.style.color = analysisUI.textSecondary;
       } else if (index === current) {
         item.indicator.textContent = "●";
-        item.indicator.style.color = UI.text;
-        item.text.style.color = UI.text;
+        item.row.dataset.state = "active";
+        item.indicator.style.color = analysisUI.text;
+        item.text.style.color = analysisUI.text;
       } else {
         item.indicator.textContent = "○";
-        item.indicator.style.color = UI.textDim;
-        item.text.style.color = UI.textDim;
+        item.row.dataset.state = "pending";
+        item.indicator.style.color = analysisUI.textDim;
+        item.text.style.color = analysisUI.textDim;
       }
     });
 

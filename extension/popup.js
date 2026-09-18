@@ -1,6 +1,8 @@
 const intentInput = document.getElementById("intent");
 const saveButton = document.getElementById("save");
 const status = document.getElementById("status");
+const siteName = document.getElementById("siteName");
+const systemStatus = document.getElementById("systemStatus");
 
 const protectionToggle = document.getElementById("protectionToggle");
 const toggleLabel = document.getElementById("toggleLabel");
@@ -35,8 +37,10 @@ async function loadSettings() {
 
   if (currentOrigin) {
     intentInput.value = intents[currentOrigin] ?? "";
+    siteName.textContent = new URL(currentOrigin).hostname;
   } else {
     intentInput.value = "";
+    siteName.textContent = "Current site unavailable";
   }
 
   const enabled = result.protectionEnabled !== false;
@@ -54,6 +58,7 @@ function renderProtectionState(enabled) {
   protectionToggle.classList.toggle("off", !enabled);
 
   toggleLabel.textContent = enabled ? "ACTIVE" : "PAUSED";
+  systemStatus.textContent = enabled ? "Protection active" : "Protection paused";
 }
 
 protectionToggle.addEventListener("click", async () => {

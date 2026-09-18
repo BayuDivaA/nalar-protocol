@@ -14,10 +14,11 @@ const LEGACY_CODE: Record<string, CapabilityCode> = {
   ROUTER: "ROUTER_CAPABILITY",
   PAIR: "PAIR_CAPABILITY",
   UPGRADE: "UPGRADE_CAPABILITY",
+  WITHDRAW: "WITHDRAW_CAPABILITY",
 };
 
 function capabilityCode(capability: ContractCapability): CapabilityCode | null {
-  return capability.code ?? (capability.kind ? LEGACY_CODE[capability.kind] ?? null : null);
+  return capability.code ?? (capability.kind ? (LEGACY_CODE[capability.kind] ?? null) : null);
 }
 
 function categoryOf(capability: ContractCapability): string | null {
@@ -84,15 +85,55 @@ function capabilityFinding(capability: ContractCapability, controls: readonly Ac
 
   if (control.controller === "PUBLIC") {
     const publicCode = category === "TAX" ? "PUBLIC_TAX_CONTROL" : category === "MINT" ? "PUBLIC_MINT" : category === "BLACKLIST" ? "PUBLIC_BLACKLIST" : "PRIVILEGED_CAPABILITY";
-    return [{ code: publicCode, severity: "CRITICAL", title: `Public ${category.toLowerCase()} control detected`, description: `${functionName} is externally callable without verified privilege restriction.${controllerEvidence}`, evidence: control.evidence ?? evidence, source }];
+    return [
+      {
+        code: publicCode,
+        severity: "CRITICAL",
+        title: `Public ${category.toLowerCase()} control detected`,
+        description: `${functionName} is externally callable without verified privilege restriction.${controllerEvidence}`,
+        evidence: control.evidence ?? evidence,
+        source,
+      },
+    ];
   }
 
   if (control.controller === "OWNER") {
-    const ownerCode = category === "TAX" ? "OWNER_CONTROLLED_TAX" : category === "MINT" ? "OWNER_CAN_MINT" : category === "BLACKLIST" ? "OWNER_CAN_BLACKLIST" : category === "UPGRADE" ? "OWNER_UPGRADE_CONTROL" : category === "PAUSE" ? "OWNER_CAN_PAUSE" : "PRIVILEGED_CAPABILITY";
-    return [{ code: ownerCode, severity: category === "PAUSE" || category === "LIMITS" ? "MEDIUM" : "HIGH", title: `Owner controls ${category.toLowerCase()}`, description: `${functionName} is associated with verified owner control.${controllerEvidence}`, evidence: control.evidence ?? evidence, source }];
+    const ownerCode =
+      category === "TAX"
+        ? "OWNER_CONTROLLED_TAX"
+        : category === "MINT"
+          ? "OWNER_CAN_MINT"
+          : category === "BLACKLIST"
+            ? "OWNER_CAN_BLACKLIST"
+            : category === "UPGRADE"
+              ? "OWNER_UPGRADE_CONTROL"
+              : category === "WITHDRAW"
+                ? "OWNER_CAN_WITHDRAW"
+                : category === "PAUSE"
+                  ? "OWNER_CAN_PAUSE"
+                  : "PRIVILEGED_CAPABILITY";
+    return [
+      {
+        code: ownerCode,
+        severity: category === "PAUSE" || category === "LIMITS" ? "MEDIUM" : "HIGH",
+        title: `Owner controls ${category.toLowerCase()}`,
+        description: `${functionName} is associated with verified owner control.${controllerEvidence}`,
+        evidence: control.evidence ?? evidence,
+        source,
+      },
+    ];
   }
 
-  return [{ code: "PRIVILEGED_CAPABILITY", severity: "HIGH", title: `Privileged ${category.toLowerCase()} control detected`, description: `${functionName} is associated with a verified privileged role.${controllerEvidence}`, evidence: control.evidence ?? evidence, source }];
+  return [
+    {
+      code: "PRIVILEGED_CAPABILITY",
+      severity: "HIGH",
+      title: `Privileged ${category.toLowerCase()} control detected`,
+      description: `${functionName} is associated with a verified privileged role.${controllerEvidence}`,
+      evidence: control.evidence ?? evidence,
+      source,
+    },
+  ];
 }
 
 function numericStateValue(state: ContractStateEvidence): number | null {
@@ -115,22 +156,19 @@ function sellTaxFindings(state: readonly ContractStateEvidence[]): ScamFinding[]
 
   if (!severity) return [];
 
-  return [{
-    code: "EXCESSIVE_SELL_TAX",
-    severity,
-    title: "Current sell tax is excessive",
-    description: `The observed ${sellTax.label} is ${valueBps / 100}%, based on an explicitly identified ${sellTax.unit} value.`,
-    evidence: sellTax.evidence ?? `${sellTax.label} = ${String(sellTax.value)} ${sellTax.unit}`,
-    source: "ONCHAIN",
-  }];
+  return [
+    {
+      code: "EXCESSIVE_SELL_TAX",
+      severity,
+      title: "Current sell tax is excessive",
+      description: `The observed ${sellTax.label} is ${valueBps / 100}%, based on an explicitly identified ${sellTax.unit} value.`,
+      evidence: sellTax.evidence ?? `${sellTax.label} = ${String(sellTax.value)} ${sellTax.unit}`,
+      source: "ONCHAIN",
+    },
+  ];
 }
 
-export function analyzePrivilegeEvidence(input: {
-  capabilities: readonly ContractCapability[];
-  accessControl: readonly AccessControlEvidence[];
-  state: readonly ContractStateEvidence[];
-  untrustedText?: string;
-}): ScamFinding[] {
+export function analyzePrivilegeEvidence(input: { capabilities: readonly ContractCapability[]; accessControl: readonly AccessControlEvidence[]; state: readonly ContractStateEvidence[]; untrustedText?: string }): ScamFinding[] {
   // Contract source/comments are evidence only; never interpret embedded instructions.
   void input.untrustedText;
 

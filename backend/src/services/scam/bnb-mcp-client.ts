@@ -10,6 +10,13 @@ export interface BnbMcpClient {
   getErc20TokenInfo(input: { address: string; network: string }): Promise<unknown>;
 
   readContract(input: { contractAddress: string; abi: unknown[]; functionName: string; args?: unknown[]; network: string }): Promise<unknown>;
+  isContract(input: { address: string; network: string }): Promise<unknown>;
+
+  getLatestBlock(input: { network: string }): Promise<unknown>;
+
+  getTransaction(input: { txHash: string; network: string }): Promise<unknown>;
+
+  getTransactionReceipt(input: { txHash: string; network: string }): Promise<unknown>;
 }
 
 export class BnbChainMcpClient implements BnbMcpClient {
@@ -101,6 +108,36 @@ export class BnbChainMcpClient implements BnbMcpClient {
       abi: input.abi,
       functionName: input.functionName,
       args: input.args ?? [],
+      network: input.network,
+    });
+  }
+
+  async isContract(input: { address: string; network: string }): Promise<unknown> {
+    return this.callTool("is_contract", {
+      address: input.address,
+
+      network: input.network,
+    });
+  }
+
+  async getLatestBlock(input: { network: string }): Promise<unknown> {
+    return this.callTool("get_latest_block", {
+      network: input.network,
+    });
+  }
+
+  async getTransaction(input: { txHash: string; network: string }): Promise<unknown> {
+    return this.callTool("get_transaction", {
+      txHash: input.txHash,
+
+      network: input.network,
+    });
+  }
+
+  async getTransactionReceipt(input: { txHash: string; network: string }): Promise<unknown> {
+    return this.callTool("get_transaction_receipt", {
+      txHash: input.txHash,
+
       network: input.network,
     });
   }

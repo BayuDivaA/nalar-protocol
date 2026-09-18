@@ -1,11 +1,16 @@
 const intentInput = document.getElementById("intent");
+
 const saveButton = document.getElementById("save");
-const status = document.getElementById("status");
+
+const message = document.getElementById("message");
+
 const siteName = document.getElementById("siteName");
+
+const toggle = document.getElementById("toggle");
+
 const systemStatus = document.getElementById("systemStatus");
 
-const protectionToggle = document.getElementById("protectionToggle");
-const toggleLabel = document.getElementById("toggleLabel");
+const statusDot = document.getElementById("statusDot");
 
 let currentOrigin = null;
 
@@ -37,9 +42,13 @@ async function loadSettings() {
 
   if (currentOrigin) {
     intentInput.value = intents[currentOrigin] ?? "";
-    siteName.textContent = new URL(currentOrigin).hostname;
+
+    try {
+      siteName.textContent = new URL(currentOrigin).hostname;
+    } catch {
+      siteName.textContent = "Current site";
+    }
   } else {
-    intentInput.value = "";
     siteName.textContent = "Current site unavailable";
   }
 
@@ -49,19 +58,22 @@ async function loadSettings() {
     protectionEnabled: enabled,
   });
 
-  renderProtectionState(enabled);
+  renderProtection(enabled);
 }
 
-function renderProtectionState(enabled) {
-  protectionToggle.setAttribute("aria-pressed", String(enabled));
+function renderProtection(enabled) {
+  toggle.textContent = enabled ? "ACTIVE" : "PAUSED";
 
-  protectionToggle.classList.toggle("off", !enabled);
+  toggle.classList.toggle("paused", !enabled);
 
-  toggleLabel.textContent = enabled ? "ACTIVE" : "PAUSED";
+  toggle.setAttribute("aria-pressed", String(enabled));
+
   systemStatus.textContent = enabled ? "Protection active" : "Protection paused";
+
+  statusDot.style.background = enabled ? "#9EBC9F" : "#77766F";
 }
 
-protectionToggle.addEventListener("click", async () => {
+toggle.addEventListener("click", async () => {
   const result = await chrome.storage.local.get(["protectionEnabled"]);
 
   const current = result.protectionEnabled !== false;
@@ -72,12 +84,12 @@ protectionToggle.addEventListener("click", async () => {
     protectionEnabled: next,
   });
 
-  renderProtectionState(next);
+  renderProtection(next);
 
-  status.textContent = next ? "Protection active." : "Protection paused.";
+  message.textContent = next ? "Protection active." : "Protection paused.";
 
   setTimeout(() => {
-    status.textContent = "";
+    message.textContent = "";
   }, 1600);
 });
 
@@ -85,12 +97,16 @@ saveButton.addEventListener("click", async () => {
   const intent = intentInput.value.trim();
 
   if (!intent) {
-    status.textContent = "Intent cannot be empty.";
+    message.textContent = "Describe what you expect the transaction to do.";
+
+    intentInput.focus();
+
     return;
   }
 
   if (!currentOrigin) {
-    status.textContent = "Unable to determine current website.";
+    message.textContent = "Unable to determine the current website.";
+
     return;
   }
 
@@ -104,15 +120,15 @@ saveButton.addEventListener("click", async () => {
     intents,
   });
 
-  status.textContent = "Intent saved.";
+  message.textContent = "Intent saved for this site.";
 
   setTimeout(() => {
-    status.textContent = "";
+    message.textContent = "";
   }, 1600);
 });
 
 loadSettings().catch((error) => {
-  console.error("[Nalar] Failed to load settings:", error);
+  console.error("[Nalar] Popup initialization failed:", error);
 
-  status.textContent = "Failed to load Nalar settings.";
+  message.textContent = "Unable to load Nalar settings.";
 });

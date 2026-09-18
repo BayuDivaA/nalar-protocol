@@ -1,9 +1,13 @@
 (() => {
+  "use strict";
+
   if (window.__NALAR_BRIDGE_INSTALLED__) {
     return;
   }
 
   window.__NALAR_BRIDGE_INSTALLED__ = true;
+
+  console.info("[Nalar] Extension bridge installed.");
 
   window.addEventListener("message", async (event) => {
     if (event.source !== window) {
@@ -17,90 +21,125 @@
     }
 
     try {
-      if (message.type === "GET_INTENT") {
-        const response = await chrome.runtime.sendMessage({
-          type: "GET_INTENT",
-          origin: window.location.origin,
-        });
+      switch (message.type) {
+        case "GET_PROTECTION_STATUS": {
+          const response = await chrome.runtime.sendMessage({
+            type: "GET_PROTECTION_STATUS",
 
-        window.postMessage(
-          {
-            source: "NALAR_EXTENSION",
-            type: "INTENT_RESULT",
             id: message.id,
-            intent: response?.intent ?? null,
-            error: response?.error ?? null,
-          },
-          "*",
-        );
+          });
 
-        return;
-      }
+          window.postMessage(
+            {
+              source: "NALAR_EXTENSION",
 
-      if (message.type === "SET_INTENT") {
-        const response = await chrome.runtime.sendMessage({
-          type: "SET_INTENT",
-          origin: window.location.origin,
-          intent: message.intent,
-        });
+              type: "PROTECTION_STATUS",
 
-        window.postMessage(
-          {
-            source: "NALAR_EXTENSION",
-            type: "INTENT_SAVED",
+              id: message.id,
+
+              enabled: response?.enabled === true,
+
+              error: response?.error ?? null,
+            },
+            "*",
+          );
+
+          return;
+        }
+
+        case "GET_INTENT": {
+          const response = await chrome.runtime.sendMessage({
+            type: "GET_INTENT",
+
+            origin: window.location.origin,
+
             id: message.id,
-            ok: response?.ok === true,
-            error: response?.error ?? null,
-          },
-          "*",
-        );
+          });
 
-        return;
-      }
+          window.postMessage(
+            {
+              source: "NALAR_EXTENSION",
 
-      if (message.type === "TX_REQUEST") {
-        const response = await chrome.runtime.sendMessage({
-          type: "CHECK_TRANSACTION",
-          id: message.id,
-          origin: window.location.origin,
-          chainId: message.chainId,
-          transaction: message.transaction,
-        });
+              type: "INTENT_RESULT",
 
-        window.postMessage(
-          {
-            source: "NALAR_EXTENSION",
-            type: "TX_RESULT",
+              id: message.id,
+
+              intent: response?.intent ?? null,
+
+              error: response?.error ?? null,
+            },
+            "*",
+          );
+
+          return;
+        }
+
+        case "SET_INTENT": {
+          const response = await chrome.runtime.sendMessage({
+            type: "SET_INTENT",
+
+            origin: window.location.origin,
+
+            intent: message.intent,
+
             id: message.id,
-            security: response?.security ?? null,
-            error: response?.error ?? null,
-          },
-          "*",
-        );
+          });
 
-        return;
-      }
+          window.postMessage(
+            {
+              source: "NALAR_EXTENSION",
 
-      if (message.type === "GET_PROTECTION_STATUS") {
-        const response = await chrome.runtime.sendMessage({
-          type: "GET_PROTECTION_STATUS",
-          id: message.id,
-        });
+              type: "INTENT_SAVED",
 
-        console.log("[Nalar] Protection response:", response);
+              id: message.id,
 
-        window.postMessage(
-          {
-            source: "NALAR_EXTENSION",
-            type: "PROTECTION_STATUS",
+              ok: response?.ok === true,
+
+              error: response?.error ?? null,
+            },
+            "*",
+          );
+
+          return;
+        }
+
+        case "TX_REQUEST": {
+          console.info("[Nalar] TX_REQUEST → background", message.id);
+
+          const response = await chrome.runtime.sendMessage({
+            type: "CHECK_TRANSACTION",
+
+            origin: window.location.origin,
+
             id: message.id,
-            enabled: response?.enabled === true,
-            error: response?.error ?? null,
-          },
-          "*",
-        );
 
-        return;
+            chainId: message.chainId,
+
+            transaction: message.transaction,
+          });
+
+          console.info("[Nalar] Backend result received:", message.id);
+
+          window.postMessage(
+            {
+              source: "NALAR_EXTENSION",
+
+              type: "TX_RESULT",
+
+              id: message.id,
+
+              security: response?.security ?? null,
+
+              error: response?.error ?? null,
+            },
+            "*",
+          );
+
+          return;
+        }
+
+        default:
+          return;
       }
     } catch (error) {
       console.error("[Nalar] Bridge error:", error);
@@ -108,12 +147,12 @@
       window.postMessage(
         {
           source: "NALAR_EXTENSION",
+
           type: "BRIDGE_ERROR",
+
           id: message.id,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Extension bridge failed.",
+
+          error: error instanceof Error ? error.message : "Extension bridge failed.",
         },
         "*",
       );

@@ -42,6 +42,150 @@ const EXACT_CAPABILITIES: Record<string, CapabilityDefinition> = {
   revokerole: { code: "ACCESS_CONTROL_CAPABILITY", category: "ACCESS_CONTROL" },
   renouncerole: { code: "ACCESS_CONTROL_CAPABILITY", category: "ACCESS_CONTROL" },
   default_admin_role: { code: "ACCESS_CONTROL_CAPABILITY", category: "ACCESS_CONTROL" },
+  withdraw: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  withdrawall: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  rescue: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  rescuetoken: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  rescueerc20: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  sweep: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  sweepnative: {
+    code: "WITHDRAW_CAPABILITY",
+    category: "WITHDRAW",
+  },
+
+  /*
+   * Mint / supply control
+   */
+  mintto: {
+    code: "MINT_CAPABILITY",
+    category: "MINT",
+  },
+
+  setminter: {
+    code: "MINT_CAPABILITY",
+    category: "MINT",
+  },
+
+  addminter: {
+    code: "MINT_CAPABILITY",
+    category: "MINT",
+  },
+
+  removeminter: {
+    code: "MINT_CAPABILITY",
+    category: "MINT",
+  },
+
+  /*
+   * Blacklist variants
+   */
+  setblacklist: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  addblacklisted: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  removeblacklisted: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  setbots: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  /*
+   * Tax / fee variants
+   */
+  settaxes: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  setfees: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  setbuytaxes: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  setselltax: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  /*
+   * Upgrade / admin
+   */
+  upgradeto: {
+    code: "UPGRADE_CAPABILITY",
+    category: "UPGRADE",
+  },
+
+  upgradetoandcall: {
+    code: "UPGRADE_CAPABILITY",
+    category: "UPGRADE",
+  },
+
+  changeadmin: {
+    code: "UPGRADE_CAPABILITY",
+    category: "UPGRADE",
+  },
+
+  transferadmin: {
+    code: "UPGRADE_CAPABILITY",
+    category: "UPGRADE",
+  },
+
+  /*
+   * Trading
+   */
+  enabletrading: {
+    code: "TRADING_CAPABILITY",
+    category: "TRADING",
+  },
+
+  disabletrading: {
+    code: "TRADING_CAPABILITY",
+    category: "TRADING",
+  },
+
+  settrading: {
+    code: "TRADING_CAPABILITY",
+    category: "TRADING",
+  },
 };
 
 function signatureOfFunction(fn: AbiFunction): string {
@@ -57,16 +201,18 @@ export function detectContractCapabilities(abi: Abi, evidenceSource: EvidenceSou
 
     if (!definition) return [];
 
-    return [{
-      code: definition.code,
-      category: definition.category,
-      functionSignature: signatureOfFunction(fn),
-      evidenceSource,
-      confidence: "HIGH",
-      access: "UNKNOWN",
-      functionName: fn.name,
-      kind: definition.category === "LIMITS" || definition.category === "OWNERSHIP" || definition.category === "ACCESS_CONTROL" ? undefined : definition.category,
-      evidence: `ABI exposes ${signatureOfFunction(fn)}; ABI presence does not establish who may call it.`,
-    }];
+    return [
+      {
+        code: definition.code,
+        category: definition.category,
+        functionSignature: signatureOfFunction(fn),
+        evidenceSource,
+        confidence: "HIGH",
+        access: "UNKNOWN",
+        functionName: fn.name,
+        kind: definition.category === "LIMITS" || definition.category === "OWNERSHIP" || definition.category === "ACCESS_CONTROL" ? undefined : definition.category,
+        evidence: `ABI exposes ${signatureOfFunction(fn)}; ABI presence does not establish who may call it.`,
+      },
+    ];
   });
 }

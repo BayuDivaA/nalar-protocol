@@ -1,28 +1,47 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+
+type Theme = "dark" | "light";
+
+function subscribeTheme(callback: () => void) {
+  window.addEventListener("nalar-theme-change", callback);
+  return () => window.removeEventListener("nalar-theme-change", callback);
+}
+
+function getThemeSnapshot(): Theme {
+  return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+}
+
+function getServerThemeSnapshot(): Theme {
+  return "dark";
+}
+
+function subscribeHydration() {
+  return () => undefined;
+}
+
+function getHydratedSnapshot() {
+  return true;
+}
+
+function getServerHydratedSnapshot() {
+  return false;
+}
 
 /**
  * Minimal theme toggle: sun/moon icon, persists to localStorage,
  * accessible with keyboard, animated transition.
  */
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem("nalar-theme");
-    if (stored === "light" || stored === "dark") {
-      setTheme(stored);
-    }
-  }, []);
+  const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getServerThemeSnapshot);
+  const mounted = useSyncExternalStore(subscribeHydration, getHydratedSnapshot, getServerHydratedSnapshot);
 
   function toggle() {
     const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
     document.documentElement.setAttribute("data-theme", next);
     localStorage.setItem("nalar-theme", next);
+    window.dispatchEvent(new Event("nalar-theme-change"));
   }
 
   if (!mounted) {

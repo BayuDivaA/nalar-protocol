@@ -19,6 +19,10 @@ import { auditSwapTokens } from "../services/scam/token-auditor";
 import { calculateScamRisk } from "../services/scam/scam-risk-engine";
 import { buildTransactionScamContext } from "../services/scam/transaction-scam-context";
 import { BnbAgentInvestigator } from "../services/scam/bnb-agent-investigator";
+import { analyzeTransactionThreats } from "../services/scam/transaction-threat-analyzer";
+import { BnbTransactionInvestigator } from "../services/scam/bnb-transaction-investigator";
+
+import { BnbChainMcpClient } from "../services/scam/bnb-mcp-client";
 
 export const securityRoute = new Hono();
 
@@ -38,10 +42,7 @@ const securityCheckSchema = z.object({
   }),
 });
 
-export const bnbAgentInvestigator =
-  process.env.BNB_INVESTIGATOR_ENABLED === "true"
-    ? new BnbAgentInvestigator()
-    : undefined;
+export const bnbAgentInvestigator = process.env.BNB_INVESTIGATOR_ENABLED === "true" ? new BnbAgentInvestigator() : undefined;
 
 securityRoute.post("/", async (c) => {
   try {
@@ -273,6 +274,25 @@ securityRoute.post("/", async (c) => {
       swaps: enrichedSwaps,
     };
 
+    const bnbTransactionInvestigation =
+      process.env.BNB_INVESTIGATOR_ENABLED === "true"
+        ? await new BnbTransactionInvestigator(new BnbChainMcpClient()).investigate({
+            chainId: transaction.chainId,
+
+            to,
+
+            effects: analyzedEffects,
+          })
+        : {
+            available: false,
+
+            observations: [],
+
+            contractAddresses: [],
+
+            summary: null,
+          };
+
     const actualAction = analyzedEffects.swaps.length > 0 ? "SWAP" : decoded.classification.action;
 
     console.log("[SWAP DEBUG][EFFECTS]", {
@@ -298,19 +318,42 @@ securityRoute.post("/", async (c) => {
 
       intentDescription: intent.description,
     });
-    /**
-     * STEP 6
-     *
-     * Read current blockchain state.
-     */
+
+    //Read current blockchain state.
+
     const stateDiff = await resolveEffectState(analyzedEffects);
 
+    // Deterministic transaction threat analysis.
+
+    const transactionThreatFindings = analyzeTransactionThreats({
+      from,
+      to,
+      value,
+
+      action: actualAction,
+
+      functionName: decoded.functionName ?? null,
+
+      protocol: decoded.protocol,
+
+      contractVerified: intelligence.contractVerified ?? null,
+
+      effects: analyzedEffects,
+
+      intentAllowsApproval: intent.allowApproval,
+    });
+
+    const transactionThreatRisk = calculateScamRisk(
+      transactionThreatFindings.filter(
+        (finding) => !["UNLIMITED_ALLOWANCE", "UNEXPECTED_SPENDER", "UNEXPECTED_NFT_OPERATOR", "APPROVAL_TO_CONTRACT"].includes(finding.code),
+      ),
+    );
     const scamAnalyses = await auditSwapTokens({
       chainId: transaction.chainId,
       owner: from,
       router: to,
       swaps: analyzedEffects.swaps,
-  investigator: bnbAgentInvestigator,
+      investigator: bnbAgentInvestigator,
     });
 
     const transactionScamContext = buildTransactionScamContext(scamAnalyses);
@@ -324,7 +367,11 @@ securityRoute.post("/", async (c) => {
      *
      * Deterministic risk analysis.
      */
-    const risk = mergeScamRisk(calculateRisk(stateDiff, actualAction, analyzedEffects.approvals), scamRisk);
+    const baseRisk = calculateRisk(stateDiff, actualAction, analyzedEffects.approvals);
+
+    const riskWithTokenScam = mergeScamRisk(baseRisk, scamRisk);
+
+    const risk = mergeScamRisk(riskWithTokenScam, transactionThreatRisk);
 
     /**
      * STEP 8
@@ -339,6 +386,10 @@ securityRoute.post("/", async (c) => {
       action: actualAction,
       value,
     });
+
+    const targetIsContract = decoded.contractVerified !== false;
+
+    const counterpartyAddresses = new Set(analyzedEffects.approvals.map((approval) => (approval.type === "ERC20_ALLOWANCE" ? approval.spender.toLowerCase() : approval.operator.toLowerCase())));
 
     /**
      * Final deterministic
@@ -490,6 +541,20 @@ securityRoute.post("/", async (c) => {
       reasons: decision.reasons,
 
       explanation,
+
+      transactionThreats: serializeBigInt(transactionThreatFindings),
+
+      transactionThreatRisk: serializeBigInt(transactionThreatRisk),
+
+      bnbIntelligence: {
+        available: bnbTransactionInvestigation.available,
+
+        summary: bnbTransactionInvestigation.summary,
+
+        observations: serializeBigInt(bnbTransactionInvestigation.observations),
+
+        contractAddresses: bnbTransactionInvestigation.contractAddresses,
+      },
     });
   } catch (error) {
     console.error("[SECURITY CHECK]", error);

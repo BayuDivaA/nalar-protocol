@@ -29,6 +29,7 @@
             type: "INTENT_RESULT",
             id: message.id,
             intent: response?.intent ?? null,
+            error: response?.error ?? null,
           },
           "*",
         );
@@ -65,6 +66,7 @@
           chainId: message.chainId,
           transaction: message.transaction,
         });
+
         window.postMessage(
           {
             source: "NALAR_EXTENSION",
@@ -75,12 +77,13 @@
           },
           "*",
         );
+
+        return;
       }
 
       if (message.type === "GET_PROTECTION_STATUS") {
         const response = await chrome.runtime.sendMessage({
           type: "GET_PROTECTION_STATUS",
-
           id: message.id,
         });
 
@@ -89,13 +92,9 @@
         window.postMessage(
           {
             source: "NALAR_EXTENSION",
-
             type: "PROTECTION_STATUS",
-
             id: message.id,
-
             enabled: response?.enabled === true,
-
             error: response?.error ?? null,
           },
           "*",
@@ -104,12 +103,17 @@
         return;
       }
     } catch (error) {
+      console.error("[Nalar] Bridge error:", error);
+
       window.postMessage(
         {
           source: "NALAR_EXTENSION",
           type: "BRIDGE_ERROR",
           id: message.id,
-          error: error instanceof Error ? error.message : "Extension bridge failed.",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Extension bridge failed.",
         },
         "*",
       );

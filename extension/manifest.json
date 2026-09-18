@@ -9,7 +9,7 @@
   ],
   "host_permissions": [
     "<all_urls>",
-    "http://localhost:3000/*"
+    "http://localhost:3001/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -22,6 +22,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["bridge.js"],
+      "css": ["ui.css"],
       "run_at": "document_start"
     },
     {

@@ -1,0 +1,511 @@
+
+/* ============================================================
+   NALAR TXSENTRY — UI POLISH
+   Visual direction:
+   quiet security / editorial / high-trust
+   ============================================================ */
+
+:root {
+  --nalar-ui-bg: #0a0a09;
+  --nalar-ui-surface: #10100f;
+  --nalar-ui-surface-2: #151513;
+  --nalar-ui-line: rgba(255, 255, 255, 0.075);
+  --nalar-ui-line-strong: rgba(255, 255, 255, 0.14);
+  --nalar-ui-text: #f2f1eb;
+  --nalar-ui-soft: #b7b5ad;
+  --nalar-ui-muted: #73736d;
+  --nalar-ui-danger: #ef806f;
+  --nalar-ui-warning: #e0b76d;
+  --nalar-ui-safe: #9dbb9f;
+}
+
+/* ------------------------------------------------------------
+   Overlay / modal
+   ------------------------------------------------------------ */
+
+.nalar-overlay {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,255,255,.025), transparent 34%),
+    rgba(4,4,4,.78) !important;
+  backdrop-filter: blur(10px) saturate(.85) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(.85) !important;
+}
+
+.nalar-modal {
+  position: relative !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.022), transparent 24%),
+    var(--nalar-ui-bg) !important;
+  border: 1px solid var(--nalar-ui-line-strong) !important;
+  border-radius: 16px !important;
+  box-shadow:
+    0 40px 120px rgba(0,0,0,.52),
+    0 1px 0 rgba(255,255,255,.035) inset !important;
+}
+
+.nalar-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.18),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.nalar-decision-overlay[data-decision="block"] .nalar-modal::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(239,128,111,.58),
+    transparent
+  );
+}
+
+.nalar-decision-overlay[data-decision="review"] .nalar-modal::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(224,183,109,.58),
+    transparent
+  );
+}
+
+.nalar-decision-overlay[data-decision="allow"] .nalar-modal::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(157,187,159,.58),
+    transparent
+  );
+}
+
+/* ------------------------------------------------------------
+   Decision header
+   ------------------------------------------------------------ */
+
+.nalar-decision-header {
+  padding: 24px 26px 22px !important;
+  border-bottom: 1px solid var(--nalar-ui-line) !important;
+}
+
+.nalar-decision-mark {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 12px !important;
+  border-color: var(--nalar-ui-line-strong) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)),
+    var(--nalar-ui-surface) !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18) !important;
+}
+
+.nalar-decision-header h2 {
+  font-size: 24px !important;
+  line-height: 1.06 !important;
+  letter-spacing: -.035em !important;
+}
+
+.nalar-decision-state {
+  color: var(--nalar-ui-soft) !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+.nalar-decision-risk {
+  min-width: 118px !important;
+  padding: 12px 13px !important;
+  border-radius: 11px !important;
+  background: var(--nalar-ui-surface) !important;
+  border-color: var(--nalar-ui-line) !important;
+}
+
+.nalar-decision-risk-value {
+  font-size: 13px !important;
+  letter-spacing: .02em !important;
+}
+
+.nalar-decision-risk-score {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 10px !important;
+}
+
+/* ------------------------------------------------------------
+   Body
+   ------------------------------------------------------------ */
+
+.nalar-decision-body {
+  padding: 0 26px !important;
+  max-height: min(58vh, 620px) !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(255,255,255,.16) transparent !important;
+}
+
+.nalar-decision-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nalar-decision-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nalar-decision-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,.12);
+  border-radius: 99px;
+}
+
+/* ------------------------------------------------------------
+   Sections — less "card", more report
+   ------------------------------------------------------------ */
+
+.nalar-section {
+  padding: 19px 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-line) !important;
+}
+
+.nalar-section-label {
+  margin-bottom: 9px !important;
+  color: var(--nalar-ui-muted) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .16em !important;
+}
+
+.nalar-text-block {
+  color: var(--nalar-ui-text) !important;
+  font-size: 14px !important;
+  line-height: 1.72 !important;
+}
+
+/* User intent: visually quieter */
+.nalar-decision-body .nalar-section:first-child .nalar-text-block {
+  color: var(--nalar-ui-soft) !important;
+  font-size: 13px !important;
+}
+
+/* Main explanation: make it the visual center */
+.nalar-section:has(.nalar-decision-summary) {
+  margin: 4px -12px 0 !important;
+  padding: 18px 12px 20px !important;
+  border-bottom: 1px solid var(--nalar-ui-line-strong) !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.018), transparent),
+    rgba(255,255,255,.012) !important;
+}
+
+.nalar-section:has(.nalar-decision-summary) .nalar-section-label {
+  color: #aaa9a2 !important;
+}
+
+.nalar-decision-summary {
+  max-width: 42ch !important;
+  color: var(--nalar-ui-text) !important;
+  font-size: 16px !important;
+  line-height: 1.58 !important;
+  letter-spacing: -.01em !important;
+}
+
+.nalar-decision-detail {
+  color: var(--nalar-ui-soft) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+
+.nalar-decision-detail::first-letter {
+  color: var(--nalar-ui-muted);
+}
+
+/* ------------------------------------------------------------
+   Actual transaction
+   ------------------------------------------------------------ */
+
+.nalar-decision-body .nalar-section:nth-child(2) {
+  padding-top: 18px !important;
+}
+
+.nalar-decision-body .nalar-section:nth-child(2) > div > div:first-child {
+  font-size: 17px !important;
+  font-weight: 620 !important;
+  letter-spacing: -.022em !important;
+}
+
+/* ------------------------------------------------------------
+   Intent match
+   ------------------------------------------------------------ */
+
+.nalar-intent-match {
+  margin-top: 14px !important;
+  padding-top: 12px !important;
+  color: var(--nalar-ui-muted) !important;
+  border-top: 1px solid var(--nalar-ui-line) !important;
+}
+
+.nalar-intent-match strong {
+  font-size: 11px !important;
+  letter-spacing: .02em !important;
+}
+
+.nalar-intent-match[data-match="true"] strong {
+  color: var(--nalar-ui-safe) !important;
+}
+
+.nalar-intent-match[data-match="false"] strong {
+  color: var(--nalar-ui-danger) !important;
+}
+
+/* ------------------------------------------------------------
+   Simulation
+   ------------------------------------------------------------ */
+
+.nalar-simulation {
+  padding: 13px 14px !important;
+  border: 1px solid var(--nalar-ui-line) !important;
+  border-radius: 10px !important;
+  background: var(--nalar-ui-surface) !important;
+}
+
+.nalar-simulation-result {
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+}
+
+.nalar-simulation-meta {
+  margin-top: 8px !important;
+  color: var(--nalar-ui-muted) !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 10px !important;
+}
+
+.nalar-simulation[data-success="true"] .nalar-simulation-result {
+  color: var(--nalar-ui-safe) !important;
+}
+
+.nalar-simulation[data-success="false"] .nalar-simulation-result {
+  color: var(--nalar-ui-danger) !important;
+}
+
+/* ------------------------------------------------------------
+   Evidence
+   ------------------------------------------------------------ */
+
+.nalar-section:has(.nalar-evidence-card) {
+  padding-bottom: 20px !important;
+}
+
+.nalar-evidence-card {
+  margin-top: 10px !important;
+  padding: 16px !important;
+  border: 1px solid var(--nalar-ui-line) !important;
+  border-radius: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.018), transparent),
+    var(--nalar-ui-surface) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.12) !important;
+}
+
+.nalar-evidence-heading {
+  gap: 12px !important;
+}
+
+.nalar-evidence-badge {
+  border-radius: 999px !important;
+  padding: 5px 8px !important;
+  background: rgba(157,187,159,.06) !important;
+  border-color: rgba(157,187,159,.22) !important;
+  color: var(--nalar-ui-safe) !important;
+}
+
+.nalar-finding {
+  font-size: 12px !important;
+  line-height: 1.58 !important;
+}
+
+.nalar-finding[data-severity="critical"],
+.nalar-finding[data-severity="high"] {
+  color: var(--nalar-ui-danger) !important;
+}
+
+.nalar-finding[data-severity="medium"] {
+  color: var(--nalar-ui-warning) !important;
+}
+
+/* ------------------------------------------------------------
+   Footer / actions
+   ------------------------------------------------------------ */
+
+.nalar-decision-footer {
+  padding: 18px 26px 24px !important;
+  background: rgba(255,255,255,.008) !important;
+}
+
+.nalar-decision-note {
+  color: var(--nalar-ui-muted) !important;
+  font-size: 10px !important;
+  line-height: 1.55 !important;
+}
+
+.nalar-button {
+  min-height: 44px !important;
+  border-radius: 9px !important;
+  border-color: var(--nalar-ui-line-strong) !important;
+  background: var(--nalar-ui-surface) !important;
+  color: var(--nalar-ui-text) !important;
+  font-size: 12px !important;
+  letter-spacing: -.005em !important;
+  transition:
+    transform 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease !important;
+}
+
+.nalar-button:hover {
+  border-color: rgba(255,255,255,.24) !important;
+  background: var(--nalar-ui-surface-2) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.16) !important;
+}
+
+.nalar-button.nalar-button-primary {
+  background: var(--nalar-ui-text) !important;
+  border-color: var(--nalar-ui-text) !important;
+  color: var(--nalar-ui-bg) !important;
+}
+
+.nalar-button.nalar-button-primary:hover {
+  background: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.nalar-button:active {
+  transform: translateY(1px) !important;
+}
+
+/* ------------------------------------------------------------
+   Intent screen
+   ------------------------------------------------------------ */
+
+.nalar-intent-modal {
+  border-radius: 16px !important;
+}
+
+.nalar-intent-header {
+  padding: 25px 26px 21px !important;
+  border-bottom-color: var(--nalar-ui-line) !important;
+}
+
+.nalar-intent-header h2 {
+  font-size: 24px !important;
+  letter-spacing: -.035em !important;
+}
+
+.nalar-intent-body {
+  padding: 23px 26px 18px !important;
+}
+
+.nalar-intent-origin,
+.nalar-intent-textarea {
+  background: var(--nalar-ui-surface) !important;
+  border-color: var(--nalar-ui-line) !important;
+}
+
+.nalar-intent-origin {
+  border-radius: 9px !important;
+  color: var(--nalar-ui-soft) !important;
+}
+
+.nalar-intent-textarea {
+  min-height: 126px !important;
+  border-radius: 10px !important;
+  color: var(--nalar-ui-text) !important;
+  line-height: 1.65 !important;
+}
+
+.nalar-intent-textarea::placeholder {
+  color: var(--nalar-ui-muted) !important;
+}
+
+.nalar-intent-textarea:focus {
+  border-color: rgba(255,255,255,.26) !important;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,.045),
+    0 10px 30px rgba(0,0,0,.14) !important;
+}
+
+/* ------------------------------------------------------------
+   Analysis screen
+   ------------------------------------------------------------ */
+
+.nalar-analysis-modal {
+  border-radius: 16px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%),
+    var(--nalar-ui-bg) !important;
+}
+
+.nalar-analysis-step {
+  position: relative !important;
+  padding: 10px 0 10px 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-line) !important;
+}
+
+.nalar-analysis-step:last-child {
+  border-bottom: 0 !important;
+}
+
+.nalar-analysis-step[data-state="active"] {
+  color: var(--nalar-ui-text) !important;
+}
+
+.nalar-analysis-step[data-state="done"] {
+  color: var(--nalar-ui-soft) !important;
+}
+
+.nalar-analysis-indicator {
+  transition:
+    color 180ms ease,
+    transform 180ms ease,
+    opacity 180ms ease !important;
+}
+
+.nalar-analysis-step[data-state="active"] .nalar-analysis-indicator {
+  color: var(--nalar-ui-text) !important;
+  transform: scale(1.08);
+}
+
+/* ------------------------------------------------------------
+   Small screens
+   ------------------------------------------------------------ */
+
+@media (max-width: 640px) {
+  .nalar-overlay {
+    padding: 10px !important;
+    align-items: flex-end !important;
+  }
+
+  .nalar-modal {
+    width: 100% !important;
+    max-height: calc(100vh - 20px) !important;
+    border-radius: 16px 16px 12px 12px !important;
+  }
+
+  .nalar-decision-body {
+    max-height: calc(100vh - 300px) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nalar-overlay,
+  .nalar-modal,
+  .nalar-analysis-step,
+  .nalar-button {
+    animation: none !important;
+    transition: none !important;
+  }
+}

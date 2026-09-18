@@ -460,8 +460,18 @@
   async function handleTransactionRequest({ originalRequest, args, providerLabel }) {
     const protectionEnabled = await getProtectionStatus();
 
+    console.info("[Nalar] Protection status:", {
+      provider: providerLabel,
+      enabled: protectionEnabled,
+    });
+
     if (!protectionEnabled) {
-      console.info("[Nalar] Protection paused. Forwarding transaction directly.", providerLabel);
+      showNalarMessage("Nalar protection is paused. The transaction will be sent directly to your wallet.");
+
+      console.warn(
+        "[Nalar] Protection is PAUSED. Forwarding transaction directly.",
+        providerLabel,
+      );
 
       return originalRequest(args);
     }

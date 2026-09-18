@@ -285,13 +285,10 @@
     return window.ethereum;
   }
 
-  function removeElement(id) {
+  const removeNalarElement = (id) => {
     const element = document.getElementById(id);
-
-    if (element) {
-      element.remove();
-    }
-  }
+    if (element) element.remove();
+  };
 
   /**
    * ============================================================
@@ -300,7 +297,7 @@
    */
 
   function showNalarMessage(message) {
-    removeElement(IDS.banner);
+    removeNalarElement(IDS.banner);
     installOverlayStyles();
 
     const banner = document.createElement("div");
@@ -673,7 +670,7 @@
    */
 
   function showDecisionOverlay(security, decision, onContinue, onCancel) {
-    removeElement(IDS.decision);
+    removeNalarElement(IDS.decision);
     installOverlayStyles();
 
     const overlay = document.createElement("div");
@@ -1605,7 +1602,7 @@
 
   function showIntentOverlay(existingIntent = "") {
     return new Promise((resolve) => {
-      removeElement(IDS.intent);
+      removeNalarElement(IDS.intent);
       installOverlayStyles();
 
       const overlay = document.createElement("div");
@@ -2424,7 +2421,7 @@
 })();
 
 function showAnalysisOverlay() {
-  removeElement("__nalar_analysis_overlay__");
+  removeNalarElement("__nalar_analysis_overlay__");
 
   const analysisUI = {
     background: "#121311",

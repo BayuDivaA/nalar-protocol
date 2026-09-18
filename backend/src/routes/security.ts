@@ -293,6 +293,10 @@ securityRoute.post("/", async (c) => {
             summary: null,
           };
 
+    const targetIsContract = bnbTransactionInvestigation.available ? bnbTransactionInvestigation.contractAddresses.includes(to.toLowerCase()) : null;
+
+    const counterpartyContracts = new Set(bnbTransactionInvestigation.contractAddresses.map((address) => address.toLowerCase()));
+
     const actualAction = analyzedEffects.swaps.length > 0 ? "SWAP" : decoded.classification.action;
 
     console.log("[SWAP DEBUG][EFFECTS]", {
@@ -329,25 +333,17 @@ securityRoute.post("/", async (c) => {
       from,
       to,
       value,
-
       action: actualAction,
-
       functionName: decoded.functionName ?? null,
-
       protocol: decoded.protocol,
-
       contractVerified: intelligence.contractVerified ?? null,
-
       effects: analyzedEffects,
-
       intentAllowsApproval: intent.allowApproval,
+      targetIsContract,
+      counterpartyContracts,
     });
 
-    const transactionThreatRisk = calculateScamRisk(
-      transactionThreatFindings.filter(
-        (finding) => !["UNLIMITED_ALLOWANCE", "UNEXPECTED_SPENDER", "UNEXPECTED_NFT_OPERATOR", "APPROVAL_TO_CONTRACT"].includes(finding.code),
-      ),
-    );
+    const transactionThreatRisk = calculateScamRisk(transactionThreatFindings.filter((finding) => !["UNLIMITED_ALLOWANCE", "UNEXPECTED_SPENDER", "UNEXPECTED_NFT_OPERATOR", "APPROVAL_TO_CONTRACT"].includes(finding.code)));
     const scamAnalyses = await auditSwapTokens({
       chainId: transaction.chainId,
       owner: from,
@@ -386,10 +382,6 @@ securityRoute.post("/", async (c) => {
       action: actualAction,
       value,
     });
-
-    const targetIsContract = decoded.contractVerified !== false;
-
-    const counterpartyAddresses = new Set(analyzedEffects.approvals.map((approval) => (approval.type === "ERC20_ALLOWANCE" ? approval.spender.toLowerCase() : approval.operator.toLowerCase())));
 
     /**
      * Final deterministic

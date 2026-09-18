@@ -130,6 +130,15 @@ mock.module("../../services/explanation-engine", () => ({
   },
 }));
 
+mock.module("../../services/simulator", () => ({
+  simulateTransaction: async () => ({
+    success: true,
+    gasEstimate: "500000",
+    returnData: "0x",
+    error: null,
+  }),
+}));
+
 const { default: app } = await import("../../index");
 
 const DEMO_NFT = "0x4ACCcd7a3d2e2a7c99BE0ea035B40cE03C7A14d1";

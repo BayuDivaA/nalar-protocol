@@ -34,7 +34,7 @@ export async function auditToken(input: { chainId: number; token: Address; owner
   }
 
   if (evidence.verified === false) {
-    findings.push({ code: "UNVERIFIED_CONTRACT", severity: "MEDIUM", title: "Contract source is unverified", description: "No verified ABI or source match was available for this contract.", source: "CONTRACT" });
+    findings.push({ code: "UNVERIFIED_CONTRACT", severity: "INFO", title: "Contract source is unverified", description: "No verified ABI or source match was available for this contract.", source: "CONTRACT" });
   }
 
   if (!inspectionUnavailable && (evidence.verified === null || evidence.codeAvailable === null)) {

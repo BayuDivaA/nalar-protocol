@@ -28,6 +28,18 @@ describe("BNB investigator fallback probes", () => {
     const mcp: BnbMcpClient = {
       async connect() {},
       async close() {},
+      async isContract() {
+        return false;
+      },
+      async getLatestBlock() {
+        return null;
+      },
+      async getTransaction() {
+        return null;
+      },
+      async getTransactionReceipt() {
+        return null;
+      },
 
       async getErc20TokenInfo() {
         return {

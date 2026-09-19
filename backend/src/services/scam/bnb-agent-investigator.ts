@@ -87,8 +87,6 @@ export class BnbAgentInvestigator implements ScamInvestigator {
 
       const successfulReads = contractReads.filter((item): item is ContractReadObservation => item !== null);
 
-      const state = successfulReads.map((observation) => this.toStateEvidence(observation)).filter((item): item is ContractStateEvidence => item !== null);
-
       let owner: Address | null = null;
 
       for (const observation of successfulReads) {
@@ -103,6 +101,22 @@ export class BnbAgentInvestigator implements ScamInvestigator {
         }
       }
 
+      const state = successfulReads.map((observation) => this.toStateEvidence(observation)).filter((item): item is ContractStateEvidence => item !== null);
+
+      const ownerState: ContractStateEvidence[] = owner
+        ? [
+            {
+              code: "OWNER",
+              label: "owner",
+              value: owner,
+              unit: "ADDRESS",
+              status: "KNOWN",
+              evidenceSource: "ONCHAIN",
+              evidence: "Read from BNB MCP owner().",
+            },
+          ]
+        : [];
+
       for (const observation of successfulReads) {
         observations.push(`MCP contract state ${observation.functionName}(): ${this.summarizeUnknown(observation.result)}`);
       }
@@ -114,7 +128,7 @@ export class BnbAgentInvestigator implements ScamInvestigator {
           observations,
           probes.map((probe) => probe.functionName),
         ),
-        state,
+        state: [...ownerState, ...state],
         owner,
       };
     } catch (error) {

@@ -49,4 +49,32 @@ describe("Scam risk engine", () => {
 
     expect(result.level).not.toBe("CRITICAL");
   });
+
+  test("unverified contract alone does not create security risk", async () => {
+    const result = await auditToken({
+      chainId: 97,
+      token: TOKEN,
+      owner: USER,
+      router: ROUTER,
+      provider: {
+        async inspectContract() {
+          return {
+            verified: false,
+            proxy: false,
+            implementation: null,
+            owner: null,
+            codeAvailable: true,
+            capabilities: [],
+            accessControl: [],
+            state: [],
+          };
+        },
+      },
+    });
+
+    expect(result.riskScore).toBe(0);
+    expect(result.riskLevel).toBe("LOW");
+
+    expect(result.findings.some((finding) => finding.code === "UNVERIFIED_CONTRACT")).toBe(true);
+  });
 });

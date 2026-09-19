@@ -42,7 +42,13 @@ const securityCheckSchema = z.object({
   }),
 });
 
-export const bnbAgentInvestigator = process.env.BNB_INVESTIGATOR_ENABLED === "true" ? new BnbAgentInvestigator() : undefined;
+const bnbInvestigatorEnabled = process.env.BNB_INVESTIGATOR_ENABLED === "true";
+
+export const bnbMcpClient = bnbInvestigatorEnabled ? new BnbChainMcpClient() : undefined;
+
+export const bnbAgentInvestigator = bnbMcpClient ? new BnbAgentInvestigator(bnbMcpClient) : undefined;
+
+export const bnbTransactionInvestigator = bnbMcpClient ? new BnbTransactionInvestigator(bnbMcpClient) : undefined;
 
 securityRoute.post("/", async (c) => {
   try {
@@ -274,24 +280,18 @@ securityRoute.post("/", async (c) => {
       swaps: enrichedSwaps,
     };
 
-    const bnbTransactionInvestigation =
-      process.env.BNB_INVESTIGATOR_ENABLED === "true"
-        ? await new BnbTransactionInvestigator(new BnbChainMcpClient()).investigate({
-            chainId: transaction.chainId,
-
-            to,
-
-            effects: analyzedEffects,
-          })
-        : {
-            available: false,
-
-            observations: [],
-
-            contractAddresses: [],
-
-            summary: null,
-          };
+    const bnbTransactionInvestigation = bnbTransactionInvestigator
+      ? await bnbTransactionInvestigator.investigate({
+          chainId: transaction.chainId,
+          to,
+          effects: analyzedEffects,
+        })
+      : {
+          available: false,
+          observations: [],
+          contractAddresses: [],
+          summary: null,
+        };
 
     const targetIsContract = bnbTransactionInvestigation.available ? bnbTransactionInvestigation.contractAddresses.includes(to.toLowerCase()) : null;
 

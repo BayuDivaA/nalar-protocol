@@ -22,36 +22,47 @@ export interface BnbMcpClient {
 export class BnbChainMcpClient implements BnbMcpClient {
   private client: Client | null = null;
   private transport: StdioClientTransport | null = null;
+  private connectPromise: Promise<void> | null = null;
 
   async connect(): Promise<void> {
     if (this.client) {
       return;
     }
 
-    const command = process.env.BNB_MCP_COMMAND ?? "npx";
+    if (this.connectPromise) {
+      return this.connectPromise;
+    }
 
-    const packageName = process.env.BNB_MCP_PACKAGE ?? "@bnb-chain/mcp@latest";
+    this.connectPromise = (async () => {
+      const command = process.env.BNB_MCP_COMMAND ?? "npx";
 
-    const client = new Client({
-      name: "nalar-protocol-investigator",
-      version: "1.0.0",
-    });
+      const packageName = process.env.BNB_MCP_PACKAGE ?? "@bnb-chain/mcp@latest";
 
-    const transport = new StdioClientTransport({
-      command,
-      args: ["-y", packageName],
-      env: {
-        ...process.env,
+      const client = new Client({
+        name: "nalar-protocol-investigator",
+        version: "1.0.0",
+      });
 
-        // Explicitly keep the investigator read-only.
-        PRIVATE_KEY: "",
-      },
-    });
+      const transport = new StdioClientTransport({
+        command,
+        args: ["-y", packageName],
+        env: {
+          ...process.env,
+          PRIVATE_KEY: "",
+        },
+      });
 
-    await client.connect(transport);
+      await client.connect(transport);
 
-    this.client = client;
-    this.transport = transport;
+      this.client = client;
+      this.transport = transport;
+    })();
+
+    try {
+      await this.connectPromise;
+    } finally {
+      this.connectPromise = null;
+    }
   }
 
   async close(): Promise<void> {

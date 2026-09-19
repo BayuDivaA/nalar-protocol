@@ -103,10 +103,6 @@ const EXACT_CAPABILITIES: Record<string, CapabilityDefinition> = {
   /*
    * Blacklist variants
    */
-  setblacklist: {
-    code: "BLACKLIST_CAPABILITY",
-    category: "BLACKLIST",
-  },
 
   addblacklisted: {
     code: "BLACKLIST_CAPABILITY",
@@ -141,23 +137,9 @@ const EXACT_CAPABILITIES: Record<string, CapabilityDefinition> = {
     category: "TAX",
   },
 
-  setselltax: {
-    code: "TAX_CAPABILITY",
-    category: "TAX",
-  },
-
   /*
    * Upgrade / admin
    */
-  upgradeto: {
-    code: "UPGRADE_CAPABILITY",
-    category: "UPGRADE",
-  },
-
-  upgradetoandcall: {
-    code: "UPGRADE_CAPABILITY",
-    category: "UPGRADE",
-  },
 
   changeadmin: {
     code: "UPGRADE_CAPABILITY",
@@ -172,19 +154,70 @@ const EXACT_CAPABILITIES: Record<string, CapabilityDefinition> = {
   /*
    * Trading
    */
-  enabletrading: {
-    code: "TRADING_CAPABILITY",
-    category: "TRADING",
-  },
-
-  disabletrading: {
-    code: "TRADING_CAPABILITY",
-    category: "TRADING",
-  },
 
   settrading: {
     code: "TRADING_CAPABILITY",
     category: "TRADING",
+  },
+
+  settaxrate: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  setfeerate: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  updatetax: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  updatefee: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  setfeepercent: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  settaxpercent: {
+    code: "TAX_CAPABILITY",
+    category: "TAX",
+  },
+
+  setblackliststatus: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  blockaddress: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  unblockaddress: {
+    code: "BLACKLIST_CAPABILITY",
+    category: "BLACKLIST",
+  },
+
+  setmaxtransaction: {
+    code: "LIMITS_CAPABILITY",
+    category: "LIMITS",
+  },
+
+  setmaxwalletbalance: {
+    code: "LIMITS_CAPABILITY",
+    category: "LIMITS",
+  },
+
+  setimplementation: {
+    code: "UPGRADE_CAPABILITY",
+    category: "UPGRADE",
   },
 };
 

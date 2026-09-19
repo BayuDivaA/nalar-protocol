@@ -43,29 +43,29 @@
   };
 
   const UI = {
-    bg: "#090909",
-    surface: "#10100f",
-    raised: "#151514",
+    bg: "#080b0f",
+    surface: "#0e141a",
+    raised: "#121a21",
 
-    border: "rgba(255,255,255,.085)",
+    border: "rgba(192,222,232,.12)",
 
-    borderStrong: "rgba(255,255,255,.16)",
+    borderStrong: "rgba(192,222,232,.23)",
 
-    text: "#F3F2ED",
+    text: "#EDF4F6",
 
-    soft: "#B9B7AE",
+    soft: "#A9BBC2",
 
-    muted: "#77766F",
+    muted: "#71838C",
 
-    dim: "#4F4E49",
+    dim: "#42535C",
 
-    danger: "#F07868",
+    danger: "#FF827C",
 
-    warning: "#E1B66B",
+    warning: "#EAC477",
 
-    safe: "#9EBC9F",
+    safe: "#8ADCF9",
 
-    accent: "#D7D1C2",
+    accent: "#C6EAF5",
   };
 
   const wrappedProviders = new WeakSet();
@@ -210,6 +210,16 @@
         }
       }
 
+      @keyframes nalarSweep {
+        from {
+          top: -4%;
+        }
+
+        to {
+          top: 104%;
+        }
+      }
+
       .nalar-overlay {
         animation:
           nalarFadeIn
@@ -217,10 +227,21 @@
       }
 
       .nalar-modal {
+        isolation: isolate;
         animation:
           nalarModalIn
           280ms
           cubic-bezier(.16,1,.3,1);
+      }
+
+      .nalar-modal::before {
+        position: absolute;
+        inset: 0 18px auto;
+        height: 1px;
+        content: "";
+        background: #8adcf9;
+        opacity: .65;
+        pointer-events: none;
       }
 
       .nalar-button {
@@ -232,7 +253,7 @@
 
       .nalar-button:hover {
         border-color:
-          rgba(255,255,255,.26)
+          rgba(138,220,249,.55)
           !important;
       }
 
@@ -247,6 +268,25 @@
           1.2s
           ease-in-out
           infinite;
+
+        text-shadow: 0 0 14px rgba(138,220,249,.6);
+      }
+
+      .nalar-risk-fill {
+        transition: transform 300ms ease-out;
+      }
+
+      .nalar-analysis-modal::after {
+        position: absolute;
+        top: -4%;
+        right: 0;
+        left: 0;
+        height: 1px;
+        content: "";
+        background: rgba(138,220,249,.42);
+        box-shadow: 0 0 18px rgba(138,220,249,.26);
+        pointer-events: none;
+        animation: nalarSweep 2.8s linear infinite;
       }
 
       @media (
@@ -260,6 +300,18 @@
 
         .nalar-button {
           transition: none !important;
+        }
+
+        .nalar-risk-fill {
+          transition: none !important;
+        }
+
+        .nalar-analysis-modal::after {
+          animation: none !important;
+        }
+
+        .nalar-modal::before {
+          animation: none !important;
         }
       }
     `;
@@ -886,7 +938,7 @@
       });
 
       textarea.addEventListener("focus", () => {
-        textarea.style.borderColor = "rgba(255,255,255,.32)";
+        textarea.style.borderColor = UI.safe;
       });
 
       textarea.addEventListener("blur", () => {
@@ -990,6 +1042,8 @@
     applyOverlayStyle(overlay);
 
     const modal = createModal();
+
+    modal.classList.add("nalar-analysis-modal");
 
     Object.assign(modal.style, {
       width: "min(500px, 100%)",
@@ -1310,11 +1364,44 @@
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
     });
 
+    const riskTrack = document.createElement("div");
+
+    Object.assign(riskTrack.style, {
+      height: "3px",
+
+      marginTop: "9px",
+
+      overflow: "hidden",
+
+      background: UI.raised,
+    });
+
+    const riskFill = document.createElement("div");
+
+    riskFill.className = "nalar-risk-fill";
+
+    Object.assign(riskFill.style, {
+      width: "100%",
+
+      height: "100%",
+
+      transform: `scaleX(${Math.max(0, Math.min(100, riskScore)) / 100})`,
+
+      transformOrigin: "left center",
+
+      background: riskColor(riskLevel),
+
+    });
+
+    riskTrack.appendChild(riskFill);
+
     risk.appendChild(riskLabel);
 
     risk.appendChild(riskValue);
 
     risk.appendChild(riskScoreText);
+
+    risk.appendChild(riskTrack);
 
     header.appendChild(mark);
 
@@ -1975,11 +2062,11 @@
 
       padding: "16px",
 
-      background: "rgba(0,0,0,.72)",
+      background: "rgba(4,7,10,.84)",
 
-      backdropFilter: "blur(8px)",
+      backdropFilter: "blur(3px)",
 
-      WebkitBackdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(3px)",
 
       fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
 
@@ -2001,13 +2088,13 @@
 
       border: `1px solid ${UI.borderStrong}`,
 
-      borderRadius: "16px",
+      borderRadius: "12px",
 
       background: UI.bg,
 
       color: UI.text,
 
-      boxShadow: "0 34px 110px rgba(0,0,0,.54), 0 1px 0 rgba(255,255,255,.035) inset",
+      boxShadow: "0 34px 110px rgba(0,0,0,.62), 0 1px 0 rgba(192,222,232,.055) inset",
     });
 
     return modal;

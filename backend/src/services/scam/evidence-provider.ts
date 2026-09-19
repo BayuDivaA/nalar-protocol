@@ -52,7 +52,7 @@ export interface AccessControlEvidence {
 }
 
 export interface ContractStateEvidence {
-  code: "CURRENT_SELL_TAX" | "PAUSED" | "TRADING_ENABLED" | "CURRENT_BUY_TAX" | "MAX_TX" | "MAX_WALLET" | "TOTAL_SUPPLY" | "ROUTER" | "PAIR";
+  code: "CURRENT_SELL_TAX" | "PAUSED" | "TRADING_ENABLED" | "CURRENT_BUY_TAX" | "MAX_TX" | "MAX_WALLET" | "TOTAL_SUPPLY" | "ROUTER" | "PAIR" | "OWNER";
   label: string;
   value: string | boolean | bigint | null;
   unit?: "BPS" | "PERCENT" | "RAW" | "ADDRESS" | "BOOLEAN";

@@ -40,17 +40,24 @@ async function readKnownState(address: Address, abi: Abi): Promise<ContractState
     { names: ["pair"], code: "PAIR", label: "pair", unit: "ADDRESS" },
   ];
 
-  return Promise.all(reads.flatMap((read) => {
-    const fn = functionByName(abi, read.names);
-    if (!fn || fn.stateMutability !== "view" && fn.stateMutability !== "pure") return [];
+  return Promise.all(
+    reads.flatMap((read) => {
+      const fn = functionByName(abi, read.names);
+      if (!fn || (fn.stateMutability !== "view" && fn.stateMutability !== "pure")) return [];
 
-    return [publicClient.readContract({ address, abi: [fn], functionName: fn.name }).then((value) => ({ code: read.code, label: read.label, value: readValueForState(value), unit: read.unit, status: "KNOWN" as const, evidenceSource: "ONCHAIN" as const })).catch(() => ({ code: read.code, label: read.label, value: null, unit: read.unit, status: "UNKNOWN" as const, evidenceSource: "ONCHAIN" as const }))];
-  }));
+      return [
+        publicClient
+          .readContract({ address, abi: [fn], functionName: fn.name })
+          .then((value) => ({ code: read.code, label: read.label, value: readValueForState(value), unit: read.unit, status: "KNOWN" as const, evidenceSource: "ONCHAIN" as const }))
+          .catch(() => ({ code: read.code, label: read.label, value: null, unit: read.unit, status: "UNKNOWN" as const, evidenceSource: "ONCHAIN" as const })),
+      ];
+    }),
+  );
 }
 
 async function readOwner(address: Address, abi: Abi): Promise<Address | null> {
   const fn = functionByName(abi, ["owner", "getOwner"]);
-  if (!fn || fn.stateMutability !== "view" && fn.stateMutability !== "pure") return null;
+  if (!fn || (fn.stateMutability !== "view" && fn.stateMutability !== "pure")) return null;
 
   try {
     const value = await publicClient.readContract({ address, abi: [fn], functionName: fn.name });
@@ -65,11 +72,27 @@ function accessControlEvidence(abi: Abi, owner: Address | null): AccessControlEv
   const evidence: AccessControlEvidence[] = [];
 
   if (capabilities.some((capability) => capability.code === "OWNERSHIP_CAPABILITY")) {
-    evidence.push({ mechanism: "OWNABLE", status: owner ? "VERIFIED" : "UNKNOWN", controller: owner ? "OWNER" : "UNKNOWN", address: owner, evidenceSource: owner ? "ONCHAIN" : "ABI", confidence: owner ? "HIGH" : "LOW", evidence: owner ? `Current owner resolved to ${owner}; this does not prove every mutating function is owner-only.` : "Ownership function is present, but the current owner could not be read." });
+    evidence.push({
+      mechanism: "OWNABLE",
+      status: owner ? "VERIFIED" : "UNKNOWN",
+      controller: owner ? "OWNER" : "UNKNOWN",
+      address: owner,
+      evidenceSource: owner ? "ONCHAIN" : "ABI",
+      confidence: owner ? "HIGH" : "LOW",
+      evidence: owner ? `Current owner resolved to ${owner}; this does not prove every mutating function is owner-only.` : "Ownership function is present, but the current owner could not be read.",
+    });
   }
 
   if (capabilities.some((capability) => capability.code === "ACCESS_CONTROL_CAPABILITY")) {
-    evidence.push({ mechanism: "ACCESS_CONTROL", status: "UNKNOWN", controller: "UNKNOWN", address: null, evidenceSource: "ABI", confidence: "LOW", evidence: "Role-management functions are present, but no role-to-capability mapping was proven." });
+    evidence.push({
+      mechanism: "ACCESS_CONTROL",
+      status: "UNKNOWN",
+      controller: "UNKNOWN",
+      address: null,
+      evidenceSource: "ABI",
+      confidence: "LOW",
+      evidence: "Role-management functions are present, but no role-to-capability mapping was proven.",
+    });
   }
 
   return evidence;
@@ -99,7 +122,8 @@ export class BscEvidenceProvider implements BlockchainEvidenceProvider {
     const implementation = implementationValue ? addressFromImplementationSlot(implementationValue) : null;
     const baseInspection = resolutionValue?.found && resolutionValue.contract ? await inspectAbi(input.address, resolutionValue.contract.abi, "ABI") : { capabilities: [], accessControl: [], state: [] };
     const implementationResolution = implementation ? await resolveContractAbi({ chainId: input.chainId, address: implementation }) : null;
-    const implementationInspection = implementationResolution?.found && implementationResolution.contract ? await inspectAbi(input.address, implementationResolution.contract.abi, "IMPLEMENTATION") : { capabilities: [], accessControl: [], state: [] };
+    const implementationInspection =
+      implementationResolution?.found && implementationResolution.contract ? await inspectAbi(input.address, implementationResolution.contract.abi, "IMPLEMENTATION") : { capabilities: [], accessControl: [], state: [] };
 
     return {
       verified: resolutionValue?.found ? (resolutionValue.contract?.verified ?? null) : resolutionValue?.error?.includes("not found") ? false : null,

@@ -8,19 +8,19 @@
 
     <style>
       :root {
-        --bg: #090909;
-        --surface: #10100f;
-        --raised: #151514;
-        --line: rgba(255, 255, 255, 0.08);
-        --line-strong: rgba(255, 255, 255, 0.15);
+        --bg: #080b0f;
+        --surface: #0e141a;
+        --raised: #121a21;
+        --line: rgba(192, 222, 232, 0.12);
+        --line-strong: rgba(192, 222, 232, 0.23);
 
-        --text: #f3f2ed;
-        --soft: #b9b7ae;
-        --muted: #77766f;
+        --text: #edf4f6;
+        --soft: #a9bbc2;
+        --muted: #71838c;
 
-        --safe: #9ebc9f;
-        --danger: #f07868;
-        --accent: #d7d1c2;
+        --safe: #8adcf9;
+        --danger: #ff827c;
+        --accent: #c6eaf5;
       }
 
       * {
@@ -48,6 +48,11 @@
 
       body {
         overflow-x: hidden;
+
+        background:
+          linear-gradient(rgba(138, 220, 249, 0.025) 1px, transparent 1px),
+          var(--bg);
+        background-size: 100% 36px;
       }
 
       button,
@@ -64,9 +69,11 @@
         align-items: center;
         justify-content: space-between;
 
-        padding: 18px 20px;
+        padding: 16px 20px;
 
         border-bottom: 1px solid var(--line);
+
+        background: rgba(8, 11, 15, 0.92);
       }
 
       .brand {
@@ -83,9 +90,13 @@
         place-items: center;
 
         border: 1px solid var(--line-strong);
-        border-radius: 8px;
+        border-radius: 6px;
 
         background: var(--raised);
+
+        color: var(--accent);
+
+        box-shadow: 0 0 0 1px rgba(138, 220, 249, 0.06);
 
         font-size: 11px;
         font-weight: 700;
@@ -102,7 +113,7 @@
         align-items: center;
         gap: 7px;
 
-        color: var(--soft);
+        color: var(--muted);
 
         font-size: 10px;
       }
@@ -111,13 +122,15 @@
         width: 7px;
         height: 7px;
 
-        border-radius: 50%;
+        border-radius: 2px;
 
         background: var(--safe);
+
+        box-shadow: 0 0 0 3px rgba(138, 220, 249, 0.09);
       }
 
       .content {
-        padding: 22px 20px;
+        padding: 24px 20px 22px;
       }
 
       .eyebrow,
@@ -136,7 +149,7 @@
 
         max-width: 300px;
 
-        font-size: 25px;
+        font-size: 26px;
         line-height: 1.07;
 
         letter-spacing: -0.04em;
@@ -157,9 +170,11 @@
         padding: 11px 12px;
 
         border: 1px solid var(--line);
-        border-radius: 9px;
+        border-radius: 6px;
 
         background: var(--surface);
+
+        box-shadow: inset 2px 0 0 var(--safe);
       }
 
       .site-name {
@@ -191,9 +206,9 @@
         resize: vertical;
 
         border: 1px solid var(--line-strong);
-        border-radius: 10px;
+        border-radius: 6px;
 
-        background: var(--surface);
+        background: rgba(14, 20, 26, 0.9);
         color: var(--text);
 
         outline: none;
@@ -207,8 +222,8 @@
       }
 
       .intent:focus {
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.04);
+        border-color: var(--safe);
+        box-shadow: 0 0 0 3px rgba(138, 220, 249, 0.09);
       }
 
       .save {
@@ -219,15 +234,22 @@
         margin-top: 8px;
 
         border: 1px solid var(--text);
-        border-radius: 9px;
+        border-radius: 6px;
 
-        background: var(--text);
+        background: var(--accent);
         color: var(--bg);
 
         font-size: 11px;
         font-weight: 700;
 
         cursor: pointer;
+
+        transition: background 150ms ease, transform 150ms ease;
+      }
+
+      .save:hover {
+        background: #e7f8fc;
+        transform: translateY(-1px);
       }
 
       .message {
@@ -246,7 +268,7 @@
         padding: 14px;
 
         border: 1px solid var(--line);
-        border-radius: 10px;
+        border-radius: 6px;
 
         background: var(--surface);
       }
@@ -282,12 +304,23 @@
         height: 34px;
 
         border: 1px solid var(--line-strong);
-        border-radius: 999px;
+        border-radius: 5px;
 
         background: var(--raised);
         color: var(--safe);
 
         cursor: pointer;
+
+        font-size: 9px;
+        font-weight: 750;
+        letter-spacing: 0.1em;
+
+        transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+      }
+
+      .toggle:hover {
+        border-color: var(--safe);
+        background: rgba(138, 220, 249, 0.08);
       }
 
       .toggle.paused {
@@ -313,6 +346,50 @@
         font-weight: 600;
       }
 
+      .signal-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        background: rgba(14, 20, 26, 0.64);
+      }
+
+      .signal-step {
+        min-width: 0;
+        padding: 8px 7px 7px;
+        border-left: 1px solid var(--line-strong);
+      }
+
+      .signal-step:first-child {
+        border-left: 0;
+      }
+
+      .signal-index {
+        display: block;
+        color: var(--safe);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 9px;
+      }
+
+      .signal-name {
+        display: block;
+        margin-top: 7px;
+        color: var(--soft);
+        font-size: 10px;
+        font-weight: 650;
+      }
+
+      .signal-state {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 8px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
       footer {
         padding: 14px 20px 18px;
 
@@ -324,6 +401,13 @@
         color: var(--muted);
 
         font-size: 9px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .save,
+        .toggle {
+          transition: none;
+        }
       }
     </style>
   </head>
@@ -355,6 +439,24 @@
             <div class="label">CURRENT SITE</div>
 
             <div id="siteName" class="site-name">Loading…</div>
+          </div>
+
+          <div class="signal-strip" aria-label="Nalar security flow">
+            <div class="signal-step">
+              <span class="signal-index">01</span>
+              <span class="signal-name">Intercept</span>
+              <span class="signal-state">wallet request</span>
+            </div>
+            <div class="signal-step">
+              <span class="signal-index">02</span>
+              <span class="signal-name">Analyze</span>
+              <span class="signal-state">intent + evidence</span>
+            </div>
+            <div class="signal-step">
+              <span class="signal-index">03</span>
+              <span class="signal-name">Decide</span>
+              <span class="signal-state">before signing</span>
+            </div>
           </div>
         </section>
 

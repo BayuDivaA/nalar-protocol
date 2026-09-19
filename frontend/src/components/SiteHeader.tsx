@@ -39,8 +39,10 @@ export default function SiteHeader() {
         </Link>
 
         <nav className="site-nav" aria-label="Main navigation">
-          <a href="#mechanism">Mechanism</a>
-          <a href="#evidence">Evidence</a>
+          <a href="#problem">Why Nalar</a>
+          <a href="#mechanism">How it works</a>
+          <a href="#intelligence">Intelligence</a>
+          <a href="#architecture">Architecture</a>
           <Link href="/demo">Demo</Link>
           <Link href="/install" className="site-nav-strong">Get the extension</Link>
           <ThemeToggle />
@@ -64,8 +66,10 @@ export default function SiteHeader() {
 
       {open && (
         <nav id="mobile-navigation" className="mobile-nav" aria-label="Mobile navigation">
-          <a href="#mechanism" onClick={close}>Mechanism</a>
-          <a href="#evidence" onClick={close}>Evidence</a>
+          <a href="#problem" onClick={close}>Why Nalar</a>
+          <a href="#mechanism" onClick={close}>How it works</a>
+          <a href="#intelligence" onClick={close}>Intelligence</a>
+          <a href="#architecture" onClick={close}>Architecture</a>
           <Link href="/demo" onClick={close}>Demo</Link>
           <Link href="/install" onClick={close}>Get the extension</Link>
           <a href={githubUrl} target="_blank" rel="noreferrer" onClick={close}>View source on GitHub</a>

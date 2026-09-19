@@ -70,7 +70,9 @@ function renderProtection(enabled) {
 
   systemStatus.textContent = enabled ? "Protection active" : "Protection paused";
 
-  statusDot.style.background = enabled ? "#9EBC9F" : "#77766F";
+  document.body.dataset.protection = enabled ? "active" : "paused";
+
+  statusDot.style.background = enabled ? "var(--safe)" : "var(--muted)";
 }
 
 toggle.addEventListener("click", async () => {

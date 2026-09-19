@@ -15,20 +15,23 @@ describe("Contract capability detector", () => {
 
   test("maps dangerous functions to explicit capability categories", () => {
     const capabilities = detectContractCapabilities([
-      { type: "function", name: "mint", stateMutability: "nonpayable", inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }], outputs: [] },
+      {
+        type: "function",
+        name: "mint",
+        stateMutability: "nonpayable",
+        inputs: [
+          { name: "to", type: "address" },
+          { name: "amount", type: "uint256" },
+        ],
+        outputs: [],
+      },
       { type: "function", name: "setSellTax", stateMutability: "nonpayable", inputs: [{ name: "tax", type: "uint256" }], outputs: [] },
       { type: "function", name: "blacklist", stateMutability: "nonpayable", inputs: [{ name: "account", type: "address" }], outputs: [] },
       { type: "function", name: "pause", stateMutability: "nonpayable", inputs: [], outputs: [] },
       { type: "function", name: "upgradeTo", stateMutability: "nonpayable", inputs: [{ name: "implementation", type: "address" }], outputs: [] },
     ]);
 
-    expect(capabilities.map((item) => item.code)).toEqual([
-      "MINT_CAPABILITY",
-      "TAX_CAPABILITY",
-      "BLACKLIST_CAPABILITY",
-      "PAUSE_CAPABILITY",
-      "UPGRADE_CAPABILITY",
-    ]);
+    expect(capabilities.map((item) => item.code)).toEqual(["MINT_CAPABILITY", "TAX_CAPABILITY", "BLACKLIST_CAPABILITY", "PAUSE_CAPABILITY", "UPGRADE_CAPABILITY"]);
     expect(capabilities[1]).toMatchObject({ category: "TAX", functionSignature: "setSellTax(uint256)", evidenceSource: "ABI", confidence: "HIGH" });
   });
 
@@ -41,5 +44,40 @@ describe("Contract capability detector", () => {
 
     expect(capabilities.map((item) => item.code)).toEqual(["OWNERSHIP_CAPABILITY", "ACCESS_CONTROL_CAPABILITY", "ACCESS_CONTROL_CAPABILITY"]);
     expect(capabilities.every((item) => item.access === "UNKNOWN")).toBe(true);
+  });
+
+  test("detects common tax, blacklist, limits, and upgrade variants", () => {
+    const capabilities = detectContractCapabilities([
+      {
+        type: "function",
+        name: "updateTax",
+        stateMutability: "nonpayable",
+        inputs: [{ name: "tax", type: "uint256" }],
+        outputs: [],
+      },
+      {
+        type: "function",
+        name: "blockAddress",
+        stateMutability: "nonpayable",
+        inputs: [{ name: "account", type: "address" }],
+        outputs: [],
+      },
+      {
+        type: "function",
+        name: "setMaxTransaction",
+        stateMutability: "nonpayable",
+        inputs: [{ name: "amount", type: "uint256" }],
+        outputs: [],
+      },
+      {
+        type: "function",
+        name: "setImplementation",
+        stateMutability: "nonpayable",
+        inputs: [{ name: "implementation", type: "address" }],
+        outputs: [],
+      },
+    ]);
+
+    expect(capabilities.map((item) => item.code)).toEqual(["TAX_CAPABILITY", "BLACKLIST_CAPABILITY", "LIMITS_CAPABILITY", "UPGRADE_CAPABILITY"]);
   });
 });

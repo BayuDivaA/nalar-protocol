@@ -1,4 +1,4 @@
-import { Client } from "@modelcontextprotocol/client";
+import { Client, type Transport, SSEClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 
 type JsonObject = Record<string, unknown>;
@@ -21,7 +21,7 @@ export interface BnbMcpClient {
 
 export class BnbChainMcpClient implements BnbMcpClient {
   private client: Client | null = null;
-  private transport: StdioClientTransport | null = null;
+  private transport: Transport | null = null;
   private connectPromise: Promise<void> | null = null;
 
   async connect(): Promise<void> {
@@ -34,23 +34,31 @@ export class BnbChainMcpClient implements BnbMcpClient {
     }
 
     this.connectPromise = (async () => {
-      const command = process.env.BNB_MCP_COMMAND ?? "npx";
-
-      const packageName = process.env.BNB_MCP_PACKAGE ?? "@bnb-chain/mcp@latest";
+      const transportMode = process.env.BNB_MCP_TRANSPORT ?? "stdio";
 
       const client = new Client({
         name: "nalar-protocol-investigator",
         version: "1.0.0",
       });
 
-      const transport = new StdioClientTransport({
-        command,
-        args: ["-y", packageName],
-        env: {
-          ...process.env,
-          PRIVATE_KEY: "",
-        },
-      });
+      let transport: Transport;
+
+      if (transportMode === "http") {
+        const urlStr = process.env.BNB_MCP_URL || "http://localhost:8000/sse";
+        transport = new SSEClientTransport(new URL(urlStr));
+      } else {
+        const command = process.env.BNB_MCP_COMMAND ?? "npx";
+        const packageName = process.env.BNB_MCP_PACKAGE ?? "@bnb-chain/mcp@latest";
+
+        transport = new StdioClientTransport({
+          command,
+          args: ["-y", packageName],
+          env: {
+            ...process.env,
+            PRIVATE_KEY: "",
+          },
+        });
+      }
 
       await client.connect(transport);
 
@@ -67,12 +75,24 @@ export class BnbChainMcpClient implements BnbMcpClient {
 
   async close(): Promise<void> {
     const client = this.client;
+    const transport = this.transport;
 
     this.client = null;
     this.transport = null;
 
     if (client) {
-      await client.close();
+      try {
+        await client.close();
+      } catch {
+        // Ignore close errors
+      }
+    }
+    if (transport && "close" in transport && typeof (transport as { close?: () => Promise<void> }).close === "function") {
+      try {
+        await (transport as { close: () => Promise<void> }).close();
+      } catch {
+        // Ignore close errors
+      }
     }
   }
 

@@ -43,29 +43,29 @@
   };
 
   const UI = {
-    bg: "#080b0f",
-    surface: "#0e141a",
-    raised: "#121a21",
+    bg: "#0a0a09",
+    surface: "#10100f",
+    raised: "#151513",
 
-    border: "rgba(192,222,232,.12)",
+    border: "rgba(255,255,255,.075)",
 
-    borderStrong: "rgba(192,222,232,.23)",
+    borderStrong: "rgba(255,255,255,.14)",
 
-    text: "#EDF4F6",
+    text: "#f2f1eb",
 
-    soft: "#A9BBC2",
+    soft: "#b7b5ad",
 
-    muted: "#71838C",
+    muted: "#73736d",
 
-    dim: "#42535C",
+    dim: "#4a4a45",
 
-    danger: "#FF827C",
+    danger: "#ef806f",
 
-    warning: "#EAC477",
+    warning: "#e0b76d",
 
-    safe: "#8ADCF9",
+    safe: "#9dbb9f",
 
-    accent: "#C6EAF5",
+    accent: "#f2f1eb",
   };
 
   const wrappedProviders = new WeakSet();
@@ -176,62 +176,74 @@
 
     style.textContent = `
       @keyframes nalarFadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
+        from { opacity: 0; }
+        to { opacity: 1; }
       }
 
       @keyframes nalarModalIn {
         from {
           opacity: 0;
-          transform:
-            translateY(8px)
-            scale(.985);
+          transform: translateY(8px) scale(.985);
         }
-
         to {
           opacity: 1;
-          transform:
-            translateY(0)
-            scale(1);
+          transform: translateY(0) scale(1);
         }
+      }
+
+      @keyframes nalarStepIn {
+        from {
+          opacity: 0;
+          transform: translateX(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes nalarProgressFill {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
       }
 
       @keyframes nalarPulse {
-        0%, 100% {
-          opacity: .35;
-        }
-
-        50% {
-          opacity: 1;
-        }
+        0%, 100% { opacity: .4; }
+        50% { opacity: 1; }
       }
 
       @keyframes nalarSweep {
-        from {
-          top: -4%;
-        }
+        from { top: -4%; }
+        to { top: 104%; }
+      }
 
+      @keyframes nalarRiskReveal {
+        from {
+          stroke-dashoffset: var(--nalar-ring-circumference, 220);
+        }
         to {
-          top: 104%;
+          stroke-dashoffset: var(--nalar-ring-target, 220);
+        }
+      }
+
+      @keyframes nalarNodeReveal {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
       }
 
       .nalar-overlay {
-        animation:
-          nalarFadeIn
-          160ms ease-out;
+        animation: nalarFadeIn 160ms ease-out;
       }
 
       .nalar-modal {
         isolation: isolate;
-        animation:
-          nalarModalIn
-          280ms
-          cubic-bezier(.16,1,.3,1);
+        animation: nalarModalIn 280ms cubic-bezier(.16,1,.3,1);
       }
 
       .nalar-modal::before {
@@ -239,7 +251,7 @@
         inset: 0 18px auto;
         height: 1px;
         content: "";
-        background: #8adcf9;
+        background: rgba(255,255,255,.18);
         opacity: .65;
         pointer-events: none;
       }
@@ -248,32 +260,29 @@
         transition:
           background 150ms ease,
           border-color 150ms ease,
-          transform 100ms ease;
+          transform 100ms ease,
+          box-shadow 150ms ease;
       }
 
       .nalar-button:hover {
-        border-color:
-          rgba(138,220,249,.55)
-          !important;
+        border-color: rgba(255,255,255,.24) !important;
       }
 
       .nalar-button:active {
-        transform:
-          translateY(1px);
+        transform: translateY(1px);
+      }
+
+      .nalar-button:focus-visible {
+        outline: 2px solid ${UI.safe};
+        outline-offset: 2px;
       }
 
       .nalar-analysis-active {
-        animation:
-          nalarPulse
-          1.2s
-          ease-in-out
-          infinite;
-
-        text-shadow: 0 0 14px rgba(138,220,249,.6);
+        animation: nalarPulse 1.2s ease-in-out infinite;
       }
 
       .nalar-risk-fill {
-        transition: transform 300ms ease-out;
+        transition: transform 600ms cubic-bezier(.16,1,.3,1);
       }
 
       .nalar-analysis-modal::after {
@@ -283,18 +292,26 @@
         left: 0;
         height: 1px;
         content: "";
-        background: rgba(138,220,249,.42);
-        box-shadow: 0 0 18px rgba(138,220,249,.26);
+        background: rgba(255,255,255,.2);
+        box-shadow: 0 0 12px rgba(255,255,255,.1);
         pointer-events: none;
-        animation: nalarSweep 2.8s linear infinite;
+        animation: nalarSweep 3s linear infinite;
       }
 
-      @media (
-        prefers-reduced-motion: reduce
-      ) {
+      .nalar-step-progress {
+        transform-origin: left center;
+        transition: transform 400ms cubic-bezier(.16,1,.3,1);
+      }
+
+      .nalar-timeline-node {
+        animation: nalarNodeReveal 300ms ease-out both;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
         .nalar-overlay,
         .nalar-modal,
-        .nalar-analysis-active {
+        .nalar-analysis-active,
+        .nalar-timeline-node {
           animation: none !important;
         }
 
@@ -302,7 +319,8 @@
           transition: none !important;
         }
 
-        .nalar-risk-fill {
+        .nalar-risk-fill,
+        .nalar-step-progress {
           transition: none !important;
         }
 
@@ -907,42 +925,33 @@
 
       textarea.placeholder = "Example: Swap 0.001 tBNB to NDEMO";
 
+      textarea.className = "nalar-intent-textarea";
+
       Object.assign(textarea.style, {
         display: "block",
-
         width: "100%",
-
         minHeight: "128px",
-
         marginTop: "8px",
-
         resize: "vertical",
-
         padding: "14px",
-
         border: `1px solid ${UI.borderStrong}`,
-
-        borderRadius: "10px",
-
+        borderRadius: "8px",
         outline: "none",
-
         background: UI.surface,
-
         color: UI.text,
-
         fontSize: "13px",
-
         lineHeight: "1.6",
-
         fontFamily: "inherit",
       });
 
       textarea.addEventListener("focus", () => {
-        textarea.style.borderColor = UI.safe;
+        textarea.style.borderColor = "rgba(255,255,255,.26)";
+        textarea.style.boxShadow = "0 0 0 3px rgba(255,255,255,.045)";
       });
 
       textarea.addEventListener("blur", () => {
         textarea.style.borderColor = UI.borderStrong;
+        textarea.style.boxShadow = "none";
       });
 
       body.appendChild(intentLabel);
@@ -1046,7 +1055,7 @@
     modal.classList.add("nalar-analysis-modal");
 
     Object.assign(modal.style, {
-      width: "min(500px, 100%)",
+      width: "min(480px, 100%)",
       padding: "28px",
     });
 
@@ -1054,84 +1063,128 @@
 
     const title = document.createElement("h2");
 
-    title.textContent = "Reading the transaction";
+    title.textContent = "Analyzing transaction";
 
     Object.assign(title.style, {
       margin: "10px 0 0",
-
-      fontSize: "24px",
-
+      fontSize: "22px",
       lineHeight: "1.08",
-
-      letterSpacing: "-.035em",
-
+      letterSpacing: "-.03em",
       color: UI.text,
     });
 
     const subtitle = document.createElement("p");
 
-    subtitle.textContent = "Nalar is checking the request before your wallet is asked to sign.";
+    subtitle.textContent = "Checking the request before your wallet is asked to sign.";
 
     Object.assign(subtitle.style, {
       margin: "10px 0 0",
-
       fontSize: "13px",
-
       lineHeight: "1.6",
-
       color: UI.soft,
     });
 
+    const counter = document.createElement("div");
+
+    Object.assign(counter.style, {
+      marginTop: "20px",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      fontSize: "10px",
+      color: UI.muted,
+    });
+
+    counter.textContent = `01 / ${String(ANALYSIS_STEPS.length).padStart(2, "0")}`;
+
     const list = document.createElement("div");
 
-    list.style.marginTop = "24px";
+    list.style.marginTop = "8px";
 
     const rows = ANALYSIS_STEPS.map((label, index) => {
       const row = document.createElement("div");
 
+      row.setAttribute("data-state", index === 0 ? "active" : "pending");
+
       Object.assign(row.style, {
         display: "grid",
-
-        gridTemplateColumns: "20px 1fr",
-
+        gridTemplateColumns: "22px 1fr",
         alignItems: "center",
-
         gap: "10px",
-
-        padding: "11px 0",
-
+        padding: "10px 0",
         borderBottom: `1px solid ${UI.border}`,
+        opacity: index === 0 ? "1" : "0",
+        animation: `nalarStepIn 200ms ease-out ${index * 80}ms both`,
       });
 
-      const dot = document.createElement("div");
+      if (index === ANALYSIS_STEPS.length - 1) {
+        row.style.borderBottom = "none";
+      }
 
-      dot.textContent = index === 0 ? "●" : "○";
+      const indicator = document.createElement("div");
 
-      dot.style.color = index === 0 ? UI.text : UI.dim;
+      indicator.className = "nalar-analysis-indicator";
 
-      dot.style.fontSize = "10px";
+      Object.assign(indicator.style, {
+        width: "22px",
+        height: "22px",
+        display: "grid",
+        placeItems: "center",
+        fontSize: "10px",
+        fontWeight: "600",
+      });
 
-      dot.style.textAlign = "center";
+      if (index === 0) {
+        indicator.textContent = "●";
+        indicator.style.color = UI.text;
+        indicator.classList.add("nalar-analysis-active");
+      } else {
+        indicator.textContent = "○";
+        indicator.style.color = UI.dim;
+      }
+
+      const textWrap = document.createElement("div");
 
       const text = document.createElement("div");
 
       text.textContent = label;
 
-      text.style.color = index === 0 ? UI.text : UI.dim;
-
       text.style.fontSize = "12px";
 
-      row.appendChild(dot);
+      text.style.color = index === 0 ? UI.text : UI.dim;
 
-      row.appendChild(text);
+      const progress = document.createElement("div");
+
+      Object.assign(progress.style, {
+        height: "2px",
+        marginTop: "6px",
+        background: UI.raised,
+        overflow: "hidden",
+        borderRadius: "1px",
+      });
+
+      const progressFill = document.createElement("div");
+
+      progressFill.className = "nalar-step-progress";
+
+      Object.assign(progressFill.style, {
+        width: "100%",
+        height: "100%",
+        background: UI.safe,
+        transform: "scaleX(0)",
+      });
+
+      progress.appendChild(progressFill);
+
+      textWrap.appendChild(text);
+
+      textWrap.appendChild(progress);
+
+      row.appendChild(indicator);
+
+      row.appendChild(textWrap);
 
       list.appendChild(row);
 
-      return {
-        dot,
-        text,
-        row,
-      };
+      return { indicator, text, row, progressFill };
     });
 
     modal.appendChild(eyebrow);
@@ -1139,6 +1192,8 @@
     modal.appendChild(title);
 
     modal.appendChild(subtitle);
+
+    modal.appendChild(counter);
 
     modal.appendChild(list);
 
@@ -1151,47 +1206,47 @@
     const timer = setInterval(() => {
       if (!document.getElementById(IDS.analysis)) {
         clearInterval(timer);
-
         return;
       }
 
       rows.forEach((item, index) => {
         if (index < current) {
-          item.dot.textContent = "✓";
-
-          item.dot.style.color = UI.safe;
-
+          item.indicator.textContent = "✓";
+          item.indicator.style.color = UI.safe;
+          item.indicator.classList.remove("nalar-analysis-active");
           item.text.style.color = UI.soft;
+          item.progressFill.style.transform = "scaleX(1)";
+          item.row.setAttribute("data-state", "done");
         } else if (index === current) {
-          item.dot.textContent = "●";
-
-          item.dot.classList.add("nalar-analysis-active");
-
-          item.dot.style.color = UI.text;
-
+          item.indicator.textContent = "●";
+          item.indicator.classList.add("nalar-analysis-active");
+          item.indicator.style.color = UI.text;
           item.text.style.color = UI.text;
+          item.progressFill.style.transform = "scaleX(0.6)";
+          item.row.setAttribute("data-state", "active");
         } else {
-          item.dot.textContent = "○";
-
-          item.dot.classList.remove("nalar-analysis-active");
-
-          item.dot.style.color = UI.dim;
-
+          item.indicator.textContent = "○";
+          item.indicator.classList.remove("nalar-analysis-active");
+          item.indicator.style.color = UI.dim;
           item.text.style.color = UI.dim;
+          item.progressFill.style.transform = "scaleX(0)";
+          item.row.setAttribute("data-state", "pending");
         }
       });
 
+      counter.textContent = `${String(current + 1).padStart(2, "0")} / ${String(ANALYSIS_STEPS.length).padStart(2, "0")}`;
+
       current += 1;
 
+      // hold on last step until backend responds
       if (current >= rows.length) {
         current = rows.length - 1;
       }
-    }, 480);
+    }, 520);
 
     return {
       remove() {
         clearInterval(timer);
-
         removeNalarElement(IDS.analysis);
       },
     };
@@ -1212,19 +1267,18 @@
 
     overlay.id = IDS.decision;
 
-    overlay.className = "nalar-overlay";
+    overlay.className = "nalar-overlay nalar-decision-overlay";
+
+    overlay.setAttribute("data-decision", decision.toLowerCase());
 
     applyOverlayStyle(overlay);
 
     const modal = createModal();
 
     Object.assign(modal.style, {
-      width: "min(560px, 100%)",
-
+      width: "min(540px, 100%)",
       maxHeight: "calc(100vh - 32px)",
-
       display: "flex",
-
       flexDirection: "column",
     });
 
@@ -1234,49 +1288,35 @@
 
     const status = getDecisionStatus(decision);
 
-    /*
-     * Header
-     */
-
     const header = document.createElement("header");
+
+    header.className = "nalar-decision-header";
 
     Object.assign(header.style, {
       display: "grid",
-
-      gridTemplateColumns: "46px 1fr auto",
-
+      gridTemplateColumns: "44px 1fr auto",
       gap: "14px",
-
       alignItems: "center",
-
       padding: "24px 26px 22px",
-
       borderBottom: `1px solid ${UI.border}`,
     });
 
     const mark = document.createElement("div");
 
-    mark.textContent = decision === "BLOCK" ? "!" : decision === "REVIEW" ? "?" : "✓";
+    mark.className = "nalar-decision-mark";
+
+    mark.textContent = decision === "BLOCK" ? "✕" : decision === "REVIEW" ? "?" : "✓";
 
     Object.assign(mark.style, {
-      width: "46px",
-
-      height: "46px",
-
+      width: "44px",
+      height: "44px",
       display: "grid",
-
       placeItems: "center",
-
       border: `1px solid ${UI.borderStrong}`,
-
-      borderRadius: "12px",
-
+      borderRadius: "10px",
       background: UI.surface,
-
       color: decision === "BLOCK" ? UI.danger : decision === "REVIEW" ? UI.warning : UI.safe,
-
-      fontSize: "20px",
-
+      fontSize: "18px",
       fontWeight: "700",
     });
 
@@ -1289,308 +1329,79 @@
     heading.textContent = status.title;
 
     Object.assign(heading.style, {
-      margin: "7px 0 0",
-
-      fontSize: "24px",
-
-      lineHeight: "1.05",
-
-      letterSpacing: "-.035em",
-
+      margin: "6px 0 0",
+      fontSize: "22px",
+      lineHeight: "1.06",
+      letterSpacing: "-.03em",
       color: UI.text,
     });
 
-    const stateText = document.createElement("div");
+    const severityRow = document.createElement("div");
 
-    stateText.textContent = status.label;
-
-    Object.assign(stateText.style, {
-      marginTop: "7px",
-
-      fontSize: "11px",
-
-      color: UI.soft,
-
-      lineHeight: "1.45",
+    Object.assign(severityRow.style, {
+      marginTop: "6px",
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
     });
+
+    const severityText = document.createElement("span");
+
+    severityText.textContent = riskLevel;
+
+    Object.assign(severityText.style, {
+      fontSize: "10px",
+      fontWeight: "700",
+      letterSpacing: ".06em",
+      color: riskColor(riskLevel),
+    });
+
+    const scoreText = document.createElement("span");
+
+    scoreText.textContent = `${riskScore}/100`;
+
+    Object.assign(scoreText.style, {
+      fontSize: "10px",
+      color: UI.muted,
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    });
+
+    severityRow.appendChild(severityText);
+
+    severityRow.appendChild(scoreText);
 
     headingWrap.appendChild(eyebrow);
 
     headingWrap.appendChild(heading);
 
-    headingWrap.appendChild(stateText);
+    headingWrap.appendChild(severityRow);
 
-    const risk = document.createElement("div");
-
-    Object.assign(risk.style, {
-      minWidth: "108px",
-
-      padding: "11px 12px",
-
-      border: `1px solid ${UI.border}`,
-
-      borderRadius: "10px",
-
-      background: UI.surface,
-    });
-
-    const riskLabel = createLabel("RISK");
-
-    const riskValue = document.createElement("div");
-
-    riskValue.textContent = riskLevel;
-
-    Object.assign(riskValue.style, {
-      marginTop: "5px",
-
-      color: riskColor(riskLevel),
-
-      fontSize: "12px",
-
-      fontWeight: "700",
-    });
-
-    const riskScoreText = document.createElement("div");
-
-    riskScoreText.textContent = `${riskScore}/100`;
-
-    Object.assign(riskScoreText.style, {
-      marginTop: "4px",
-
-      color: UI.muted,
-
-      fontSize: "10px",
-
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-    });
-
-    const riskTrack = document.createElement("div");
-
-    Object.assign(riskTrack.style, {
-      height: "3px",
-
-      marginTop: "9px",
-
-      overflow: "hidden",
-
-      background: UI.raised,
-    });
-
-    const riskFill = document.createElement("div");
-
-    riskFill.className = "nalar-risk-fill";
-
-    Object.assign(riskFill.style, {
-      width: "100%",
-
-      height: "100%",
-
-      transform: `scaleX(${Math.max(0, Math.min(100, riskScore)) / 100})`,
-
-      transformOrigin: "left center",
-
-      background: riskColor(riskLevel),
-
-    });
-
-    riskTrack.appendChild(riskFill);
-
-    risk.appendChild(riskLabel);
-
-    risk.appendChild(riskValue);
-
-    risk.appendChild(riskScoreText);
-
-    risk.appendChild(riskTrack);
+    const riskRing = createRiskRing(riskScore, riskLevel);
 
     header.appendChild(mark);
 
     header.appendChild(headingWrap);
 
-    header.appendChild(risk);
-
-    /*
-     * Scroll body
-     */
+    header.appendChild(riskRing);
 
     const body = document.createElement("main");
 
+    body.className = "nalar-decision-body";
+
     Object.assign(body.style, {
       overflowY: "auto",
-
       padding: "0 26px",
-
       flex: "1 1 auto",
     });
 
-    /*
-     * User intent
-     */
+    // security summary
+    const summaryData = buildSecuritySummary(security, decision);
 
-    const intent = security?.intent?.description ?? "No intent description available.";
-
-    body.appendChild(createSection("YOUR REQUEST", createText(intent)));
-
-    /*
-     * Actual transaction
-     */
-
-    const summary = security?.transactionSummary ?? {};
-
-    const tx = document.createElement("div");
-
-    const txTitle = document.createElement("div");
-
-    txTitle.textContent = summary.title ?? humanizeAction(security?.actual?.action);
-
-    Object.assign(txTitle.style, {
-      fontSize: "17px",
-
-      fontWeight: "650",
-
-      letterSpacing: "-.02em",
-
-      color: UI.text,
-    });
-
-    const txDescription = document.createElement("div");
-
-    txDescription.textContent = summary.description ?? "Transaction details are available in the technical reference.";
-
-    Object.assign(txDescription.style, {
-      marginTop: "7px",
-
-      fontSize: "13px",
-
-      lineHeight: "1.6",
-
-      color: UI.soft,
-    });
-
-    tx.appendChild(txTitle);
-
-    tx.appendChild(txDescription);
-
-    if (Array.isArray(summary.details) && summary.details.length) {
-      const details = document.createElement("div");
-
-      details.style.marginTop = "13px";
-
-      summary.details.slice(0, 6).forEach((item) => {
-        const row = document.createElement("div");
-
-        row.textContent = item;
-
-        Object.assign(row.style, {
-          padding: "6px 0",
-
-          fontSize: "11px",
-
-          color: UI.muted,
-        });
-
-        details.appendChild(row);
-      });
-
-      tx.appendChild(details);
+    if (summaryData.length) {
+      body.appendChild(createSection("SECURITY SUMMARY", createSecuritySummary(summaryData)));
     }
 
-    body.appendChild(createSection("WHAT WILL HAPPEN", tx));
-
-    /*
-     * Intent match
-     */
-
-    if (typeof security?.intentMatch === "boolean") {
-      const match = document.createElement("div");
-
-      Object.assign(match.style, {
-        display: "flex",
-
-        justifyContent: "space-between",
-
-        gap: "12px",
-
-        paddingTop: "13px",
-
-        marginTop: "-1px",
-
-        borderTop: `1px solid ${UI.border}`,
-
-        fontSize: "11px",
-
-        color: UI.muted,
-      });
-
-      const matchValue = document.createElement("strong");
-
-      matchValue.textContent = security.intentMatch ? "Matches your request" : "Does not match your request";
-
-      matchValue.style.color = security.intentMatch ? UI.safe : UI.danger;
-
-      match.appendChild(document.createTextNode("Intent check"));
-
-      match.appendChild(matchValue);
-
-      tx.appendChild(match);
-    }
-
-    /*
-     * Simulation
-     */
-
-    const simulation = security?.simulation;
-
-    if (simulation && typeof simulation.success === "boolean") {
-      const sim = document.createElement("div");
-
-      Object.assign(sim.style, {
-        padding: "13px 14px",
-
-        border: `1px solid ${UI.border}`,
-
-        borderRadius: "10px",
-
-        background: UI.surface,
-      });
-
-      const simStatus = document.createElement("div");
-
-      simStatus.textContent = simulation.success ? "Simulation completed." : "Simulation failed.";
-
-      simStatus.style.color = simulation.success ? UI.safe : UI.danger;
-
-      simStatus.style.fontSize = "12px";
-
-      simStatus.style.fontWeight = "600";
-
-      sim.appendChild(simStatus);
-
-      if (simulation.gasEstimate) {
-        const gas = document.createElement("div");
-
-        gas.textContent = `Gas estimate: ${simulation.gasEstimate}`;
-
-        Object.assign(gas.style, {
-          marginTop: "7px",
-
-          color: UI.muted,
-
-          fontSize: "10px",
-
-          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-        });
-
-        sim.appendChild(gas);
-      }
-
-      body.appendChild(createSection("SIMULATION", sim));
-    }
-
-    /*
-     * Explanation
-     */
-
+    // explanation
     const explanation = security?.explanation ?? {};
 
     const primaryReason =
@@ -1598,9 +1409,7 @@
 
     const details = dedupe([
       ...(Array.isArray(explanation.details) ? explanation.details : []),
-
       ...(Array.isArray(explanation.reasons) ? explanation.reasons : []),
-
       ...(decision !== "ALLOW" && Array.isArray(security?.reasons) ? security.reasons : []),
     ]).filter((item) => item !== primaryReason);
 
@@ -1608,99 +1417,97 @@
 
     const primary = document.createElement("div");
 
+    primary.className = "nalar-decision-summary";
+
     primary.textContent = primaryReason;
 
     Object.assign(primary.style, {
       fontSize: "16px",
-
-      lineHeight: "1.6",
-
+      lineHeight: "1.58",
       color: UI.text,
-
       letterSpacing: "-.01em",
+      maxWidth: "42ch",
     });
 
     explanationBox.appendChild(primary);
 
     if (details.length) {
-      const list = document.createElement("div");
+      const detailList = document.createElement("div");
 
-      list.style.marginTop = "14px";
+      detailList.style.marginTop = "14px";
 
       details.slice(0, 5).forEach((item) => {
         const row = document.createElement("div");
 
-        row.textContent = `• ${item}`;
+        row.className = "nalar-decision-detail";
+
+        row.textContent = `· ${item}`;
 
         Object.assign(row.style, {
-          marginBottom: "7px",
-
+          marginBottom: "6px",
           color: UI.soft,
-
           fontSize: "12px",
-
-          lineHeight: "1.55",
+          lineHeight: "1.6",
         });
 
-        list.appendChild(row);
+        detailList.appendChild(row);
       });
 
-      explanationBox.appendChild(list);
+      explanationBox.appendChild(detailList);
     }
 
     body.appendChild(createSection(decision === "BLOCK" ? "WHY NALAR STOPPED IT" : "NALAR'S READING", explanationBox));
 
-    /*
-     * Scam intelligence
-     */
-
+    // scam intelligence / evidence hierarchy
     const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
 
     if (reports.length) {
-      body.appendChild(createScamSection(reports));
+      body.appendChild(createEvidenceSection(reports));
     }
 
-    /*
-     * Technical details
-     */
+    // evidence timeline
+    const timelineData = buildTimelineData(security, decision);
 
+    if (timelineData.length) {
+      body.appendChild(createSection("EVIDENCE CHAIN", createEvidenceTimeline(timelineData)));
+    }
+
+    // intent match
+    if (typeof security?.intentMatch === "boolean") {
+      body.appendChild(createIntentMatchSection(security));
+    }
+
+    // technical details
     body.appendChild(createTechnicalSection(security));
-
-    /*
-     * Footer
-     */
 
     const footer = document.createElement("footer");
 
+    footer.className = "nalar-decision-footer";
+
     Object.assign(footer.style, {
       padding: "18px 26px 24px",
-
       borderTop: `1px solid ${UI.border}`,
-
       flex: "0 0 auto",
     });
 
     const note = document.createElement("div");
 
+    note.className = "nalar-decision-note";
+
     note.textContent = getFooterNote(decision);
 
     Object.assign(note.style, {
       marginBottom: "13px",
-
       color: UI.muted,
-
       fontSize: "10px",
-
-      lineHeight: "1.5",
+      lineHeight: "1.55",
     });
 
     const actions = document.createElement("div");
 
     Object.assign(actions.style, {
       display: "grid",
-
       gridTemplateColumns: decision === "BLOCK" ? "1fr" : "120px 1fr",
-
       gap: "8px",
     });
 
@@ -1751,33 +1558,30 @@
   |--------------------------------------------------------------------------
   */
 
-  function createScamSection(reports) {
+  function createEvidenceSection(reports) {
     const wrapper = document.createElement("div");
 
     reports.forEach((analysis) => {
       const card = document.createElement("div");
 
+      card.className = "nalar-evidence-card";
+
       Object.assign(card.style, {
         marginTop: "10px",
-
-        padding: "15px",
-
+        padding: "16px",
         border: `1px solid ${UI.border}`,
-
-        borderRadius: "11px",
-
+        borderRadius: "10px",
         background: UI.surface,
       });
 
       const head = document.createElement("div");
 
+      head.className = "nalar-evidence-heading";
+
       Object.assign(head.style, {
         display: "flex",
-
         justifyContent: "space-between",
-
         alignItems: "center",
-
         gap: "12px",
       });
 
@@ -1797,10 +1601,9 @@
 
       Object.assign(badge.style, {
         color: riskColor(analysis?.riskLevel),
-
         fontSize: "10px",
-
         fontWeight: "700",
+        letterSpacing: ".04em",
       });
 
       head.appendChild(token);
@@ -1817,21 +1620,25 @@
         findingList.style.marginTop = "13px";
 
         findings.slice(0, 5).forEach((finding) => {
+          const severity = String(finding?.severity ?? "INFO").toUpperCase();
+          const isThreat = severity === "CRITICAL" || severity === "HIGH";
+
           const row = document.createElement("div");
 
-          const severity = String(finding?.severity ?? "INFO").toUpperCase();
+          row.className = "nalar-finding";
 
-          row.textContent = finding?.title ?? finding?.code ?? "Security finding";
+          row.setAttribute("data-severity", severity.toLowerCase());
 
           Object.assign(row.style, {
-            padding: "6px 0",
-
+            padding: "5px 0",
             fontSize: "12px",
-
-            lineHeight: "1.5",
-
-            color: severity === "CRITICAL" || severity === "HIGH" ? UI.danger : severity === "MEDIUM" ? UI.warning : UI.soft,
+            lineHeight: "1.55",
+            color: isThreat ? UI.danger : severity === "MEDIUM" ? UI.warning : UI.muted,
           });
+
+          const title = finding?.title ?? finding?.code ?? "Security finding";
+
+          row.textContent = isThreat ? title : title;
 
           findingList.appendChild(row);
         });
@@ -1846,9 +1653,7 @@
 
         Object.assign(state.style, {
           marginTop: "12px",
-
           paddingTop: "12px",
-
           borderTop: `1px solid ${UI.border}`,
         });
 
@@ -1857,13 +1662,9 @@
 
           Object.assign(row.style, {
             display: "flex",
-
             justifyContent: "space-between",
-
             gap: "12px",
-
-            padding: "5px 0",
-
+            padding: "4px 0",
             fontSize: "11px",
           });
 
@@ -1889,6 +1690,8 @@
 
           value.style.color = UI.soft;
 
+          value.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
           row.appendChild(label);
 
           row.appendChild(value);
@@ -1903,22 +1706,17 @@
         const source = document.createElement("div");
 
         Object.assign(source.style, {
-          marginTop: "13px",
-
+          marginTop: "12px",
           paddingTop: "11px",
-
           borderTop: `1px solid ${UI.border}`,
-
           display: "flex",
-
           justifyContent: "space-between",
-
           alignItems: "center",
         });
 
         const label = document.createElement("span");
 
-        label.textContent = "BNB Intelligence";
+        label.textContent = "BNB MCP";
 
         label.style.color = UI.muted;
 
@@ -1926,15 +1724,12 @@
 
         const evidence = document.createElement("span");
 
-        evidence.textContent = "ON-CHAIN EVIDENCE";
+        evidence.textContent = "ON-CHAIN";
 
         Object.assign(evidence.style, {
           color: UI.safe,
-
           fontSize: "8px",
-
           letterSpacing: ".08em",
-
           fontWeight: "700",
         });
 
@@ -1948,7 +1743,7 @@
       wrapper.appendChild(card);
     });
 
-    return createSection("SCAM INTELLIGENCE", wrapper);
+    return createSection("SECURITY EVIDENCE", wrapper);
   }
 
   /*
@@ -1962,7 +1757,6 @@
 
     Object.assign(wrapper.style, {
       padding: "17px 0",
-
       borderBottom: `1px solid ${UI.border}`,
     });
 
@@ -1972,11 +1766,8 @@
 
     Object.assign(summary.style, {
       cursor: "pointer",
-
       color: UI.soft,
-
       fontSize: "11px",
-
       userSelect: "none",
     });
 
@@ -2002,12 +1793,9 @@
 
       Object.assign(row.style, {
         display: "flex",
-
         justifyContent: "space-between",
-
         gap: "12px",
-
-        padding: "5px 0",
+        padding: "4px 0",
       });
 
       const left = document.createElement("span");
@@ -2049,27 +1837,16 @@
   function applyOverlayStyle(overlay) {
     Object.assign(overlay.style, {
       position: "fixed",
-
       inset: "0",
-
       zIndex: "2147483647",
-
       display: "flex",
-
       alignItems: "center",
-
       justifyContent: "center",
-
       padding: "16px",
-
-      background: "rgba(4,7,10,.84)",
-
-      backdropFilter: "blur(3px)",
-
-      WebkitBackdropFilter: "blur(3px)",
-
+      background: "rgba(4,4,4,.78)",
+      backdropFilter: "blur(10px) saturate(.85)",
+      WebkitBackdropFilter: "blur(10px) saturate(.85)",
       fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-
       boxSizing: "border-box",
     });
   }
@@ -2081,20 +1858,13 @@
 
     Object.assign(modal.style, {
       position: "relative",
-
       width: "min(520px, 100%)",
-
       overflow: "hidden",
-
       border: `1px solid ${UI.borderStrong}`,
-
-      borderRadius: "12px",
-
+      borderRadius: "14px",
       background: UI.bg,
-
       color: UI.text,
-
-      boxShadow: "0 34px 110px rgba(0,0,0,.62), 0 1px 0 rgba(192,222,232,.055) inset",
+      boxShadow: "0 40px 120px rgba(0,0,0,.52), 0 1px 0 rgba(255,255,255,.035) inset",
     });
 
     return modal;
@@ -2103,15 +1873,14 @@
   function createLabel(text) {
     const label = document.createElement("div");
 
+    label.className = "nalar-section-label";
+
     label.textContent = text;
 
     Object.assign(label.style, {
       fontSize: "9px",
-
       letterSpacing: ".16em",
-
       fontWeight: "700",
-
       color: UI.muted,
     });
 
@@ -2121,13 +1890,13 @@
   function createText(text) {
     const element = document.createElement("div");
 
+    element.className = "nalar-text-block";
+
     element.textContent = text;
 
     Object.assign(element.style, {
       color: UI.text,
-
       fontSize: "13px",
-
       lineHeight: "1.7",
     });
 
@@ -2137,9 +1906,10 @@
   function createSection(label, content) {
     const section = document.createElement("section");
 
+    section.className = "nalar-section";
+
     Object.assign(section.style, {
       padding: "18px 0",
-
       borderBottom: `1px solid ${UI.border}`,
     });
 
@@ -2157,7 +1927,7 @@
   function createButton(label, primary) {
     const button = document.createElement("button");
 
-    button.className = "nalar-button";
+    button.className = primary ? "nalar-button nalar-button-primary" : "nalar-button";
 
     button.type = "button";
 
@@ -2165,25 +1935,417 @@
 
     Object.assign(button.style, {
       minHeight: "44px",
-
       padding: "0 14px",
-
       border: `1px solid ${primary ? UI.text : UI.borderStrong}`,
-
-      borderRadius: "9px",
-
+      borderRadius: "8px",
       background: primary ? UI.text : UI.surface,
-
       color: primary ? UI.bg : UI.text,
-
       fontSize: "12px",
-
-      fontWeight: "650",
-
+      fontWeight: "600",
       cursor: "pointer",
     });
 
     return button;
+  }
+
+  function createRiskRing(score, level) {
+    const container = document.createElement("div");
+
+    container.className = "nalar-risk-ring";
+
+    Object.assign(container.style, {
+      minWidth: "110px",
+      padding: "12px 13px",
+      border: `1px solid ${UI.border}`,
+      borderRadius: "10px",
+      background: UI.surface,
+      textAlign: "center",
+    });
+
+    const size = 48;
+    const stroke = 3;
+    const radius = (size - stroke) / 2;
+    const circumference = 2 * Math.PI * radius;
+    const clampedScore = Math.max(0, Math.min(100, score));
+    const target = circumference - (clampedScore / 100) * circumference;
+    const color = riskColor(level);
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("viewBox", `0 0 ${size} ${size}`);
+    svg.style.display = "block";
+    svg.style.margin = "0 auto";
+
+    const trackCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+    trackCircle.setAttribute("cx", String(size / 2));
+    trackCircle.setAttribute("cy", String(size / 2));
+    trackCircle.setAttribute("r", String(radius));
+    trackCircle.setAttribute("fill", "none");
+    trackCircle.setAttribute("stroke", UI.raised);
+    trackCircle.setAttribute("stroke-width", String(stroke));
+
+    const fillCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+
+    fillCircle.setAttribute("cx", String(size / 2));
+    fillCircle.setAttribute("cy", String(size / 2));
+    fillCircle.setAttribute("r", String(radius));
+    fillCircle.setAttribute("fill", "none");
+    fillCircle.setAttribute("stroke", color);
+    fillCircle.setAttribute("stroke-width", String(stroke));
+    fillCircle.setAttribute("stroke-dasharray", String(circumference));
+    fillCircle.setAttribute("stroke-dashoffset", String(circumference));
+    fillCircle.setAttribute("stroke-linecap", "round");
+    fillCircle.setAttribute("transform", `rotate(-90 ${size / 2} ${size / 2})`);
+
+    fillCircle.style.setProperty("--nalar-ring-circumference", String(circumference));
+    fillCircle.style.setProperty("--nalar-ring-target", String(target));
+    fillCircle.style.transition = "stroke-dashoffset 800ms cubic-bezier(.16,1,.3,1)";
+
+    // animated reveal after mount
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fillCircle.setAttribute("stroke-dashoffset", String(target));
+      });
+    });
+
+    const scoreLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+
+    scoreLabel.setAttribute("x", String(size / 2));
+    scoreLabel.setAttribute("y", String(size / 2 + 1));
+    scoreLabel.setAttribute("text-anchor", "middle");
+    scoreLabel.setAttribute("dominant-baseline", "central");
+    scoreLabel.setAttribute("fill", color);
+    scoreLabel.setAttribute("font-size", "12");
+    scoreLabel.setAttribute("font-weight", "700");
+    scoreLabel.setAttribute("font-family", "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace");
+    scoreLabel.textContent = String(clampedScore);
+
+    svg.appendChild(trackCircle);
+    svg.appendChild(fillCircle);
+    svg.appendChild(scoreLabel);
+
+    container.appendChild(svg);
+
+    const riskLabel = document.createElement("div");
+
+    riskLabel.textContent = level;
+
+    Object.assign(riskLabel.style, {
+      marginTop: "6px",
+      fontSize: "9px",
+      fontWeight: "700",
+      letterSpacing: ".06em",
+      color,
+    });
+
+    container.appendChild(riskLabel);
+
+    return container;
+  }
+
+  function createSecuritySummary(rows) {
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "nalar-security-summary";
+
+    Object.assign(wrapper.style, {
+      padding: "14px",
+      border: `1px solid ${UI.border}`,
+      borderRadius: "8px",
+      background: UI.surface,
+    });
+
+    rows.forEach((item, index) => {
+      const row = document.createElement("div");
+
+      row.className = "nalar-summary-row";
+
+      Object.assign(row.style, {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "baseline",
+        gap: "12px",
+        padding: "5px 0",
+        fontSize: "11px",
+      });
+
+      if (index > 0) {
+        row.style.borderTop = `1px solid ${UI.border}`;
+      }
+
+      const label = document.createElement("span");
+
+      label.textContent = item.label;
+
+      label.style.color = UI.muted;
+
+      const value = document.createElement("span");
+
+      value.textContent = item.value;
+
+      value.style.color = item.color ?? UI.soft;
+
+      if (item.mono) {
+        value.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      }
+
+      row.appendChild(label);
+
+      row.appendChild(value);
+
+      wrapper.appendChild(row);
+    });
+
+    return wrapper;
+  }
+
+  function buildSecuritySummary(security, decision) {
+    const rows = [];
+
+    const intent = security?.intent?.description;
+
+    if (intent) {
+      rows.push({ label: "Intent", value: intent });
+    }
+
+    const summary = security?.transactionSummary;
+
+    if (summary?.title) {
+      rows.push({ label: "Actual transaction", value: summary.title });
+    }
+
+    const sim = security?.simulation;
+
+    if (sim && typeof sim.success === "boolean") {
+      rows.push({
+        label: "Simulation",
+        value: sim.success ? "Completed" : "Failed",
+        color: sim.success ? UI.safe : UI.danger,
+      });
+    }
+
+    if (typeof security?.intentMatch === "boolean") {
+      rows.push({
+        label: "Intent match",
+        value: security.intentMatch ? "Match" : "Mismatch",
+        color: security.intentMatch ? UI.safe : UI.danger,
+      });
+    }
+
+    rows.push({
+      label: "Decision",
+      value: decision,
+      color: decision === "BLOCK" ? UI.danger : decision === "REVIEW" ? UI.warning : UI.safe,
+    });
+
+    return rows;
+  }
+
+  function createEvidenceTimeline(nodes) {
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "nalar-timeline";
+
+    Object.assign(wrapper.style, {
+      position: "relative",
+      paddingLeft: "20px",
+    });
+
+    // vertical connector line
+    const line = document.createElement("div");
+
+    Object.assign(line.style, {
+      position: "absolute",
+      left: "5px",
+      top: "4px",
+      bottom: "4px",
+      width: "1px",
+      background: UI.borderStrong,
+    });
+
+    wrapper.appendChild(line);
+
+    nodes.forEach((node, index) => {
+      const el = document.createElement("div");
+
+      el.className = "nalar-timeline-node";
+
+      el.setAttribute("data-type", node.type ?? "data");
+
+      Object.assign(el.style, {
+        position: "relative",
+        padding: "5px 0",
+        fontSize: "11px",
+        animationDelay: `${index * 100}ms`,
+      });
+
+      // node dot via pseudo-element positioning
+      const dot = document.createElement("div");
+
+      const isDecision = node.type === "decision";
+      const isThreat = node.type === "threat";
+      const dotSize = isDecision ? 7 : 5;
+
+      Object.assign(dot.style, {
+        position: "absolute",
+        left: `-${18 + (isDecision ? 1 : 0)}px`,
+        top: "50%",
+        transform: "translateY(-50%)",
+        width: `${dotSize}px`,
+        height: `${dotSize}px`,
+        borderRadius: "50%",
+        background: isThreat || isDecision ? UI.danger : UI.muted,
+      });
+
+      el.appendChild(dot);
+
+      const text = document.createElement("span");
+
+      text.textContent = node.label;
+
+      text.style.color = isThreat || isDecision ? UI.danger : node.type === "interpretation" ? UI.soft : UI.muted;
+
+      if (node.mono) {
+        text.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      }
+
+      el.appendChild(text);
+
+      wrapper.appendChild(el);
+    });
+
+    return wrapper;
+  }
+
+  function buildTimelineData(security, decision) {
+    const nodes = [];
+
+    const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
+
+    reports.forEach((analysis) => {
+      const stateEntries = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
+
+      stateEntries.forEach((entry) => {
+        let displayValue = entry?.value ?? "Unknown";
+
+        if (entry?.code === "CURRENT_SELL_TAX" && entry?.unit === "PERCENT") {
+          const numeric = Number(displayValue);
+
+          if (Number.isFinite(numeric)) {
+            displayValue = `${(numeric / 100).toFixed(2)}%`;
+          }
+        }
+
+        nodes.push({
+          label: `${humanizeEvidenceLabel(entry?.label ?? entry?.code)} = ${displayValue}`,
+          type: "data",
+          mono: true,
+        });
+      });
+
+      const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
+
+      findings.forEach((finding) => {
+        const severity = String(finding?.severity ?? "INFO").toUpperCase();
+
+        nodes.push({
+          label: finding?.title ?? finding?.code ?? "Finding",
+          type: severity === "CRITICAL" || severity === "HIGH" ? "threat" : "interpretation",
+        });
+      });
+    });
+
+    if (security?.riskLevel) {
+      nodes.push({
+        label: security.riskLevel,
+        type: "threat",
+      });
+    }
+
+    if (decision) {
+      nodes.push({
+        label: decision,
+        type: "decision",
+      });
+    }
+
+    return nodes;
+  }
+
+  function createIntentMatchSection(security) {
+    const wrapper = document.createElement("div");
+
+    wrapper.className = "nalar-intent-match";
+
+    wrapper.setAttribute("data-match", String(security.intentMatch));
+
+    Object.assign(wrapper.style, {
+      padding: "18px 0",
+      borderBottom: `1px solid ${UI.border}`,
+    });
+
+    const heading = createLabel("INTENT CHECK");
+
+    heading.style.marginBottom = "10px";
+
+    wrapper.appendChild(heading);
+
+    const content = document.createElement("div");
+
+    Object.assign(content.style, {
+      fontSize: "13px",
+      lineHeight: "1.6",
+    });
+
+    if (security.intentMatch) {
+      content.style.color = UI.safe;
+
+      content.textContent = "\u2713 Your request matches the transaction.";
+    } else {
+      content.style.color = UI.danger;
+
+      const mismatchText = "\u2717 Your request does not match the transaction.";
+
+      content.textContent = mismatchText;
+
+      // show specific mismatch details from backend if available
+      const intentDesc = security?.intent?.description;
+      const txTitle = security?.transactionSummary?.title;
+
+      if (intentDesc && txTitle && intentDesc !== txTitle) {
+        const detail = document.createElement("div");
+
+        Object.assign(detail.style, {
+          marginTop: "8px",
+          fontSize: "11px",
+          lineHeight: "1.5",
+          color: UI.soft,
+        });
+
+        const requested = document.createElement("div");
+
+        requested.textContent = `Requested: ${intentDesc}`;
+
+        const actual = document.createElement("div");
+
+        actual.textContent = `Transaction: ${txTitle}`;
+
+        actual.style.marginTop = "2px";
+
+        detail.appendChild(requested);
+
+        detail.appendChild(actual);
+
+        content.appendChild(detail);
+      }
+    }
+
+    wrapper.appendChild(content);
+
+    return wrapper;
   }
 
   function getDecisionStatus(decision) {

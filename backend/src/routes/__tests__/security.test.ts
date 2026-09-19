@@ -1,4 +1,4 @@
-import { describe, expect, test, mock } from "bun:test";
+import { describe, expect, test, mock, beforeEach } from "bun:test";
 
 type SecurityCheckResponse = {
   ok: boolean;
@@ -139,6 +139,8 @@ mock.module("../../services/simulator", () => ({
   }),
 }));
 
+process.env.BNB_INVESTIGATOR_ENABLED = "false";
+
 const { default: app } = await import("../../index");
 
 const DEMO_NFT = "0x4ACCcd7a3d2e2a7c99BE0ea035B40cE03C7A14d1";
@@ -154,6 +156,40 @@ const ERC20_SPENDER = "0x3333333333333333333333333333333333333333";
 const MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 
 describe("POST /api/transactions/security-check", () => {
+  beforeEach(() => {
+    process.env.BNB_INVESTIGATOR_ENABLED = "false";
+
+    mock.module("../../services/intent-engine", () => ({
+      parseUserIntent: async (_input: string) => ({
+        action: "MINT",
+        quantity: 1,
+        maxValueNative: "0.02",
+        nativeCurrency: "BNB",
+        allowApproval: false,
+        targetAddress: null,
+        description: "Mint 1 NFT for 0.02 BNB",
+      }),
+    }));
+
+    mock.module("../../services/explanation-engine", () => ({
+      generateSecurityExplanation: async (input: { intent: string; decision: string; riskLevel: string; riskScore: number; intentMatch: boolean; actualAction: string; actualFunction: string | null; reasons: string[] }) => ({
+        title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
+        summary: input.decision === "BLOCK" ? "Transaction blocked by deterministic security rules." : input.decision === "REVIEW" ? "Transaction requires additional review." : "Transaction allowed by deterministic security rules.",
+        details: [`Intent: ${input.intent}`, `Actual action: ${input.actualAction}`, `Risk: ${input.riskLevel} (${input.riskScore}/100)`],
+        recommendedAction: input.decision === "BLOCK" ? "CANCEL" : input.decision === "REVIEW" ? "REVIEW" : "PROCEED",
+      }),
+    }));
+
+    mock.module("../../services/simulator", () => ({
+      simulateTransaction: async () => ({
+        success: true,
+        gasEstimate: "500000",
+        returnData: "0x",
+        error: null,
+      }),
+    }));
+  });
+
   test("safe mint should ALLOW", async () => {
     const response = await app.fetch(
       new Request("http://localhost/api/transactions/security-check", {

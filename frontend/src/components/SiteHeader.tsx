@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import ThemeToggle from "@/src/components/ThemeToggle";
 
-const githubUrl = "https://github.com/BayuDivaA/nalar-protocol";
+const githubUrl = "https://github.com/BayuDivaA/nalar-extension";
 
 export default function SiteHeader() {
   const [open, setOpen] = useState(false);
@@ -34,7 +34,9 @@ export default function SiteHeader() {
     <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
       <div className="site-header-inner">
         <Link href="/" className="site-brand" onClick={close}>
-          <span className="site-brand-mark" aria-hidden="true">N</span>
+          <span className="site-brand-mark" aria-hidden="true">
+            N
+          </span>
           <span>Nalar Protocol</span>
         </Link>
 
@@ -44,20 +46,15 @@ export default function SiteHeader() {
           <a href="#intelligence">Intelligence</a>
           <a href="#architecture">Architecture</a>
           <Link href="/demo">Demo</Link>
-          <Link href="/install" className="site-nav-strong">Get the extension</Link>
+          <Link href="/install" className="site-nav-strong">
+            Get the extension
+          </Link>
           <ThemeToggle />
         </nav>
 
         <div className="site-mobile-actions">
           <ThemeToggle />
-          <button
-            type="button"
-            className="menu-button"
-            aria-expanded={open}
-            aria-controls="mobile-navigation"
-            aria-label={open ? "Close navigation" : "Open navigation"}
-            onClick={() => setOpen((value) => !value)}
-          >
+          <button type="button" className="menu-button" aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? "Close navigation" : "Open navigation"} onClick={() => setOpen((value) => !value)}>
             <span className={open ? "menu-line menu-line-top open" : "menu-line menu-line-top"} />
             <span className={open ? "menu-line menu-line-bottom open" : "menu-line menu-line-bottom"} />
           </button>
@@ -66,13 +63,27 @@ export default function SiteHeader() {
 
       {open && (
         <nav id="mobile-navigation" className="mobile-nav" aria-label="Mobile navigation">
-          <a href="#problem" onClick={close}>Why Nalar</a>
-          <a href="#mechanism" onClick={close}>How it works</a>
-          <a href="#intelligence" onClick={close}>Intelligence</a>
-          <a href="#architecture" onClick={close}>Architecture</a>
-          <Link href="/demo" onClick={close}>Demo</Link>
-          <Link href="/install" onClick={close}>Get the extension</Link>
-          <a href={githubUrl} target="_blank" rel="noreferrer" onClick={close}>View source on GitHub</a>
+          <a href="#problem" onClick={close}>
+            Why Nalar
+          </a>
+          <a href="#mechanism" onClick={close}>
+            How it works
+          </a>
+          <a href="#intelligence" onClick={close}>
+            Intelligence
+          </a>
+          <a href="#architecture" onClick={close}>
+            Architecture
+          </a>
+          <Link href="/demo" onClick={close}>
+            Demo
+          </Link>
+          <Link href="/install" onClick={close}>
+            Get the extension
+          </Link>
+          <a href={githubUrl} target="_blank" rel="noreferrer" onClick={close}>
+            View source on GitHub
+          </a>
         </nav>
       )}
     </header>

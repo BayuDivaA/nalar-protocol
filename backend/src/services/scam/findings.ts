@@ -64,7 +64,8 @@ export type ScamFindingCode =
   | "UNVERIFIED_EXECUTOR"
   | "UNKNOWN_EXECUTION_PATH"
   | "SUSPICIOUS_APPROVAL_TARGET"
-  | "APPROVAL_TO_CONTRACT";
+  | "APPROVAL_TO_CONTRACT"
+  | "WITHDRAW_CAPABILITY";
 
 export interface ScamFinding {
   code: ScamFindingCode;

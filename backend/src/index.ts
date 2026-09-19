@@ -8,12 +8,34 @@ import { securityRoute } from "./routes/security";
 
 const app = new Hono();
 
+const defaultLocalOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+];
+
+const configuredOrigins = env.FRONTEND_ORIGIN
+  ? env.FRONTEND_ORIGIN.split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+  : [];
+
+const allowedOrigins = new Set([...defaultLocalOrigins, ...configuredOrigins]);
+
 app.use(
   "/api/*",
   cors({
-    origin: "http://localhost:3000",
+    origin: (origin) => {
+      if (!origin) return "*";
+      if (allowedOrigins.has(origin)) return origin;
+      if (origin.startsWith("chrome-extension://") || origin.startsWith("moz-extension://")) {
+        return origin;
+      }
+      return undefined;
+    },
     allowMethods: ["GET", "POST", "OPTIONS"],
-    allowHeaders: ["Content-Type"],
+    allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
@@ -29,7 +51,4 @@ app.route("/health", healthRoute);
 app.route("/api/transactions", transactionRoute);
 app.route("/api/transactions/security-check", securityRoute);
 
-export default {
-  port: env.PORT,
-  fetch: app.fetch,
-};
+export default app;

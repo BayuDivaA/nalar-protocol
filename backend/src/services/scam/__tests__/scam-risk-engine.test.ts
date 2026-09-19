@@ -2,6 +2,12 @@ import { describe, expect, test } from "bun:test";
 
 import type { ScamFinding } from "../findings";
 import { calculateScamRisk } from "../scam-risk-engine";
+import type { Address } from "viem";
+import { auditToken } from "../token-auditor";
+
+const TOKEN = "0x1111111111111111111111111111111111111111" as Address;
+const USER = "0x2222222222222222222222222222222222222222" as Address;
+const ROUTER = "0x3333333333333333333333333333333333333333" as Address;
 
 const finding = (overrides: Partial<ScamFinding> = {}): ScamFinding => ({
   code: "UNVERIFIED_CONTRACT",

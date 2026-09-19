@@ -23,6 +23,7 @@ import { analyzeTransactionThreats } from "../services/scam/transaction-threat-a
 import { BnbTransactionInvestigator } from "../services/scam/bnb-transaction-investigator";
 
 import { BnbChainMcpClient } from "../services/scam/bnb-mcp-client";
+import { env } from "../config/env";
 
 export const securityRoute = new Hono();
 
@@ -42,13 +43,30 @@ const securityCheckSchema = z.object({
   }),
 });
 
-const bnbInvestigatorEnabled = process.env.BNB_INVESTIGATOR_ENABLED === "true";
+let sharedMcpClient: BnbChainMcpClient | null = null;
 
-export const bnbMcpClient = bnbInvestigatorEnabled ? new BnbChainMcpClient() : undefined;
+export function getBnbInvestigator() {
+  const isEnabled = process.env.BNB_INVESTIGATOR_ENABLED !== undefined ? process.env.BNB_INVESTIGATOR_ENABLED === "true" : env.BNB_INVESTIGATOR_ENABLED;
+  if (!isEnabled) {
+    return {
+      client: undefined,
+      agentInvestigator: undefined,
+      transactionInvestigator: undefined,
+    };
+  }
+  if (!sharedMcpClient) {
+    sharedMcpClient = new BnbChainMcpClient();
+  }
+  return {
+    client: sharedMcpClient,
+    agentInvestigator: new BnbAgentInvestigator(sharedMcpClient),
+    transactionInvestigator: new BnbTransactionInvestigator(sharedMcpClient),
+  };
+}
 
-export const bnbAgentInvestigator = bnbMcpClient ? new BnbAgentInvestigator(bnbMcpClient) : undefined;
-
-export const bnbTransactionInvestigator = bnbMcpClient ? new BnbTransactionInvestigator(bnbMcpClient) : undefined;
+export const bnbMcpClient = getBnbInvestigator().client;
+export const bnbAgentInvestigator = getBnbInvestigator().agentInvestigator;
+export const bnbTransactionInvestigator = getBnbInvestigator().transactionInvestigator;
 
 securityRoute.post("/", async (c) => {
   try {
@@ -280,8 +298,10 @@ securityRoute.post("/", async (c) => {
       swaps: enrichedSwaps,
     };
 
-    const bnbTransactionInvestigation = bnbTransactionInvestigator
-      ? await bnbTransactionInvestigator.investigate({
+    const { agentInvestigator: activeAgentInvestigator, transactionInvestigator: activeTxInvestigator } = getBnbInvestigator();
+
+    const bnbTransactionInvestigation = activeTxInvestigator
+      ? await activeTxInvestigator.investigate({
           chainId: transaction.chainId,
           to,
           effects: analyzedEffects,
@@ -349,7 +369,7 @@ securityRoute.post("/", async (c) => {
       owner: from,
       router: to,
       swaps: analyzedEffects.swaps,
-      investigator: bnbAgentInvestigator,
+      investigator: activeAgentInvestigator,
     });
 
     const transactionScamContext = buildTransactionScamContext(scamAnalyses);

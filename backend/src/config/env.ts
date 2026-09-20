@@ -6,10 +6,7 @@ const envSchema = z
   .object({
     PORT: z.coerce.number().default(3000),
 
-    BNB_RPC_URL: z
-      .string()
-      .url("BNB_RPC_URL must be a valid RPC URL")
-      .default("https://data-seed-prebsc-1-s1.binance.org:8545"),
+    BNB_RPC_URL: z.string().url("BNB_RPC_URL must be a valid RPC URL").default("https://data-seed-prebsc-1-s1.binance.org:8545"),
 
     TXSENTRY_DEMO_NFT: z
       .string()
@@ -28,9 +25,7 @@ const envSchema = z
       .default("false")
       .transform((val) => val === "true"),
 
-    BNB_MCP_TRANSPORT: z
-      .enum(["stdio", "sse", "http"])
-      .default(process.env.VERCEL === "1" ? "sse" : "stdio"),
+    BNB_MCP_TRANSPORT: z.enum(["stdio", "sse", "http"]).default(process.env.VERCEL === "1" ? "sse" : "stdio"),
 
     BNB_MCP_URL: z.string().url("BNB_MCP_URL must be a valid URL").optional(),
 

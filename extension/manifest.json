@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "Intent-aware Web3 transaction security by Nalar Protocol.",
   "permissions": ["storage", "tabs"],
-  "host_permissions": ["<all_urls>", "http://localhost:3001/*"],
+  "host_permissions": ["https://nalar-protocol.vercel.app/*", "http://localhost:3001/*"],
   "background": {
     "service_worker": "background.js"
   },

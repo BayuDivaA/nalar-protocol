@@ -31,4 +31,3 @@ export const ai = new Proxy({} as OpenAI, {
     return typeof val === "function" ? val.bind(client) : val;
   },
 });
-

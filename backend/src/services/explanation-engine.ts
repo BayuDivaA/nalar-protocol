@@ -73,10 +73,10 @@ export async function generateSecurityExplanation(input: {
       temperature: 0,
 
       messages: [
-      {
-        role: "system",
+        {
+          role: "system",
 
-        content: `
+          content: `
 You are Nalar Protocol's transaction security explanation assistant.
 
 Your ONLY job is to explain an already-determined
@@ -299,15 +299,15 @@ BLOCK -> CANCEL
 REVIEW -> REVIEW
 ALLOW -> PROCEED
 `,
-      },
+        },
 
-      {
-        role: "user",
+        {
+          role: "user",
 
-        content: JSON.stringify(input),
-      },
-    ],
-  });
+          content: JSON.stringify(input),
+        },
+      ],
+    });
 
     const raw = response.choices[0]?.message?.content;
     if (!raw) {

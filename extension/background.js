@@ -1,4 +1,12 @@
-const BACKEND_URL = "http://localhost:3001";
+try {
+  importScripts("config.js");
+} catch (e) {
+  console.warn("[Nalar] Failed to load config.js, using defaults:", e);
+}
+
+const BACKEND_URL = typeof NALAR_CONFIG !== "undefined" && NALAR_CONFIG.BACKEND_URL ? NALAR_CONFIG.BACKEND_URL : "https://nalar-protocol.vercel.app";
+
+const TIMEOUT_MS = typeof NALAR_CONFIG !== "undefined" && NALAR_CONFIG.TIMEOUT_MS ? NALAR_CONFIG.TIMEOUT_MS : 30000;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "GET_PROTECTION_STATUS") {
@@ -163,43 +171,68 @@ async function handleSecurityCheck(transaction, chainId, origin) {
     transaction: normalized,
   });
 
-  const response = await fetch(`${BACKEND_URL}/api/transactions/security-check`, {
-    method: "POST",
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({
-      intent,
-
-      transaction: {
-        chainId: numericChainId,
-
-        from: normalized.from,
-
-        to: normalized.to,
-
-        value: normalized.value,
-
-        data: normalized.data,
+  let response;
+  try {
+    response = await fetch(`${BACKEND_URL}/api/transactions/security-check`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      signal: controller.signal,
+      body: JSON.stringify({
+        intent,
+        transaction: {
+          chainId: numericChainId,
+          from: normalized.from,
+          to: normalized.to,
+          value: normalized.value,
+          data: normalized.data,
+        },
+      }),
+    });
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error && (error.name === "AbortError" || error.code === 20)) {
+      throw new Error("Security analysis timed out. The blockchain investigation took longer than expected.");
+    }
+    console.error("[Nalar] Security check network error:", error);
+    throw new Error("Security service is unavailable. Please check your network connection.");
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const responseText = await response.text();
 
   console.log("[Nalar] Backend response:", response.status, responseText);
 
   if (!response.ok) {
-    throw new Error(`Nalar security API returned ${response.status}.`);
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("Access to security service was unauthorized.");
+    }
+    if (response.status === 429) {
+      throw new Error("Security service rate limit exceeded. Please try again shortly.");
+    }
+    if (response.status >= 500) {
+      throw new Error("Security analysis could not be completed by the server.");
+    }
+    throw new Error(`Security service returned HTTP ${response.status}.`);
   }
 
+  let parsed;
   try {
-    return JSON.parse(responseText);
+    parsed = JSON.parse(responseText);
   } catch {
-    throw new Error("Nalar returned an invalid security response.");
+    throw new Error("Security service returned an invalid response.");
   }
+
+  if (!parsed || parsed.ok === false) {
+    throw new Error(parsed?.error ?? "Security analysis could not be completed.");
+  }
+
+  return parsed;
 }
 
 /*

@@ -36,3 +36,25 @@
                        │
                        ▼
               DEMO SMART CONTRACT
+
+
+
+
+
+
+STATUS ARSITEKTUR BNB MCP
+Arsitektur BNB MCP beroperasi penuh sesuai spesifikasi hybrid (Local Stdio + Remote Railway SSE):
+
+Browser Extension
+       │
+       ▼
+Vercel Serverless Function (https://nalar-protocol.vercel.app)
+       │
+       ▼  (SSE + Authorization: Bearer <MCP_AUTH_TOKEN>)
+Railway BNB MCP Gateway (https://nalar-protocol-mcp-production.up.railway.app/sse)
+       │
+       ▼
+Official @bnb-chain/mcp process
+       │
+       ▼
+BSC Testnet RPC (Chain ID 97)

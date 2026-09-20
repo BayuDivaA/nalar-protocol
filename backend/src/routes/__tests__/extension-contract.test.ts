@@ -24,7 +24,7 @@ describe("Extension API Contract Compatibility", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Origin": "chrome-extension://abcdefghijklmnop",
+          Origin: "chrome-extension://abcdefghijklmnop",
         },
         body: JSON.stringify(extensionPayload),
       }),

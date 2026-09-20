@@ -1780,10 +1780,10 @@
 
     Object.assign(header.style, {
       display: "grid",
-      gridTemplateColumns: "44px 1fr auto",
+      gridTemplateColumns: "40px 1fr auto",
       gap: "14px",
       alignItems: "center",
-      padding: "24px 26px 22px",
+      padding: "22px 24px 20px",
       borderBottom: `1px solid ${UI.border}`,
     });
 
@@ -1794,12 +1794,12 @@
     mark.textContent = decision === "BLOCK" ? "✕" : decision === "REVIEW" ? "?" : "✓";
 
     Object.assign(mark.style, {
-      width: "44px",
-      height: "44px",
+      width: "40px",
+      height: "40px",
       display: "grid",
       placeItems: "center",
       border: `1px solid ${UI.borderStrong}`,
-      borderRadius: "10px",
+      borderRadius: "8px",
       background: UI.surface,
       color: decision === "BLOCK" ? UI.danger : decision === "REVIEW" ? UI.warning : UI.safe,
       fontSize: "18px",
@@ -1808,7 +1808,7 @@
 
     const headingWrap = document.createElement("div");
 
-    const eyebrow = createLabel("NALAR PROTOCOL · DECISION");
+    const eyebrow = createLabel("NALAR PROTOCOL · SECURITY");
 
     const heading = document.createElement("h2");
 
@@ -1816,9 +1816,9 @@
 
     Object.assign(heading.style, {
       margin: "4px 0 0",
-      fontSize: "22px",
-      lineHeight: "1.08",
-      letterSpacing: "-.03em",
+      fontSize: "20px",
+      lineHeight: "1.1",
+      letterSpacing: "-.02em",
       color: UI.text,
       fontWeight: "700",
     });
@@ -1830,183 +1830,176 @@
     Object.assign(subtitle.style, {
       margin: "4px 0 0",
       fontSize: "12px",
-      lineHeight: "1.4",
+      lineHeight: "1.45",
       color: UI.soft,
     });
 
     headingWrap.appendChild(eyebrow);
-
     headingWrap.appendChild(heading);
-
     headingWrap.appendChild(subtitle);
 
-    const riskRing = createRiskRing(riskScore, riskLevel);
+    const riskPill = document.createElement("div");
+    riskPill.className = "nalar-risk-pill";
+    riskPill.setAttribute("data-level", riskLevel.toLowerCase());
+    riskPill.textContent = `Risk ${riskScore} · ${riskLevel}`;
+
+    const pillColor = riskColor(riskLevel);
+    Object.assign(riskPill.style, {
+      padding: "5px 10px",
+      borderRadius: "6px",
+      fontSize: "11px",
+      fontWeight: "700",
+      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+      letterSpacing: ".02em",
+      color: pillColor,
+      background: decision === "BLOCK" ? "rgba(239,128,111,.1)" : decision === "REVIEW" ? "rgba(224,183,109,.1)" : "rgba(157,187,159,.1)",
+      border: `1px solid ${decision === "BLOCK" ? "rgba(239,128,111,.25)" : decision === "REVIEW" ? "rgba(224,183,109,.25)" : "rgba(157,187,159,.25)"}`,
+      whiteSpace: "nowrap",
+    });
 
     header.appendChild(mark);
-
     header.appendChild(headingWrap);
-
-    header.appendChild(riskRing);
+    header.appendChild(riskPill);
 
     return header;
+  }
+
+  function getPrimaryRootCause(explanation, security, decision) {
+    const isMismatch = security?.intentMatch === false || security?.comparison?.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH";
+    const comp = security?.comparison || {};
+
+    // 1. Intent mismatch (highest priority)
+    if (isMismatch) {
+      if (typeof explanation?.whyStopped?.primaryReason === "string" && explanation.whyStopped.primaryReason.trim()) {
+        return explanation.whyStopped.primaryReason.trim();
+      }
+      if (typeof explanation?.comparison?.summary === "string" && explanation.comparison.summary.trim()) {
+        return explanation.comparison.summary.trim();
+      }
+      if (comp?.summary) {
+        return comp.summary;
+      }
+
+      let userIntent = "complete your transaction";
+      if (typeof explanation?.userIntent === "string" && explanation.userIntent.trim()) {
+        userIntent = explanation.userIntent.trim();
+      } else if (explanation?.userIntent?.description) {
+        userIntent = explanation.userIntent.description;
+      } else if (security?.intent?.description) {
+        userIntent = security.intent.description;
+      }
+
+      let actualAction = "perform a different action";
+      if (typeof explanation?.actualTransaction === "string" && explanation.actualTransaction.trim()) {
+        actualAction = explanation.actualTransaction.trim();
+      } else if (explanation?.actualTransaction?.summary) {
+        actualAction = explanation.actualTransaction.summary;
+      } else if (security?.transactionSummary?.title) {
+        actualAction = security.transactionSummary.title;
+      } else if (security?.actual?.action) {
+        actualAction = humanizeAction(security.actual.action);
+      }
+
+      return `You asked to ${userIntent}, but this transaction asks for ${actualAction} instead.`;
+    }
+
+    // 2. Critical security finding (e.g. excessive sell tax >= 20%, honeypot, blacklisting)
+    const analyses = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
+    for (const a of analyses) {
+      const state = Array.isArray(a?.contractPrivileges?.state) ? a.contractPrivileges.state : [];
+      const sellTax = state.find((s) => s?.code === "CURRENT_SELL_TAX");
+      if (sellTax && Number(sellTax.value) >= 2000) {
+        const pct = (Number(sellTax.value) / 100).toFixed(0);
+        return `Contract charges an excessive ${pct}% sell tax, preventing you from recovering funds.`;
+      }
+
+      const findings = Array.isArray(a?.findings) ? a.findings : [];
+      const criticalFinding = findings.find((f) => String(f?.severity).toUpperCase() === "CRITICAL" || String(f?.severity).toUpperCase() === "HIGH");
+      if (criticalFinding?.title) {
+        return criticalFinding.title;
+      }
+    }
+
+    // 3. Simulation failure
+    if (security?.simulation && security.simulation.success === false) {
+      return "Transaction failed during simulation and would revert on-chain.";
+    }
+
+    // 4. Policy restriction or primary reason from backend explanation
+    if (typeof explanation?.whyStopped?.primaryReason === "string" && explanation.whyStopped.primaryReason.trim()) {
+      return explanation.whyStopped.primaryReason.trim();
+    }
+
+    if (typeof explanation?.summary === "string" && explanation.summary.trim()) {
+      return explanation.summary.trim();
+    }
+
+    // 5. Review / insufficient evidence / default
+    return getFallbackSummary(security, decision);
   }
 
   function createWhyStoppedCard(explanation, security, decision) {
     const isBlock = decision === "BLOCK";
     const isReview = decision === "REVIEW";
 
-    const card = document.createElement("div");
+    const card = document.createElement("section");
 
     card.className = "nalar-why-stopped-card";
 
     Object.assign(card.style, {
       marginTop: "16px",
-      padding: "18px 20px",
-      border: `1px solid ${isBlock ? "rgba(239,128,111,.32)" : isReview ? "rgba(224,183,109,.32)" : UI.border}`,
+      padding: "16px 18px",
       borderRadius: "10px",
-      background: UI.surface,
+      border: `1px solid ${isBlock ? "rgba(239,128,111,.28)" : isReview ? "rgba(224,183,109,.28)" : UI.border}`,
+      background: isBlock ? "rgba(239,128,111,.04)" : isReview ? "rgba(224,183,109,.04)" : UI.surface,
     });
 
-    const sectionLabel = createLabel(isBlock ? "WHY NALAR STOPPED THIS" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT");
+    const labelText = isBlock ? "WHY IT WAS STOPPED" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT";
+    const sectionLabel = createLabel(labelText);
+    sectionLabel.style.color = isBlock ? UI.danger : isReview ? UI.warning : UI.muted;
 
     card.appendChild(sectionLabel);
 
-    const headlineText =
-      (typeof explanation.headline === "string" && explanation.headline.trim()) ||
-      (typeof explanation.whyStopped?.title === "string" && explanation.whyStopped.title.trim()) ||
-      (typeof explanation.title === "string" && explanation.title.trim()) ||
-      (isBlock ? "Potentially Malicious Transaction Blocked" : isReview ? "Transaction Requires Verification" : "Transaction Cleared");
+    const primaryReasonText = getPrimaryRootCause(explanation, security, decision);
 
-    const headline = document.createElement("div");
+    const reasonEl = document.createElement("div");
 
-    headline.className = "nalar-why-stopped-headline";
+    reasonEl.className = "nalar-why-stopped-primary";
 
-    headline.textContent = headlineText;
+    reasonEl.textContent = primaryReasonText;
 
-    Object.assign(headline.style, {
+    Object.assign(reasonEl.style, {
       marginTop: "8px",
-      fontSize: "16px",
-      fontWeight: "650",
-      lineHeight: "1.35",
-      letterSpacing: "-.01em",
-      color: isBlock ? UI.danger : isReview ? UI.warning : UI.text,
-    });
-
-    card.appendChild(headline);
-
-    const primaryReasonText =
-      (typeof explanation.whyStopped?.primaryReason === "string" && explanation.whyStopped.primaryReason.trim()) || (typeof explanation.summary === "string" && explanation.summary.trim()) || getFallbackSummary(security, decision);
-
-    const primaryReason = document.createElement("div");
-
-    primaryReason.className = "nalar-why-stopped-primary";
-
-    primaryReason.textContent = primaryReasonText;
-
-    Object.assign(primaryReason.style, {
-      marginTop: "8px",
-      fontSize: "13px",
+      fontSize: "14px",
+      fontWeight: "500",
       lineHeight: "1.6",
-      color: UI.soft,
+      color: UI.text,
     });
 
-    card.appendChild(primaryReason);
-
-    const userImpactText =
-      (typeof explanation.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim()) ||
-      (isBlock ? "Signing this transaction could result in irreversible loss of assets or funds." : isReview ? "Review transaction details carefully before deciding whether to sign." : null);
-
-    if (userImpactText) {
-      const impactBox = document.createElement("div");
-
-      impactBox.className = "nalar-why-stopped-impact";
-
-      Object.assign(impactBox.style, {
-        marginTop: "12px",
-        padding: "10px 12px",
-        borderRadius: "6px",
-        border: `1px solid ${UI.border}`,
-        background: UI.raised,
-      });
-
-      const impactLabel = document.createElement("div");
-
-      impactLabel.className = "nalar-impact-label";
-
-      impactLabel.textContent = "POTENTIAL IMPACT";
-
-      Object.assign(impactLabel.style, {
-        fontSize: "9px",
-        fontWeight: "700",
-        letterSpacing: ".12em",
-        color: UI.muted,
-      });
-
-      const impactValue = document.createElement("div");
-
-      impactValue.className = "nalar-impact-text";
-
-      impactValue.textContent = userImpactText;
-
-      Object.assign(impactValue.style, {
-        marginTop: "4px",
-        fontSize: "12px",
-        lineHeight: "1.55",
-        color: UI.soft,
-      });
-
-      impactBox.appendChild(impactLabel);
-
-      impactBox.appendChild(impactValue);
-
-      card.appendChild(impactBox);
-    }
-
-    const details = dedupe([...(Array.isArray(explanation.details) ? explanation.details : []), ...(isBlock && Array.isArray(security?.reasons) ? security.reasons : [])]).filter(
-      (item) => item !== primaryReasonText && item !== headlineText,
-    );
-
-    if (details.length) {
-      const list = document.createElement("div");
-
-      list.style.marginTop = "12px";
-
-      details.slice(0, 4).forEach((item) => {
-        const row = document.createElement("div");
-
-        row.textContent = `· ${item}`;
-
-        Object.assign(row.style, {
-          marginBottom: "4px",
-          color: UI.muted,
-          fontSize: "12px",
-          lineHeight: "1.55",
-        });
-
-        list.appendChild(row);
-      });
-
-      card.appendChild(list);
-    }
+    card.appendChild(reasonEl);
 
     return card;
   }
 
   function createIntentVsActualComparison(explanation, security, decision) {
-    const card = document.createElement("div");
+    const card = document.createElement("section");
 
     card.className = "nalar-comparison-card";
 
     Object.assign(card.style, {
-      marginTop: "14px",
+      marginTop: "12px",
       padding: "16px 18px",
       border: `1px solid ${UI.border}`,
       borderRadius: "10px",
       background: UI.surface,
     });
 
-    const headerRow = document.createElement("div");
+    const comp = security?.comparison || {};
+    const isMismatch = comp.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH" || security?.intentMatch === false;
+    const isUncertain = comp.overall === "UNCERTAIN" || explanation?.comparison?.status === "UNKNOWN";
+    const isMatch = !isMismatch && !isUncertain && (explanation?.comparison?.status === "MATCH" || security?.intentMatch === true || comp.overall === "MATCH");
 
+    const headerRow = document.createElement("div");
     headerRow.className = "nalar-comparison-header";
 
     Object.assign(headerRow.style, {
@@ -2016,22 +2009,16 @@
       marginBottom: "12px",
     });
 
-    const headerLabel = createLabel("INTENT VS ACTUAL TRANSACTION");
-
+    const headerLabel = createLabel("YOUR REQUEST VS ACTUAL");
     headerRow.appendChild(headerLabel);
 
-    const comp = security?.comparison || {};
-    const isMismatch = comp.overall === "MISMATCH" || explanation.comparison?.status === "MISMATCH" || security?.intentMatch === false;
-    const isUncertain = comp.overall === "UNCERTAIN" || explanation.comparison?.status === "UNKNOWN";
-    const isMatch = !isMismatch && !isUncertain && (explanation.comparison?.status === "MATCH" || security?.intentMatch === true || comp.overall === "MATCH");
-
-    let badgeText = "✓ MATCH";
+    let badgeText = "✓ MATCHES";
     let badgeColor = UI.safe;
     let badgeBg = "rgba(157,187,159,.12)";
     let badgeBorder = "rgba(157,187,159,.25)";
 
     if (isMismatch) {
-      badgeText = "✕ INTENT MISMATCH";
+      badgeText = "✕ DOESN'T MATCH";
       badgeColor = UI.danger;
       badgeBg = "rgba(239,128,111,.12)";
       badgeBorder = "rgba(239,128,111,.25)";
@@ -2043,11 +2030,8 @@
     }
 
     const matchBadge = document.createElement("div");
-
     matchBadge.className = "nalar-badge";
-
     matchBadge.setAttribute("data-match", String(isMatch));
-
     matchBadge.textContent = badgeText;
 
     Object.assign(matchBadge.style, {
@@ -2055,18 +2039,16 @@
       borderRadius: "4px",
       fontSize: "9px",
       fontWeight: "750",
-      letterSpacing: ".08em",
+      letterSpacing: ".06em",
       color: badgeColor,
       background: badgeBg,
       border: `1px solid ${badgeBorder}`,
     });
 
     headerRow.appendChild(matchBadge);
-
     card.appendChild(headerRow);
 
     const grid = document.createElement("div");
-
     grid.className = "nalar-comparison-grid";
 
     Object.assign(grid.style, {
@@ -2076,18 +2058,20 @@
     });
 
     let userIntentText = "Not specified";
-    if (typeof explanation.userIntent === "string" && explanation.userIntent.trim()) {
+    if (typeof explanation?.userIntent === "string" && explanation.userIntent.trim()) {
       userIntentText = explanation.userIntent.trim();
-    } else if (explanation.userIntent && typeof explanation.userIntent.summary === "string" && explanation.userIntent.summary.trim()) {
+    } else if (explanation?.userIntent?.summary && typeof explanation.userIntent.summary === "string") {
       userIntentText = explanation.userIntent.summary.trim();
+    } else if (explanation?.userIntent?.description && typeof explanation.userIntent.description === "string") {
+      userIntentText = explanation.userIntent.description.trim();
     } else if (security?.intent?.description) {
       userIntentText = security.intent.description;
     }
 
     let actualTxText = "Contract call";
-    if (typeof explanation.actualTransaction === "string" && explanation.actualTransaction.trim()) {
+    if (typeof explanation?.actualTransaction === "string" && explanation.actualTransaction.trim()) {
       actualTxText = explanation.actualTransaction.trim();
-    } else if (explanation.actualTransaction && typeof explanation.actualTransaction.summary === "string" && explanation.actualTransaction.summary.trim()) {
+    } else if (explanation?.actualTransaction?.summary && typeof explanation.actualTransaction.summary === "string") {
       actualTxText = explanation.actualTransaction.summary.trim();
     } else if (security?.transactionSummary?.title) {
       actualTxText = security.transactionSummary.title;
@@ -2098,9 +2082,7 @@
     }
 
     const intentBox = document.createElement("div");
-
     intentBox.className = "nalar-comparison-box";
-
     Object.assign(intentBox.style, {
       padding: "11px 12px",
       border: `1px solid ${UI.border}`,
@@ -2109,11 +2091,8 @@
     });
 
     const intentLabel = document.createElement("div");
-
     intentLabel.className = "nalar-comparison-label";
-
-    intentLabel.textContent = "WHAT YOU INTENDED";
-
+    intentLabel.textContent = "YOUR REQUEST";
     Object.assign(intentLabel.style, {
       fontSize: "9px",
       fontWeight: "700",
@@ -2122,42 +2101,33 @@
     });
 
     const intentVal = document.createElement("div");
-
     intentVal.className = "nalar-comparison-value";
-
     intentVal.textContent = userIntentText;
-
     Object.assign(intentVal.style, {
-      marginTop: "6px",
+      marginTop: "5px",
       fontSize: "12px",
-      lineHeight: "1.55",
+      fontWeight: "600",
+      lineHeight: "1.5",
       color: UI.text,
       wordBreak: "break-word",
     });
 
     intentBox.appendChild(intentLabel);
-
     intentBox.appendChild(intentVal);
-
     grid.appendChild(intentBox);
 
     const actualBox = document.createElement("div");
-
     actualBox.className = "nalar-comparison-box";
-
     Object.assign(actualBox.style, {
       padding: "11px 12px",
-      border: `1px solid ${isMatch ? UI.border : "rgba(239,128,111,.35)"}`,
+      border: `1px solid ${isMatch ? UI.border : "rgba(239,128,111,.3)"}`,
       borderRadius: "8px",
-      background: UI.raised,
+      background: isMatch ? UI.raised : "rgba(239,128,111,.03)",
     });
 
     const actualLabel = document.createElement("div");
-
     actualLabel.className = "nalar-comparison-label";
-
-    actualLabel.textContent = "WHAT THE TRANSACTION DOES";
-
+    actualLabel.textContent = "ACTUAL TRANSACTION";
     Object.assign(actualLabel.style, {
       fontSize: "9px",
       fontWeight: "700",
@@ -2166,110 +2136,54 @@
     });
 
     const actualVal = document.createElement("div");
-
     actualVal.className = "nalar-comparison-value";
-
     actualVal.textContent = actualTxText;
-
     Object.assign(actualVal.style, {
-      marginTop: "6px",
+      marginTop: "5px",
       fontSize: "12px",
-      lineHeight: "1.55",
+      fontWeight: "600",
+      lineHeight: "1.5",
       color: isMatch ? UI.text : UI.danger,
       wordBreak: "break-word",
     });
 
     actualBox.appendChild(actualLabel);
-
     actualBox.appendChild(actualVal);
-
     grid.appendChild(actualBox);
 
     card.appendChild(grid);
 
-    // Collect structured field comparison data
-    const mismatchesList = [];
-    const matchesList = [];
+    if (isMismatch) {
+      const mismatchesList = [];
 
-    if (comp.outputToken) {
-      if (comp.outputToken.status === "MISMATCH") {
+      if (comp.outputToken && comp.outputToken.status === "MISMATCH") {
         mismatchesList.push(`Receive token: Expected ${comp.outputToken.expected || "token"}, Actual ${comp.outputToken.actual || "token"}`);
-      } else if (comp.outputToken.status === "MATCH") {
-        matchesList.push(`Receive token matches: ${comp.outputToken.actual}`);
       }
-    }
-
-    if (comp.inputToken) {
-      if (comp.inputToken.status === "MISMATCH") {
+      if (comp.inputToken && comp.inputToken.status === "MISMATCH") {
         mismatchesList.push(`Send token: Expected ${comp.inputToken.expected || "token"}, Actual ${comp.inputToken.actual || "token"}`);
-      } else if (comp.inputToken.status === "MATCH") {
-        matchesList.push(`Send token matches: ${comp.inputToken.actual}`);
       }
-    }
-
-    if (comp.amount) {
-      if (comp.amount.status === "MISMATCH") {
+      if (comp.amount && comp.amount.status === "MISMATCH") {
         mismatchesList.push(`Amount: Expected ${comp.amount.expected}, Actual ${comp.amount.actual}`);
-      } else if (comp.amount.status === "MATCH") {
-        matchesList.push(`Amount matches: ${comp.amount.actual}`);
       }
-    }
-
-    if (comp.action) {
-      if (comp.action.status === "MISMATCH") {
+      if (comp.action && comp.action.status === "MISMATCH") {
         mismatchesList.push(`Action: Expected ${humanizeAction(comp.action.expected)}, Actual ${humanizeAction(comp.action.actual)}`);
-      } else if (comp.action.status === "MATCH") {
-        matchesList.push(`Action matches: ${humanizeAction(comp.action.actual)}`);
       }
-    }
-
-    if (comp.recipient) {
-      if (comp.recipient.status === "MISMATCH") {
+      if (comp.recipient && comp.recipient.status === "MISMATCH") {
         mismatchesList.push(`Recipient: Expected ${formatAddress(comp.recipient.expected)}, Actual ${formatAddress(comp.recipient.actual)}`);
-      } else if (comp.recipient.status === "MATCH") {
-        matchesList.push(`Recipient matches: ${formatAddress(comp.recipient.actual)}`);
       }
-    }
 
-    // Include any string mismatches from comp.mismatches or explanation
-    const otherMismatches = Array.isArray(comp.mismatches) ? comp.mismatches : Array.isArray(explanation.comparison?.details) ? explanation.comparison.details : [];
-
-    const comparisonSummary = (typeof explanation.comparison?.summary === "string" && explanation.comparison.summary.trim()) || comp.summary;
-
-    if (isMismatch || mismatchesList.length || matchesList.length || otherMismatches.length || comparisonSummary) {
-      const diffContainer = document.createElement("div");
-
-      diffContainer.className = "nalar-comparison-diff";
-
-      Object.assign(diffContainer.style, {
-        marginTop: "12px",
-        paddingTop: "11px",
-        borderTop: `1px solid ${UI.border}`,
-      });
-
-      if (comparisonSummary) {
-        const summaryEl = document.createElement("div");
-
-        summaryEl.textContent = comparisonSummary;
-
-        Object.assign(summaryEl.style, {
-          fontSize: "12px",
-          lineHeight: "1.55",
-          color: isMatch ? UI.soft : UI.danger,
-          marginBottom: mismatchesList.length || matchesList.length ? "10px" : "0",
-        });
-
-        diffContainer.appendChild(summaryEl);
+      if (mismatchesList.length === 0 && Array.isArray(comp.mismatches) && comp.mismatches.length > 0) {
+        comp.mismatches.forEach((m) => mismatchesList.push(m));
       }
 
       if (mismatchesList.length > 0) {
-        const mismatchLabel = createLabel("WHAT DOESN'T MATCH");
-        Object.assign(mismatchLabel.style, {
-          color: UI.danger,
-          marginBottom: "6px",
-          marginTop: "6px",
+        const diffContainer = document.createElement("div");
+        diffContainer.className = "nalar-comparison-diff";
+        Object.assign(diffContainer.style, {
+          marginTop: "12px",
+          paddingTop: "10px",
+          borderTop: `1px solid ${UI.border}`,
         });
-        diffContainer.appendChild(mismatchLabel);
 
         mismatchesList.forEach((diff) => {
           const diffRow = document.createElement("div");
@@ -2279,46 +2193,13 @@
             fontSize: "11px",
             lineHeight: "1.5",
             color: UI.danger,
+            fontWeight: "500",
           });
           diffContainer.appendChild(diffRow);
         });
-      } else if (otherMismatches.length > 0 && isMismatch) {
-        otherMismatches.forEach((diff) => {
-          const diffRow = document.createElement("div");
-          diffRow.textContent = `· ${diff}`;
-          Object.assign(diffRow.style, {
-            marginTop: "4px",
-            fontSize: "11px",
-            lineHeight: "1.5",
-            color: UI.muted,
-          });
-          diffContainer.appendChild(diffRow);
-        });
+
+        card.appendChild(diffContainer);
       }
-
-      if (matchesList.length > 0) {
-        const matchLabel = createLabel(isMismatch ? "WHAT MATCHES" : "VERIFIED PARAMETERS");
-        Object.assign(matchLabel.style, {
-          color: UI.safe,
-          marginBottom: "6px",
-          marginTop: mismatchesList.length > 0 ? "10px" : "6px",
-        });
-        diffContainer.appendChild(matchLabel);
-
-        matchesList.forEach((item) => {
-          const matchRow = document.createElement("div");
-          matchRow.textContent = `✓ ${item}`;
-          Object.assign(matchRow.style, {
-            marginTop: "3px",
-            fontSize: "11px",
-            lineHeight: "1.5",
-            color: UI.soft,
-          });
-          diffContainer.appendChild(matchRow);
-        });
-      }
-
-      card.appendChild(diffContainer);
     }
 
     return card;
@@ -2329,79 +2210,101 @@
     const isReview = decision === "REVIEW";
     const isMismatch = security?.intentMatch === false || security?.comparison?.overall === "MISMATCH";
 
-    const text =
-      typeof explanation.whatThisMeans === "string" && explanation.whatThisMeans.trim().length > 0
-        ? explanation.whatThisMeans.trim()
-        : isBlock
-          ? "Signing this transaction could result in irreversible loss of assets or unverified smart contract execution."
-          : isMismatch
-            ? "This transaction does not match your intended action. Please verify token symbols and amounts carefully before proceeding."
-            : isReview
-              ? "This transaction requires manual verification due to policy or contract risk parameters. Double-check all details before signing."
-              : "This transaction will execute with standard network confirmation and fees.";
+    let text = "";
+    if (typeof explanation?.whatThisMeans === "string" && explanation.whatThisMeans.trim().length > 0) {
+      text = explanation.whatThisMeans.trim();
+    } else if (typeof explanation?.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim().length > 0) {
+      text = explanation.whyStopped.userImpact.trim();
+    } else if (isBlock && isMismatch) {
+      text = "Signing this request would execute an action different from what you intended, potentially transferring permissions or assets unexpectedly.";
+    } else if (isBlock) {
+      text = "Signing this transaction could result in irreversible loss of assets or unverified contract execution.";
+    } else if (isReview) {
+      text = "This transaction interacts with contract functions or addresses that require careful verification before signing.";
+    } else {
+      text = "This transaction matches your requested parameters and will execute with standard network confirmation.";
+    }
 
-    const card = document.createElement("div");
+    const card = document.createElement("section");
 
     card.className = "nalar-means-card";
 
     Object.assign(card.style, {
-      marginTop: "14px",
-      padding: "14px 16px",
+      marginTop: "12px",
+      padding: "14px 18px",
       border: `1px solid ${UI.border}`,
-      borderRadius: "8px",
+      borderRadius: "10px",
       background: UI.surface,
-      fontSize: "13px",
-      lineHeight: "1.65",
-      color: UI.text,
     });
 
     const label = createLabel("WHAT THIS MEANS FOR YOU");
-
-    label.style.marginBottom = "8px";
-
+    label.style.marginBottom = "6px";
     card.appendChild(label);
 
     const body = document.createElement("div");
-
     body.textContent = text;
-
+    Object.assign(body.style, {
+      fontSize: "12px",
+      lineHeight: "1.6",
+      color: UI.soft,
+    });
     card.appendChild(body);
 
     return card;
   }
 
   function createEvidenceSection(explanation, security) {
-    const evidenceItems = Array.isArray(explanation.evidence) && explanation.evidence.length > 0 ? explanation.evidence : null;
+    const evidenceItems = Array.isArray(explanation?.evidence) && explanation.evidence.length > 0 ? explanation.evidence : null;
+    const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
+
+    if (!evidenceItems && !reports.length) {
+      return null;
+    }
+
+    const count = evidenceItems ? evidenceItems.length : reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0);
+
+    const wrapper = document.createElement("details");
+    wrapper.className = "nalar-evidence-details";
+
+    Object.assign(wrapper.style, {
+      marginTop: "12px",
+      padding: "12px 0 0",
+      borderTop: `1px solid ${UI.border}`,
+    });
+
+    const summary = document.createElement("summary");
+    summary.textContent = `Security evidence (${count > 0 ? `${count} items` : "verified"})`;
+
+    Object.assign(summary.style, {
+      cursor: "pointer",
+      color: UI.muted,
+      fontSize: "11px",
+      fontWeight: "600",
+      userSelect: "none",
+      padding: "4px 0",
+    });
+
+    wrapper.appendChild(summary);
+
+    const content = document.createElement("div");
+    content.className = "nalar-evidence-content";
+    Object.assign(content.style, {
+      marginTop: "10px",
+      padding: "12px 14px",
+      borderRadius: "8px",
+      border: `1px solid ${UI.border}`,
+      background: UI.surface,
+    });
 
     if (evidenceItems) {
-      const card = document.createElement("div");
-
-      card.className = "nalar-evidence-card";
-
-      Object.assign(card.style, {
-        marginTop: "14px",
-        padding: "16px 18px",
-        border: `1px solid ${UI.border}`,
-        borderRadius: "10px",
-        background: UI.surface,
-      });
-
-      const label = createLabel("OBSERVED SECURITY EVIDENCE");
-
-      label.style.marginBottom = "12px";
-
-      card.appendChild(label);
-
       evidenceItems.forEach((item, index) => {
         const row = document.createElement("div");
-
         Object.assign(row.style, {
-          padding: "8px 0",
+          padding: "7px 0",
           borderTop: index > 0 ? `1px solid ${UI.border}` : "none",
         });
 
         const topLine = document.createElement("div");
-
         Object.assign(topLine.style, {
           display: "flex",
           justifyContent: "space-between",
@@ -2410,262 +2313,140 @@
         });
 
         const labelEl = document.createElement("span");
-
         labelEl.textContent = item.label;
-
         Object.assign(labelEl.style, {
-          fontSize: "12px",
+          fontSize: "11px",
           fontWeight: "600",
           color: UI.text,
         });
 
         const rightSide = document.createElement("div");
-
         Object.assign(rightSide.style, {
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "6px",
         });
 
         const valEl = document.createElement("span");
-
         valEl.textContent = item.value;
-
         Object.assign(valEl.style, {
-          fontSize: "12px",
+          fontSize: "11px",
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
           color: UI.soft,
         });
 
         const badge = document.createElement("span");
-
         badge.className = "nalar-badge-source";
-
         badge.setAttribute("data-source", item.source);
-
         badge.textContent = item.source;
 
         rightSide.appendChild(valEl);
-
         rightSide.appendChild(badge);
-
         topLine.appendChild(labelEl);
-
         topLine.appendChild(rightSide);
-
         row.appendChild(topLine);
 
         if (item.explanation) {
           const expEl = document.createElement("div");
-
           expEl.textContent = item.explanation;
-
           Object.assign(expEl.style, {
-            marginTop: "4px",
+            marginTop: "3px",
             fontSize: "11px",
-            lineHeight: "1.55",
+            lineHeight: "1.5",
             color: UI.muted,
           });
-
           row.appendChild(expEl);
         }
 
-        card.appendChild(row);
+        content.appendChild(row);
       });
+    } else {
+      reports.forEach((analysis, rIdx) => {
+        const sub = document.createElement("div");
+        if (rIdx > 0) {
+          sub.style.marginTop = "10px";
+          sub.style.paddingTop = "10px";
+          sub.style.borderTop = `1px solid ${UI.border}`;
+        }
 
-      return card;
-    }
-
-    const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
-
-    if (!reports.length) {
-      return null;
-    }
-
-    const wrapper = document.createElement("div");
-
-    reports.forEach((analysis) => {
-      const card = document.createElement("div");
-
-      card.className = "nalar-evidence-card";
-
-      Object.assign(card.style, {
-        marginTop: "14px",
-        padding: "16px",
-        border: `1px solid ${UI.border}`,
-        borderRadius: "10px",
-        background: UI.surface,
-      });
-
-      const head = document.createElement("div");
-
-      head.className = "nalar-evidence-heading";
-
-      Object.assign(head.style, {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: "12px",
-      });
-
-      const token = document.createElement("div");
-
-      token.textContent = formatAddress(analysis?.token);
-
-      token.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-
-      token.style.fontSize = "12px";
-
-      token.style.color = UI.text;
-
-      const badge = document.createElement("div");
-
-      badge.textContent = `${analysis?.riskLevel ?? "UNKNOWN"} · ${analysis?.riskScore ?? 0}`;
-
-      Object.assign(badge.style, {
-        color: riskColor(analysis?.riskLevel),
-        fontSize: "10px",
-        fontWeight: "700",
-        letterSpacing: ".04em",
-      });
-
-      head.appendChild(token);
-
-      head.appendChild(badge);
-
-      card.appendChild(head);
-
-      const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
-
-      if (findings.length) {
-        const findingList = document.createElement("div");
-
-        findingList.style.marginTop = "13px";
-
-        findings.slice(0, 5).forEach((finding) => {
-          const severity = String(finding?.severity ?? "INFO").toUpperCase();
-          const isThreat = severity === "CRITICAL" || severity === "HIGH";
-
-          const row = document.createElement("div");
-
-          row.className = "nalar-finding";
-
-          row.setAttribute("data-severity", severity.toLowerCase());
-
-          Object.assign(row.style, {
-            padding: "5px 0",
-            fontSize: "12px",
-            lineHeight: "1.55",
-            color: isThreat ? UI.danger : severity === "MEDIUM" ? UI.warning : UI.muted,
-          });
-
-          const title = finding?.title ?? finding?.code ?? "Security finding";
-
-          row.textContent = isThreat ? title : title;
-
-          findingList.appendChild(row);
-        });
-
-        card.appendChild(findingList);
-      }
-
-      const stateEntries = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
-
-      if (stateEntries.length) {
-        const state = document.createElement("div");
-
-        Object.assign(state.style, {
-          marginTop: "12px",
-          paddingTop: "12px",
-          borderTop: `1px solid ${UI.border}`,
-        });
-
-        stateEntries.slice(0, 7).forEach((entry) => {
-          const row = document.createElement("div");
-
-          Object.assign(row.style, {
-            display: "flex",
-            justifyContent: "space-between",
-            gap: "12px",
-            padding: "4px 0",
-            fontSize: "11px",
-          });
-
-          const label = document.createElement("span");
-
-          label.textContent = humanizeEvidenceLabel(entry?.label ?? entry?.code);
-
-          label.style.color = UI.muted;
-
-          const value = document.createElement("span");
-
-          let displayValue = entry?.value ?? "Unknown";
-
-          if (entry?.code === "CURRENT_SELL_TAX" && entry?.unit === "PERCENT") {
-            const numeric = Number(displayValue);
-
-            if (Number.isFinite(numeric)) {
-              displayValue = `${(numeric / 100).toFixed(2)}%`;
-            }
-          }
-
-          value.textContent = String(displayValue);
-
-          value.style.color = UI.soft;
-
-          value.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-
-          row.appendChild(label);
-
-          row.appendChild(value);
-
-          state.appendChild(row);
-        });
-
-        card.appendChild(state);
-      }
-
-      if (analysis?.agentAnalysis?.available === true) {
-        const source = document.createElement("div");
-
-        Object.assign(source.style, {
-          marginTop: "12px",
-          paddingTop: "11px",
-          borderTop: `1px solid ${UI.border}`,
+        const head = document.createElement("div");
+        Object.assign(head.style, {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          marginBottom: "8px",
         });
 
-        const label = document.createElement("span");
+        const token = document.createElement("div");
+        token.textContent = formatAddress(analysis?.token);
+        token.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+        token.style.fontSize = "11px";
+        token.style.color = UI.text;
 
-        label.textContent = "BNB MCP";
-
-        label.style.color = UI.muted;
-
-        label.style.fontSize = "10px";
-
-        const evidence = document.createElement("span");
-
-        evidence.textContent = "ON-CHAIN";
-
-        Object.assign(evidence.style, {
-          color: UI.safe,
-          fontSize: "8px",
-          letterSpacing: ".08em",
+        const badge = document.createElement("div");
+        badge.textContent = `${analysis?.riskLevel ?? "UNKNOWN"} · ${analysis?.riskScore ?? 0}`;
+        Object.assign(badge.style, {
+          color: riskColor(analysis?.riskLevel),
+          fontSize: "10px",
           fontWeight: "700",
         });
 
-        source.appendChild(label);
+        head.appendChild(token);
+        head.appendChild(badge);
+        sub.appendChild(head);
 
-        source.appendChild(evidence);
+        const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
+        findings.forEach((finding) => {
+          const severity = String(finding?.severity ?? "INFO").toUpperCase();
+          const isThreat = severity === "CRITICAL" || severity === "HIGH";
+          const fRow = document.createElement("div");
+          fRow.className = "nalar-finding";
+          fRow.setAttribute("data-severity", severity.toLowerCase());
+          Object.assign(fRow.style, {
+            padding: "3px 0",
+            fontSize: "11px",
+            lineHeight: "1.5",
+            color: isThreat ? UI.danger : severity === "MEDIUM" ? UI.warning : UI.muted,
+          });
+          fRow.textContent = `· ${finding?.title ?? finding?.code ?? "Security finding"}`;
+          sub.appendChild(fRow);
+        });
 
-        card.appendChild(source);
-      }
+        const stateEntries = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
+        stateEntries.slice(0, 5).forEach((entry) => {
+          const sRow = document.createElement("div");
+          Object.assign(sRow.style, {
+            display: "flex",
+            justifyContent: "space-between",
+            padding: "3px 0",
+            fontSize: "10px",
+          });
+          const sLabel = document.createElement("span");
+          sLabel.textContent = humanizeEvidenceLabel(entry?.label ?? entry?.code);
+          sLabel.style.color = UI.muted;
 
-      wrapper.appendChild(card);
-    });
+          const sVal = document.createElement("span");
+          let displayVal = entry?.value ?? "Unknown";
+          if (entry?.code === "CURRENT_SELL_TAX" && entry?.unit === "PERCENT") {
+            const numeric = Number(displayVal);
+            if (Number.isFinite(numeric)) {
+              displayVal = `${(numeric / 100).toFixed(2)}%`;
+            }
+          }
+          sVal.textContent = String(displayVal);
+          sVal.style.color = UI.soft;
+          sVal.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
+          sRow.appendChild(sLabel);
+          sRow.appendChild(sVal);
+          sub.appendChild(sRow);
+        });
+
+        content.appendChild(sub);
+      });
+    }
+
+    wrapper.appendChild(content);
     return wrapper;
   }
 
@@ -2675,14 +2456,14 @@
     wrapper.className = "nalar-tech-details";
 
     Object.assign(wrapper.style, {
-      marginTop: "14px",
-      padding: "14px 0",
+      marginTop: "8px",
+      padding: "10px 0 14px",
       borderBottom: `1px solid ${UI.border}`,
     });
 
     const summary = document.createElement("summary");
 
-    summary.textContent = "Technical details (advanced)";
+    summary.textContent = "Technical details";
 
     Object.assign(summary.style, {
       cursor: "pointer",
@@ -2690,18 +2471,23 @@
       fontSize: "11px",
       fontWeight: "600",
       userSelect: "none",
+      padding: "4px 0",
     });
 
     wrapper.appendChild(summary);
 
     const content = document.createElement("div");
 
-    content.style.marginTop = "10px";
+    Object.assign(content.style, {
+      marginTop: "8px",
+      padding: "10px 12px",
+      borderRadius: "8px",
+      border: `1px solid ${UI.border}`,
+      background: UI.surface,
+    });
 
     const actual = security?.actual ?? {};
-
     const tx = security?.transactionSummary ?? {};
-
     const sim = security?.simulation ?? {};
 
     const rows = [
@@ -2724,27 +2510,18 @@
       });
 
       const left = document.createElement("span");
-
       left.textContent = label;
-
       left.style.color = UI.muted;
-
       left.style.fontSize = "10px";
 
       const right = document.createElement("span");
-
       right.textContent = String(value);
-
       right.style.color = UI.soft;
-
       right.style.fontSize = "10px";
-
       right.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
 
       row.appendChild(left);
-
       row.appendChild(right);
-
       content.appendChild(row);
     });
 
@@ -2761,7 +2538,7 @@
     footer.className = "nalar-decision-footer";
 
     Object.assign(footer.style, {
-      padding: "18px 26px 24px",
+      padding: "16px 26px 22px",
       borderTop: `1px solid ${UI.border}`,
       flex: "0 0 auto",
     });
@@ -2773,10 +2550,10 @@
     note.textContent = getFooterNote(decision);
 
     Object.assign(note.style, {
-      marginBottom: "13px",
+      marginBottom: "12px",
       color: UI.muted,
-      fontSize: "10px",
-      lineHeight: "1.55",
+      fontSize: "11px",
+      lineHeight: "1.5",
     });
 
     const actions = document.createElement("div");
@@ -2800,7 +2577,7 @@
     actions.appendChild(cancel);
 
     if (!isBlock) {
-      const continueButton = createButton(decision === "REVIEW" ? "Review & continue" : "Continue to wallet", true);
+      const continueButton = createButton(decision === "REVIEW" ? "Review & Continue" : "Continue", true);
 
       continueButton.onclick = () => {
         overlay.remove();
@@ -3359,8 +3136,8 @@
       default:
         return {
           title: "SAFE TO CONTINUE",
-          subtitle: "No high-risk conditions detected.",
-          label: "No high-risk conditions detected.",
+          subtitle: "Transaction appears consistent with your intent.",
+          label: "Transaction appears consistent with your intent.",
         };
     }
   }
@@ -3383,14 +3160,14 @@
 
   function getFooterNote(decision) {
     if (decision === "BLOCK") {
-      return "The transaction was not forwarded to your wallet.";
+      return "Transaction was not forwarded to your wallet.";
     }
 
     if (decision === "REVIEW") {
-      return "Continuing will send the original request to your wallet for final confirmation.";
+      return "Continuing will send the original request to your wallet.";
     }
 
-    return "Nalar has completed the check. Your wallet will ask for final confirmation next.";
+    return "Your wallet will ask for final confirmation.";
   }
 
   function humanizeEvidenceLabel(value) {

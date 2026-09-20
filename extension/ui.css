@@ -65,9 +65,21 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
 }
 .nalar-decision-header h2 {
-  font-size: 22px !important;
-  line-height: 1.06 !important;
-  letter-spacing: -0.03em !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em !important;
+}
+.nalar-risk-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 5px 10px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1 !important;
 }
 
 /* Body and scrollbar */
@@ -325,54 +337,25 @@
   padding: 16px 18px !important;
   border: 1px solid var(--nalar-ui-line-strong) !important;
   border-radius: 10px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent), var(--nalar-ui-surface) !important;
+  background: var(--nalar-ui-surface) !important;
 }
 
 .nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card {
-  border-color: rgba(239, 128, 111, 0.32) !important;
-  background: linear-gradient(180deg, rgba(239, 128, 111, 0.06), transparent 60%), var(--nalar-ui-surface) !important;
+  border-color: rgba(239, 128, 111, 0.28) !important;
+  background: linear-gradient(180deg, rgba(239, 128, 111, 0.05), transparent 60%), var(--nalar-ui-surface) !important;
 }
 
 .nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card {
-  border-color: rgba(224, 183, 109, 0.32) !important;
-  background: linear-gradient(180deg, rgba(224, 183, 109, 0.06), transparent 60%), var(--nalar-ui-surface) !important;
-}
-
-.nalar-why-stopped-headline {
-  font-size: 15px !important;
-  font-weight: 650 !important;
-  line-height: 1.4 !important;
-  letter-spacing: -0.01em !important;
-  color: var(--nalar-ui-text) !important;
+  border-color: rgba(224, 183, 109, 0.28) !important;
+  background: linear-gradient(180deg, rgba(224, 183, 109, 0.05), transparent 60%), var(--nalar-ui-surface) !important;
 }
 
 .nalar-why-stopped-primary {
   margin-top: 8px !important;
-  font-size: 13px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
   line-height: 1.6 !important;
-  color: var(--nalar-ui-soft) !important;
-}
-
-.nalar-why-stopped-impact {
-  margin-top: 12px !important;
-  padding: 10px 12px !important;
-  border-radius: 6px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  background: var(--nalar-ui-surface-2) !important;
-}
-
-.nalar-impact-label {
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
-  color: var(--nalar-ui-muted) !important;
-}
-
-.nalar-impact-text {
-  margin-top: 4px !important;
-  font-size: 12px !important;
-  line-height: 1.55 !important;
-  color: var(--nalar-ui-soft) !important;
+  color: var(--nalar-ui-text) !important;
 }
 
 /* Intent vs Actual Comparison Card */
@@ -488,22 +471,24 @@
 
 /* What This Means Card */
 .nalar-means-card {
-  padding: 14px 16px !important;
+  padding: 14px 18px !important;
   border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   background: var(--nalar-ui-surface) !important;
-  font-size: 13px !important;
-  line-height: 1.65 !important;
-  color: var(--nalar-ui-text) !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  color: var(--nalar-ui-soft) !important;
 }
 
-/* Technical details accordion */
+/* Accordion details (Evidence and Technical details) */
+.nalar-evidence-details,
 .nalar-tech-details {
-  margin-top: 14px !important;
-  padding: 12px 0 !important;
+  margin-top: 10px !important;
+  padding: 8px 0 10px !important;
   border-bottom: 1px solid var(--nalar-ui-line) !important;
 }
 
+.nalar-evidence-details summary,
 .nalar-tech-details summary {
   cursor: pointer !important;
   color: var(--nalar-ui-muted) !important;
@@ -511,15 +496,42 @@
   font-weight: 600 !important;
   user-select: none !important;
   transition: color 150ms ease !important;
+  list-style: none !important;
 }
 
+.nalar-evidence-details summary::-webkit-details-marker,
+.nalar-tech-details summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.nalar-evidence-details summary::before,
+.nalar-tech-details summary::before {
+  content: "▸ " !important;
+  display: inline-block !important;
+  transition: transform 150ms ease !important;
+}
+
+.nalar-evidence-details[open] summary::before,
+.nalar-tech-details[open] summary::before {
+  transform: rotate(90deg) !important;
+}
+
+.nalar-evidence-details summary:hover,
 .nalar-tech-details summary:hover {
   color: var(--nalar-ui-soft) !important;
 }
 
+.nalar-evidence-details[open] summary,
 .nalar-tech-details[open] summary {
   color: var(--nalar-ui-soft) !important;
-  margin-bottom: 10px !important;
+  margin-bottom: 8px !important;
+}
+
+.nalar-evidence-content {
+  border: 1px solid var(--nalar-ui-line) !important;
+  border-radius: 8px !important;
+  background: var(--nalar-ui-surface) !important;
+  padding: 12px 14px !important;
 }
 
 /* Network overlay */

@@ -36,6 +36,8 @@ export class BnbChainMcpClient implements BnbMcpClient {
     this.connectPromise = (async () => {
       const transportMode = process.env.BNB_MCP_TRANSPORT ?? "stdio";
 
+      console.log(`[MCP] Initializing client with transport: ${transportMode}`);
+
       const client = new Client({
         name: "nalar-protocol-investigator",
         version: "1.0.0",
@@ -43,27 +45,86 @@ export class BnbChainMcpClient implements BnbMcpClient {
 
       let transport: Transport;
 
-      if (transportMode === "http") {
-        const urlStr = process.env.BNB_MCP_URL || "http://localhost:8000/sse";
-        transport = new SSEClientTransport(new URL(urlStr));
+      if (transportMode === "sse" || transportMode === "http") {
+        const urlStr = process.env.BNB_MCP_URL;
+        if (!urlStr) {
+          throw new Error("BNB_MCP_URL is required when BNB_MCP_TRANSPORT is 'sse' or 'http'.");
+        }
+
+        const authToken = process.env.MCP_AUTH_TOKEN || process.env.BNB_MCP_AUTH_TOKEN || process.env.BNB_MCP_SHARED_SECRET;
+        const headers: Record<string, string> = {};
+
+        if (authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
+        console.log(`[MCP] Connecting to remote SSE server at ${new URL(urlStr).origin}...`);
+
+        transport = new SSEClientTransport(new URL(urlStr), {
+          requestInit: { headers },
+          authProvider: authToken
+            ? {
+                token: async () => authToken,
+              }
+            : undefined,
+        });
       } else {
         const command = process.env.BNB_MCP_COMMAND ?? "npx";
         const packageName = process.env.BNB_MCP_PACKAGE ?? "@bnb-chain/mcp@latest";
+
+        console.log(`[MCP] Spawning local official MCP process: ${command} ${packageName}...`);
 
         transport = new StdioClientTransport({
           command,
           args: ["-y", packageName],
           env: {
             ...process.env,
-            PRIVATE_KEY: "",
+            PRIVATE_KEY: "", // Strictly read-only
           },
         });
       }
 
-      await client.connect(transport);
+      transport.onclose = () => {
+        console.log("[MCP] Transport closed. Resetting connection state.");
+        this.client = null;
+        this.transport = null;
+      };
 
-      this.client = client;
+      transport.onerror = (error) => {
+        console.warn("[MCP] Transport error:", error instanceof Error ? error.message : String(error));
+        this.client = null;
+        this.transport = null;
+      };
+
       this.transport = transport;
+
+      const defaultConnectTimeout = transportMode === "stdio" ? 30000 : 10000;
+      const connectTimeoutMs = Number(process.env.MCP_CONNECT_TIMEOUT_MS || defaultConnectTimeout);
+      let connectTimer: NodeJS.Timeout | undefined;
+      const connectTimeoutPromise = new Promise<never>((_, reject) => {
+        connectTimer = setTimeout(() => {
+          reject(new Error(`BNB MCP connection timed out after ${connectTimeoutMs}ms`));
+        }, connectTimeoutMs);
+      });
+
+      try {
+        await Promise.race([client.connect(transport), connectTimeoutPromise]);
+        console.log("[MCP] Connected successfully.");
+        this.client = client;
+      } catch (err) {
+        try {
+          if ("close" in transport && typeof (transport as { close?: () => Promise<void> }).close === "function") {
+            await (transport as { close: () => Promise<void> }).close();
+          }
+        } catch {
+          // ignore
+        }
+        this.client = null;
+        this.transport = null;
+        throw err;
+      } finally {
+        if (connectTimer) clearTimeout(connectTimer);
+      }
     })();
 
     try {
@@ -94,6 +155,7 @@ export class BnbChainMcpClient implements BnbMcpClient {
         // Ignore close errors
       }
     }
+    console.log("[MCP] Disconnected.");
   }
 
   private async callTool(name: string, args: JsonObject): Promise<unknown> {
@@ -103,27 +165,52 @@ export class BnbChainMcpClient implements BnbMcpClient {
       throw new Error("BNB MCP client is not connected.");
     }
 
-    const result = await this.client.callTool({
+    const timeoutMs = Number(process.env.MCP_TIMEOUT_MS || 10000);
+
+    const callPromise = this.client.callTool({
       name,
       arguments: args,
     });
 
-    const text = result.content
-      ?.filter((item) => item.type === "text")
-      .map((item) => item.text)
-      .join("\n");
+    let toolTimer: NodeJS.Timeout | undefined;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      toolTimer = setTimeout(() => {
+        reject(new Error(`BNB MCP tool call timed out after ${timeoutMs}ms: ${name}`));
+      }, timeoutMs);
+    });
 
-    // MCP can report a logical contract-read failure inside
-    // a successful tool response as plain text.
-    if (result.isError) {
-      throw new Error(text || `BNB MCP tool failed: ${name}`);
+    try {
+      const result = await Promise.race([callPromise, timeoutPromise]);
+
+      const text = result.content
+        ?.filter((item) => item.type === "text")
+        .map((item) => item.text)
+        .join("\n");
+
+      // MCP can report a logical contract-read failure inside
+      // a successful tool response as plain text.
+      if (result.isError) {
+        throw new Error(text || `BNB MCP tool failed: ${name}`);
+      }
+
+      if (text && /Error reading contract:/i.test(text)) {
+        throw new Error(text);
+      }
+
+      return result;
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      if (/closed|disconnected|abort|not connected/i.test(errMsg)) {
+        console.warn("[MCP] Connection lost during tool call. Resetting client state.");
+        this.client = null;
+        this.transport = null;
+      }
+      throw err;
+    } finally {
+      if (toolTimer) {
+        clearTimeout(toolTimer);
+      }
     }
-
-    if (text && /Error reading contract:/i.test(text)) {
-      throw new Error(text);
-    }
-
-    return result;
   }
 
   async getErc20TokenInfo(input: { address: string; network: string }): Promise<unknown> {
@@ -146,7 +233,6 @@ export class BnbChainMcpClient implements BnbMcpClient {
   async isContract(input: { address: string; network: string }): Promise<unknown> {
     return this.callTool("is_contract", {
       address: input.address,
-
       network: input.network,
     });
   }
@@ -160,7 +246,6 @@ export class BnbChainMcpClient implements BnbMcpClient {
   async getTransaction(input: { txHash: string; network: string }): Promise<unknown> {
     return this.callTool("get_transaction", {
       txHash: input.txHash,
-
       network: input.network,
     });
   }
@@ -168,7 +253,6 @@ export class BnbChainMcpClient implements BnbMcpClient {
   async getTransactionReceipt(input: { txHash: string; network: string }): Promise<unknown> {
     return this.callTool("get_transaction_receipt", {
       txHash: input.txHash,
-
       network: input.network,
     });
   }

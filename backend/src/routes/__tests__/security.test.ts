@@ -1,3 +1,6 @@
+// Bun supplies this module at test runtime; the backend TypeScript setup does
+// not include Bun's type declarations.
+// @ts-expect-error Bun's test module is available when running the test suite.
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 
 type SecurityCheckResponse = {

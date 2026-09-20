@@ -10,7 +10,7 @@ import { resolveEffectState } from "../services/effect-state";
 import { calculateRisk, mergeScamRisk } from "../services/risk-engine";
 import { compareIntent } from "../services/intent-comparator";
 import { makeSecurityDecision } from "../services/security-decision";
-import { generateSecurityExplanation } from "../services/explanation-engine";
+import { generateSecurityExplanation, buildDeterministicExplanation } from "../services/explanation-engine";
 import { defaultPolicy, evaluatePolicy } from "../services/policy";
 import { analyzeTransactionIntelligence } from "../services/transaction-intelligence";
 import { translateTransaction } from "../services/transaction-translator";
@@ -189,15 +189,45 @@ securityRoute.post("/", async (c) => {
      * security failure.
      */
     if (!simulation.success) {
-      const explanation = {
-        title: "Transaction blocked",
-
-        summary: "The transaction could not be safely simulated.",
-
-        details: [simulation.error ?? "Simulation reverted."],
-
-        recommendedAction: "CANCEL" as const,
-      };
+      const explanation = buildDeterministicExplanation({
+        intent: intentText,
+        decision: "BLOCK",
+        riskLevel: "CRITICAL",
+        riskScore: 100,
+        intentMatch: false,
+        actualAction: decoded.classification.action,
+        actualFunction: decoded.functionName ?? null,
+        actualValueNative: `${Number(value) / 1e18} BNB`,
+        reasons: ["Transaction simulation failed."],
+        effects: {},
+        comparison: {
+          matches: false,
+          mismatches: ["Transaction simulation failed."],
+        },
+        policy: {
+          allowed: false,
+          requiresReview: false,
+          reasons: ["Transaction simulation failed."],
+        },
+        normalizedIntent: {
+          action: intent.action,
+          quantity: intent.quantity,
+          tokenIn: intent.tokenIn,
+          tokenOut: intent.tokenOut,
+          description: intent.description,
+        },
+        transactionSummary: {
+          title: decoded.classification.description,
+          action: decoded.classification.action,
+          target: to,
+          description: decoded.classification.description,
+        },
+        simulation: {
+          success: false,
+          gasEstimate: null,
+          error: simulation.error,
+        },
+      });
 
       return c.json({
         ok: true,
@@ -449,24 +479,61 @@ securityRoute.post("/", async (c) => {
 
         policy: {
           allowed: policyEvaluation.allowed,
-
           requiresReview: policyEvaluation.requiresReview,
-
           reasons: policyEvaluation.reasons,
         },
+        normalizedIntent: {
+          action: intent.action,
+          quantity: intent.quantity,
+          tokenIn: intent.tokenIn,
+          tokenOut: intent.tokenOut,
+          description: intent.description,
+        },
+        transactionSummary,
+        simulation: {
+          success: simulation.success,
+          gasEstimate: simulation.gasEstimate,
+          error: simulation.error,
+        },
+        scamAnalyses: scamAnalyses as any,
+        transactionThreats: transactionThreatFindings as any,
       });
     } catch (error) {
       console.error("[EXPLANATION]", error);
 
-      explanation = {
-        title: decision.decision === "BLOCK" ? "Transaction blocked" : decision.decision === "REVIEW" ? "Transaction needs review" : "Transaction appears safe",
-
-        summary: decision.reasons[0] ?? "Security analysis completed.",
-
-        details: decision.reasons,
-
-        recommendedAction: decision.decision === "BLOCK" ? ("CANCEL" as const) : decision.decision === "REVIEW" ? ("REVIEW" as const) : ("PROCEED" as const),
-      };
+      explanation = buildDeterministicExplanation({
+        intent: intentText,
+        decision: decision.decision,
+        riskLevel: risk.level,
+        riskScore: risk.score,
+        intentMatch: comparison.matches,
+        actualAction,
+        actualFunction: decoded.functionName ?? null,
+        actualValueNative: `${Number(value) / 1e18} BNB`,
+        reasons: decision.reasons,
+        effects: serializeBigInt(effects),
+        comparison,
+        policy: {
+          allowed: policyEvaluation.allowed,
+          requiresReview: policyEvaluation.requiresReview,
+          reasons: policyEvaluation.reasons,
+        },
+        normalizedIntent: {
+          action: intent.action,
+          quantity: intent.quantity,
+          tokenIn: intent.tokenIn,
+          tokenOut: intent.tokenOut,
+          description: intent.description,
+        },
+        transactionSummary,
+        simulation: {
+          success: simulation.success,
+          gasEstimate: simulation.gasEstimate,
+          error: simulation.error,
+        },
+        scamAnalyses: scamAnalyses as any,
+        transactionThreats: transactionThreatFindings as any,
+      });
     }
 
     return c.json({

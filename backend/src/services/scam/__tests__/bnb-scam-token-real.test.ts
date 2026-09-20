@@ -1,4 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test, setDefaultTimeout } from "bun:test";
+
+setDefaultTimeout(20_000);
 import type { Address } from "viem";
 
 import { BnbAgentInvestigator } from "../bnb-agent-investigator";

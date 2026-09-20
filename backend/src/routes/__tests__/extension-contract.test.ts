@@ -44,6 +44,18 @@ describe("Extension API Contract Compatibility", () => {
     expect(body.explanation).toBeDefined();
     expect(typeof body.explanation.title).toBe("string");
     expect(typeof body.explanation.recommendedAction).toBe("string");
+
+    // Phase 4 structured explanation fields
+    expect(typeof body.explanation.headline).toBe("string");
+    expect(body.explanation.whyStopped).toBeDefined();
+    expect(typeof body.explanation.whyStopped.title).toBe("string");
+    expect(typeof body.explanation.whyStopped.primaryReason).toBe("string");
+    expect(typeof body.explanation.whyStopped.userImpact).toBe("string");
+    expect(body.explanation.userIntent).toBeDefined();
+    expect(["MATCH", "MISMATCH", "UNKNOWN"]).toContain(body.explanation.userIntent.status);
+    expect(body.explanation.actualTransaction).toBeDefined();
+    expect(body.explanation.comparison).toBeDefined();
+    expect(Array.isArray(body.explanation.evidence)).toBe(true);
   });
 
   test("rejects invalid extension payloads with appropriate validation errors", async () => {

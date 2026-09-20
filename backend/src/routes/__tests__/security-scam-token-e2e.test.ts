@@ -51,11 +51,29 @@ mock.module("../../services/intent-engine", () => ({
  * Explanation is not the thing under test here.
  */
 mock.module("../../services/explanation-engine", () => ({
+  buildDeterministicExplanation: () => ({
+    title: "Transaction blocked",
+    summary: "Nalar detected critical security evidence.",
+    details: [],
+    recommendedAction: "BLOCK",
+    headline: "Critical risk detected",
+    whyStopped: { title: "Why stopped", primaryReason: "Sell tax", userImpact: "Impact" },
+    userIntent: { summary: "Swap", action: "SWAP", status: "MATCH" },
+    actualTransaction: { summary: "Swap", action: "SWAP" },
+    comparison: { status: "MATCH", summary: "Matches" },
+    evidence: [],
+  }),
   generateSecurityExplanation: async () => ({
     title: "Transaction blocked",
     summary: "Nalar detected critical security evidence.",
     details: [],
     recommendedAction: "BLOCK",
+    headline: "Critical risk detected",
+    whyStopped: { title: "Why stopped", primaryReason: "Sell tax", userImpact: "Impact" },
+    userIntent: { summary: "Swap", action: "SWAP", status: "MATCH" },
+    actualTransaction: { summary: "Swap", action: "SWAP" },
+    comparison: { status: "MATCH", summary: "Matches" },
+    evidence: [],
   }),
 }));
 

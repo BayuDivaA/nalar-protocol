@@ -318,6 +318,215 @@
   border-top: 1px solid var(--nalar-ui-line);
 }
 
+/* Why Nalar Stopped Card */
+.nalar-why-stopped-card {
+  margin-top: 14px !important;
+  padding: 16px 18px !important;
+  border: 1px solid var(--nalar-ui-line-strong) !important;
+  border-radius: 10px !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.015), transparent),
+    var(--nalar-ui-surface) !important;
+}
+
+.nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card {
+  border-color: rgba(239,128,111,.32) !important;
+  background:
+    linear-gradient(180deg, rgba(239,128,111,.06), transparent 60%),
+    var(--nalar-ui-surface) !important;
+}
+
+.nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card {
+  border-color: rgba(224,183,109,.32) !important;
+  background:
+    linear-gradient(180deg, rgba(224,183,109,.06), transparent 60%),
+    var(--nalar-ui-surface) !important;
+}
+
+.nalar-why-stopped-headline {
+  font-size: 15px !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+  letter-spacing: -.01em !important;
+  color: var(--nalar-ui-text) !important;
+}
+
+.nalar-why-stopped-primary {
+  margin-top: 8px !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  color: var(--nalar-ui-soft) !important;
+}
+
+.nalar-why-stopped-impact {
+  margin-top: 12px !important;
+  padding: 10px 12px !important;
+  border-radius: 6px !important;
+  border: 1px solid var(--nalar-ui-line) !important;
+  background: var(--nalar-ui-surface-2) !important;
+}
+
+.nalar-impact-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .12em !important;
+  color: var(--nalar-ui-muted) !important;
+}
+
+.nalar-impact-text {
+  margin-top: 4px !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: var(--nalar-ui-soft) !important;
+}
+
+/* Intent vs Actual Comparison Card */
+.nalar-comparison-card {
+  margin-top: 10px !important;
+  padding: 16px !important;
+  border: 1px solid var(--nalar-ui-line) !important;
+  border-radius: 10px !important;
+  background: var(--nalar-ui-surface) !important;
+}
+
+.nalar-comparison-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-bottom: 12px !important;
+}
+
+.nalar-comparison-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+@media (max-width: 480px) {
+  .nalar-comparison-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.nalar-comparison-box {
+  padding: 11px 12px !important;
+  border: 1px solid var(--nalar-ui-line) !important;
+  border-radius: 8px !important;
+  background: var(--nalar-ui-surface-2) !important;
+}
+
+.nalar-comparison-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: .12em !important;
+  color: var(--nalar-ui-muted) !important;
+}
+
+.nalar-comparison-value {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  line-height: 1.55 !important;
+  color: var(--nalar-ui-text) !important;
+  word-break: break-word !important;
+}
+
+.nalar-comparison-diff {
+  margin-top: 12px !important;
+  padding-top: 11px !important;
+  border-top: 1px solid var(--nalar-ui-line) !important;
+}
+
+/* Badges */
+.nalar-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  font-size: 9px !important;
+  font-weight: 750 !important;
+  letter-spacing: .08em !important;
+}
+
+.nalar-badge[data-match="true"] {
+  background: rgba(157,187,159,.12) !important;
+  color: var(--nalar-ui-safe) !important;
+  border: 1px solid rgba(157,187,159,.25) !important;
+}
+
+.nalar-badge[data-match="false"] {
+  background: rgba(239,128,111,.12) !important;
+  color: var(--nalar-ui-danger) !important;
+  border: 1px solid rgba(239,128,111,.25) !important;
+}
+
+.nalar-badge-source {
+  display: inline-block !important;
+  padding: 2px 6px !important;
+  border-radius: 3px !important;
+  font-size: 8px !important;
+  font-weight: 700 !important;
+  letter-spacing: .08em !important;
+  border: 1px solid var(--nalar-ui-line-strong) !important;
+  background: var(--nalar-ui-surface-2) !important;
+  color: var(--nalar-ui-soft) !important;
+}
+
+.nalar-badge-source[data-source="ON-CHAIN"],
+.nalar-badge-source[data-source="BNB MCP"] {
+  color: var(--nalar-ui-safe) !important;
+  border-color: rgba(157,187,159,.25) !important;
+  background: rgba(157,187,159,.08) !important;
+}
+
+.nalar-badge-source[data-source="SIMULATION"] {
+  color: var(--nalar-ui-warning) !important;
+  border-color: rgba(224,183,109,.25) !important;
+  background: rgba(224,183,109,.08) !important;
+}
+
+.nalar-badge-source[data-source="POLICY"] {
+  color: var(--nalar-ui-danger) !important;
+  border-color: rgba(239,128,111,.25) !important;
+  background: rgba(239,128,111,.08) !important;
+}
+
+/* What This Means Card */
+.nalar-means-card {
+  padding: 14px 16px !important;
+  border: 1px solid var(--nalar-ui-line) !important;
+  border-radius: 8px !important;
+  background: var(--nalar-ui-surface) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  color: var(--nalar-ui-text) !important;
+}
+
+/* Technical details accordion */
+.nalar-tech-details {
+  margin-top: 14px !important;
+  padding: 12px 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-line) !important;
+}
+
+.nalar-tech-details summary {
+  cursor: pointer !important;
+  color: var(--nalar-ui-muted) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  user-select: none !important;
+  transition: color 150ms ease !important;
+}
+
+.nalar-tech-details summary:hover {
+  color: var(--nalar-ui-soft) !important;
+}
+
+.nalar-tech-details[open] summary {
+  color: var(--nalar-ui-soft) !important;
+  margin-bottom: 10px !important;
+}
+
 /* Small screens */
 @media (max-width: 640px) {
   .nalar-overlay {

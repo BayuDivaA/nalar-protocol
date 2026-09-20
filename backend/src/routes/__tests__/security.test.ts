@@ -120,6 +120,18 @@ mock.module("../../services/intent-engine", () => ({
 }));
 
 mock.module("../../services/explanation-engine", () => ({
+  buildDeterministicExplanation: (input: any) => ({
+    title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
+    summary: input.decision === "BLOCK" ? "Transaction blocked by deterministic security rules." : input.decision === "REVIEW" ? "Transaction requires additional review." : "Transaction allowed by deterministic security rules.",
+    details: [`Intent: ${input.intent}`, `Actual action: ${input.actualAction}`, `Risk: ${input.riskLevel} (${input.riskScore}/100)`],
+    recommendedAction: input.decision === "BLOCK" ? "CANCEL" : input.decision === "REVIEW" ? "REVIEW" : "PROCEED",
+    headline: "Test headline",
+    whyStopped: { title: "Test", primaryReason: "Test", userImpact: "Test" },
+    userIntent: { summary: "Test", action: "TEST", status: "MATCH" },
+    actualTransaction: { summary: "Test", action: "TEST" },
+    comparison: { status: "MATCH", summary: "Test" },
+    evidence: [],
+  }),
   generateSecurityExplanation: async (input: { intent: string; decision: string; riskLevel: string; riskScore: number; intentMatch: boolean; actualAction: string; actualFunction: string | null; reasons: string[] }) => {
     return {
       title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
@@ -129,6 +141,12 @@ mock.module("../../services/explanation-engine", () => ({
       details: [`Intent: ${input.intent}`, `Actual action: ${input.actualAction}`, `Risk: ${input.riskLevel} (${input.riskScore}/100)`],
 
       recommendedAction: input.decision === "BLOCK" ? "CANCEL" : input.decision === "REVIEW" ? "REVIEW" : "PROCEED",
+      headline: "Test headline",
+      whyStopped: { title: "Test", primaryReason: "Test", userImpact: "Test" },
+      userIntent: { summary: "Test", action: "TEST", status: "MATCH" },
+      actualTransaction: { summary: "Test", action: "TEST" },
+      comparison: { status: "MATCH", summary: "Test" },
+      evidence: [],
     };
   },
 }));
@@ -175,11 +193,29 @@ describe("POST /api/transactions/security-check", () => {
     }));
 
     mock.module("../../services/explanation-engine", () => ({
+      buildDeterministicExplanation: (input: any) => ({
+        title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
+        summary: input.decision === "BLOCK" ? "Transaction blocked by deterministic security rules." : input.decision === "REVIEW" ? "Transaction requires additional review." : "Transaction allowed by deterministic security rules.",
+        details: [`Intent: ${input.intent}`, `Actual action: ${input.actualAction}`, `Risk: ${input.riskLevel} (${input.riskScore}/100)`],
+        recommendedAction: input.decision === "BLOCK" ? "CANCEL" : input.decision === "REVIEW" ? "REVIEW" : "PROCEED",
+        headline: "Test headline",
+        whyStopped: { title: "Test", primaryReason: "Test", userImpact: "Test" },
+        userIntent: { summary: "Test", action: "TEST", status: "MATCH" },
+        actualTransaction: { summary: "Test", action: "TEST" },
+        comparison: { status: "MATCH", summary: "Test" },
+        evidence: [],
+      }),
       generateSecurityExplanation: async (input: { intent: string; decision: string; riskLevel: string; riskScore: number; intentMatch: boolean; actualAction: string; actualFunction: string | null; reasons: string[] }) => ({
         title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
         summary: input.decision === "BLOCK" ? "Transaction blocked by deterministic security rules." : input.decision === "REVIEW" ? "Transaction requires additional review." : "Transaction allowed by deterministic security rules.",
         details: [`Intent: ${input.intent}`, `Actual action: ${input.actualAction}`, `Risk: ${input.riskLevel} (${input.riskScore}/100)`],
         recommendedAction: input.decision === "BLOCK" ? "CANCEL" : input.decision === "REVIEW" ? "REVIEW" : "PROCEED",
+        headline: "Test headline",
+        whyStopped: { title: "Test", primaryReason: "Test", userImpact: "Test" },
+        userIntent: { summary: "Test", action: "TEST", status: "MATCH" },
+        actualTransaction: { summary: "Test", action: "TEST" },
+        comparison: { status: "MATCH", summary: "Test" },
+        evidence: [],
       }),
     }));
 

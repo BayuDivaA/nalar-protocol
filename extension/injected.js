@@ -1276,7 +1276,7 @@
     const modal = createModal();
 
     Object.assign(modal.style, {
-      width: "min(540px, 100%)",
+      width: "min(560px, 100%)",
       maxHeight: "calc(100vh - 32px)",
       display: "flex",
       flexDirection: "column",
@@ -1288,6 +1288,73 @@
 
     const status = getDecisionStatus(decision);
 
+    const explanation = security?.explanation ?? {};
+
+    // 1. Decision Header
+    const header = createDecisionHeader(decision, status, riskLevel, riskScore);
+
+    // Body scrollable container
+    const body = document.createElement("main");
+
+    body.className = "nalar-decision-body";
+
+    Object.assign(body.style, {
+      overflowY: "auto",
+      padding: "0 26px 20px",
+      flex: "1 1 auto",
+    });
+
+    // 2. Why Nalar Stopped Card (prominent above fold)
+    body.appendChild(createWhyStoppedCard(explanation, security, decision));
+
+    // 3. Intent vs Actual Comparison
+    body.appendChild(createIntentVsActualComparison(explanation, security, decision));
+
+    // 4. What This Means For You
+    const meansSection = createWhatThisMeansSection(explanation, security, decision);
+    if (meansSection) {
+      body.appendChild(meansSection);
+    }
+
+    // 5. Security Evidence (with context & source badges)
+    const evidenceSection = createEvidenceSection(explanation, security);
+    if (evidenceSection) {
+      body.appendChild(evidenceSection);
+    }
+
+    // 6. Technical Details (Collapsible accordion, closed by default)
+    body.appendChild(createTechnicalSection(explanation, security));
+
+    // 7. Footer Actions
+    const footer = createDecisionFooter(decision, onContinue, onCancel, overlay);
+
+    modal.appendChild(header);
+
+    modal.appendChild(body);
+
+    modal.appendChild(footer);
+
+    overlay.appendChild(modal);
+
+    document.documentElement.appendChild(overlay);
+
+    document.addEventListener("keydown", function onKeydown(event) {
+      if (!document.getElementById(IDS.decision)) {
+        document.removeEventListener("keydown", onKeydown);
+        return;
+      }
+
+      if (event.key === "Escape") {
+        document.removeEventListener("keydown", onKeydown);
+        overlay.remove();
+        if (onCancel) {
+          onCancel();
+        }
+      }
+    });
+  }
+
+  function createDecisionHeader(decision, status, riskLevel, riskScore) {
     const header = document.createElement("header");
 
     header.className = "nalar-decision-header";
@@ -1322,59 +1389,37 @@
 
     const headingWrap = document.createElement("div");
 
-    const eyebrow = createLabel("NALAR · TXSENTRY");
+    const eyebrow = createLabel("NALAR PROTOCOL · DECISION");
 
     const heading = document.createElement("h2");
 
     heading.textContent = status.title;
 
     Object.assign(heading.style, {
-      margin: "6px 0 0",
+      margin: "4px 0 0",
       fontSize: "22px",
-      lineHeight: "1.06",
+      lineHeight: "1.08",
       letterSpacing: "-.03em",
       color: UI.text,
-    });
-
-    const severityRow = document.createElement("div");
-
-    Object.assign(severityRow.style, {
-      marginTop: "6px",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-    });
-
-    const severityText = document.createElement("span");
-
-    severityText.textContent = riskLevel;
-
-    Object.assign(severityText.style, {
-      fontSize: "10px",
       fontWeight: "700",
-      letterSpacing: ".06em",
-      color: riskColor(riskLevel),
     });
 
-    const scoreText = document.createElement("span");
+    const subtitle = document.createElement("p");
 
-    scoreText.textContent = `${riskScore}/100`;
+    subtitle.textContent = status.subtitle;
 
-    Object.assign(scoreText.style, {
-      fontSize: "10px",
-      color: UI.muted,
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+    Object.assign(subtitle.style, {
+      margin: "4px 0 0",
+      fontSize: "12px",
+      lineHeight: "1.4",
+      color: UI.soft,
     });
-
-    severityRow.appendChild(severityText);
-
-    severityRow.appendChild(scoreText);
 
     headingWrap.appendChild(eyebrow);
 
     headingWrap.appendChild(heading);
 
-    headingWrap.appendChild(severityRow);
+    headingWrap.appendChild(subtitle);
 
     const riskRing = createRiskRing(riskScore, riskLevel);
 
@@ -1384,181 +1429,522 @@
 
     header.appendChild(riskRing);
 
-    const body = document.createElement("main");
+    return header;
+  }
 
-    body.className = "nalar-decision-body";
+  function createWhyStoppedCard(explanation, security, decision) {
+    const isBlock = decision === "BLOCK";
+    const isReview = decision === "REVIEW";
 
-    Object.assign(body.style, {
-      overflowY: "auto",
-      padding: "0 26px",
-      flex: "1 1 auto",
+    const card = document.createElement("div");
+
+    card.className = "nalar-why-stopped-card";
+
+    Object.assign(card.style, {
+      marginTop: "16px",
+      padding: "18px 20px",
+      border: `1px solid ${isBlock ? "rgba(239,128,111,.32)" : isReview ? "rgba(224,183,109,.32)" : UI.border}`,
+      borderRadius: "10px",
+      background: UI.surface,
     });
 
-    // security summary
-    const summaryData = buildSecuritySummary(security, decision);
+    const sectionLabel = createLabel(isBlock ? "WHY NALAR STOPPED THIS" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT");
 
-    if (summaryData.length) {
-      body.appendChild(createSection("SECURITY SUMMARY", createSecuritySummary(summaryData)));
+    card.appendChild(sectionLabel);
+
+    const headlineText =
+      explanation.headline ||
+      explanation.whyStopped?.title ||
+      explanation.title ||
+      (isBlock ? "Potentially Malicious Transaction Blocked" : isReview ? "Transaction Requires Verification" : "Transaction Cleared");
+
+    const headline = document.createElement("div");
+
+    headline.className = "nalar-why-stopped-headline";
+
+    headline.textContent = headlineText;
+
+    Object.assign(headline.style, {
+      marginTop: "8px",
+      fontSize: "16px",
+      fontWeight: "650",
+      lineHeight: "1.35",
+      letterSpacing: "-.01em",
+      color: isBlock ? UI.danger : isReview ? UI.warning : UI.text,
+    });
+
+    card.appendChild(headline);
+
+    const primaryReasonText =
+      explanation.whyStopped?.primaryReason ||
+      explanation.summary ||
+      getFallbackSummary(security, decision);
+
+    const primaryReason = document.createElement("div");
+
+    primaryReason.className = "nalar-why-stopped-primary";
+
+    primaryReason.textContent = primaryReasonText;
+
+    Object.assign(primaryReason.style, {
+      marginTop: "8px",
+      fontSize: "13px",
+      lineHeight: "1.6",
+      color: UI.soft,
+    });
+
+    card.appendChild(primaryReason);
+
+    const userImpactText = explanation.whyStopped?.userImpact || (isBlock ? explanation.recommendedAction : null);
+
+    if (userImpactText) {
+      const impactBox = document.createElement("div");
+
+      impactBox.className = "nalar-why-stopped-impact";
+
+      Object.assign(impactBox.style, {
+        marginTop: "12px",
+        padding: "10px 12px",
+        borderRadius: "6px",
+        border: `1px solid ${UI.border}`,
+        background: UI.raised,
+      });
+
+      const impactLabel = document.createElement("div");
+
+      impactLabel.className = "nalar-impact-label";
+
+      impactLabel.textContent = "POTENTIAL IMPACT";
+
+      Object.assign(impactLabel.style, {
+        fontSize: "9px",
+        fontWeight: "700",
+        letterSpacing: ".12em",
+        color: UI.muted,
+      });
+
+      const impactValue = document.createElement("div");
+
+      impactValue.className = "nalar-impact-text";
+
+      impactValue.textContent = userImpactText;
+
+      Object.assign(impactValue.style, {
+        marginTop: "4px",
+        fontSize: "12px",
+        lineHeight: "1.55",
+        color: UI.soft,
+      });
+
+      impactBox.appendChild(impactLabel);
+
+      impactBox.appendChild(impactValue);
+
+      card.appendChild(impactBox);
     }
-
-    // explanation
-    const explanation = security?.explanation ?? {};
-
-    const primaryReason =
-      typeof explanation.summary === "string" && explanation.summary.trim() ? explanation.summary.trim() : Array.isArray(security?.reasons) && security.reasons.length ? security.reasons[0] : getFallbackSummary(security, decision);
 
     const details = dedupe([
       ...(Array.isArray(explanation.details) ? explanation.details : []),
-      ...(Array.isArray(explanation.reasons) ? explanation.reasons : []),
-      ...(decision !== "ALLOW" && Array.isArray(security?.reasons) ? security.reasons : []),
-    ]).filter((item) => item !== primaryReason);
-
-    const explanationBox = document.createElement("div");
-
-    const primary = document.createElement("div");
-
-    primary.className = "nalar-decision-summary";
-
-    primary.textContent = primaryReason;
-
-    Object.assign(primary.style, {
-      fontSize: "16px",
-      lineHeight: "1.58",
-      color: UI.text,
-      letterSpacing: "-.01em",
-      maxWidth: "42ch",
-    });
-
-    explanationBox.appendChild(primary);
+      ...(isBlock && Array.isArray(security?.reasons) ? security.reasons : []),
+    ]).filter((item) => item !== primaryReasonText && item !== headlineText);
 
     if (details.length) {
-      const detailList = document.createElement("div");
+      const list = document.createElement("div");
 
-      detailList.style.marginTop = "14px";
+      list.style.marginTop = "12px";
 
-      details.slice(0, 5).forEach((item) => {
+      details.slice(0, 4).forEach((item) => {
         const row = document.createElement("div");
-
-        row.className = "nalar-decision-detail";
 
         row.textContent = `· ${item}`;
 
         Object.assign(row.style, {
-          marginBottom: "6px",
-          color: UI.soft,
+          marginBottom: "4px",
+          color: UI.muted,
           fontSize: "12px",
-          lineHeight: "1.6",
+          lineHeight: "1.55",
         });
 
-        detailList.appendChild(row);
+        list.appendChild(row);
       });
 
-      explanationBox.appendChild(detailList);
+      card.appendChild(list);
     }
 
-    body.appendChild(createSection(decision === "BLOCK" ? "WHY NALAR STOPPED IT" : "NALAR'S READING", explanationBox));
-
-    // scam intelligence / evidence hierarchy
-    const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
-
-    if (reports.length) {
-      body.appendChild(createEvidenceSection(reports));
-    }
-
-    // evidence timeline
-    const timelineData = buildTimelineData(security, decision);
-
-    if (timelineData.length) {
-      body.appendChild(createSection("EVIDENCE CHAIN", createEvidenceTimeline(timelineData)));
-    }
-
-    // intent match
-    if (typeof security?.intentMatch === "boolean") {
-      body.appendChild(createIntentMatchSection(security));
-    }
-
-    // technical details
-    body.appendChild(createTechnicalSection(security));
-
-    const footer = document.createElement("footer");
-
-    footer.className = "nalar-decision-footer";
-
-    Object.assign(footer.style, {
-      padding: "18px 26px 24px",
-      borderTop: `1px solid ${UI.border}`,
-      flex: "0 0 auto",
-    });
-
-    const note = document.createElement("div");
-
-    note.className = "nalar-decision-note";
-
-    note.textContent = getFooterNote(decision);
-
-    Object.assign(note.style, {
-      marginBottom: "13px",
-      color: UI.muted,
-      fontSize: "10px",
-      lineHeight: "1.55",
-    });
-
-    const actions = document.createElement("div");
-
-    Object.assign(actions.style, {
-      display: "grid",
-      gridTemplateColumns: decision === "BLOCK" ? "1fr" : "120px 1fr",
-      gap: "8px",
-    });
-
-    const cancel = createButton(decision === "BLOCK" ? "Close" : "Cancel", false);
-
-    cancel.onclick = () => {
-      overlay.remove();
-
-      if (onCancel) {
-        onCancel();
-      }
-    };
-
-    actions.appendChild(cancel);
-
-    if (decision !== "BLOCK") {
-      const continueButton = createButton(decision === "REVIEW" ? "Review & continue" : "Continue to wallet", true);
-
-      continueButton.onclick = () => {
-        overlay.remove();
-
-        if (onContinue) {
-          onContinue();
-        }
-      };
-
-      actions.appendChild(continueButton);
-    }
-
-    footer.appendChild(note);
-
-    footer.appendChild(actions);
-
-    modal.appendChild(header);
-
-    modal.appendChild(body);
-
-    modal.appendChild(footer);
-
-    overlay.appendChild(modal);
-
-    document.documentElement.appendChild(overlay);
+    return card;
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Scam intelligence UI
-  |--------------------------------------------------------------------------
-  */
+  function createIntentVsActualComparison(explanation, security, decision) {
+    const card = document.createElement("div");
 
-  function createEvidenceSection(reports) {
+    card.className = "nalar-comparison-card";
+
+    Object.assign(card.style, {
+      marginTop: "14px",
+      padding: "16px 18px",
+      border: `1px solid ${UI.border}`,
+      borderRadius: "10px",
+      background: UI.surface,
+    });
+
+    const headerRow = document.createElement("div");
+
+    headerRow.className = "nalar-comparison-header";
+
+    Object.assign(headerRow.style, {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: "12px",
+    });
+
+    const headerLabel = createLabel("INTENT VS ACTUAL TRANSACTION");
+
+    headerRow.appendChild(headerLabel);
+
+    const match = typeof explanation.comparison?.match === "boolean"
+      ? explanation.comparison.match
+      : typeof security?.intentMatch === "boolean"
+        ? security.intentMatch
+        : true;
+
+    const matchBadge = document.createElement("div");
+
+    matchBadge.className = "nalar-badge";
+
+    matchBadge.setAttribute("data-match", String(match));
+
+    matchBadge.textContent = match ? "✓ MATCH" : "✕ MISMATCH";
+
+    Object.assign(matchBadge.style, {
+      padding: "3px 8px",
+      borderRadius: "4px",
+      fontSize: "9px",
+      fontWeight: "750",
+      letterSpacing: ".08em",
+      color: match ? UI.safe : UI.danger,
+      background: match ? "rgba(157,187,159,.12)" : "rgba(239,128,111,.12)",
+      border: `1px solid ${match ? "rgba(157,187,159,.25)" : "rgba(239,128,111,.25)"}`,
+    });
+
+    headerRow.appendChild(matchBadge);
+
+    card.appendChild(headerRow);
+
+    const grid = document.createElement("div");
+
+    grid.className = "nalar-comparison-grid";
+
+    Object.assign(grid.style, {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "10px",
+    });
+
+    const userIntentText = explanation.userIntent || security?.intent?.description || "Not specified";
+
+    const actualTxText = explanation.actualTransaction || security?.transactionSummary?.title || humanizeAction(security?.actual?.action) || "Contract call";
+
+    const intentBox = document.createElement("div");
+
+    intentBox.className = "nalar-comparison-box";
+
+    Object.assign(intentBox.style, {
+      padding: "11px 12px",
+      border: `1px solid ${UI.border}`,
+      borderRadius: "8px",
+      background: UI.raised,
+    });
+
+    const intentLabel = document.createElement("div");
+
+    intentLabel.className = "nalar-comparison-label";
+
+    intentLabel.textContent = "WHAT YOU INTENDED";
+
+    Object.assign(intentLabel.style, {
+      fontSize: "9px",
+      fontWeight: "700",
+      letterSpacing: ".12em",
+      color: UI.muted,
+    });
+
+    const intentVal = document.createElement("div");
+
+    intentVal.className = "nalar-comparison-value";
+
+    intentVal.textContent = userIntentText;
+
+    Object.assign(intentVal.style, {
+      marginTop: "6px",
+      fontSize: "12px",
+      lineHeight: "1.55",
+      color: UI.text,
+      wordBreak: "break-word",
+    });
+
+    intentBox.appendChild(intentLabel);
+
+    intentBox.appendChild(intentVal);
+
+    grid.appendChild(intentBox);
+
+    const actualBox = document.createElement("div");
+
+    actualBox.className = "nalar-comparison-box";
+
+    Object.assign(actualBox.style, {
+      padding: "11px 12px",
+      border: `1px solid ${match ? UI.border : "rgba(239,128,111,.35)"}`,
+      borderRadius: "8px",
+      background: UI.raised,
+    });
+
+    const actualLabel = document.createElement("div");
+
+    actualLabel.className = "nalar-comparison-label";
+
+    actualLabel.textContent = "WHAT THE TRANSACTION DOES";
+
+    Object.assign(actualLabel.style, {
+      fontSize: "9px",
+      fontWeight: "700",
+      letterSpacing: ".12em",
+      color: match ? UI.muted : UI.danger,
+    });
+
+    const actualVal = document.createElement("div");
+
+    actualVal.className = "nalar-comparison-value";
+
+    actualVal.textContent = actualTxText;
+
+    Object.assign(actualVal.style, {
+      marginTop: "6px",
+      fontSize: "12px",
+      lineHeight: "1.55",
+      color: match ? UI.text : UI.danger,
+      wordBreak: "break-word",
+    });
+
+    actualBox.appendChild(actualLabel);
+
+    actualBox.appendChild(actualVal);
+
+    grid.appendChild(actualBox);
+
+    card.appendChild(grid);
+
+    const diffs = Array.isArray(explanation.comparison?.differences) ? explanation.comparison.differences : [];
+
+    const comparisonSummary = explanation.comparison?.summary;
+
+    if (!match || diffs.length || comparisonSummary) {
+      const diffContainer = document.createElement("div");
+
+      diffContainer.className = "nalar-comparison-diff";
+
+      Object.assign(diffContainer.style, {
+        marginTop: "12px",
+        paddingTop: "11px",
+        borderTop: `1px solid ${UI.border}`,
+      });
+
+      if (comparisonSummary) {
+        const summaryEl = document.createElement("div");
+
+        summaryEl.textContent = comparisonSummary;
+
+        Object.assign(summaryEl.style, {
+          fontSize: "12px",
+          lineHeight: "1.55",
+          color: match ? UI.soft : UI.danger,
+        });
+
+        diffContainer.appendChild(summaryEl);
+      }
+
+      diffs.forEach((diff) => {
+        const diffRow = document.createElement("div");
+
+        diffRow.textContent = `· ${diff}`;
+
+        Object.assign(diffRow.style, {
+          marginTop: "4px",
+          fontSize: "11px",
+          lineHeight: "1.5",
+          color: UI.muted,
+        });
+
+        diffContainer.appendChild(diffRow);
+      });
+
+      card.appendChild(diffContainer);
+    }
+
+    return card;
+  }
+
+  function createWhatThisMeansSection(explanation, security, decision) {
+    const isBlock = decision === "BLOCK";
+    const isReview = decision === "REVIEW";
+
+    const text =
+      explanation.whatThisMeans ||
+      (isBlock
+        ? "Signing this transaction could result in irreversible loss of assets or unverified smart contract execution."
+        : isReview
+          ? "Proceeding will grant permissions or initiate actions that should be carefully verified."
+          : "This transaction will execute with standard network confirmation and fees.");
+
+    const card = document.createElement("div");
+
+    card.className = "nalar-means-card";
+
+    Object.assign(card.style, {
+      marginTop: "14px",
+      padding: "14px 16px",
+      border: `1px solid ${UI.border}`,
+      borderRadius: "8px",
+      background: UI.surface,
+      fontSize: "13px",
+      lineHeight: "1.65",
+      color: UI.text,
+    });
+
+    const label = createLabel("WHAT THIS MEANS FOR YOU");
+
+    label.style.marginBottom = "8px";
+
+    card.appendChild(label);
+
+    const body = document.createElement("div");
+
+    body.textContent = text;
+
+    card.appendChild(body);
+
+    return card;
+  }
+
+  function createEvidenceSection(explanation, security) {
+    const evidenceItems = Array.isArray(explanation.evidence) && explanation.evidence.length > 0
+      ? explanation.evidence
+      : null;
+
+    if (evidenceItems) {
+      const card = document.createElement("div");
+
+      card.className = "nalar-evidence-card";
+
+      Object.assign(card.style, {
+        marginTop: "14px",
+        padding: "16px 18px",
+        border: `1px solid ${UI.border}`,
+        borderRadius: "10px",
+        background: UI.surface,
+      });
+
+      const label = createLabel("OBSERVED SECURITY EVIDENCE");
+
+      label.style.marginBottom = "12px";
+
+      card.appendChild(label);
+
+      evidenceItems.forEach((item, index) => {
+        const row = document.createElement("div");
+
+        Object.assign(row.style, {
+          padding: "8px 0",
+          borderTop: index > 0 ? `1px solid ${UI.border}` : "none",
+        });
+
+        const topLine = document.createElement("div");
+
+        Object.assign(topLine.style, {
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "8px",
+        });
+
+        const labelEl = document.createElement("span");
+
+        labelEl.textContent = item.label;
+
+        Object.assign(labelEl.style, {
+          fontSize: "12px",
+          fontWeight: "600",
+          color: UI.text,
+        });
+
+        const rightSide = document.createElement("div");
+
+        Object.assign(rightSide.style, {
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        });
+
+        const valEl = document.createElement("span");
+
+        valEl.textContent = item.value;
+
+        Object.assign(valEl.style, {
+          fontSize: "12px",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+          color: UI.soft,
+        });
+
+        const badge = document.createElement("span");
+
+        badge.className = "nalar-badge-source";
+
+        badge.setAttribute("data-source", item.source);
+
+        badge.textContent = item.source;
+
+        rightSide.appendChild(valEl);
+
+        rightSide.appendChild(badge);
+
+        topLine.appendChild(labelEl);
+
+        topLine.appendChild(rightSide);
+
+        row.appendChild(topLine);
+
+        if (item.explanation) {
+          const expEl = document.createElement("div");
+
+          expEl.textContent = item.explanation;
+
+          Object.assign(expEl.style, {
+            marginTop: "4px",
+            fontSize: "11px",
+            lineHeight: "1.55",
+            color: UI.muted,
+          });
+
+          row.appendChild(expEl);
+        }
+
+        card.appendChild(row);
+      });
+
+      return card;
+    }
+
+    const reports = Array.isArray(security?.scamAnalyses)
+      ? security.scamAnalyses
+      : Array.isArray(security?.transactionScamContext?.analyses)
+        ? security.transactionScamContext.analyses
+        : [];
+
+    if (!reports.length) {
+      return null;
+    }
+
     const wrapper = document.createElement("div");
 
     reports.forEach((analysis) => {
@@ -1567,7 +1953,7 @@
       card.className = "nalar-evidence-card";
 
       Object.assign(card.style, {
-        marginTop: "10px",
+        marginTop: "14px",
         padding: "16px",
         border: `1px solid ${UI.border}`,
         borderRadius: "10px",
@@ -1743,31 +2129,29 @@
       wrapper.appendChild(card);
     });
 
-    return createSection("SECURITY EVIDENCE", wrapper);
+    return wrapper;
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Technical details
-  |--------------------------------------------------------------------------
-  */
-
-  function createTechnicalSection(security) {
+  function createTechnicalSection(explanation, security) {
     const wrapper = document.createElement("details");
 
+    wrapper.className = "nalar-tech-details";
+
     Object.assign(wrapper.style, {
-      padding: "17px 0",
+      marginTop: "14px",
+      padding: "14px 0",
       borderBottom: `1px solid ${UI.border}`,
     });
 
     const summary = document.createElement("summary");
 
-    summary.textContent = "Technical details";
+    summary.textContent = "Technical details (advanced)";
 
     Object.assign(summary.style, {
       cursor: "pointer",
-      color: UI.soft,
+      color: UI.muted,
       fontSize: "11px",
+      fontWeight: "600",
       userSelect: "none",
     });
 
@@ -1775,17 +2159,21 @@
 
     const content = document.createElement("div");
 
-    content.style.marginTop = "13px";
+    content.style.marginTop = "10px";
 
     const actual = security?.actual ?? {};
 
     const tx = security?.transactionSummary ?? {};
 
+    const sim = security?.simulation ?? {};
+
     const rows = [
+      ["Network", "BNB Smart Chain Testnet (97)"],
+      ["Target contract", tx.target ? formatAddress(tx.target) : (security?.transaction?.to ? formatAddress(security.transaction.to) : "N/A")],
       ["Action", humanizeAction(actual.action)],
-      ["Function", actual.functionName ?? "N/A"],
-      ["Intent match", typeof security?.intentMatch === "boolean" ? (security.intentMatch ? "Matched" : "Mismatch") : "Unknown"],
-      ["Target", tx.target ? formatAddress(tx.target) : "N/A"],
+      ["Function name", actual.functionName ?? "N/A"],
+      ["Simulation status", sim.success === true ? "Success" : sim.success === false ? "Reverted / Failed" : "Not simulated"],
+      ["Risk score", `${security?.riskScore ?? 0} / 100 (${security?.riskLevel ?? "UNKNOWN"})`],
     ];
 
     rows.forEach(([label, value]) => {
@@ -1795,7 +2183,7 @@
         display: "flex",
         justifyContent: "space-between",
         gap: "12px",
-        padding: "4px 0",
+        padding: "3px 0",
       });
 
       const left = document.createElement("span");
@@ -1826,6 +2214,73 @@
     wrapper.appendChild(content);
 
     return wrapper;
+  }
+
+  function createDecisionFooter(decision, onContinue, onCancel, overlay) {
+    const isBlock = decision === "BLOCK";
+
+    const footer = document.createElement("footer");
+
+    footer.className = "nalar-decision-footer";
+
+    Object.assign(footer.style, {
+      padding: "18px 26px 24px",
+      borderTop: `1px solid ${UI.border}`,
+      flex: "0 0 auto",
+    });
+
+    const note = document.createElement("div");
+
+    note.className = "nalar-decision-note";
+
+    note.textContent = getFooterNote(decision);
+
+    Object.assign(note.style, {
+      marginBottom: "13px",
+      color: UI.muted,
+      fontSize: "10px",
+      lineHeight: "1.55",
+    });
+
+    const actions = document.createElement("div");
+
+    Object.assign(actions.style, {
+      display: "grid",
+      gridTemplateColumns: isBlock ? "1fr" : "120px 1fr",
+      gap: "8px",
+    });
+
+    const cancel = createButton(isBlock ? "Close" : "Cancel", isBlock);
+
+    cancel.onclick = () => {
+      overlay.remove();
+
+      if (onCancel) {
+        onCancel();
+      }
+    };
+
+    actions.appendChild(cancel);
+
+    if (!isBlock) {
+      const continueButton = createButton(decision === "REVIEW" ? "Review & continue" : "Continue to wallet", true);
+
+      continueButton.onclick = () => {
+        overlay.remove();
+
+        if (onContinue) {
+          onContinue();
+        }
+      };
+
+      actions.appendChild(continueButton);
+    }
+
+    footer.appendChild(note);
+
+    footer.appendChild(actions);
+
+    return footer;
   }
 
   /*
@@ -2352,23 +2807,23 @@
     switch (decision) {
       case "BLOCK":
         return {
-          title: "Transaction blocked",
-
-          label: "Nalar stopped the request before signing.",
+          title: "BLOCKED",
+          subtitle: "Nalar stopped this transaction before your wallet signed it.",
+          label: "Nalar stopped this transaction before your wallet signed it.",
         };
 
       case "REVIEW":
         return {
-          title: "Review transaction",
-
-          label: "Nalar found conditions that deserve your attention.",
+          title: "REVIEW REQUIRED",
+          subtitle: "Nalar recommends reviewing this transaction before proceeding.",
+          label: "Nalar recommends reviewing this transaction before proceeding.",
         };
 
       default:
         return {
-          title: "Transaction cleared",
-
-          label: "Nalar found no blocking security condition.",
+          title: "SAFE TO CONTINUE",
+          subtitle: "No high-risk conditions detected.",
+          label: "No high-risk conditions detected.",
         };
     }
   }

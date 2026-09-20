@@ -378,6 +378,8 @@ securityRoute.post("/", async (c) => {
       effects: analyzedEffects,
 
       intentDescription: intent.description,
+
+      targetIsContract,
     });
 
     //Read current blockchain state.
@@ -432,7 +434,11 @@ securityRoute.post("/", async (c) => {
      * Compare user intent
      * with actual effects.
      */
-    const comparison = compareIntent(intent, actualAction, analyzedEffects, value);
+    const comparison = compareIntent(intent, actualAction, analyzedEffects, value, {
+      targetIsContract,
+      functionName: decoded.functionName ?? null,
+      args: decoded.args ?? [],
+    });
 
     const policyEvaluation = evaluatePolicy({
       policy: defaultPolicy,

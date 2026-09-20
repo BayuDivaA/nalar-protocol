@@ -155,10 +155,10 @@ export function humanizeFinding(code: string, metadata?: Record<string, any>): H
 
     case "CONTRACT_TARGET_IS_EOA": {
       return {
-        headline: "Target is a personal wallet",
+        headline: "Target is not a smart contract",
         fact: "The destination address is an externally owned account (EOA), not a smart contract.",
-        meaning: "Funds sent will go directly to an individual's private wallet with no automated contract safeguards.",
-        impact: "You are sending assets directly to a personal wallet rather than interacting with a verified decentralized application.",
+        meaning: "The destination address is not a smart contract, so Nalar cannot verify contract logic or minting behind this request.",
+        impact: "You are sending assets directly to a personal wallet rather than interacting with a verified smart contract.",
       };
     }
 
@@ -236,6 +236,7 @@ export interface HumanExplanationContext {
     outputToken: { status: string; expected?: string; actual?: string };
     amount: { status: string; expected?: string | number; actual?: string | number };
     recipient: { status: string; expected?: string; actual?: string };
+    quantity?: { status: string; expected?: string | number; actual?: string | number };
     summary: string;
   };
   simulation: {
@@ -391,6 +392,11 @@ export function buildHumanExplanationContext(input: GenerateExplanationInput): H
         expected: input.comparison.recipient?.expected,
         actual: input.comparison.recipient?.actual,
       },
+      quantity: {
+        status: input.comparison.quantity?.status || "UNSPECIFIED",
+        expected: input.comparison.quantity?.expected,
+        actual: input.comparison.quantity?.actual,
+      },
       summary: input.comparison.summary,
     },
     simulation: {
@@ -534,7 +540,23 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
     headline = "This transaction does something different from what you asked for";
     summaryText = "This transaction does something different from what you asked for.";
 
-    if (context.intentComparison.outputToken.status === "MISMATCH") {
+    if (context.intentComparison.quantity?.status === "MISMATCH" && context.intentComparison.amount?.status === "MISMATCH") {
+      const expQty = context.intentComparison.quantity.expected;
+      const actQty = context.intentComparison.quantity.actual;
+      const expAmt = context.intentComparison.amount.expected;
+      const actAmt = context.intentComparison.amount.actual;
+
+      primaryReason = `You asked to mint ${expQty} NFTs for ${expAmt}, but the transaction mints ${actQty} NFT for ${actAmt}.`;
+      userImpact = `Continuing would mint ${actQty} NFT and pay ${actAmt}, which does not match your intended ${expQty} NFTs for ${expAmt}.`;
+      whatThisMeans = `Nalar stopped this because both the NFT quantity (${actQty}) and payment (${actAmt}) differ from what you requested.`;
+    } else if (context.intentComparison.quantity?.status === "MISMATCH") {
+      const expQty = context.intentComparison.quantity.expected;
+      const actQty = context.intentComparison.quantity.actual;
+
+      primaryReason = `You asked to mint ${expQty} NFTs, but the transaction mints ${actQty}.`;
+      userImpact = `Continuing would mint ${actQty} NFTs instead of your intended ${expQty}.`;
+      whatThisMeans = `Nalar stopped this because the transaction quantity (${actQty}) does not match what you asked for (${expQty}).`;
+    } else if (context.intentComparison.outputToken.status === "MISMATCH") {
       const spendPart = context.userIntent.quantity && context.userIntent.tokenIn ? `use ${context.userIntent.quantity} ${context.userIntent.tokenIn} to ` : context.userIntent.quantity ? `use ${context.userIntent.quantity} to ` : "";
       const expectedOut = context.intentComparison.outputToken.expected || context.userIntent.tokenOut || "the requested token";
       const actualOut = context.intentComparison.outputToken.actual || context.actualTransaction.output?.symbol || "another token";

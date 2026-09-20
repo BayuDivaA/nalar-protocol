@@ -93,6 +93,56 @@ export function parseIntentHeuristically(input: string): UserIntent {
     };
   }
 
+  // Pattern 4: Mint/Cetak [quantity] [NFTs/tokens] [for/with/pake/pakai/seharga/dengan] [amount] [token/tBNB]
+  // e.g. "Mint 300 NFTs for 2 tBNB", "mint 1 NFT for 0.02 tBNB", "cetak 300 NFT dengan 2 tBNB"
+  const mintWithPaymentMatch = text.match(
+    /(?:mint|cetak)\s+(?:([0-9.]+)\s*(?:nfts?|tokens?|items?)?)?.*?(?:for|with|using|pake|pakai|bayar\s+pake|dengan|seharga|sebesar)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?/i,
+  );
+  if (mintWithPaymentMatch) {
+    const rawQty = mintWithPaymentMatch[1] ? parseFloat(mintWithPaymentMatch[1]) : null;
+    const rawPayment = mintWithPaymentMatch[2] ? parseFloat(mintWithPaymentMatch[2]) : null;
+    const rawToken = mintWithPaymentMatch[3] ?? "";
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : 1;
+    const payment = rawPayment !== null && !Number.isNaN(rawPayment) ? rawPayment : null;
+
+    const tokenIn = rawToken.toUpperCase() === "BNB" || rawToken.toUpperCase() === "TBNB" ? "tBNB" : rawToken ? rawToken.toUpperCase() : null;
+    const isNativeIn = tokenIn?.toUpperCase() === "BNB" || tokenIn?.toUpperCase() === "TBNB";
+
+    return {
+      action: "MINT",
+      quantity: qty,
+      tokenIn: tokenIn ?? (payment !== null ? "tBNB" : null),
+      tokenOut: null,
+      inputAsset: tokenIn ?? (payment !== null ? "tBNB" : null),
+      outputAsset: null,
+      maxValueNative: isNativeIn && payment !== null ? String(payment) : payment !== null ? String(payment) : null,
+      nativeCurrency: isNativeIn || payment !== null ? "BNB" : null,
+      allowApproval: false,
+      targetAddress: null,
+      description: text,
+    };
+  }
+
+  // Pattern 5: Mint [quantity] [NFTs/tokens] without payment phrase
+  // e.g. "Mint 300 NFTs", "mint 5 tokens"
+  const mintSimpleMatch = text.match(/(?:mint|cetak)\s+([0-9.]+)\s*(?:nfts?|tokens?|items?)?/i);
+  if (mintSimpleMatch) {
+    const rawQty = mintSimpleMatch[1] ? parseFloat(mintSimpleMatch[1]) : null;
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+
+    return {
+      action: "MINT",
+      quantity: qty,
+      tokenIn: null,
+      tokenOut: null,
+      maxValueNative: null,
+      nativeCurrency: null,
+      allowApproval: false,
+      targetAddress: null,
+      description: text,
+    };
+  }
+
   if (lower.includes("swap") || lower.includes("tukar") || lower.includes("beli") || lower.includes("buy")) {
     return {
       action: "SWAP",
@@ -247,6 +297,14 @@ Rules:
    - tokenIn = token being sent.
    - quantity = amount sent.
    - recipient = address or name of recipient.
+9. For minting:
+   - action = MINT.
+   - quantity = number of NFTs or tokens being minted (e.g. "Mint 300 NFTs" -> quantity: 300, "Mint an NFT" -> quantity: 1).
+   - If payment is mentioned (e.g. "for 2 tBNB", "costing 0.02 BNB"):
+     - tokenIn = payment token symbol (e.g. "tBNB").
+     - nativeCurrency = "BNB" (if payment is in BNB or tBNB).
+     - maxValueNative = payment amount as string (e.g. "2").
+   - allowApproval = false.
 `,
         },
         {

@@ -92,6 +92,21 @@ export type ApprovalEffect = ERC20AllowanceEffect | ERC721ApprovalEffect;
 
 /**
  * ==================================================
+ * MINT EFFECT
+ * ==================================================
+ */
+export interface MintEffect {
+  type: "MINT";
+
+  contract: Address;
+
+  recipient: Address;
+
+  quantity: number | null;
+}
+
+/**
+ * ==================================================
  * TRANSACTION EFFECTS
  * ==================================================
  */
@@ -99,6 +114,8 @@ export interface TransactionEffects {
   approvals: ApprovalEffect[];
 
   swaps: SwapEffect[];
+
+  mints?: MintEffect[];
 }
 
 /**
@@ -221,6 +238,7 @@ export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): Transacti
   const effects: TransactionEffects = {
     approvals: [],
     swaps: [],
+    mints: [],
   };
 
   /**
@@ -326,6 +344,28 @@ export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): Transacti
         sourceFunction: "maliciousApproval",
       });
     }
+  }
+
+  /**
+   * ==================================================
+   * NFT / Token Mint
+   * ==================================================
+   */
+  if (input.functionName === "mint" || input.functionName === "safeMint") {
+    let quantity: number | null = 1;
+    if (input.args && input.args.length > 0) {
+      if (typeof input.args[0] === "bigint") {
+        quantity = Number(input.args[0]);
+      } else if (input.args.length > 1 && typeof input.args[1] === "bigint") {
+        quantity = Number(input.args[1]);
+      }
+    }
+    effects.mints?.push({
+      type: "MINT",
+      contract: input.to,
+      recipient: input.from,
+      quantity,
+    });
   }
 
   /**

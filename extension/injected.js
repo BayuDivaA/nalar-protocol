@@ -2156,20 +2156,33 @@
     if (isMismatch) {
       const mismatchesList = [];
 
+      if (comp.quantity && comp.quantity.status === "MISMATCH") {
+        const itemType = comp.action?.expected === "MINT" || comp.action?.actual === "MINT" ? "NFT quantity" : "Quantity";
+        mismatchesList.push(`${itemType}: Expected ${comp.quantity.expected}, Actual ${comp.quantity.actual}`);
+      }
+      if (comp.amount && comp.amount.status === "MISMATCH") {
+        const amountLabel = comp.action?.expected === "MINT" || comp.action?.actual === "MINT" ? "Payment" : "Amount";
+        mismatchesList.push(`${amountLabel}: Expected ${comp.amount.expected}, Actual ${comp.amount.actual}`);
+      }
       if (comp.outputToken && comp.outputToken.status === "MISMATCH") {
         mismatchesList.push(`Receive token: Expected ${comp.outputToken.expected || "token"}, Actual ${comp.outputToken.actual || "token"}`);
       }
       if (comp.inputToken && comp.inputToken.status === "MISMATCH") {
         mismatchesList.push(`Send token: Expected ${comp.inputToken.expected || "token"}, Actual ${comp.inputToken.actual || "token"}`);
       }
-      if (comp.amount && comp.amount.status === "MISMATCH") {
-        mismatchesList.push(`Amount: Expected ${comp.amount.expected}, Actual ${comp.amount.actual}`);
-      }
       if (comp.action && comp.action.status === "MISMATCH") {
         mismatchesList.push(`Action: Expected ${humanizeAction(comp.action.expected)}, Actual ${humanizeAction(comp.action.actual)}`);
       }
       if (comp.recipient && comp.recipient.status === "MISMATCH") {
         mismatchesList.push(`Recipient: Expected ${formatAddress(comp.recipient.expected)}, Actual ${formatAddress(comp.recipient.actual)}`);
+      }
+
+      if (Array.isArray(comp.mismatches)) {
+        comp.mismatches.forEach((m) => {
+          if (m && m.toLowerCase().includes("not a smart contract") && !mismatchesList.some((item) => item.toLowerCase().includes("smart contract"))) {
+            mismatchesList.push("Target: Destination is not a smart contract");
+          }
+        });
       }
 
       if (mismatchesList.length === 0 && Array.isArray(comp.mismatches) && comp.mismatches.length > 0) {

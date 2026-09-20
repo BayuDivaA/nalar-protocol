@@ -4,6 +4,7 @@ import type { Address } from "viem";
 import { compareIntent } from "../intent-comparator";
 import type { NormalizedIntent } from "../intent-normalizer";
 import type { TransactionEffects } from "../effect-analyzer";
+import { parseIntentHeuristically } from "../intent-engine";
 
 const USER = "0x53E993819F2Bc45A029615e8634BDdEEab4F7817" as Address;
 
@@ -63,7 +64,7 @@ function createSwapEffects(overrides: Partial<TransactionEffects["swaps"][number
   };
 }
 
-describe("Intent Comparator — SWAP", () => {
+describe("Intent Comparator - SWAP", () => {
   test("matching token pair should match", () => {
     const result = compareIntent(createIntent(), "SWAP", createSwapEffects(), 0n);
 
@@ -221,5 +222,157 @@ describe("Intent Comparator — SWAP", () => {
 
     expect(result.matches).toBe(false);
     expect(result.overall).toBe("UNCERTAIN");
+  });
+});
+
+describe("Intent Comparator - MINT and Invariant Checks", () => {
+  const CONTRACT = "0x5555555555555555555555555555555555555555" as Address;
+  const EOA = "0x6666666666666666666666666666666666666666" as Address;
+
+  function createMintIntent(overrides: Partial<NormalizedIntent> = {}): NormalizedIntent {
+    return {
+      action: "MINT",
+      quantity: 300,
+      tokenIn: "tBNB",
+      tokenOut: null,
+      maxValueNative: "2",
+      nativeCurrency: "BNB",
+      maxValueWei: 2_000_000_000_000_000_000n, // 2 tBNB
+      allowApproval: false,
+      targetAddress: null,
+      description: "Mint 300 NFTs for 2 tBNB",
+      ...overrides,
+    };
+  }
+
+  // Test 1: "Mint 300 NFTs for 2 tBNB" vs "Mint 1 NFT with 0.02 tBNB to EOA"
+  test("Test 1: Mint 300 NFTs for 2 tBNB vs 1 NFT with 0.02 tBNB to EOA produces MISMATCH", () => {
+    const result = compareIntent(
+      createMintIntent(),
+      "MINT",
+      {
+        approvals: [],
+        swaps: [],
+        mints: [{ type: "MINT", contract: EOA, recipient: USER, quantity: 1 }],
+      },
+      20_000_000_000_000_000n, // 0.02 tBNB
+      { targetIsContract: false, actualQuantity: 1 },
+    );
+
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("MISMATCH");
+    expect(result.quantity?.status).toBe("MISMATCH");
+    expect(result.quantity?.expected).toBe(300);
+    expect(result.quantity?.actual).toBe(1);
+    expect(result.amount.status).toBe("MISMATCH");
+    expect(result.amount.expected).toBe("2 tBNB");
+    expect(result.amount.actual).toBe("0.02 tBNB");
+    expect(result.mismatches.some((m) => m.toLowerCase().includes("quantity mismatch"))).toBe(true);
+    expect(result.mismatches.some((m) => m.toLowerCase().includes("payment mismatch"))).toBe(true);
+  });
+
+  // Test 2: "Mint 1 NFT for 0.02 tBNB" vs "Mint 1 NFT with 0.02 tBNB to contract"
+  test("Test 2: Mint 1 NFT for 0.02 tBNB vs 1 NFT with 0.02 tBNB to contract produces MATCH", () => {
+    const result = compareIntent(
+      createMintIntent({
+        quantity: 1,
+        maxValueNative: "0.02",
+        maxValueWei: 20_000_000_000_000_000n,
+        description: "Mint 1 NFT for 0.02 tBNB",
+      }),
+      "MINT",
+      {
+        approvals: [],
+        swaps: [],
+        mints: [{ type: "MINT", contract: CONTRACT, recipient: USER, quantity: 1 }],
+      },
+      20_000_000_000_000_000n, // 0.02 tBNB
+      { targetIsContract: true, actualQuantity: 1 },
+    );
+
+    expect(result.matches).toBe(true);
+    expect(result.overall).toBe("MATCH");
+    expect(result.quantity?.status).toBe("MATCH");
+    expect(result.quantity?.expected).toBe(1);
+    expect(result.quantity?.actual).toBe(1);
+    expect(result.amount.status).toBe("MATCH");
+    expect(result.mismatches).toHaveLength(0);
+  });
+
+  // Test 3: "Mint 300 NFTs for 2 tBNB" vs "Mint 300 NFTs with 0.02 tBNB" (Payment mismatch)
+  test("Test 3: Mint 300 NFTs for 2 tBNB vs 300 NFTs with 0.02 tBNB produces MISMATCH due to payment", () => {
+    const result = compareIntent(
+      createMintIntent(),
+      "MINT",
+      {
+        approvals: [],
+        swaps: [],
+        mints: [{ type: "MINT", contract: CONTRACT, recipient: USER, quantity: 300 }],
+      },
+      20_000_000_000_000_000n, // 0.02 tBNB
+      { targetIsContract: true, actualQuantity: 300 },
+    );
+
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("MISMATCH");
+    expect(result.quantity?.status).toBe("MATCH");
+    expect(result.amount.status).toBe("MISMATCH");
+    expect(result.amount.expected).toBe("2 tBNB");
+    expect(result.amount.actual).toBe("0.02 tBNB");
+    expect(result.mismatches.some((m) => m.toLowerCase().includes("payment mismatch"))).toBe(true);
+  });
+
+  // Test 4: "Mint 300 NFTs for 2 tBNB" vs "Mint 1 NFT with 2 tBNB" (Quantity mismatch)
+  test("Test 4: Mint 300 NFTs for 2 tBNB vs 1 NFT with 2 tBNB produces MISMATCH due to quantity", () => {
+    const result = compareIntent(
+      createMintIntent(),
+      "MINT",
+      {
+        approvals: [],
+        swaps: [],
+        mints: [{ type: "MINT", contract: CONTRACT, recipient: USER, quantity: 1 }],
+      },
+      2_000_000_000_000_000_000n, // 2 tBNB
+      { targetIsContract: true, actualQuantity: 1 },
+    );
+
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("MISMATCH");
+    expect(result.quantity?.status).toBe("MISMATCH");
+    expect(result.quantity?.expected).toBe(300);
+    expect(result.quantity?.actual).toBe(1);
+    expect(result.amount.status).toBe("MATCH");
+    expect(result.mismatches.some((m) => m.toLowerCase().includes("quantity mismatch"))).toBe(true);
+  });
+
+  // Test 5: "Mint 300 NFTs for 2 tBNB" vs "Unknown quantity with 2 tBNB" (UNKNOWN != MATCH)
+  test("Test 5: Mint 300 NFTs for 2 tBNB vs unknown quantity produces UNCERTAIN", () => {
+    const result = compareIntent(
+      createMintIntent(),
+      "MINT",
+      {
+        approvals: [],
+        swaps: [],
+        mints: [],
+      },
+      2_000_000_000_000_000_000n, // 2 tBNB
+      { targetIsContract: true, actualQuantity: null },
+    );
+
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("UNCERTAIN");
+    expect(result.quantity?.status).toBe("UNSPECIFIED");
+    expect(result.amount.status).toBe("MATCH");
+  });
+
+  // Test 6: Intent parser extracts quantity and payment for MINT
+  test("Test 6: parseIntentHeuristically extracts quantity and payment for MINT", () => {
+    const parsed = parseIntentHeuristically("Mint 300 NFTs for 2 tBNB");
+
+    expect(parsed.action).toBe("MINT");
+    expect(parsed.quantity).toBe(300);
+    expect(parsed.maxValueNative).toBe("2");
+    expect(parsed.nativeCurrency).toBe("BNB");
+    expect(parsed.tokenIn).toBe("tBNB");
   });
 });

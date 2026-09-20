@@ -25,7 +25,15 @@ export interface IntentComparison {
   outputToken: FieldComparison<string>;
   amount: FieldComparison<string | number>;
   recipient: FieldComparison<string>;
+  quantity?: FieldComparison<number | string>;
   summary: string;
+}
+
+export interface CompareIntentContext {
+  targetIsContract?: boolean | null;
+  functionName?: string | null;
+  args?: readonly unknown[];
+  actualQuantity?: number | null;
 }
 
 const WBNB_TESTNET = "0xae13d989dac2f0debff460ac112a837c89baa7cd".toLowerCase();
@@ -107,7 +115,13 @@ function quantityToRawAmount(quantity: number, decimals: number): bigint | null 
   }
 }
 
-export function compareIntent(intent: NormalizedIntent, actualAction: TransactionAction, effects: TransactionEffects, value: bigint): IntentComparison {
+export function compareIntent(
+  intent: NormalizedIntent,
+  actualAction: TransactionAction,
+  effects: TransactionEffects,
+  value: bigint,
+  context?: CompareIntentContext,
+): IntentComparison {
   const mismatches: string[] = [];
 
   let actionComparison: FieldComparison<string>;
@@ -115,6 +129,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   let outputTokenComparison: FieldComparison<string> = { status: "UNSPECIFIED" };
   let amountComparison: FieldComparison<string | number> = { status: "UNSPECIFIED" };
   let recipientComparison: FieldComparison<string> = { status: "UNSPECIFIED" };
+  let quantityComparison: FieldComparison<number | string> = { status: "UNSPECIFIED" };
 
   /**
    * 1. Check semantic action.
@@ -127,6 +142,14 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
       reason: "Intent action could not be determined from the provided description.",
     };
     mismatches.push("Intent action could not be verified from the description.");
+  } else if (context?.targetIsContract === false && intent.action === "MINT") {
+    actionComparison = {
+      status: "MISMATCH",
+      expected: "MINT",
+      actual: "PAYMENT",
+      reason: "Target address is not a smart contract.",
+    };
+    mismatches.push("Target address is not a smart contract; no minting contract logic detected.");
   } else if (intent.action === actualAction || (intent.action === "TRANSFER" && actualAction === "PAYMENT")) {
     actionComparison = {
       status: "MATCH",
@@ -271,9 +294,75 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   }
 
   /**
-   * 3. Check maximum BNB spending.
+   * 3. Check MINT semantics.
    */
-  if (intent.maxValueWei !== null && value > intent.maxValueWei) {
+  if (intent.action === "MINT") {
+    // Determine actual quantity
+    let actualQty: number | null | undefined = context?.actualQuantity;
+    if (actualQty === undefined) {
+      if (effects.mints && effects.mints.length > 0) {
+        actualQty = effects.mints[0]?.quantity ?? null;
+      } else if (actualAction === "MINT" || context?.functionName === "mint" || context?.functionName === "safeMint") {
+        actualQty = 1;
+      } else {
+        actualQty = null;
+      }
+    }
+
+    // Compare quantity if specified in intent
+    if (intent.quantity !== null) {
+      if (actualQty !== null && actualQty !== undefined) {
+        if (intent.quantity === actualQty) {
+          quantityComparison = {
+            status: "MATCH",
+            expected: intent.quantity,
+            actual: actualQty,
+          };
+        } else {
+          quantityComparison = {
+            status: "MISMATCH",
+            expected: intent.quantity,
+            actual: actualQty,
+            reason: `Expected ${intent.quantity}, actual is ${actualQty}`,
+          };
+          mismatches.push(`NFT quantity mismatch: Expected ${intent.quantity}, Actual ${actualQty}.`);
+        }
+      } else {
+        quantityComparison = {
+          status: "UNSPECIFIED",
+          expected: intent.quantity,
+          reason: "Actual mint quantity could not be determined.",
+        };
+      }
+    }
+
+    // Compare payment / amount for MINT
+    if (intent.maxValueNative !== null) {
+      const expectedPayment = `${intent.maxValueNative} tBNB`;
+      const actualPayment = `${formatUnits(value, 18)} tBNB`;
+
+      if (intent.maxValueWei !== null && value === intent.maxValueWei) {
+        amountComparison = {
+          status: "MATCH",
+          expected: expectedPayment,
+          actual: actualPayment,
+        };
+      } else {
+        amountComparison = {
+          status: "MISMATCH",
+          expected: expectedPayment,
+          actual: actualPayment,
+          reason: `Expected ${expectedPayment}, actual is ${actualPayment}`,
+        };
+        mismatches.push(`Payment mismatch: Expected ${expectedPayment}, Actual ${actualPayment}.`);
+      }
+    }
+  }
+
+  /**
+   * 4. Check maximum BNB spending (for non-MINT operations).
+   */
+  if (intent.action !== "MINT" && intent.maxValueWei !== null && value > intent.maxValueWei) {
     const expectedValue = intent.maxValueNative ?? `${intent.maxValueWei.toString()} wei`;
     const actualValue = `${formatUnits(value, 18)} tBNB`;
     if (amountComparison.status !== "MISMATCH") {
@@ -288,7 +377,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   }
 
   /**
-   * 4. Check approval side effects.
+   * 5. Check approval side effects.
    */
   const hasApproval = effects.approvals.length > 0;
   if (hasApproval && !intent.allowApproval) {
@@ -296,7 +385,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   }
 
   /**
-   * 5. Specific protection for mint intent.
+   * 6. Specific protection for mint intent.
    */
   if (intent.action === "MINT" && hasApproval) {
     mismatches.push("User intended to mint an NFT, but the transaction includes an approval effect.");
@@ -304,22 +393,67 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
 
   /**
    * Determine overall status and human summary.
+   *
+   * Invariants:
+   * 1. If mismatches.length > 0 -> overall is "MISMATCH", matches is false.
+   * 2. If intent action is UNKNOWN -> overall is "UNCERTAIN", matches is false.
+   * 3. If any specified intent requirement is UNVERIFIED / UNSPECIFIED -> overall is "UNCERTAIN", matches is false.
+   *    (UNKNOWN != MATCH: A transaction must NEVER show MATCH when a required comparison field is unknown).
+   * 4. Only if all specified intent requirements have status "MATCH" -> overall is "MATCH", matches is true.
    */
   const isMismatch = mismatches.length > 0;
-  const overall: "MATCH" | "MISMATCH" | "UNCERTAIN" = intent.action === "UNKNOWN" ? "UNCERTAIN" : isMismatch ? "MISMATCH" : "MATCH";
-  const matches = !isMismatch && intent.action !== "UNKNOWN";
+
+  let hasUnverifiedRequirement = false;
+  if (intent.action === "UNKNOWN") {
+    hasUnverifiedRequirement = true;
+  }
+  if (intent.action === "MINT" && intent.quantity !== null && quantityComparison.status === "UNSPECIFIED") {
+    hasUnverifiedRequirement = true;
+  }
+  if (intent.action === "SWAP" && intent.quantity !== null && amountComparison.status === "UNSPECIFIED") {
+    hasUnverifiedRequirement = true;
+  }
+  if (intent.action === "SWAP" && intent.tokenIn !== null && inputTokenComparison.status === "UNSPECIFIED") {
+    hasUnverifiedRequirement = true;
+  }
+  if (intent.action === "SWAP" && intent.tokenOut !== null && outputTokenComparison.status === "UNSPECIFIED") {
+    hasUnverifiedRequirement = true;
+  }
+
+  let overall: "MATCH" | "MISMATCH" | "UNCERTAIN";
+  let matches: boolean;
+
+  if (intent.action === "UNKNOWN") {
+    overall = "UNCERTAIN";
+    matches = false;
+  } else if (isMismatch) {
+    overall = "MISMATCH";
+    matches = false;
+  } else if (hasUnverifiedRequirement) {
+    overall = "UNCERTAIN";
+    matches = false;
+  } else {
+    overall = "MATCH";
+    matches = true;
+  }
 
   let summary = "";
-  if (outputTokenComparison.status === "MISMATCH") {
+  if (quantityComparison.status === "MISMATCH" && amountComparison.status === "MISMATCH") {
+    summary = `You asked to mint ${quantityComparison.expected} NFTs for ${amountComparison.expected}, but the transaction mints ${quantityComparison.actual} NFT for ${amountComparison.actual}.`;
+  } else if (quantityComparison.status === "MISMATCH") {
+    summary = `You asked to mint ${quantityComparison.expected} NFTs, but the transaction mints ${quantityComparison.actual}.`;
+  } else if (outputTokenComparison.status === "MISMATCH") {
     summary = `You asked to receive ${outputTokenComparison.expected}, but this transaction is configured to receive ${outputTokenComparison.actual} instead.`;
   } else if (inputTokenComparison.status === "MISMATCH") {
     summary = `You asked to spend ${inputTokenComparison.expected}, but this transaction is configured to spend ${inputTokenComparison.actual} instead.`;
   } else if (amountComparison.status === "MISMATCH") {
-    summary = `You intended to spend ${amountComparison.expected}, but the transaction sends ${amountComparison.actual}.`;
+    summary = `You intended to pay ${amountComparison.expected}, but the transaction sends ${amountComparison.actual}.`;
   } else if (actionComparison.status === "MISMATCH") {
     summary = `You intended to ${intent.action.toLowerCase()}, but the transaction performs ${actualAction.toLowerCase()}.`;
   } else if (intent.action === "UNKNOWN") {
     summary = "Could not clearly verify your intent from the description.";
+  } else if (overall === "UNCERTAIN") {
+    summary = "Could not verify all requested transaction parameters from the transaction data.";
   } else if (isMismatch) {
     summary = mismatches[0] ?? "Transaction details do not match your intent.";
   } else {
@@ -335,6 +469,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
     outputToken: outputTokenComparison,
     amount: amountComparison,
     recipient: recipientComparison,
+    quantity: quantityComparison,
     summary,
   };
 }

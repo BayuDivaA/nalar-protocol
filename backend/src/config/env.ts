@@ -6,15 +6,21 @@ const envSchema = z
   .object({
     PORT: z.coerce.number().default(3000),
 
-    BNB_RPC_URL: z.string().url("BNB_RPC_URL must be a valid RPC URL"),
+    BNB_RPC_URL: z
+      .string()
+      .url("BNB_RPC_URL must be a valid RPC URL")
+      .default("https://data-seed-prebsc-1-s1.binance.org:8545"),
 
-    TXSENTRY_DEMO_NFT: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "TXSENTRY_DEMO_NFT must be a 20-byte hex address"),
+    TXSENTRY_DEMO_NFT: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, "TXSENTRY_DEMO_NFT must be a 20-byte hex address")
+      .default("0x0000000000000000000000000000000000000000"),
 
-    AI_PROVIDER: z.enum(["gemini", "openrouter", "openai"]),
+    AI_PROVIDER: z.enum(["gemini", "openrouter", "openai", "heuristics"]).default("heuristics"),
 
-    AI_API_KEY: z.string().min(1, "AI_API_KEY is required"),
+    AI_API_KEY: z.string().optional().default(""),
 
-    AI_MODEL: z.string().min(1, "AI_MODEL is required"),
+    AI_MODEL: z.string().optional().default("gemini-1.5-flash"),
 
     BNB_INVESTIGATOR_ENABLED: z
       .string()
@@ -22,7 +28,9 @@ const envSchema = z
       .default("false")
       .transform((val) => val === "true"),
 
-    BNB_MCP_TRANSPORT: z.enum(["stdio", "sse", "http"]).default("stdio"),
+    BNB_MCP_TRANSPORT: z
+      .enum(["stdio", "sse", "http"])
+      .default(process.env.VERCEL === "1" ? "sse" : "stdio"),
 
     BNB_MCP_URL: z.string().url("BNB_MCP_URL must be a valid URL").optional(),
 
@@ -51,7 +59,7 @@ const envSchema = z
     }
   });
 
-const parsed = envSchema.safeParse({
+const rawEnv = {
   PORT: process.env.PORT,
   BNB_RPC_URL: process.env.BNB_RPC_URL,
   TXSENTRY_DEMO_NFT: process.env.TXSENTRY_DEMO_NFT,
@@ -63,13 +71,29 @@ const parsed = envSchema.safeParse({
   BNB_MCP_URL: process.env.BNB_MCP_URL,
   MCP_AUTH_TOKEN: process.env.MCP_AUTH_TOKEN ?? process.env.BNB_MCP_AUTH_TOKEN ?? process.env.BNB_MCP_SHARED_SECRET,
   FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN,
-});
+};
+
+const parsed = envSchema.safeParse(rawEnv);
 
 if (!parsed.success) {
   const issues = parsed.error.issues.map((issue) => `  - ${issue.path.join(".")}: ${issue.message}`).join("\n");
-  console.error(`\n[FATAL] Invalid environment configuration:\n${issues}\n`);
-  throw new Error(`Invalid environment configuration:\n${issues}`);
+  console.warn(`[WARN] Environment configuration warnings:\n${issues}\n`);
 }
 
-export const env = parsed.data;
-export type Env = z.infer<typeof envSchema>;
+export const env = parsed.success
+  ? parsed.data
+  : {
+      PORT: Number(process.env.PORT) || 3000,
+      BNB_RPC_URL: process.env.BNB_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545",
+      TXSENTRY_DEMO_NFT: process.env.TXSENTRY_DEMO_NFT || "0x0000000000000000000000000000000000000000",
+      AI_PROVIDER: ((process.env.AI_PROVIDER as any) || "heuristics") as "gemini" | "openrouter" | "openai" | "heuristics",
+      AI_API_KEY: process.env.AI_API_KEY || "",
+      AI_MODEL: process.env.AI_MODEL || "gemini-1.5-flash",
+      BNB_INVESTIGATOR_ENABLED: process.env.BNB_INVESTIGATOR_ENABLED === "true",
+      BNB_MCP_TRANSPORT: (process.env.BNB_MCP_TRANSPORT as any) || (process.env.VERCEL === "1" ? "sse" : "stdio"),
+      BNB_MCP_URL: process.env.BNB_MCP_URL,
+      MCP_AUTH_TOKEN: process.env.MCP_AUTH_TOKEN ?? process.env.BNB_MCP_AUTH_TOKEN ?? process.env.BNB_MCP_SHARED_SECRET,
+      FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN,
+    };
+
+export type Env = typeof env;

@@ -64,9 +64,9 @@ export function getBnbInvestigator() {
   };
 }
 
-export const bnbMcpClient = getBnbInvestigator().client;
-export const bnbAgentInvestigator = getBnbInvestigator().agentInvestigator;
-export const bnbTransactionInvestigator = getBnbInvestigator().transactionInvestigator;
+export const getBnbMcpClient = () => getBnbInvestigator().client;
+export const getBnbAgentInvestigator = () => getBnbInvestigator().agentInvestigator;
+export const getBnbTransactionInvestigator = () => getBnbInvestigator().transactionInvestigator;
 
 securityRoute.post("/", async (c) => {
   try {

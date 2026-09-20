@@ -3,10 +3,11 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
+    "build": "bun build src/index.ts --target=node --outfile=index.js --banner='// import \"hono\"'",
     "test": "bun test"
   },
-  "main": "src/index.ts",
-  "module": "src/index.ts",
+  "main": "index.js",
+  "module": "index.js",
   "type": "module",
   "private": true,
   "devDependencies": {

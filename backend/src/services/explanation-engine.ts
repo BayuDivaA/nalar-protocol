@@ -37,12 +37,42 @@ export async function generateSecurityExplanation(input: {
     reasons: string[];
   };
 }): Promise<SecurityExplanation> {
-  const response = await ai.chat.completions.create({
-    model: env.AI_MODEL,
+  const fallback = (): SecurityExplanation => {
+    if (input.decision === "BLOCK") {
+      return {
+        title: "Transaction Blocked",
+        summary: input.reasons.length > 0 ? input.reasons[0]! : "Transaction blocked due to high security risk.",
+        details: input.reasons.length > 0 ? input.reasons : ["Transaction exhibits critical security risks."],
+        recommendedAction: "CANCEL",
+      };
+    }
+    if (input.decision === "REVIEW") {
+      return {
+        title: "Review Required",
+        summary: input.reasons.length > 0 ? input.reasons[0]! : "Transaction requires careful review.",
+        details: input.reasons.length > 0 ? input.reasons : ["Transaction differs from expected parameters."],
+        recommendedAction: "REVIEW",
+      };
+    }
+    return {
+      title: "Transaction Verified",
+      summary: "Transaction matches intended action and passed security checks.",
+      details: ["No high-risk patterns detected on BNB Chain."],
+      recommendedAction: "PROCEED",
+    };
+  };
 
-    temperature: 0,
+  if (env.AI_PROVIDER === "heuristics" || !env.AI_API_KEY) {
+    return fallback();
+  }
 
-    messages: [
+  try {
+    const response = await ai.chat.completions.create({
+      model: env.AI_MODEL,
+
+      temperature: 0,
+
+      messages: [
       {
         role: "system",
 
@@ -279,21 +309,21 @@ ALLOW -> PROCEED
     ],
   });
 
-  const raw = response.choices[0]?.message?.content;
+    const raw = response.choices[0]?.message?.content;
+    if (!raw) {
+      throw new Error("AI returned empty explanation.");
+    }
 
-  if (!raw) {
-    throw new Error("AI returned empty explanation.");
+    const json = parseAIJson(raw);
+    const parsed = securityExplanationSchema.safeParse(json);
+    if (!parsed.success) {
+      console.error(parsed.error.flatten());
+      throw new Error("AI returned invalid explanation schema.");
+    }
+
+    return parsed.data;
+  } catch (error) {
+    console.warn("[AI] AI explanation generation failed, falling back to deterministic explanation:", error instanceof Error ? error.message : String(error));
+    return fallback();
   }
-
-  const json = parseAIJson(raw);
-
-  const parsed = securityExplanationSchema.safeParse(json);
-
-  if (!parsed.success) {
-    console.error(parsed.error.flatten());
-
-    throw new Error("AI returned invalid explanation schema.");
-  }
-
-  return parsed.data;
 }

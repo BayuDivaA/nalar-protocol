@@ -53925,12 +53925,119 @@ var securityExplanationSchema = exports_external.object({
 });
 
 // src/services/explanation-engine.ts
-function buildDeterministicExplanation(input2) {
-  const isBlock = input2.decision === "BLOCK";
-  const isReview = input2.decision === "REVIEW";
+function humanizeFinding(code, metadata) {
+  switch (code) {
+    case "EXCESSIVE_SELL_TAX": {
+      const taxStr = metadata?.sellTaxPercent !== undefined && metadata?.sellTaxPercent !== null ? `${Number(metadata.sellTaxPercent).toFixed(0)}%` : "an unusually high";
+      return {
+        headline: metadata?.sellTaxPercent !== undefined ? `An unusually high sell fee was found (${taxStr})` : "An unusually high sell fee was found",
+        fact: metadata?.sellTaxPercent !== undefined ? `The token contract reports a configured ${taxStr} sell tax.` : "The token contract reports an unusually high sell tax.",
+        meaning: "This is an unusually large fee applied to selling.",
+        impact: "If enforced during a sale, you could receive substantially less than expected."
+      };
+    }
+    case "OWNER_CONTROLLED_EXCESSIVE_SELL_TAX":
+    case "OWNER_CONTROLLED_TAX":
+    case "OWNER_MODIFIABLE_TAX": {
+      return {
+        headline: "The contract owner can control the sell fee",
+        fact: "The contract allows an owner or administrator to adjust transfer or sell fees.",
+        meaning: "The sell fee could change or be set to a high percentage by the contract owner.",
+        impact: "If the owner changes the fee later, selling your tokens could become costly or impossible."
+      };
+    }
+    case "UNVERIFIED_CONTRACT": {
+      return {
+        headline: "The contract could not be fully verified",
+        fact: "The contract source is not verified.",
+        meaning: "Nalar has less publicly verifiable information available to inspect.",
+        impact: "This makes it harder to independently confirm how the contract behaves."
+      };
+    }
+    case "SELL_SIMULATION_UNAVAILABLE": {
+      return {
+        headline: "Nalar could not verify the sell path",
+        fact: "The sell simulation could not be completed.",
+        meaning: "Nalar could not independently test what would happen during a sale.",
+        impact: "You have less evidence about whether the token can be sold as expected."
+      };
+    }
+    case "UNLIMITED_ALLOWANCE": {
+      return {
+        headline: "This transaction gives broad spending permission",
+        fact: "The approval is not limited to a specific token amount.",
+        meaning: "The spender may be able to use that permission more broadly than a limited approval.",
+        impact: "If the spender is unsafe or compromised, this permission could put your tokens at risk."
+      };
+    }
+    case "UNEXPECTED_SPENDER": {
+      const spender = metadata?.spender ? ` (${metadata.spender})` : "";
+      return {
+        headline: "The spender address is unfamiliar",
+        fact: `The contract requesting spending permission${spender} is not recognized as a known exchange or protocol router.`,
+        meaning: "An unfamiliar contract is asking for permission to access your tokens.",
+        impact: "If this contract is untrusted or malicious, it could transfer approved tokens without your direct confirmation."
+      };
+    }
+    case "UNEXPECTED_NFT_OPERATOR": {
+      return {
+        headline: "This transaction gives control over your NFTs",
+        fact: "The transaction grants operator rights over your NFT collection.",
+        meaning: "The designated operator would be able to transfer or manage NFTs on your behalf.",
+        impact: "If the operator is malicious, they could transfer your NFTs without further approval."
+      };
+    }
+    case "CONTRACT_TARGET_IS_EOA": {
+      return {
+        headline: "Target is a personal wallet",
+        fact: "The destination address is an externally owned account (EOA), not a smart contract.",
+        meaning: "Funds sent will go directly to an individual's private wallet with no automated contract safeguards.",
+        impact: "You are sending assets directly to a personal wallet rather than interacting with a verified decentralized application."
+      };
+    }
+    case "SIMULATION_FAILED":
+    case "SIMULATION_REVERT": {
+      const err = metadata?.error ? ` (reverted with ${metadata.error})` : "";
+      return {
+        headline: "The transaction simulation failed",
+        fact: `The blockchain node rejected this transaction during test execution${err}.`,
+        meaning: "The transaction would likely revert or fail if submitted to the network in its current state.",
+        impact: "Submitting this transaction will forfeit network gas fees without completing your intended action."
+      };
+    }
+    case "HONEYPOT_DETECTED":
+    case "FAILED_SELL_SIMULATION": {
+      return {
+        headline: "Tokens may not be sellable",
+        fact: "An attempted sell simulation reverted on-chain.",
+        meaning: "The token contract blocked selling during automated testing.",
+        impact: "If you purchase these tokens, you may be unable to sell them back for other assets."
+      };
+    }
+    case "INTENT_MISMATCH": {
+      return {
+        headline: "This transaction does something different from what you asked for",
+        fact: metadata?.detail || "The on-chain transaction parameters differ from what you asked to do.",
+        meaning: "The transaction will execute different actions, tokens, or amounts than you intended.",
+        impact: "Continuing could cause you to complete an unintended transaction or lose assets."
+      };
+    }
+    default: {
+      const title = metadata?.title || code.replace(/_/g, " ").toLowerCase();
+      const desc = metadata?.description || `Security signal detected: ${code}.`;
+      return {
+        headline: "This transaction needs your attention",
+        fact: desc,
+        meaning: `Nalar identified a security condition (${title}) that requires verification.`,
+        impact: "Review the transaction details in your wallet before confirming."
+      };
+    }
+  }
+}
+function buildHumanExplanationContext(input2) {
   let sellTaxPercent = null;
   let hasOwnerControl = false;
-  const findingCodes = new Set;
+  const securityFindings = [];
   if (Array.isArray(input2.scamAnalyses)) {
     for (const report of input2.scamAnalyses) {
       const state2 = report.contractPrivileges?.state ?? [];
@@ -53945,166 +54052,319 @@ function buildDeterministicExplanation(input2) {
       const findings = report.findings ?? [];
       for (const f of findings) {
         if (f.code) {
-          findingCodes.add(f.code);
-        }
-        if (f.code?.includes("OWNER_CONTROLLED")) {
-          hasOwnerControl = true;
+          if (f.code.includes("OWNER_CONTROLLED")) {
+            hasOwnerControl = true;
+          }
+          securityFindings.push({
+            code: f.code,
+            severity: f.severity,
+            title: f.title,
+            humanized: humanizeFinding(f.code, { ...f, sellTaxPercent })
+          });
         }
       }
     }
   }
+  const transactionThreats = [];
   if (Array.isArray(input2.transactionThreats)) {
     for (const t of input2.transactionThreats) {
       if (t.code) {
-        findingCodes.add(t.code);
+        transactionThreats.push({
+          code: t.code,
+          severity: t.severity,
+          title: t.title,
+          humanized: humanizeFinding(t.code, { ...t, sellTaxPercent })
+        });
       }
     }
   }
-  const isUnlimitedApproval = findingCodes.has("UNLIMITED_ALLOWANCE");
-  const isUnexpectedSpender = findingCodes.has("UNEXPECTED_SPENDER");
-  const isSimFailed = input2.simulation && !input2.simulation.success;
-  const isMismatch = !input2.intentMatch || input2.comparison.overall === "MISMATCH" || input2.comparison.matches === false;
-  const isUncertain = input2.comparison.overall === "UNCERTAIN";
-  const compOverall = input2.comparison.overall === "MATCH" || input2.intentMatch && input2.comparison.matches !== false && input2.comparison.overall !== "UNCERTAIN" && input2.comparison.overall !== "MISMATCH" ? "MATCH" : input2.comparison.overall === "MISMATCH" || !input2.intentMatch || input2.comparison.matches === false ? "MISMATCH" : "UNKNOWN";
-  let headline = isBlock ? "Transaction Blocked" : isReview ? "Review Recommended" : "Transaction Verified";
-  let whyTitle = isBlock ? "Why Nalar stopped this transaction" : isReview ? "Why Nalar recommends review" : "Transaction verified";
+  if (input2.simulation && !input2.simulation.success) {
+    securityFindings.unshift({
+      code: "SIMULATION_FAILED",
+      severity: "CRITICAL",
+      title: "Transaction simulation reverted",
+      humanized: humanizeFinding("SIMULATION_FAILED", { error: input2.simulation.error })
+    });
+  }
+  const actualSummary = humanizeActualTransactionSummary(input2);
+  return {
+    decision: input2.decision,
+    riskLevel: input2.riskLevel,
+    riskScore: input2.riskScore,
+    userIntent: {
+      raw: input2.intent,
+      action: input2.normalizedIntent?.action || "UNKNOWN",
+      quantity: input2.normalizedIntent?.quantity ?? null,
+      tokenIn: input2.normalizedIntent?.tokenIn ?? null,
+      tokenOut: input2.normalizedIntent?.tokenOut ?? null,
+      description: input2.normalizedIntent?.description || input2.intent
+    },
+    actualTransaction: {
+      action: input2.transactionSummary?.action || input2.actualAction,
+      functionName: input2.actualFunction,
+      valueNative: input2.actualValueNative,
+      target: input2.transactionSummary?.target ?? null,
+      summary: actualSummary,
+      protocol: input2.transactionSummary?.protocol ?? null,
+      input: input2.transactionSummary?.input ?? null,
+      output: input2.transactionSummary?.output ?? null
+    },
+    intentComparison: {
+      matches: input2.comparison.matches,
+      overall: input2.comparison.overall,
+      mismatches: input2.comparison.mismatches || [],
+      action: {
+        status: input2.comparison.action?.status || "UNSPECIFIED",
+        expected: input2.comparison.action?.expected,
+        actual: input2.comparison.action?.actual
+      },
+      inputToken: {
+        status: input2.comparison.inputToken?.status || "UNSPECIFIED",
+        expected: input2.comparison.inputToken?.expected,
+        actual: input2.comparison.inputToken?.actual
+      },
+      outputToken: {
+        status: input2.comparison.outputToken?.status || "UNSPECIFIED",
+        expected: input2.comparison.outputToken?.expected,
+        actual: input2.comparison.outputToken?.actual
+      },
+      amount: {
+        status: input2.comparison.amount?.status || "UNSPECIFIED",
+        expected: input2.comparison.amount?.expected,
+        actual: input2.comparison.amount?.actual
+      },
+      recipient: {
+        status: input2.comparison.recipient?.status || "UNSPECIFIED",
+        expected: input2.comparison.recipient?.expected,
+        actual: input2.comparison.recipient?.actual
+      },
+      summary: input2.comparison.summary
+    },
+    simulation: {
+      success: input2.simulation ? input2.simulation.success : true,
+      gasEstimate: input2.simulation?.gasEstimate ?? null,
+      error: input2.simulation?.error ?? null
+    },
+    securityFindings,
+    contractState: {
+      sellTaxPercent,
+      hasOwnerControl
+    },
+    policyResult: {
+      allowed: input2.policy.allowed,
+      requiresReview: input2.policy.requiresReview,
+      reasons: input2.policy.reasons
+    },
+    transactionThreats
+  };
+}
+function humanizeActualTransactionSummary(input2) {
+  const ts = input2.transactionSummary;
+  if (ts?.summary && !ts.summary.toLowerCase().includes("swap tokens")) {
+    return ts.summary;
+  }
+  const action = ts?.action || input2.actualAction;
+  if (action === "TOKEN_APPROVAL") {
+    const symbol2 = ts?.input?.symbol || "tokens";
+    const hasUnlimited = input2.transactionThreats?.some((t) => t.code === "UNLIMITED_ALLOWANCE");
+    if (hasUnlimited) {
+      return `Allow this contract to spend your ${symbol2} without a fixed spending limit.`;
+    }
+    if (ts?.input?.amount) {
+      return `Allow this contract to spend ${ts.input.amount} ${symbol2}.`;
+    }
+    return `Allow this contract to spend your ${symbol2}.`;
+  }
+  if (action === "TRANSFER") {
+    const amount = ts?.input?.amount || input2.actualValueNative;
+    const symbol2 = ts?.input?.symbol || (input2.actualValueNative.includes("BNB") ? "BNB" : "tokens");
+    const target = ts?.target || "recipient";
+    const targetDisplay = target.length > 12 ? `${target.slice(0, 6)}...${target.slice(-4)}` : target;
+    return `Send ${amount} to ${targetDisplay}.`;
+  }
+  if (action === "SWAP") {
+    const inAmt = ts?.input?.amount ? `${ts.input.amount} ` : "";
+    const inSym = ts?.input?.symbol || (input2.actualValueNative ? input2.actualValueNative : "tBNB");
+    const outAmt = ts?.output?.amount ? `${ts.output.amount} ` : "";
+    const outSym = ts?.output?.symbol || "tokens";
+    const protocol = ts?.protocol ? ` through ${ts.protocol}` : "";
+    if (outSym !== "tokens" || inSym !== "tokens") {
+      return `Swap ${inAmt}${inSym} for ${outAmt}${outSym}${protocol}.`.replace(/\s+/g, " ");
+    }
+  }
+  if (ts?.description && !ts.description.toLowerCase().includes("swap tokens")) {
+    return ts.description;
+  }
+  return ts?.title || input2.actualAction;
+}
+function buildDeterministicExplanation(input2) {
+  const context = buildHumanExplanationContext(input2);
+  const isBlock = input2.decision === "BLOCK";
+  const isReview = input2.decision === "REVIEW";
+  const findingCodeSet = new Set(context.securityFindings.map((f) => f.code));
+  const threatCodeSet = new Set(context.transactionThreats.map((t) => t.code));
+  const isSimFailed = !context.simulation.success;
+  const isMismatch = !input2.intentMatch || context.intentComparison.overall === "MISMATCH" || context.intentComparison.matches === false;
+  const isUncertain = context.intentComparison.overall === "UNCERTAIN";
+  const compOverall = context.intentComparison.overall === "MATCH" || input2.intentMatch && context.intentComparison.matches !== false && !isUncertain && !isMismatch ? "MATCH" : isMismatch ? "MISMATCH" : "UNKNOWN";
+  let headline = isBlock ? "The transaction was stopped" : isReview ? "This transaction needs your attention" : "The transaction passed Nalar's checks";
+  const whyTitle = isBlock ? "Why Nalar stopped this transaction" : isReview ? "Why Nalar recommends review" : "Transaction verified";
   let primaryReason = input2.reasons.length > 0 ? input2.reasons[0] : "Security evaluation completed.";
   let userImpact = "Nalar evaluated the transaction against deterministic safety rules.";
   let whatThisMeans = "Nalar verified that the on-chain parameters adhere to your intent and security policy.";
-  if (isBlock) {
-    if (sellTaxPercent !== null && sellTaxPercent >= 20) {
-      headline = `Unusually high sell tax detected (${sellTaxPercent.toFixed(0)}%)`;
-      primaryReason = `The token contract reports a configured ${sellTaxPercent.toFixed(0)}% sell tax.`;
-      userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sale, you could receive substantially less than expected.";
-      whatThisMeans = "Even though buying this token may succeed, the contract contains rules that could prevent you from selling or take most of your funds on sale.";
-    } else if (isUnlimitedApproval || isUnexpectedSpender) {
-      headline = "Unrestricted token spending permission";
-      primaryReason = "This transaction grants permission to spend your tokens without a fixed limit.";
-      userImpact = "An unrestricted allowance permits the spender contract to transfer your tokens at any time without asking for confirmation again.";
-      whatThisMeans = "You are giving this contract permission to spend your tokens without a small spending limit. If the contract is vulnerable or malicious, your balance could be drained.";
-    } else if (isSimFailed) {
-      headline = "Transaction simulation failed";
-      primaryReason = "The blockchain node rejected this transaction during test execution and it would revert.";
-      userImpact = "Submitting this transaction will forfeit the network gas fee without completing your intended action.";
-      whatThisMeans = "The smart contract rejected the transaction during on-chain simulation. The transaction cannot succeed in its current state.";
-    } else if (isMismatch) {
-      headline = "Intent mismatch detected";
-      primaryReason = input2.comparison.summary || (input2.comparison.mismatches[0] ?? "The transaction differs from your requested action.");
-      if (input2.comparison.outputToken?.status === "MISMATCH") {
-        userImpact = `You will receive ${input2.comparison.outputToken.actual} instead of your expected ${input2.comparison.outputToken.expected}.`;
-        whatThisMeans = `You asked to receive ${input2.comparison.outputToken.expected}, but this transaction is configured to receive ${input2.comparison.outputToken.actual}. If you proceed, you will not receive ${input2.comparison.outputToken.expected}.`;
-      } else if (input2.comparison.inputToken?.status === "MISMATCH") {
-        userImpact = `You will spend ${input2.comparison.inputToken.actual} instead of your intended ${input2.comparison.inputToken.expected}.`;
-        whatThisMeans = `You asked to spend ${input2.comparison.inputToken.expected}, but this transaction is configured to spend ${input2.comparison.inputToken.actual}.`;
-      } else {
-        userImpact = "The wallet request is configured to execute an action that does not match what you asked to do.";
-        whatThisMeans = "Nalar compared your plain-language intent with the transaction payload and found that the actual parameters differ from your request.";
-      }
-    } else if (input2.policy.reasons.length > 0) {
-      headline = "Policy restriction triggered";
-      primaryReason = input2.policy.reasons[0];
-      userImpact = "The requested interaction violates your security firewall policy rules.";
-      whatThisMeans = "This action is explicitly restricted by safety policies to prevent unauthorized contract operations.";
-    }
-  } else if (isReview) {
-    if (isMismatch) {
-      headline = "Intent mismatch detected";
-      primaryReason = input2.comparison.summary || (input2.comparison.mismatches[0] ?? "The transaction differs from your requested action.");
-      if (input2.comparison.outputToken?.status === "MISMATCH") {
-        userImpact = `You will receive ${input2.comparison.outputToken.actual} instead of your expected ${input2.comparison.outputToken.expected}.`;
-        whatThisMeans = `You asked to receive ${input2.comparison.outputToken.expected}, but this transaction will swap for ${input2.comparison.outputToken.actual} instead.`;
-      } else if (input2.comparison.inputToken?.status === "MISMATCH") {
-        userImpact = `You will spend ${input2.comparison.inputToken.actual} instead of your intended ${input2.comparison.inputToken.expected}.`;
-        whatThisMeans = `You asked to spend ${input2.comparison.inputToken.expected}, but this transaction will spend ${input2.comparison.inputToken.actual} instead.`;
-      } else if (input2.comparison.amount?.status === "MISMATCH") {
-        userImpact = `The transaction amount (${input2.comparison.amount.actual}) differs from your intended amount (${input2.comparison.amount.expected}).`;
-        whatThisMeans = `You asked to transact ${input2.comparison.amount.expected}, but the contract is configured for ${input2.comparison.amount.actual}.`;
-      } else {
-        userImpact = "The transaction parameters do not fully align with what you asked to do.";
-        whatThisMeans = "Nalar found differences between your requested intent and what the blockchain transaction actually does.";
-      }
-    } else if (isUncertain) {
-      headline = "Intent could not be verified";
-      primaryReason = "Could not clearly verify your intent from the provided description.";
-      userImpact = "Please verify the contract address, token symbols, and amounts in your wallet before confirming.";
-      whatThisMeans = "Nalar was unable to extract specific token and amount targets from your intent description to confirm a match.";
-    } else if (findingCodes.has("UNVERIFIED_CONTRACT")) {
-      headline = "Unverified smart contract";
-      primaryReason = "The destination contract source code is not verified on the block explorer.";
-      userImpact = "The contract logic cannot be independently inspected for backdoors or unexpected transfer fees.";
-      whatThisMeans = "You are interacting with a contract whose source code is unverified. This increases the risk of unexpected behaviors.";
-    } else if (findingCodes.has("SELL_SIMULATION_UNAVAILABLE")) {
-      headline = "Sell simulation unavailable";
-      primaryReason = "Sell simulation could not be completed on-chain.";
-      userImpact = "It could not be independently confirmed that tokens purchased can be sold back freely.";
-      whatThisMeans = "While purchasing tokens may work, the ability to sell them later has not been proven by on-chain simulation.";
-    } else if (findingCodes.has("CONTRACT_TARGET_IS_EOA")) {
-      headline = "Target is a personal wallet";
-      primaryReason = "The destination address is an externally owned account (EOA), not a verified smart contract.";
-      userImpact = "Funds sent will go directly to an individual's private wallet with no automated contract safeguards.";
-      whatThisMeans = "You are sending assets directly to another person's wallet rather than interacting with a decentralized application.";
+  let summaryText = primaryReason;
+  if (context.contractState.sellTaxPercent !== null && context.contractState.sellTaxPercent >= 20) {
+    const taxNum = context.contractState.sellTaxPercent.toFixed(0);
+    const h = humanizeFinding("EXCESSIVE_SELL_TAX", { sellTaxPercent: context.contractState.sellTaxPercent });
+    headline = `An unusually high sell fee was found (${taxNum}%)`;
+    summaryText = h.fact;
+    primaryReason = h.fact;
+    userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sale, you could receive substantially less than expected.";
+    whatThisMeans = "This is an unusually large fee applied to selling. Even if buying succeeds, selling later could result in receiving significantly less or being unable to exit your position.";
+  } else if (threatCodeSet.has("UNLIMITED_ALLOWANCE")) {
+    const h = humanizeFinding("UNLIMITED_ALLOWANCE");
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = "This transaction grants permission to spend your tokens without a fixed limit.";
+    userImpact = h.impact;
+    whatThisMeans = "You are giving this contract permission to spend your tokens without a small spending limit. If the contract is vulnerable or malicious, your balance could be drained.";
+  } else if (threatCodeSet.has("UNEXPECTED_NFT_OPERATOR")) {
+    const h = humanizeFinding("UNEXPECTED_NFT_OPERATOR");
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = h.fact;
+    userImpact = h.impact;
+    whatThisMeans = h.meaning;
+  } else if (isSimFailed) {
+    const h = humanizeFinding("SIMULATION_FAILED", { error: context.simulation.error });
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = "The blockchain node rejected this transaction during test execution and it would revert.";
+    userImpact = h.impact;
+    whatThisMeans = "The smart contract rejected the transaction during on-chain simulation. The transaction cannot succeed in its current state.";
+  } else if (isMismatch) {
+    headline = "This transaction does something different from what you asked for";
+    summaryText = "This transaction does something different from what you asked for.";
+    if (context.intentComparison.outputToken.status === "MISMATCH") {
+      const spendPart = context.userIntent.quantity && context.userIntent.tokenIn ? `use ${context.userIntent.quantity} ${context.userIntent.tokenIn} to ` : context.userIntent.quantity ? `use ${context.userIntent.quantity} to ` : "";
+      const expectedOut = context.intentComparison.outputToken.expected || context.userIntent.tokenOut || "the requested token";
+      const actualOut = context.intentComparison.outputToken.actual || context.actualTransaction.output?.symbol || "another token";
+      primaryReason = `You asked to ${spendPart}buy ${expectedOut}, but the transaction is configured to receive ${actualOut}.`;
+      userImpact = "Continuing could cause you to complete a different swap from the one you intended.";
+      whatThisMeans = `Nalar stopped this because the transaction will deliver ${actualOut} instead of the ${expectedOut} you asked to purchase.`;
+    } else if (context.intentComparison.inputToken.status === "MISMATCH") {
+      const expectedIn = context.intentComparison.inputToken.expected || context.userIntent.tokenIn || "the requested token";
+      const actualIn = context.intentComparison.inputToken.actual || "another token";
+      primaryReason = `You asked to spend ${expectedIn}, but the transaction is configured to spend ${actualIn}.`;
+      userImpact = `Continuing would spend ${actualIn} instead of your intended ${expectedIn}.`;
+      whatThisMeans = `Nalar stopped this because the transaction will spend ${actualIn} instead of the ${expectedIn} you intended to spend.`;
+    } else if (context.intentComparison.amount.status === "MISMATCH") {
+      const expectedAmt = context.intentComparison.amount.expected;
+      const actualAmt = context.intentComparison.amount.actual;
+      primaryReason = `You asked to transact ${expectedAmt}, but the transaction is configured for ${actualAmt}.`;
+      userImpact = `Continuing would transact ${actualAmt} instead of your intended amount of ${expectedAmt}.`;
+      whatThisMeans = `Nalar stopped this because the transaction amount (${actualAmt}) does not match what you asked to transact (${expectedAmt}).`;
     } else {
-      headline = "Transaction requires verification";
-      primaryReason = input2.reasons[0] ?? "This transaction exceeds normal review thresholds.";
-      userImpact = "Please verify the recipient, spending amounts, and contract details before signing.";
-      whatThisMeans = "The transaction carries values or permissions that warrant double-checking, but does not present an immediate critical threat.";
+      primaryReason = context.intentComparison.summary || (context.intentComparison.mismatches[0] ?? "The transaction differs from your requested action.");
+      userImpact = "Continuing could execute an action or transfer that differs from what you intended.";
+      whatThisMeans = "Nalar found differences between your requested intent and what the blockchain transaction actually does.";
     }
-  } else {
-    headline = "Transaction cleared for signing";
-    primaryReason = "The transaction matches what you asked to do and passed all automated checks.";
+  } else if (findingCodeSet.has("OWNER_CONTROLLED_EXCESSIVE_SELL_TAX") || findingCodeSet.has("OWNER_CONTROLLED_TAX") || context.contractState.hasOwnerControl) {
+    const h = humanizeFinding("OWNER_CONTROLLED_TAX");
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = h.fact;
+    userImpact = h.impact;
+    whatThisMeans = h.meaning;
+  } else if (findingCodeSet.has("UNVERIFIED_CONTRACT")) {
+    const h = humanizeFinding("UNVERIFIED_CONTRACT");
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = "The contract source is not verified on the block explorer.";
+    userImpact = h.impact;
+    whatThisMeans = "Nalar could not independently verify the contract's published source code, so there is less publicly verifiable information available to inspect.";
+  } else if (findingCodeSet.has("SELL_SIMULATION_UNAVAILABLE")) {
+    const h = humanizeFinding("SELL_SIMULATION_UNAVAILABLE");
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = "The sell simulation could not be completed on-chain.";
+    userImpact = h.impact;
+    whatThisMeans = "Nalar could not independently test what would happen during a sale. While buying may work, the ability to sell has not been proven by on-chain simulation.";
+  } else if (findingCodeSet.has("CONTRACT_TARGET_IS_EOA")) {
+    const h = humanizeFinding("CONTRACT_TARGET_IS_EOA");
+    headline = h.headline;
+    summaryText = h.fact;
+    primaryReason = h.fact;
+    userImpact = h.impact;
+    whatThisMeans = h.meaning;
+  } else if (isUncertain) {
+    headline = "Intent could not be verified";
+    summaryText = "Could not clearly verify your intent from the provided description.";
+    primaryReason = summaryText;
+    userImpact = "Please verify the contract address, token symbols, and amounts in your wallet before confirming.";
+    whatThisMeans = "Nalar was unable to extract specific token and amount targets from your intent description to confirm a match.";
+  } else if (context.policyResult.reasons.length > 0) {
+    headline = isBlock ? "The transaction was stopped" : "This transaction needs your attention";
+    summaryText = context.policyResult.reasons[0];
+    primaryReason = summaryText;
+    userImpact = "The requested interaction asks for permissions or actions that exceed your configured security policy.";
+    whatThisMeans = "Nalar stopped this because the transaction asks for a permission or action you did not request.";
+  } else if (!isBlock && !isReview) {
+    headline = "The transaction passed Nalar's checks";
+    summaryText = "The transaction matches what you asked to do and passed all automated checks.";
+    primaryReason = summaryText;
     userImpact = "No high-risk patterns or policy violations were detected on BNB Chain.";
     whatThisMeans = "Nalar verified that the on-chain execution path matches your intent with no hidden allowances or dangerous contract configurations.";
   }
-  const intentSummary = input2.normalizedIntent?.description ?? input2.intent;
-  const intentAction = input2.normalizedIntent?.action ?? "UNKNOWN";
-  const intentInputToken = input2.normalizedIntent?.tokenIn ?? (input2.actualValueNative ? `${input2.actualValueNative}` : undefined);
-  const intentOutputToken = input2.normalizedIntent?.tokenOut ?? undefined;
+  const intentInputToken = context.userIntent.tokenIn || (input2.actualValueNative ? `${input2.actualValueNative}` : undefined);
+  const intentOutputToken = context.userIntent.tokenOut || undefined;
   const userIntent = {
-    summary: intentSummary,
-    action: intentAction,
+    summary: context.userIntent.description,
+    action: context.userIntent.action,
     input: intentInputToken,
     expectedOutput: intentOutputToken,
     status: compOverall
   };
-  const txSummary = input2.transactionSummary?.summary ?? input2.transactionSummary?.description ?? input2.actualAction;
-  const actualInputDisplay = input2.transactionSummary?.input?.amount ? `${input2.transactionSummary.input.amount} ${input2.transactionSummary.input.symbol ?? ""}`.trim() : input2.actualValueNative;
-  const actualOutputDisplay = input2.transactionSummary?.output?.amount ? `${input2.transactionSummary.output.amount} ${input2.transactionSummary.output.symbol ?? ""}`.trim() : input2.transactionSummary?.output?.symbol ?? undefined;
+  const actualInputDisplay = context.actualTransaction.input?.amount ? `${context.actualTransaction.input.amount} ${context.actualTransaction.input.symbol ?? ""}`.trim() : input2.actualValueNative;
+  const actualOutputDisplay = context.actualTransaction.output?.amount ? `${context.actualTransaction.output.amount} ${context.actualTransaction.output.symbol ?? ""}`.trim() : context.actualTransaction.output?.symbol ?? undefined;
   const actualTransaction = {
-    summary: txSummary,
-    action: input2.transactionSummary?.action ?? input2.actualAction,
+    summary: context.actualTransaction.summary,
+    action: context.actualTransaction.action,
     input: actualInputDisplay,
     output: actualOutputDisplay,
-    target: input2.transactionSummary?.target ?? undefined
+    target: context.actualTransaction.target ?? undefined
   };
-  let compSummary = input2.comparison.summary;
+  let compSummary = context.intentComparison.summary;
   if (!compSummary || compOverall === "MATCH") {
     if (compOverall === "MATCH" && isBlock) {
       compSummary = "The transaction matches your request, but Nalar blocked it because the target token was found to have a critical security risk.";
     } else if (compOverall === "MATCH") {
       compSummary = "The transaction matches what you asked to do.";
     } else {
-      compSummary = input2.comparison.mismatches?.[0] ?? "The transaction differs from your requested action.";
+      compSummary = primaryReason;
     }
+  } else if (isMismatch && context.intentComparison.outputToken.status === "MISMATCH") {
+    compSummary = primaryReason;
   }
   const comparison = {
     status: compOverall,
     summary: compSummary,
-    details: input2.comparison.mismatches
+    details: context.intentComparison.mismatches.length > 0 ? context.intentComparison.mismatches : [primaryReason]
   };
   const evidence = [];
-  if (sellTaxPercent !== null) {
+  if (context.contractState.sellTaxPercent !== null) {
     evidence.push({
       label: "Sell tax",
-      value: `${sellTaxPercent.toFixed(0)}%`,
-      explanation: `The token contract reports a configured ${sellTaxPercent.toFixed(0)}% sell tax.`,
+      value: `${context.contractState.sellTaxPercent.toFixed(0)}%`,
+      explanation: `The token contract reports a configured ${context.contractState.sellTaxPercent.toFixed(0)}% sell tax.`,
       source: "ON-CHAIN"
     });
   }
-  if (hasOwnerControl) {
+  if (context.contractState.hasOwnerControl) {
     evidence.push({
       label: "Owner control",
       value: "Detected",
-      explanation: "The token owner can modify contract parameters or trading configurations.",
+      explanation: "The contract allows an owner or administrator to adjust transfer or sell fees.",
       source: "ON-CHAIN"
     });
   }
@@ -54118,22 +54378,22 @@ function buildDeterministicExplanation(input2) {
   }
   evidence.push({
     label: "Intent check",
-    value: input2.comparison.overall === "MATCH" ? "Matched" : input2.comparison.overall === "MISMATCH" ? "Mismatch" : "Uncertain",
-    explanation: input2.comparison.summary,
+    value: compOverall === "MATCH" ? "Matched" : compOverall === "MISMATCH" ? "Mismatch" : "Uncertain",
+    explanation: compSummary,
     source: "INTENT"
   });
-  if (input2.policy.reasons.length > 0) {
+  if (context.policyResult.reasons.length > 0) {
     evidence.push({
       label: "Policy evaluation",
-      value: input2.policy.allowed ? "Allowed" : "Forbidden",
-      explanation: input2.policy.reasons[0],
+      value: context.policyResult.allowed ? "Allowed" : "Forbidden",
+      explanation: context.policyResult.reasons[0],
       source: "POLICY"
     });
   }
   return {
     title: isBlock ? "Transaction Blocked" : isReview ? "Review Required" : "Transaction Verified",
     headline,
-    summary: primaryReason,
+    summary: summaryText,
     details: input2.reasons.length > 0 ? input2.reasons : [primaryReason],
     recommendedAction: isBlock ? "CANCEL" : isReview ? "REVIEW" : "PROCEED",
     whyStopped: {
@@ -54185,6 +54445,7 @@ reason=MISSING_API_KEY`);
     console.log(`[AI] provider=${env.AI_PROVIDER}`);
     console.log(`[AI] model=${env.AI_MODEL}`);
     console.log("[AI] request started");
+    const context = buildHumanExplanationContext(input2);
     const response = await ai.chat.completions.create({
       model: env.AI_MODEL,
       temperature: 0,
@@ -54192,36 +54453,41 @@ reason=MISSING_API_KEY`);
         {
           role: "system",
           content: `
-You are Nalar Protocol's transaction security explanation assistant.
+You translate verified blockchain security facts into simple language for normal users.
 
-Your ONLY job is to explain an already-determined security decision to a normal person in clear, calm, professional language.
+Your ONLY job is to explain an already-determined security decision to a normal person in clear, calm, accessible English.
 
 You are NOT the security decision maker. The security engine has ALREADY decided: ALLOW, REVIEW, or BLOCK. NEVER change that decision.
 
-NEVER invent facts. NEVER assume facts that are not present in the input.
+CORE PRINCIPLE:
+OBSERVED FACT -> WHAT IT MEANS -> USER IMPACT
+Never use finding codes, security-engineering jargon, or generic AI paragraphs in primary prose.
 
-LANGUAGE RULES:
-- Use simple, direct, accessible English.
-- Sound calm, clear, and professional.
-- Explain the problem like a trusted security assistant.
-- Do not use empty AI buzzwords (e.g. "unlock", "elevate", "cutting-edge", "game-changer", "seamless").
-- Clearly distinguish:
-  1. What the user intended
-  2. What the transaction actually tries to do
-  3. Why Nalar stopped or flagged it
-  4. What this means for the user
-
-STRICT CONDITIONALITY & EVIDENCE RULES:
-- Never convert a configured tax into a guaranteed financial loss.
-- If the evidence shows sellTax = 9800 (98%):
-  Say: "The token contract reports a configured 98% sell tax."
-  And: "If enforced during a sale, you could receive substantially less than expected."
-  Do NOT say: "You will lose 98%" unless on-chain simulation proved that outcome.
-- If unlimited approval: Explain that the permission is not limited to a specific amount.
-- If limited approval: Explain the exact amount only if available.
-- If NFT operator approval: Explain that this gives permission to manage all NFTs in the collection.
-- When intentMatch is true but decision is BLOCK: Explain that the transaction matches what the user asked, but Nalar blocked it because the target token contains an independent critical risk.
-- When intentMatch is false: Explain ONLY the mismatch fields present in comparison.mismatches. Do not invent amount mismatches if only tokens differ.
+STRICT RULES:
+- Never invent evidence or facts. Use only the verified facts provided in the input context.
+- Never change the decision (ALLOW, REVIEW, BLOCK), risk level, risk score, or comparison status.
+- Never introduce unsupported technical claims.
+- Do not repeat raw finding codes (e.g. EXCESSIVE_SELL_TAX, UNVERIFIED_CONTRACT) in user-facing text.
+- Do not use empty AI buzzwords (e.g. "unlock", "elevate", "cutting-edge", "game-changer", "seamless", "delve").
+- Prefer short, clear sentences.
+- Explain one cause at a time.
+- State observed facts first, then explain what they mean, then explain the potential impact.
+- Use conditional language when an outcome is not proven:
+  - If a 98% sell tax is configured: "The token contract reports a configured 98% sell tax. If enforced during a sale, you could receive substantially less than expected." Never say "You will lose 98% of your funds" unless on-chain simulation proved that exact outcome.
+  - If unlimited approval: "This transaction gives broad spending permission without a fixed limit. If the spender is unsafe or compromised, this permission could put your tokens at risk."
+- Preserve token names, amounts, and addresses exactly as provided.
+- Explain intent vs actual transaction explicitly:
+  - If they differ, state: "This transaction does something different from what you asked for."
+  - Then explain the exact difference (e.g. "You asked to use 0.002 tBNB to buy DHON, but the transaction is configured to receive BUSD.").
+  - Do NOT invent amount mismatches if the amount matches.
+- For headlines:
+  - BLOCK: Prefer "The transaction was stopped" (or a specific humanized headline such as "An unusually high sell fee was found (98%)" or "This transaction does something different from what you asked for").
+  - REVIEW: Prefer "This transaction needs your attention" (or a specific humanized headline such as "The contract could not be fully verified").
+  - ALLOW: Prefer "The transaction passed Nalar's checks".
+- Recommended action MUST match the decision:
+  BLOCK -> CANCEL
+  REVIEW -> REVIEW
+  ALLOW -> PROCEED
 
 Return JSON conforming to this schema:
 {
@@ -54267,16 +54533,14 @@ Return JSON conforming to this schema:
 
 IMPORTANT: "details" must always be a JSON array of strings, e.g. ["reason 1"].
 "source" in evidence MUST be one of: "ON-CHAIN" | "SIMULATION" | "TRANSACTION" | "POLICY" | "INTENT" | "BNB_MCP".
-
-The recommended action MUST match the deterministic decision:
-BLOCK -> CANCEL
-REVIEW -> REVIEW
-ALLOW -> PROCEED
 `
         },
         {
           role: "user",
-          content: JSON.stringify(input2)
+          content: JSON.stringify({
+            verifiedContext: context,
+            rawInput: input2
+          })
         }
       ]
     });

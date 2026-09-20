@@ -39,15 +39,19 @@ app.use(
   }),
 );
 
-app.get("/", (c) => {
+const infoHandler = (c: any) => {
   return c.json({
     name: "TxSentry API",
     version: "0.1.0",
     description: "AI-powered transaction intent firewall for Web3",
   });
-});
+};
+
+app.get("/", infoHandler);
+app.get("/api", infoHandler);
 
 app.route("/health", healthRoute);
+app.route("/api/health", healthRoute);
 app.route("/api/transactions", transactionRoute);
 app.route("/api/transactions/security-check", securityRoute);
 

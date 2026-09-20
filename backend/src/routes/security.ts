@@ -541,6 +541,12 @@ securityRoute.post("/", async (c) => {
         scamAnalyses: scamAnalyses as any,
         transactionThreats: transactionThreatFindings as any,
       });
+      explanation.meta = {
+        generator: "DETERMINISTIC",
+        provider: env.AI_PROVIDER,
+        model: env.AI_MODEL,
+        fallbackReason: error instanceof Error ? error.message : "Unhandled route exception",
+      };
     }
 
     return c.json({

@@ -68,14 +68,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({
           security,
           error: null,
+          errorCode: null,
+          receivedChainId: null,
         });
       })
       .catch((error) => {
         console.error("[Nalar] Security check failed:", error);
 
+        const isNetworkError =
+          error?.code === "NETWORK_NOT_SUPPORTED" || error?.code === "UNSUPPORTED_CHAIN" || (typeof error?.message === "string" && (error.message.includes("BNB Testnet only") || error.message.includes("UNSUPPORTED_CHAIN")));
+
         sendResponse({
           security: null,
           error: error instanceof Error ? error.message : "Security check failed.",
+          errorCode: isNetworkError ? "NETWORK_NOT_SUPPORTED" : (error?.code ?? null),
+          receivedChainId: error?.receivedChainId ?? null,
         });
       });
 
@@ -141,15 +148,35 @@ async function saveIntent(origin, intent) {
 |--------------------------------------------------------------------------
 */
 
+function parseNumericChainId(chainId) {
+  if (typeof chainId === "number" && Number.isFinite(chainId)) {
+    return chainId;
+  }
+  if (typeof chainId === "string") {
+    const trimmed = chainId.trim();
+    if (/^0x[0-9a-fA-F]+$/i.test(trimmed)) {
+      return Number.parseInt(trimmed, 16);
+    }
+    const dec = Number.parseInt(trimmed, 10);
+    if (Number.isFinite(dec)) {
+      return dec;
+    }
+  }
+  return null;
+}
+
 async function handleSecurityCheck(transaction, chainId, origin) {
-  if (typeof chainId !== "string" || !/^0x[0-9a-fA-F]+$/.test(chainId)) {
+  const numericChainId = parseNumericChainId(chainId) ?? parseNumericChainId(transaction?.chainId);
+
+  if (numericChainId === null) {
     throw new Error("Invalid wallet chain ID.");
   }
 
-  const numericChainId = Number.parseInt(chainId, 16);
-
   if (numericChainId !== 97) {
-    throw new Error(`Nalar currently supports BNB Testnet only. Received chain ${numericChainId}.`);
+    const err = new Error(`Nalar currently supports BNB Testnet only. Received chain ${numericChainId}.`);
+    err.code = "NETWORK_NOT_SUPPORTED";
+    err.receivedChainId = numericChainId;
+    throw err;
   }
 
   if (typeof origin !== "string" || !origin) {
@@ -209,6 +236,21 @@ async function handleSecurityCheck(transaction, chainId, origin) {
   console.log("[Nalar] Backend response:", response.status, responseText);
 
   if (!response.ok) {
+    if (response.status === 400) {
+      try {
+        const errJson = JSON.parse(responseText);
+        if (errJson.error === "UNSUPPORTED_CHAIN" || String(errJson.error).includes("BNB Testnet only")) {
+          const err = new Error(`Nalar currently supports BNB Testnet only. Received chain ${errJson.receivedChainId ?? numericChainId}.`);
+          err.code = "NETWORK_NOT_SUPPORTED";
+          err.receivedChainId = errJson.receivedChainId ?? numericChainId;
+          throw err;
+        }
+      } catch (parseErr) {
+        if (parseErr.code === "NETWORK_NOT_SUPPORTED") {
+          throw parseErr;
+        }
+      }
+    }
     if (response.status === 401 || response.status === 403) {
       throw new Error("Access to security service was unauthorized.");
     }

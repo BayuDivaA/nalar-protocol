@@ -17,7 +17,7 @@ const envSchema = z
 
     AI_API_KEY: z.string().optional().default(""),
 
-    AI_MODEL: z.string().optional().default("gemini-1.5-flash"),
+    AI_MODEL: z.string().optional().default("gemini-3.5-flash-lite"),
 
     BNB_INVESTIGATOR_ENABLED: z
       .string()
@@ -83,7 +83,7 @@ export const env = parsed.success
       TXSENTRY_DEMO_NFT: process.env.TXSENTRY_DEMO_NFT || "0x0000000000000000000000000000000000000000",
       AI_PROVIDER: ((process.env.AI_PROVIDER as any) || "heuristics") as "gemini" | "openrouter" | "openai" | "heuristics",
       AI_API_KEY: process.env.AI_API_KEY || "",
-      AI_MODEL: process.env.AI_MODEL || "gemini-1.5-flash",
+      AI_MODEL: process.env.AI_MODEL || "gemini-3.5-flash-lite",
       BNB_INVESTIGATOR_ENABLED: process.env.BNB_INVESTIGATOR_ENABLED === "true",
       BNB_MCP_TRANSPORT: (process.env.BNB_MCP_TRANSPORT as any) || (process.env.VERCEL === "1" ? "sse" : "stdio"),
       BNB_MCP_URL: process.env.BNB_MCP_URL,

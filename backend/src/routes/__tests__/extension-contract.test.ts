@@ -56,7 +56,9 @@ describe("Extension API Contract Compatibility", () => {
     expect(body.explanation.actualTransaction).toBeDefined();
     expect(body.explanation.comparison).toBeDefined();
     expect(Array.isArray(body.explanation.evidence)).toBe(true);
-  });
+    expect(body.explanation.meta).toBeDefined();
+    expect(["AI", "DETERMINISTIC"]).toContain(body.explanation.meta.generator);
+  }, 15000);
 
   test("rejects invalid extension payloads with appropriate validation errors", async () => {
     // Missing required 'from' field
@@ -79,5 +81,61 @@ describe("Extension API Contract Compatibility", () => {
     );
 
     expect(response.status).toBe(400);
+  });
+
+  test("rejects unsupported networks (chainId 1, chainId 56) with 400 UNSUPPORTED_CHAIN", async () => {
+    // Ethereum Mainnet (chainId 1)
+    const ethPayload = {
+      intent: "Transfer 1 ETH",
+      transaction: {
+        chainId: 1,
+        from: "0x53E993819F2Bc45A029615e8634BDdEEab4F7817",
+        to: "0xe56E18ff683AbF6E1aA01804FaCaeB3694FDdd35",
+        value: "1000000000000000000",
+        data: "0x",
+      },
+    };
+
+    const ethResponse = await app.fetch(
+      new Request("http://localhost/api/transactions/security-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ethPayload),
+      }),
+    );
+
+    expect(ethResponse.status).toBe(400);
+    const ethBody = await ethResponse.json();
+    expect(ethBody.ok).toBe(false);
+    expect(ethBody.error).toBe("UNSUPPORTED_CHAIN");
+    expect(ethBody.expectedChainId).toBe(97);
+    expect(ethBody.receivedChainId).toBe(1);
+
+    // BNB Smart Chain Mainnet (chainId 56)
+    const bscPayload = {
+      intent: "Swap 1 BNB to USDT",
+      transaction: {
+        chainId: 56,
+        from: "0x53E993819F2Bc45A029615e8634BDdEEab4F7817",
+        to: "0xe56E18ff683AbF6E1aA01804FaCaeB3694FDdd35",
+        value: "0",
+        data: "0x",
+      },
+    };
+
+    const bscResponse = await app.fetch(
+      new Request("http://localhost/api/transactions/security-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bscPayload),
+      }),
+    );
+
+    expect(bscResponse.status).toBe(400);
+    const bscBody = await bscResponse.json();
+    expect(bscBody.ok).toBe(false);
+    expect(bscBody.error).toBe("UNSUPPORTED_CHAIN");
+    expect(bscBody.expectedChainId).toBe(97);
+    expect(bscBody.receivedChainId).toBe(56);
   });
 });

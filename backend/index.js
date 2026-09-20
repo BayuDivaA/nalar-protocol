@@ -49,6 +49,32 @@ var __export = (target, all) => {
 var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
 var __require = /* @__PURE__ */ createRequire(import.meta.url);
 
+// node_modules/openai/internal/auth/x509-transport-state.js
+var require_x509_transport_state = __commonJS(function(exports, module) {
+  if (typeof module !== "undefined" && module !== globalThis.module && typeof exports !== "undefined" && exports === exports) {
+    Object.defineProperty(exports, "__esModule", { value: true });
+    exports.findX509Credential = exports.rememberX509Credential = exports.findX509OAuthError = exports.rememberX509OAuthError = exports.isApprovedX509Client = exports.markApprovedX509Client = exports.isRetryableX509IssuerError = exports.markRetryableX509IssuerError = exports.isTransientX509ConnectionError = exports.markTransientX509ConnectionError = exports.rememberRegisteredX509Transport = exports.findRegisteredX509Transport = undefined;
+    const registeredX509Transports2 = new WeakMap;
+    const transientX509ConnectionErrors2 = new WeakSet;
+    const retryableX509IssuerErrors2 = new WeakSet;
+    const approvedX509Clients2 = new WeakSet;
+    const approvedX509OAuthErrors2 = new WeakMap;
+    const approvedX509Credentials2 = new WeakMap;
+    exports.findRegisteredX509Transport = WeakMap.prototype.get.bind(registeredX509Transports2);
+    exports.rememberRegisteredX509Transport = WeakMap.prototype.set.bind(registeredX509Transports2);
+    exports.markTransientX509ConnectionError = WeakSet.prototype.add.bind(transientX509ConnectionErrors2);
+    exports.isTransientX509ConnectionError = WeakSet.prototype.has.bind(transientX509ConnectionErrors2);
+    exports.markRetryableX509IssuerError = WeakSet.prototype.add.bind(retryableX509IssuerErrors2);
+    exports.isRetryableX509IssuerError = WeakSet.prototype.has.bind(retryableX509IssuerErrors2);
+    exports.markApprovedX509Client = WeakSet.prototype.add.bind(approvedX509Clients2);
+    exports.isApprovedX509Client = WeakSet.prototype.has.bind(approvedX509Clients2);
+    exports.rememberX509OAuthError = WeakMap.prototype.set.bind(approvedX509OAuthErrors2);
+    exports.findX509OAuthError = WeakMap.prototype.get.bind(approvedX509OAuthErrors2);
+    exports.rememberX509Credential = WeakMap.prototype.set.bind(approvedX509Credentials2);
+    exports.findX509Credential = WeakMap.prototype.get.bind(approvedX509Credentials2);
+  }
+});
+
 // node_modules/viem/_esm/accounts/utils/parseAccount.js
 function parseAccount(account) {
   if (typeof account === "string")
@@ -1622,12 +1648,12 @@ var init_sha3 = __esm(() => {
       aexists(this);
       data = toBytes2(data);
       abytes(data);
-      const { blockLen, state } = this;
+      const { blockLen, state: state2 } = this;
       const len = data.length;
       for (let pos = 0;pos < len; ) {
         const take = Math.min(blockLen - this.pos, len - pos);
         for (let i = 0;i < take; i++)
-          state[this.pos++] ^= data[pos++];
+          state2[this.pos++] ^= data[pos++];
         if (this.pos === blockLen)
           this.keccak();
       }
@@ -1637,11 +1663,11 @@ var init_sha3 = __esm(() => {
       if (this.finished)
         return;
       this.finished = true;
-      const { state, suffix, pos, blockLen } = this;
-      state[pos] ^= suffix;
+      const { state: state2, suffix, pos, blockLen } = this;
+      state2[pos] ^= suffix;
       if ((suffix & 128) !== 0 && pos === blockLen - 1)
         this.keccak();
-      state[blockLen - 1] ^= 128;
+      state2[blockLen - 1] ^= 128;
       this.keccak();
     }
     writeInto(out) {
@@ -1829,8 +1855,8 @@ var init_cursor = __esm(() => {
     }
   };
   RecursiveReadLimitExceededError = class RecursiveReadLimitExceededError extends BaseError {
-    constructor({ count, limit }) {
-      super(`Recursive read limit of \`${limit}\` exceeded (recursive read count: \`${count}\`).`, { name: "RecursiveReadLimitExceededError" });
+    constructor({ count, limit: limit2 }) {
+      super(`Recursive read limit of \`${limit2}\` exceeded (recursive read count: \`${count}\`).`, { name: "RecursiveReadLimitExceededError" });
     }
   };
 });
@@ -2092,26 +2118,26 @@ var init_fromBytes = __esm(() => {
 });
 
 // node_modules/viem/_esm/utils/data/concat.js
-function concat(values) {
-  if (typeof values[0] === "string")
-    return concatHex(values);
-  return concatBytes2(values);
+function concat(values2) {
+  if (typeof values2[0] === "string")
+    return concatHex(values2);
+  return concatBytes2(values2);
 }
-function concatBytes2(values) {
+function concatBytes2(values2) {
   let length = 0;
-  for (const arr of values) {
+  for (const arr of values2) {
     length += arr.length;
   }
   const result = new Uint8Array(length);
   let offset = 0;
-  for (const arr of values) {
+  for (const arr of values2) {
     result.set(arr, offset);
     offset += arr.length;
   }
   return result;
 }
-function concatHex(values) {
-  return `0x${values.reduce((acc, x) => acc + x.replace("0x", ""), "")}`;
+function concatHex(values2) {
+  return `0x${values2.reduce((acc, x) => acc + x.replace("0x", ""), "")}`;
 }
 
 // node_modules/viem/_esm/utils/regex.js
@@ -2122,22 +2148,22 @@ var init_regex = __esm(() => {
 });
 
 // node_modules/viem/_esm/utils/abi/encodeAbiParameters.js
-function encodeAbiParameters(params, values) {
-  if (params.length !== values.length)
+function encodeAbiParameters(params, values2) {
+  if (params.length !== values2.length)
     throw new AbiEncodingLengthMismatchError({
       expectedLength: params.length,
-      givenLength: values.length
+      givenLength: values2.length
     });
   const preparedParams = prepareParams({
     params,
-    values
+    values: values2
   });
   return encodeParams(preparedParams);
 }
-function prepareParams({ params, values }) {
+function prepareParams({ params, values: values2 }) {
   const preparedParams = [];
   for (let i = 0;i < params.length; i++) {
-    preparedParams.push(prepareParam({ param: params[i], value: values[i] }));
+    preparedParams.push(prepareParam({ param: params[i], value: values2[i] }));
   }
   return preparedParams;
 }
@@ -2372,7 +2398,7 @@ function decodeAbiParameters(params, data) {
       size: size2(data)
     });
   let consumed = 0;
-  const values = [];
+  const values2 = [];
   for (let i = 0;i < params.length; ++i) {
     const param = params[i];
     if (consumed < bytes.length)
@@ -2381,9 +2407,9 @@ function decodeAbiParameters(params, data) {
       staticPosition: 0
     });
     consumed += consumed_;
-    values.push(data2);
+    values2.push(data2);
   }
-  return values;
+  return values2;
 }
 function decodeParameter(cursor, param, { staticPosition }) {
   const arrayComponents = getArrayComponents(param.type);
@@ -3270,8 +3296,8 @@ function isSolidityType(type) {
 function isSolidityKeyword(name) {
   return name === "address" || name === "bool" || name === "function" || name === "string" || name === "tuple" || bytesRegex2.test(name) || integerRegex2.test(name) || protectedKeywordsRegex.test(name);
 }
-function isValidDataLocation(type, isArray) {
-  return isArray || type === "bytes" || type === "string" || type === "tuple";
+function isValidDataLocation(type, isArray2) {
+  return isArray2 || type === "bytes" || type === "string" || type === "tuple";
 }
 var abiParameterWithoutTupleRegex, abiParameterWithTupleRegex, dynamicIntegerRegex, protectedKeywordsRegex;
 var init_utils2 = __esm(() => {
@@ -3673,11 +3699,11 @@ function decodeFunctionResult(parameters) {
     throw new AbiFunctionNotFoundError(undefined, { docsPath });
   if (!abiItem.outputs)
     throw new AbiFunctionOutputsNotFoundError(abiItem.name, { docsPath });
-  const values = decodeAbiParameters(abiItem.outputs, data);
-  if (values && values.length > 1)
-    return values;
-  if (values && values.length === 1)
-    return values[0];
+  const values2 = decodeAbiParameters(abiItem.outputs, data);
+  if (values2 && values2.length > 1)
+    return values2;
+  if (values2 && values2.length === 1)
+    return values2[0];
   return;
 }
 var docsPath = "/docs/contract/decodeFunctionResult";
@@ -3850,7 +3876,7 @@ var init_decodeErrorResult = __esm(() => {
 });
 
 // node_modules/viem/_esm/utils/stringify.js
-var stringify = (value, replacer, space) => JSON.stringify(value, (key, value_) => {
+var stringify2 = (value, replacer, space) => JSON.stringify(value, (key, value_) => {
   const value2 = typeof value_ === "bigint" ? value_.toString() : value_;
   return typeof replacer === "function" ? replacer(key, value2) : value2;
 }, space);
@@ -3863,7 +3889,7 @@ function formatAbiItemWithArgs({ abiItem, args, includeFunctionName = true, incl
     return;
   if (!abiItem.inputs)
     return;
-  return `${includeFunctionName ? abiItem.name : ""}(${abiItem.inputs.map((input2, i) => `${includeName && input2.name ? `${input2.name}: ` : ""}${typeof args[i] === "object" ? stringify(args[i]) : args[i]}`).join(", ")})`;
+  return `${includeFunctionName ? abiItem.name : ""}(${abiItem.inputs.map((input2, i) => `${includeName && input2.name ? `${input2.name}: ` : ""}${typeof args[i] === "object" ? stringify2(args[i]) : args[i]}`).join(", ")})`;
 }
 var init_formatAbiItemWithArgs = () => {};
 
@@ -3998,27 +4024,27 @@ function prettyStateMapping(stateMapping) {
   }, "");
 }
 function prettyStateOverride(stateOverride) {
-  return stateOverride.reduce((pretty, { address, ...state }) => {
+  return stateOverride.reduce((pretty, { address, ...state2 }) => {
     let val = `${pretty}    ${address}:
 `;
-    if (state.nonce)
-      val += `      nonce: ${state.nonce}
+    if (state2.nonce)
+      val += `      nonce: ${state2.nonce}
 `;
-    if (state.balance)
-      val += `      balance: ${state.balance}
+    if (state2.balance)
+      val += `      balance: ${state2.balance}
 `;
-    if (state.code)
-      val += `      code: ${state.code}
+    if (state2.code)
+      val += `      code: ${state2.code}
 `;
-    if (state.state) {
+    if (state2.state) {
       val += `      state:
 `;
-      val += prettyStateMapping(state.state);
+      val += prettyStateMapping(state2.state);
     }
-    if (state.stateDiff) {
+    if (state2.stateDiff) {
       val += `      stateDiff:
 `;
-      val += prettyStateMapping(state.stateDiff);
+      val += prettyStateMapping(state2.stateDiff);
     }
     return val;
   }, `  State Override:
@@ -4181,12 +4207,12 @@ function getAbortError(signal) {
     return signal.reason;
   if (typeof DOMException === "function")
     return new DOMException("This operation was aborted", "AbortError");
-  const error61 = new Error("This operation was aborted");
-  error61.name = "AbortError";
-  return error61;
+  const error62 = new Error("This operation was aborted");
+  error62.name = "AbortError";
+  return error62;
 }
-function isAbortError(error61) {
-  return typeof error61 === "object" && error61 !== null && "name" in error61 && error61.name === "AbortError";
+function isAbortError2(error62) {
+  return typeof error62 === "object" && error62 !== null && "name" in error62 && error62.name === "AbortError";
 }
 var getContractAddress = (address) => address, getUrl = (url2) => {
   try {
@@ -4329,14 +4355,14 @@ ${prettyStateOverride(stateOverride)}`;
     }
   };
   ContractFunctionRevertedError = class ContractFunctionRevertedError extends BaseError {
-    constructor({ abi, data, functionName, message, cause: error61 }) {
+    constructor({ abi, data, functionName, message, cause: error62 }) {
       let cause;
       let decodedData;
       let metaMessages;
       let reason;
       if (data && data !== "0x") {
         try {
-          decodedData = decodeErrorResult({ abi, data, cause: error61 });
+          decodedData = decodeErrorResult({ abi, data, cause: error62 });
           const { abiItem, errorName, args: errorArgs } = decodedData;
           if (errorName === "Error") {
             reason = errorArgs[0];
@@ -4375,7 +4401,7 @@ ${prettyStateOverride(stateOverride)}`;
         reason || signature
       ].join(`
 `) : `The contract function "${functionName}" reverted.`, {
-        cause: cause ?? error61,
+        cause: cause ?? error62,
         metaMessages,
         name: "ContractFunctionRevertedError"
       });
@@ -4522,7 +4548,7 @@ function encodeFunctionResult(parameters) {
     throw new AbiFunctionNotFoundError(undefined, { docsPath: docsPath4 });
   if (!abiItem.outputs)
     throw new AbiFunctionOutputsNotFoundError(abiItem.name, { docsPath: docsPath4 });
-  const values = (() => {
+  const values2 = (() => {
     if (abiItem.outputs.length === 0)
       return [];
     if (abiItem.outputs.length === 1)
@@ -4531,7 +4557,7 @@ function encodeFunctionResult(parameters) {
       return result;
     throw new InvalidArrayError(result);
   })();
-  return encodeAbiParameters(abiItem.outputs, values);
+  return encodeAbiParameters(abiItem.outputs, values2);
 }
 var docsPath4 = "/docs/contract/encodeFunctionResult";
 var init_encodeFunctionResult = __esm(() => {
@@ -4546,9 +4572,9 @@ async function localBatchGatewayRequest(parameters) {
   const { args: [queries] } = decodeFunctionData({ abi: batchGatewayAbi, data });
   const failures = [];
   const responses = [];
-  await Promise.all(queries.map(async (query, i) => {
+  await Promise.all(queries.map(async (query2, i) => {
     try {
-      responses[i] = query.urls.includes(localBatchGatewayUrl) ? await localBatchGatewayRequest({ data: query.data, ccipRequest }) : await ccipRequest(query);
+      responses[i] = query2.urls.includes(localBatchGatewayUrl) ? await localBatchGatewayRequest({ data: query2.data, ccipRequest }) : await ccipRequest(query2);
       failures[i] = false;
     } catch (err) {
       failures[i] = true;
@@ -4561,17 +4587,17 @@ async function localBatchGatewayRequest(parameters) {
     result: [failures, responses]
   });
 }
-function encodeError(error61) {
-  if (error61.name === "HttpRequestError" && error61.status)
+function encodeError(error62) {
+  if (error62.name === "HttpRequestError" && error62.status)
     return encodeErrorResult({
       abi: batchGatewayAbi,
       errorName: "HttpError",
-      args: [error61.status, error61.shortMessage]
+      args: [error62.status, error62.shortMessage]
     });
   return encodeErrorResult({
     abi: [solidityError],
     errorName: "Error",
-    args: ["shortMessage" in error61 ? error61.shortMessage : error61.message]
+    args: ["shortMessage" in error62 ? error62.shortMessage : error62.message]
   });
 }
 var localBatchGatewayUrl = "x-batch-gateway:true";
@@ -4595,7 +4621,7 @@ var init_request = __esm(() => {
         metaMessages: [
           status && `Status: ${status}`,
           `URL: ${getUrl(url2)}`,
-          body && `Request body: ${stringify(body)}`
+          body && `Request body: ${stringify2(body)}`
         ].filter(Boolean),
         name: "HttpRequestError"
       });
@@ -4652,11 +4678,11 @@ var init_request = __esm(() => {
     }
   };
   RpcRequestError = class RpcRequestError extends BaseError {
-    constructor({ body, error: error61, url: url2 }) {
+    constructor({ body, error: error62, url: url2 }) {
       super("RPC Request failed.", {
-        cause: error61,
-        details: error61.message,
-        metaMessages: [`URL: ${getUrl(url2)}`, `Request body: ${stringify(body)}`],
+        cause: error62,
+        details: error62.message,
+        metaMessages: [`URL: ${getUrl(url2)}`, `Request body: ${stringify2(body)}`],
         name: "RpcRequestError"
       });
       Object.defineProperty(this, "code", {
@@ -4677,8 +4703,8 @@ var init_request = __esm(() => {
         writable: true,
         value: undefined
       });
-      this.code = error61.code;
-      this.data = error61.data;
+      this.code = error62.code;
+      this.data = error62.data;
       this.url = url2;
     }
   };
@@ -4686,7 +4712,7 @@ var init_request = __esm(() => {
     constructor({ body, url: url2 }) {
       super("The request took too long to respond.", {
         details: "The request timed out.",
-        metaMessages: [`URL: ${getUrl(url2)}`, `Request body: ${stringify(body)}`],
+        metaMessages: [`URL: ${getUrl(url2)}`, `Request body: ${stringify2(body)}`],
         name: "TimeoutError"
       });
       Object.defineProperty(this, "url", {
@@ -5199,14 +5225,14 @@ function hexToBytes2(hex3) {
   if (hl % 2)
     throw new Error("hex string expected, got unpadded hex of length " + hl);
   const array2 = new Uint8Array(al);
-  for (let ai = 0, hi = 0;ai < al; ai++, hi += 2) {
+  for (let ai2 = 0, hi = 0;ai2 < al; ai2++, hi += 2) {
     const n1 = asciiToBase16(hex3.charCodeAt(hi));
     const n2 = asciiToBase16(hex3.charCodeAt(hi + 1));
     if (n1 === undefined || n2 === undefined) {
       const char = hex3[hi] + hex3[hi + 1];
       throw new Error('hex string expected, got non-hex character "' + char + '" at index ' + hi);
     }
-    array2[ai] = n1 * 16 + n2;
+    array2[ai2] = n1 * 16 + n2;
   }
   return array2;
 }
@@ -5652,7 +5678,7 @@ var init_hex = __esm(() => {
 });
 
 // node_modules/ox/_esm/core/Json.js
-function stringify2(value, replacer, space) {
+function stringify3(value, replacer, space) {
   return JSON.stringify(value, (key, value2) => {
     if (typeof replacer === "function")
       return replacer(key, value2);
@@ -5804,7 +5830,7 @@ var init_Bytes = __esm(() => {
   };
   InvalidBytesTypeError = class InvalidBytesTypeError extends BaseError3 {
     constructor(value) {
-      super(`Value \`${typeof value === "object" ? stringify2(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`, {
+      super(`Value \`${typeof value === "object" ? stringify3(value) : value}\` of type \`${typeof value}\` is an invalid Bytes value.`, {
         metaMessages: ["Bytes values must be of type `Bytes`."]
       });
       Object.defineProperty(this, "name", {
@@ -5864,8 +5890,8 @@ function assert3(value, options = {}) {
   if (!value.startsWith("0x"))
     throw new InvalidHexValueError(value);
 }
-function concat2(...values) {
-  return `0x${values.reduce((acc, x) => acc + x.replace("0x", ""), "")}`;
+function concat2(...values2) {
+  return `0x${values2.reduce((acc, x) => acc + x.replace("0x", ""), "")}`;
 }
 function from3(value) {
   if (value instanceof Uint8Array)
@@ -5993,7 +6019,7 @@ var init_Hex = __esm(() => {
   };
   InvalidHexTypeError = class InvalidHexTypeError extends BaseError3 {
     constructor(value) {
-      super(`Value \`${typeof value === "object" ? stringify2(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`, {
+      super(`Value \`${typeof value === "object" ? stringify3(value) : value}\` of type \`${typeof value}\` is an invalid hex type.`, {
         metaMessages: ['Hex types must be represented as `"0x${string}"`.']
       });
       Object.defineProperty(this, "name", {
@@ -6585,7 +6611,7 @@ function serializeStateMapping(stateMapping) {
   }, {});
 }
 function serializeAccountStateOverride(parameters) {
-  const { balance, nonce, state, stateDiff, code } = parameters;
+  const { balance, nonce, state: state2, stateDiff, code } = parameters;
   const rpcAccountStateOverride = {};
   if (code !== undefined)
     rpcAccountStateOverride.code = code;
@@ -6593,8 +6619,8 @@ function serializeAccountStateOverride(parameters) {
     rpcAccountStateOverride.balance = numberToHex(balance);
   if (nonce !== undefined)
     rpcAccountStateOverride.nonce = numberToHex(nonce);
-  if (state !== undefined)
-    rpcAccountStateOverride.state = serializeStateMapping(state);
+  if (state2 !== undefined)
+    rpcAccountStateOverride.state = serializeStateMapping(state2);
   if (stateDiff !== undefined) {
     if (rpcAccountStateOverride.state)
       throw new StateAssignmentConflictError;
@@ -6774,7 +6800,7 @@ var init_ccip = __esm(() => {
       super("Offchain gateway response is malformed. Response data must be a hex value.", {
         metaMessages: [
           `Gateway URL: ${getUrl(url2)}`,
-          `Response: ${stringify(result)}`
+          `Response: ${stringify2(result)}`
         ],
         name: "OffchainLookupResponseMalformedError"
       });
@@ -6830,7 +6856,7 @@ async function offchainLookup(client, { blockNumber, blockTag, data, requestOpti
   } catch (err) {
     if (requestOptions?.signal?.aborted)
       throw getAbortError(requestOptions.signal);
-    if (isAbortError(err))
+    if (isAbortError2(err))
       throw err;
     throw new OffchainLookupError({
       callbackSelector,
@@ -6843,7 +6869,7 @@ async function offchainLookup(client, { blockNumber, blockTag, data, requestOpti
   }
 }
 async function ccipRequest({ data, requestOptions, sender, urls }) {
-  let error61 = new Error("An unknown error occurred.");
+  let error62 = new Error("An unknown error occurred.");
   for (let i = 0;i < urls.length; i++) {
     if (requestOptions?.signal?.aborted)
       throw getAbortError(requestOptions.signal);
@@ -6865,9 +6891,9 @@ async function ccipRequest({ data, requestOptions, sender, urls }) {
         result = await response.text();
       }
       if (!response.ok) {
-        error61 = new HttpRequestError({
+        error62 = new HttpRequestError({
           body,
-          details: result?.error ? stringify(result.error) : response.statusText,
+          details: result?.error ? stringify2(result.error) : response.statusText,
           headers: response.headers,
           status: response.status,
           url: url2
@@ -6875,7 +6901,7 @@ async function ccipRequest({ data, requestOptions, sender, urls }) {
         continue;
       }
       if (!isHex(result)) {
-        error61 = new OffchainLookupResponseMalformedError({
+        error62 = new OffchainLookupResponseMalformedError({
           result,
           url: url2
         });
@@ -6885,16 +6911,16 @@ async function ccipRequest({ data, requestOptions, sender, urls }) {
     } catch (err) {
       if (requestOptions?.signal?.aborted)
         throw getAbortError(requestOptions.signal);
-      if (isAbortError(err))
+      if (isAbortError2(err))
         throw err;
-      error61 = new HttpRequestError({
+      error62 = new HttpRequestError({
         body,
         details: err.message,
         url: url2
       });
     }
   }
-  throw error61;
+  throw error62;
 }
 var offchainLookupSignature = "0x556f1830", offchainLookupAbiItem;
 var init_ccip2 = __esm(() => {
@@ -7033,7 +7059,7 @@ async function call(client, args) {
   } catch (err) {
     if (requestOptions?.signal?.aborted)
       throw getAbortError(requestOptions.signal);
-    if (isAbortError(err))
+    if (isAbortError2(err))
       throw err;
     const data2 = getRevertErrorData(err);
     const { offchainLookup: offchainLookup2, offchainLookupSignature: offchainLookupSignature2 } = await Promise.resolve().then(() => (init_ccip2(), exports_ccip));
@@ -7168,8 +7194,8 @@ function toDeploylessCallViaFactoryData(parameters) {
 function getRevertErrorData(err) {
   if (!(err instanceof BaseError))
     return;
-  const error61 = err.walk();
-  return typeof error61?.data === "object" ? error61.data?.data : error61.data;
+  const error62 = err.walk();
+  return typeof error62?.data === "object" ? error62.data?.data : error62.data;
 }
 var requestOptionsId = 0, requestOptionsIds;
 var init_call = __esm(() => {
@@ -7276,11 +7302,11 @@ var init__md = __esm(() => {
       if (len % 4)
         throw new Error("_sha2: outputLen should be aligned to 32bit");
       const outLen = len / 4;
-      const state = this.get();
-      if (outLen > state.length)
+      const state2 = this.get();
+      if (outLen > state2.length)
         throw new Error("_sha2: outputLen bigger than state");
       for (let i = 0;i < outLen; i++)
-        oview.setUint32(4 * i, state[i], isLE2);
+        oview.setUint32(4 * i, state2[i], isLE2);
     }
     digest() {
       const { buffer: buffer2, outputLen } = this;
@@ -8098,7 +8124,7 @@ function weierstrassPoints(opts) {
     let num;
     try {
       num = typeof key === "bigint" ? key : bytesToNumberBE(ensureBytes("private key", key, nByteLength));
-    } catch (error61) {
+    } catch (error62) {
       throw new Error("invalid private key, expected hex or " + nByteLength + " bytes, got " + typeof key);
     }
     if (wrapPrivateKey)
@@ -8548,7 +8574,7 @@ function weierstrass(curveDef) {
       try {
         normPrivateKeyToScalar(privateKey);
         return true;
-      } catch (error61) {
+      } catch (error62) {
         return false;
       }
     },
@@ -8667,13 +8693,13 @@ function weierstrass(curveDef) {
     if (format2 !== undefined && format2 !== "compact" && format2 !== "der")
       throw new Error("format must be compact or der");
     const isHex2 = typeof sg === "string" || isBytes2(sg);
-    const isObj = !isHex2 && !format2 && typeof sg === "object" && sg !== null && typeof sg.r === "bigint" && typeof sg.s === "bigint";
-    if (!isHex2 && !isObj)
+    const isObj2 = !isHex2 && !format2 && typeof sg === "object" && sg !== null && typeof sg.r === "bigint" && typeof sg.s === "bigint";
+    if (!isHex2 && !isObj2)
       throw new Error("invalid signature, expected Uint8Array, hex string or Signature instance");
     let _sig = undefined;
     let P;
     try {
-      if (isObj)
+      if (isObj2)
         _sig = new Signature(sg.r, sg.s);
       if (isHex2) {
         try {
@@ -8687,7 +8713,7 @@ function weierstrass(curveDef) {
           _sig = Signature.fromCompact(sg);
       }
       P = Point.fromHex(publicKey);
-    } catch (error61) {
+    } catch (error62) {
       return false;
     }
     if (!_sig)
@@ -9054,7 +9080,7 @@ function isogenyMap(field, map2) {
     return { x, y };
   };
 }
-function createHasher2(Point, mapToCurve, defaults) {
+function createHasher2(Point, mapToCurve, defaults2) {
   if (typeof mapToCurve !== "function")
     throw new Error("mapToCurve() must be defined");
   function map2(num) {
@@ -9068,15 +9094,15 @@ function createHasher2(Point, mapToCurve, defaults) {
     return P;
   }
   return {
-    defaults,
+    defaults: defaults2,
     hashToCurve(msg, options) {
-      const u = hash_to_field(msg, 2, { ...defaults, DST: defaults.DST, ...options });
+      const u = hash_to_field(msg, 2, { ...defaults2, DST: defaults2.DST, ...options });
       const u0 = map2(u[0]);
       const u1 = map2(u[1]);
       return clear(u0.add(u1));
     },
     encodeToCurve(msg, options) {
-      const u = hash_to_field(msg, 1, { ...defaults, DST: defaults.encodeDST, ...options });
+      const u = hash_to_field(msg, 1, { ...defaults2, DST: defaults2.encodeDST, ...options });
       return clear(map2(u[0]));
     },
     mapToCurve(scalars) {
@@ -9194,7 +9220,7 @@ function schnorrVerify(signature, message, publicKey) {
     if (!R || !R.hasEvenY() || R.toAffine().x !== r)
       return false;
     return true;
-  } catch (error61) {
+  } catch (error62) {
     return false;
   }
 }
@@ -9310,32 +9336,6 @@ var init_secp256k1 = __esm(() => {
   }))();
   hashToCurve = /* @__PURE__ */ (() => secp256k1_hasher.hashToCurve)();
   encodeToCurve = /* @__PURE__ */ (() => secp256k1_hasher.encodeToCurve)();
-});
-
-// node_modules/openai/internal/auth/x509-transport-state.js
-var require_x509_transport_state = __commonJS(function(exports, module) {
-  if (typeof module !== "undefined" && module !== globalThis.module && typeof exports !== "undefined" && exports === exports) {
-    Object.defineProperty(exports, "__esModule", { value: true });
-    exports.findX509Credential = exports.rememberX509Credential = exports.findX509OAuthError = exports.rememberX509OAuthError = exports.isApprovedX509Client = exports.markApprovedX509Client = exports.isRetryableX509IssuerError = exports.markRetryableX509IssuerError = exports.isTransientX509ConnectionError = exports.markTransientX509ConnectionError = exports.rememberRegisteredX509Transport = exports.findRegisteredX509Transport = undefined;
-    const registeredX509Transports2 = new WeakMap;
-    const transientX509ConnectionErrors2 = new WeakSet;
-    const retryableX509IssuerErrors2 = new WeakSet;
-    const approvedX509Clients2 = new WeakSet;
-    const approvedX509OAuthErrors2 = new WeakMap;
-    const approvedX509Credentials2 = new WeakMap;
-    exports.findRegisteredX509Transport = WeakMap.prototype.get.bind(registeredX509Transports2);
-    exports.rememberRegisteredX509Transport = WeakMap.prototype.set.bind(registeredX509Transports2);
-    exports.markTransientX509ConnectionError = WeakSet.prototype.add.bind(transientX509ConnectionErrors2);
-    exports.isTransientX509ConnectionError = WeakSet.prototype.has.bind(transientX509ConnectionErrors2);
-    exports.markRetryableX509IssuerError = WeakSet.prototype.add.bind(retryableX509IssuerErrors2);
-    exports.isRetryableX509IssuerError = WeakSet.prototype.has.bind(retryableX509IssuerErrors2);
-    exports.markApprovedX509Client = WeakSet.prototype.add.bind(approvedX509Clients2);
-    exports.isApprovedX509Client = WeakSet.prototype.has.bind(approvedX509Clients2);
-    exports.rememberX509OAuthError = WeakMap.prototype.set.bind(approvedX509OAuthErrors2);
-    exports.findX509OAuthError = WeakMap.prototype.get.bind(approvedX509OAuthErrors2);
-    exports.rememberX509Credential = WeakMap.prototype.set.bind(approvedX509Credentials2);
-    exports.findX509Credential = WeakMap.prototype.get.bind(approvedX509Credentials2);
-  }
 });
 
 // node_modules/isexe/windows.js
@@ -29928,7 +29928,7 @@ var envSchema = exports_external.object({
   TXSENTRY_DEMO_NFT: exports_external.string().regex(/^0x[a-fA-F0-9]{40}$/, "TXSENTRY_DEMO_NFT must be a 20-byte hex address").default("0x0000000000000000000000000000000000000000"),
   AI_PROVIDER: exports_external.enum(["gemini", "openrouter", "openai", "heuristics"]).default("heuristics"),
   AI_API_KEY: exports_external.string().optional().default(""),
-  AI_MODEL: exports_external.string().optional().default("gemini-1.5-flash"),
+  AI_MODEL: exports_external.string().optional().default("gemini-3.5-flash-lite"),
   BNB_INVESTIGATOR_ENABLED: exports_external.string().optional().default("false").transform((val) => val === "true"),
   BNB_MCP_TRANSPORT: exports_external.enum(["stdio", "sse", "http"]).default(process.env.VERCEL === "1" ? "sse" : "stdio"),
   BNB_MCP_URL: exports_external.string().url("BNB_MCP_URL must be a valid URL").optional(),
@@ -29981,8074 +29981,13 @@ var env = parsed.success ? parsed.data : {
   TXSENTRY_DEMO_NFT: process.env.TXSENTRY_DEMO_NFT || "0x0000000000000000000000000000000000000000",
   AI_PROVIDER: process.env.AI_PROVIDER || "heuristics",
   AI_API_KEY: process.env.AI_API_KEY || "",
-  AI_MODEL: process.env.AI_MODEL || "gemini-1.5-flash",
+  AI_MODEL: process.env.AI_MODEL || "gemini-3.5-flash-lite",
   BNB_INVESTIGATOR_ENABLED: process.env.BNB_INVESTIGATOR_ENABLED === "true",
   BNB_MCP_TRANSPORT: process.env.BNB_MCP_TRANSPORT || (process.env.VERCEL === "1" ? "sse" : "stdio"),
   BNB_MCP_URL: process.env.BNB_MCP_URL,
   MCP_AUTH_TOKEN: process.env.MCP_AUTH_TOKEN ?? process.env.BNB_MCP_AUTH_TOKEN ?? process.env.BNB_MCP_SHARED_SECRET,
   FRONTEND_ORIGIN: process.env.FRONTEND_ORIGIN
 };
-// node_modules/viem/_esm/utils/uid.js
-var size = 256;
-var index = size;
-var buffer;
-function uid(length = 11) {
-  if (!buffer || index + length > size * 2) {
-    buffer = "";
-    index = 0;
-    for (let i = 0;i < size; i++) {
-      buffer += (256 + Math.random() * 256 | 0).toString(16).substring(1);
-    }
-  }
-  return buffer.substring(index, index++ + length);
-}
-
-// node_modules/viem/_esm/clients/createClient.js
-function createClient(parameters) {
-  const { batch, chain, ccipRead, dataSuffix, key = "base", name = "Base Client", tokens, type = "base" } = parameters;
-  const experimental_blockTag = parameters.experimental_blockTag ?? (typeof chain?.experimental_preconfirmationTime === "number" ? "pending" : undefined);
-  const blockTime = chain?.blockTime ?? 12000;
-  const defaultPollingInterval = Math.min(Math.max(Math.floor(blockTime / 2), 500), 4000);
-  const pollingInterval = parameters.pollingInterval ?? defaultPollingInterval;
-  const cacheTime = parameters.cacheTime ?? pollingInterval;
-  const account = parameters.account ? parseAccount(parameters.account) : undefined;
-  const { config: config2, request, value } = parameters.transport({
-    account,
-    chain,
-    pollingInterval
-  });
-  const transport = { ...config2, ...value };
-  const client = {
-    account,
-    batch,
-    cacheTime,
-    ccipRead,
-    chain,
-    dataSuffix,
-    key,
-    name,
-    pollingInterval,
-    request,
-    tokens,
-    transport,
-    type,
-    uid: uid(),
-    ...experimental_blockTag ? { experimental_blockTag } : {}
-  };
-  function extend2(base) {
-    return (extendFn) => {
-      const extended = extendFn(base);
-      for (const key2 in client)
-        delete extended[key2];
-      const combined = { ...base, ...extended };
-      for (const key2 in extended) {
-        const a = base[key2];
-        const b = extended[key2];
-        if (isPlainObject2(a) && isPlainObject2(b))
-          combined[key2] = { ...a, ...b };
-      }
-      return Object.assign(combined, { extend: extend2(combined) });
-    };
-  }
-  return Object.assign(client, { extend: extend2(client) });
-}
-function isPlainObject2(value) {
-  if (typeof value !== "object" || value === null)
-    return false;
-  const prototype = Object.getPrototypeOf(value);
-  return prototype === Object.prototype || prototype === null;
-}
-function bindActionDecorators(client, action) {
-  const wrapped = (parameters = {}) => action(client, parameters);
-  for (const key of [
-    "call",
-    "calls",
-    "callWithPeriod",
-    "estimateGas",
-    "prepare",
-    "prepareRecipient",
-    "predict",
-    "simulate"
-  ])
-    if (Object.hasOwn(action, key)) {
-      const helper = action[key];
-      wrapped[key] = (args = {}) => {
-        if (helper.length === 1)
-          return helper(args);
-        return helper(client, args);
-      };
-    }
-  for (const key of ["extractEvent", "extractEvents"])
-    if (Object.hasOwn(action, key))
-      wrapped[key] = action[key];
-  return wrapped;
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsAddress.js
-init_abis();
-init_decodeFunctionResult();
-init_encodeFunctionData();
-init_getAddress();
-init_getChainContractAddress();
-init_size();
-init_toHex();
-
-// node_modules/viem/_esm/utils/ens/errors.js
-init_base();
-init_contract();
-function isNullUniversalResolverError(err) {
-  if (!(err instanceof BaseError))
-    return false;
-  const cause = err.walk((e) => e instanceof ContractFunctionRevertedError);
-  if (!(cause instanceof ContractFunctionRevertedError))
-    return false;
-  if (cause.data?.errorName === "HttpError")
-    return true;
-  if (cause.data?.errorName === "ResolverError")
-    return true;
-  if (cause.data?.errorName === "ResolverNotContract")
-    return true;
-  if (cause.data?.errorName === "ResolverNotFound")
-    return true;
-  if (cause.data?.errorName === "ReverseAddressMismatch")
-    return true;
-  if (cause.data?.errorName === "UnsupportedResolverProfile")
-    return true;
-  return false;
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsAddress.js
-init_localBatchGatewayRequest();
-
-// node_modules/viem/_esm/utils/ens/namehash.js
-init_toBytes();
-init_toHex();
-init_keccak256();
-
-// node_modules/viem/_esm/utils/ens/encodedLabelToLabelhash.js
-function encodedLabelToLabelhash(label) {
-  if (label.length !== 66)
-    return null;
-  if (label.indexOf("[") !== 0)
-    return null;
-  if (label.indexOf("]") !== 65)
-    return null;
-  const hash3 = `0x${label.slice(1, 65)}`;
-  if (!isHex(hash3))
-    return null;
-  return hash3;
-}
-
-// node_modules/viem/_esm/utils/ens/namehash.js
-function namehash(name) {
-  let result = new Uint8Array(32).fill(0);
-  if (!name)
-    return bytesToHex(result);
-  const labels = name.split(".");
-  for (let i = labels.length - 1;i >= 0; i -= 1) {
-    const hashFromEncodedLabel = encodedLabelToLabelhash(labels[i]);
-    const hashed = hashFromEncodedLabel ? toBytes(hashFromEncodedLabel) : keccak256(stringToBytes(labels[i]), "bytes");
-    result = keccak256(concat([result, hashed]), "bytes");
-  }
-  return bytesToHex(result);
-}
-
-// node_modules/viem/_esm/utils/ens/packetToBytes.js
-init_toBytes();
-
-// node_modules/viem/_esm/utils/ens/encodeLabelhash.js
-function encodeLabelhash(hash3) {
-  return `[${hash3.slice(2)}]`;
-}
-
-// node_modules/viem/_esm/utils/ens/labelhash.js
-init_toBytes();
-init_toHex();
-init_keccak256();
-function labelhash(label) {
-  const result = new Uint8Array(32).fill(0);
-  if (!label)
-    return bytesToHex(result);
-  return encodedLabelToLabelhash(label) || keccak256(stringToBytes(label));
-}
-
-// node_modules/viem/_esm/utils/ens/packetToBytes.js
-function packetToBytes(packet) {
-  const value = packet.replace(/^\.|\.$/gm, "");
-  if (value.length === 0)
-    return new Uint8Array(1);
-  const bytes = new Uint8Array(stringToBytes(value).byteLength + 2);
-  let offset = 0;
-  const list = value.split(".");
-  for (let i = 0;i < list.length; i++) {
-    let encoded = stringToBytes(list[i]);
-    if (encoded.byteLength > 255)
-      encoded = stringToBytes(encodeLabelhash(labelhash(list[i])));
-    bytes[offset] = encoded.length;
-    bytes.set(encoded, offset + 1);
-    offset += encoded.length + 1;
-  }
-  if (bytes.byteLength !== offset + 1)
-    return bytes.slice(0, offset + 1);
-  return bytes;
-}
-
-// node_modules/viem/_esm/utils/getAction.js
-function getAction(client, actionFn, name) {
-  const action_implicit = client[actionFn.name];
-  if (typeof action_implicit === "function")
-    return action_implicit;
-  const action_explicit = client[name];
-  if (typeof action_explicit === "function")
-    return action_explicit;
-  return (params) => actionFn(client, params);
-}
-
-// node_modules/viem/_esm/actions/public/readContract.js
-init_decodeFunctionResult();
-init_encodeFunctionData();
-
-// node_modules/viem/_esm/utils/errors/getContractError.js
-init_abi();
-init_base();
-init_contract();
-init_request();
-init_rpc();
-var EXECUTION_REVERTED_ERROR_CODE = 3;
-function getContractError(err, { abi, address, args, docsPath: docsPath5, functionName, sender }) {
-  const error61 = err instanceof RawContractError ? err : err instanceof BaseError ? err.walk((err2) => ("data" in err2)) || err.walk() : {};
-  const { code, data, details, message, shortMessage } = error61;
-  const cause = (() => {
-    if (err instanceof AbiDecodingZeroDataError)
-      return new ContractFunctionZeroDataError({ functionName, cause: err });
-    if ([EXECUTION_REVERTED_ERROR_CODE, InternalRpcError.code].includes(code) && (data || details || message || shortMessage) || code === InvalidInputRpcError.code && details === "execution reverted" && data) {
-      return new ContractFunctionRevertedError({
-        abi,
-        data: typeof data === "object" ? data.data : data,
-        functionName,
-        message: error61 instanceof RpcRequestError ? details : shortMessage ?? message,
-        cause: err
-      });
-    }
-    return err;
-  })();
-  return new ContractFunctionExecutionError(cause, {
-    abi,
-    args,
-    contractAddress: address,
-    docsPath: docsPath5,
-    functionName,
-    sender
-  });
-}
-
-// node_modules/viem/_esm/actions/public/readContract.js
-init_call();
-async function readContract(client, parameters) {
-  const { abi, address, args, functionName, ...rest } = parameters;
-  const calldata = encodeFunctionData({
-    abi,
-    args,
-    functionName
-  });
-  try {
-    const { data } = await getAction(client, call, "call")({
-      ...rest,
-      data: calldata,
-      to: address
-    });
-    return decodeFunctionResult({
-      abi,
-      args,
-      functionName,
-      data: data || "0x"
-    });
-  } catch (error61) {
-    throw getContractError(error61, {
-      abi,
-      address,
-      args,
-      docsPath: "/docs/contract/readContract",
-      functionName
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsAddress.js
-async function getEnsAddress(client, parameters) {
-  const { blockNumber, blockTag, coinType, name, gatewayUrls, strict } = parameters;
-  const { chain } = client;
-  const universalResolverAddress = (() => {
-    if (parameters.universalResolverAddress)
-      return parameters.universalResolverAddress;
-    if (!chain)
-      throw new Error("client chain not configured. universalResolverAddress is required.");
-    return getChainContractAddress({
-      blockNumber,
-      chain,
-      contract: "ensUniversalResolver"
-    });
-  })();
-  const tlds = chain?.ensTlds;
-  if (tlds && !tlds.some((tld) => name.endsWith(tld)))
-    return null;
-  const args = (() => {
-    if (coinType != null)
-      return [namehash(name), BigInt(coinType)];
-    return [namehash(name)];
-  })();
-  try {
-    const functionData = encodeFunctionData({
-      abi: addressResolverAbi,
-      functionName: "addr",
-      args
-    });
-    const readContractParameters = {
-      address: universalResolverAddress,
-      abi: universalResolverResolveAbi,
-      functionName: "resolveWithGateways",
-      args: [
-        toHex(packetToBytes(name)),
-        functionData,
-        gatewayUrls ?? [localBatchGatewayUrl]
-      ],
-      blockNumber,
-      blockTag
-    };
-    const readContractAction = getAction(client, readContract, "readContract");
-    const res = await readContractAction(readContractParameters);
-    if (res[0] === "0x")
-      return null;
-    const address = decodeAddress2({ coinType, data: res[0], args });
-    if (address === "0x")
-      return null;
-    if (trim(address) === "0x00")
-      return null;
-    return address;
-  } catch (err) {
-    if (strict)
-      throw err;
-    if (isNullUniversalResolverError(err))
-      return null;
-    throw err;
-  }
-}
-function decodeAddress2({ coinType, data, args }) {
-  try {
-    return decodeFunctionResult({
-      abi: addressResolverAbi,
-      args,
-      functionName: "addr",
-      data
-    });
-  } catch (err) {
-    if (coinType == null)
-      throw err;
-    const address = trim(data);
-    if (size2(address) === 20)
-      return getAddress(address);
-    throw err;
-  }
-}
-
-// node_modules/viem/_esm/errors/ens.js
-init_base();
-
-class EnsAvatarInvalidMetadataError extends BaseError {
-  constructor({ data }) {
-    super("Unable to extract image from metadata. The metadata may be malformed or invalid.", {
-      metaMessages: [
-        "- Metadata must be a JSON object with at least an `image`, `image_url` or `image_data` property.",
-        "",
-        `Provided data: ${JSON.stringify(data)}`
-      ],
-      name: "EnsAvatarInvalidMetadataError"
-    });
-  }
-}
-
-class EnsAvatarInvalidNftUriError extends BaseError {
-  constructor({ reason }) {
-    super(`ENS NFT avatar URI is invalid. ${reason}`, {
-      name: "EnsAvatarInvalidNftUriError"
-    });
-  }
-}
-
-class EnsAvatarUriResolutionError extends BaseError {
-  constructor({ uri }) {
-    super(`Unable to resolve ENS avatar URI "${uri}". The URI may be malformed, invalid, or does not respond with a valid image.`, { name: "EnsAvatarUriResolutionError" });
-  }
-}
-
-class EnsAvatarUnsupportedNamespaceError extends BaseError {
-  constructor({ namespace }) {
-    super(`ENS NFT avatar namespace "${namespace}" is not supported. Must be "erc721" or "erc1155".`, { name: "EnsAvatarUnsupportedNamespaceError" });
-  }
-}
-
-// node_modules/viem/_esm/utils/ens/avatar/utils.js
-var networkRegex = /(?<protocol>https?:\/\/[^/]*|ipfs:\/|ipns:\/|ar:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w\-.]+)(?<subtarget>\/.*)?/;
-var ipfsHashRegex = /^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,})(\/(?<target>[\w\-.]+))?(?<subtarget>\/.*)?$/;
-var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
-var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
-async function isImageUri(uri) {
-  try {
-    const res = await fetch(uri, { method: "HEAD" });
-    if (res.status === 200) {
-      const contentType = res.headers.get("content-type");
-      return contentType?.startsWith("image/");
-    }
-    return false;
-  } catch (error61) {
-    if (typeof error61 === "object" && typeof error61.response !== "undefined") {
-      return false;
-    }
-    if (!Object.hasOwn(globalThis, "Image"))
-      return false;
-    return new Promise((resolve) => {
-      const img = new Image;
-      img.onload = () => {
-        resolve(true);
-      };
-      img.onerror = () => {
-        resolve(false);
-      };
-      img.src = uri;
-    });
-  }
-}
-function getGateway(custom2, defaultGateway) {
-  if (!custom2)
-    return defaultGateway;
-  if (custom2.endsWith("/"))
-    return custom2.slice(0, -1);
-  return custom2;
-}
-function resolveAvatarUri({ uri, gatewayUrls }) {
-  const isEncoded = base64Regex.test(uri);
-  if (isEncoded)
-    return { uri, isOnChain: true, isEncoded };
-  const ipfsGateway = getGateway(gatewayUrls?.ipfs, "https://ipfs.io");
-  const arweaveGateway = getGateway(gatewayUrls?.arweave, "https://arweave.net");
-  const networkRegexMatch = uri.match(networkRegex);
-  const { protocol, subpath, target, subtarget = "" } = networkRegexMatch?.groups || {};
-  const isIPNS = protocol === "ipns:/" || subpath === "ipns/";
-  const isIPFS = protocol === "ipfs:/" || subpath === "ipfs/" || ipfsHashRegex.test(uri);
-  if (uri.startsWith("http") && !isIPNS && !isIPFS) {
-    let replacedUri = uri;
-    if (gatewayUrls?.arweave)
-      replacedUri = uri.replace(/https:\/\/arweave.net/g, gatewayUrls?.arweave);
-    return { uri: replacedUri, isOnChain: false, isEncoded: false };
-  }
-  if ((isIPNS || isIPFS) && target) {
-    return {
-      uri: `${ipfsGateway}/${isIPNS ? "ipns" : "ipfs"}/${target}${subtarget}`,
-      isOnChain: false,
-      isEncoded: false
-    };
-  }
-  if (protocol === "ar:/" && target) {
-    return {
-      uri: `${arweaveGateway}/${target}${subtarget || ""}`,
-      isOnChain: false,
-      isEncoded: false
-    };
-  }
-  let parsedUri = uri.replace(dataURIRegex, "");
-  if (parsedUri.startsWith("<svg")) {
-    parsedUri = `data:image/svg+xml;base64,${btoa(parsedUri)}`;
-  }
-  if (parsedUri.startsWith("data:") || parsedUri.startsWith("{")) {
-    return {
-      uri: parsedUri,
-      isOnChain: true,
-      isEncoded: false
-    };
-  }
-  throw new EnsAvatarUriResolutionError({ uri });
-}
-function getJsonImage(data) {
-  if (typeof data !== "object" || !("image" in data) && !("image_url" in data) && !("image_data" in data)) {
-    throw new EnsAvatarInvalidMetadataError({ data });
-  }
-  return data.image || data.image_url || data.image_data;
-}
-async function getMetadataAvatarUri({ gatewayUrls, uri }) {
-  try {
-    const res = await fetch(uri).then((res2) => res2.json());
-    const image = await parseAvatarUri({
-      gatewayUrls,
-      uri: getJsonImage(res)
-    });
-    return image;
-  } catch {
-    throw new EnsAvatarUriResolutionError({ uri });
-  }
-}
-async function parseAvatarUri({ gatewayUrls, uri }) {
-  const { uri: resolvedURI, isOnChain } = resolveAvatarUri({ uri, gatewayUrls });
-  if (isOnChain)
-    return resolvedURI;
-  const isImage = await isImageUri(resolvedURI);
-  if (isImage)
-    return resolvedURI;
-  throw new EnsAvatarUriResolutionError({ uri });
-}
-function parseNftUri(uri_) {
-  let uri = uri_;
-  if (uri.startsWith("did:nft:")) {
-    uri = uri.replace("did:nft:", "").replace(/_/g, "/");
-  }
-  const [reference, asset_namespace, tokenID] = uri.split("/");
-  const [eip_namespace, chainID] = reference.split(":");
-  const [erc_namespace, contractAddress] = asset_namespace.split(":");
-  if (!eip_namespace || eip_namespace.toLowerCase() !== "eip155")
-    throw new EnsAvatarInvalidNftUriError({ reason: "Only EIP-155 supported" });
-  if (!chainID)
-    throw new EnsAvatarInvalidNftUriError({ reason: "Chain ID not found" });
-  if (!contractAddress)
-    throw new EnsAvatarInvalidNftUriError({
-      reason: "Contract address not found"
-    });
-  if (!tokenID)
-    throw new EnsAvatarInvalidNftUriError({ reason: "Token ID not found" });
-  if (!erc_namespace)
-    throw new EnsAvatarInvalidNftUriError({ reason: "ERC namespace not found" });
-  return {
-    chainID: Number.parseInt(chainID, 10),
-    namespace: erc_namespace.toLowerCase(),
-    contractAddress,
-    tokenID
-  };
-}
-async function getNftTokenUri(client, { nft }) {
-  if (nft.namespace === "erc721") {
-    return readContract(client, {
-      address: nft.contractAddress,
-      abi: [
-        {
-          name: "tokenURI",
-          type: "function",
-          stateMutability: "view",
-          inputs: [{ name: "tokenId", type: "uint256" }],
-          outputs: [{ name: "", type: "string" }]
-        }
-      ],
-      functionName: "tokenURI",
-      args: [BigInt(nft.tokenID)]
-    });
-  }
-  if (nft.namespace === "erc1155") {
-    return readContract(client, {
-      address: nft.contractAddress,
-      abi: [
-        {
-          name: "uri",
-          type: "function",
-          stateMutability: "view",
-          inputs: [{ name: "_id", type: "uint256" }],
-          outputs: [{ name: "", type: "string" }]
-        }
-      ],
-      functionName: "uri",
-      args: [BigInt(nft.tokenID)]
-    });
-  }
-  throw new EnsAvatarUnsupportedNamespaceError({ namespace: nft.namespace });
-}
-
-// node_modules/viem/_esm/utils/ens/avatar/parseAvatarRecord.js
-async function parseAvatarRecord(client, { gatewayUrls, record: record2 }) {
-  if (/eip155:/i.test(record2))
-    return parseNftAvatarUri(client, { gatewayUrls, record: record2 });
-  return parseAvatarUri({ uri: record2, gatewayUrls });
-}
-async function parseNftAvatarUri(client, { gatewayUrls, record: record2 }) {
-  const nft = parseNftUri(record2);
-  const nftUri = await getNftTokenUri(client, { nft });
-  const { uri: resolvedNftUri, isOnChain, isEncoded } = resolveAvatarUri({ uri: nftUri, gatewayUrls });
-  if (isOnChain && (resolvedNftUri.includes("data:application/json;base64,") || resolvedNftUri.startsWith("{"))) {
-    const encodedJson = isEncoded ? atob(resolvedNftUri.replace("data:application/json;base64,", "")) : resolvedNftUri;
-    const decoded = JSON.parse(encodedJson);
-    return parseAvatarUri({ uri: getJsonImage(decoded), gatewayUrls });
-  }
-  let uriTokenId = nft.tokenID;
-  if (nft.namespace === "erc1155")
-    uriTokenId = uriTokenId.replace("0x", "").padStart(64, "0");
-  return getMetadataAvatarUri({
-    gatewayUrls,
-    uri: resolvedNftUri.replace(/(?:0x)?{id}/, uriTokenId)
-  });
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsText.js
-init_abis();
-init_decodeFunctionResult();
-init_encodeFunctionData();
-init_getChainContractAddress();
-init_toHex();
-init_localBatchGatewayRequest();
-async function getEnsText(client, parameters) {
-  const { blockNumber, blockTag, key, name, gatewayUrls, strict } = parameters;
-  const { chain } = client;
-  const universalResolverAddress = (() => {
-    if (parameters.universalResolverAddress)
-      return parameters.universalResolverAddress;
-    if (!chain)
-      throw new Error("client chain not configured. universalResolverAddress is required.");
-    return getChainContractAddress({
-      blockNumber,
-      chain,
-      contract: "ensUniversalResolver"
-    });
-  })();
-  const tlds = chain?.ensTlds;
-  if (tlds && !tlds.some((tld) => name.endsWith(tld)))
-    return null;
-  try {
-    const readContractParameters = {
-      address: universalResolverAddress,
-      abi: universalResolverResolveAbi,
-      args: [
-        toHex(packetToBytes(name)),
-        encodeFunctionData({
-          abi: textResolverAbi,
-          functionName: "text",
-          args: [namehash(name), key]
-        }),
-        gatewayUrls ?? [localBatchGatewayUrl]
-      ],
-      functionName: "resolveWithGateways",
-      blockNumber,
-      blockTag
-    };
-    const readContractAction = getAction(client, readContract, "readContract");
-    const res = await readContractAction(readContractParameters);
-    if (res[0] === "0x")
-      return null;
-    const record2 = decodeFunctionResult({
-      abi: textResolverAbi,
-      functionName: "text",
-      data: res[0]
-    });
-    return record2 === "" ? null : record2;
-  } catch (err) {
-    if (strict)
-      throw err;
-    if (isNullUniversalResolverError(err))
-      return null;
-    throw err;
-  }
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsAvatar.js
-async function getEnsAvatar(client, { blockNumber, blockTag, assetGatewayUrls, name, gatewayUrls, strict, universalResolverAddress }) {
-  const record2 = await getAction(client, getEnsText, "getEnsText")({
-    blockNumber,
-    blockTag,
-    key: "avatar",
-    name,
-    universalResolverAddress,
-    gatewayUrls,
-    strict
-  });
-  if (!record2)
-    return null;
-  try {
-    return await parseAvatarRecord(client, {
-      record: record2,
-      gatewayUrls: assetGatewayUrls
-    });
-  } catch {
-    return null;
-  }
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsName.js
-init_abis();
-init_getChainContractAddress();
-init_localBatchGatewayRequest();
-async function getEnsName(client, parameters) {
-  const { address, blockNumber, blockTag, coinType = 60n, gatewayUrls, strict } = parameters;
-  const { chain } = client;
-  const universalResolverAddress = (() => {
-    if (parameters.universalResolverAddress)
-      return parameters.universalResolverAddress;
-    if (!chain)
-      throw new Error("client chain not configured. universalResolverAddress is required.");
-    return getChainContractAddress({
-      blockNumber,
-      chain,
-      contract: "ensUniversalResolver"
-    });
-  })();
-  try {
-    const readContractParameters = {
-      address: universalResolverAddress,
-      abi: universalResolverReverseAbi,
-      args: [address, coinType, gatewayUrls ?? [localBatchGatewayUrl]],
-      functionName: "reverseWithGateways",
-      blockNumber,
-      blockTag
-    };
-    const readContractAction = getAction(client, readContract, "readContract");
-    const [name] = await readContractAction(readContractParameters);
-    return name || null;
-  } catch (err) {
-    if (strict)
-      throw err;
-    if (isNullUniversalResolverError(err))
-      return null;
-    throw err;
-  }
-}
-
-// node_modules/viem/_esm/actions/ens/getEnsResolver.js
-init_getChainContractAddress();
-init_toHex();
-async function getEnsResolver(client, parameters) {
-  const { blockNumber, blockTag, name } = parameters;
-  const { chain } = client;
-  const universalResolverAddress = (() => {
-    if (parameters.universalResolverAddress)
-      return parameters.universalResolverAddress;
-    if (!chain)
-      throw new Error("client chain not configured. universalResolverAddress is required.");
-    return getChainContractAddress({
-      blockNumber,
-      chain,
-      contract: "ensUniversalResolver"
-    });
-  })();
-  const tlds = chain?.ensTlds;
-  if (tlds && !tlds.some((tld) => name.endsWith(tld)))
-    throw new Error(`${name} is not a valid ENS TLD (${tlds?.join(", ")}) for chain "${chain.name}" (id: ${chain.id}).`);
-  const [resolverAddress] = await getAction(client, readContract, "readContract")({
-    address: universalResolverAddress,
-    abi: [
-      {
-        inputs: [{ type: "bytes" }],
-        name: "findResolver",
-        outputs: [
-          { type: "address" },
-          { type: "bytes32" },
-          { type: "uint256" }
-        ],
-        stateMutability: "view",
-        type: "function"
-      }
-    ],
-    functionName: "findResolver",
-    args: [toHex(packetToBytes(name))],
-    blockNumber,
-    blockTag
-  });
-  return resolverAddress;
-}
-
-// node_modules/viem/_esm/clients/decorators/public.js
-init_call();
-
-// node_modules/viem/_esm/actions/public/createAccessList.js
-init_base();
-init_toHex();
-init_getCallError();
-init_transactionRequest();
-init_assertRequest();
-async function createAccessList(client, args) {
-  const { account: account_ = client.account, blockNumber, blockTag = "latest", blobs, data, gas, gasPrice, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, to, value, ...rest } = args;
-  const account = account_ ? parseAccount(account_) : undefined;
-  try {
-    assertRequest(args);
-    const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
-    const block = blockNumberHex || blockTag;
-    const chainFormat = client.chain?.formatters?.transactionRequest?.format;
-    const format2 = chainFormat || formatTransactionRequest;
-    const request = format2({
-      ...extract(rest, { format: chainFormat }),
-      account,
-      blobs,
-      data,
-      gas,
-      gasPrice,
-      maxFeePerBlobGas,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      to,
-      value
-    }, "createAccessList");
-    const response = await client.request({
-      method: "eth_createAccessList",
-      params: [request, block]
-    });
-    if (response.error)
-      throw new BaseError(response.error, { details: response.error });
-    return {
-      accessList: response.accessList,
-      gasUsed: BigInt(response.gasUsed)
-    };
-  } catch (err) {
-    throw getCallError(err, {
-      ...args,
-      account,
-      chain: client.chain
-    });
-  }
-}
-
-// node_modules/viem/_esm/utils/filters/createFilterRequestScope.js
-function createFilterRequestScope(client, { method }) {
-  const requestMap = {};
-  if (client.transport.type === "fallback")
-    client.transport.onResponse?.(({ method: method_, response: id, status, transport }) => {
-      if (status === "success" && method === method_)
-        requestMap[id] = transport.request;
-    });
-  return (id) => requestMap[id] || client.request;
-}
-
-// node_modules/viem/_esm/actions/public/createBlockFilter.js
-async function createBlockFilter(client) {
-  const getRequest = createFilterRequestScope(client, {
-    method: "eth_newBlockFilter"
-  });
-  const id = await client.request({
-    method: "eth_newBlockFilter"
-  });
-  return { id, request: getRequest(id), type: "block" };
-}
-
-// node_modules/viem/_esm/utils/abi/encodeEventTopics.js
-init_abi();
-
-// node_modules/viem/_esm/errors/log.js
-init_base();
-
-class FilterTypeNotSupportedError extends BaseError {
-  constructor(type) {
-    super(`Filter type "${type}" is not supported.`, {
-      name: "FilterTypeNotSupportedError"
-    });
-  }
-}
-
-// node_modules/viem/_esm/utils/abi/encodeEventTopics.js
-init_toBytes();
-init_keccak256();
-init_toEventSelector();
-init_encodeAbiParameters();
-init_formatAbiItem();
-init_getAbiItem();
-var docsPath6 = "/docs/contract/encodeEventTopics";
-function encodeEventTopics(parameters) {
-  const { abi, eventName, args } = parameters;
-  let abiItem = abi[0];
-  if (eventName) {
-    const item = getAbiItem({ abi, name: eventName });
-    if (!item)
-      throw new AbiEventNotFoundError(eventName, { docsPath: docsPath6 });
-    abiItem = item;
-  }
-  if (abiItem.type !== "event")
-    throw new AbiEventNotFoundError(undefined, { docsPath: docsPath6 });
-  let topics = [];
-  if (args && "inputs" in abiItem) {
-    const indexedInputs = abiItem.inputs?.filter((param) => ("indexed" in param) && param.indexed);
-    const args_ = Array.isArray(args) ? args : Object.values(args).length > 0 ? indexedInputs?.map((x) => args[x.name]) ?? [] : [];
-    if (args_.length > 0) {
-      topics = indexedInputs?.map((param, i) => {
-        if (Array.isArray(args_[i]))
-          return args_[i].map((_, j) => encodeArg({ param, value: args_[i][j] }));
-        return typeof args_[i] !== "undefined" && args_[i] !== null ? encodeArg({ param, value: args_[i] }) : null;
-      }) ?? [];
-    }
-  }
-  if (abiItem.anonymous)
-    return topics;
-  const definition = formatAbiItem(abiItem);
-  const signature = toEventSelector(definition);
-  return [signature, ...topics];
-}
-function encodeArg({ param, value }) {
-  if (param.type === "string" || param.type === "bytes")
-    return keccak256(toBytes(value));
-  if (param.type === "tuple" || param.type.match(/^(.*)\[(\d+)?\]$/))
-    throw new FilterTypeNotSupportedError(param.type);
-  return encodeAbiParameters([param], [value]);
-}
-
-// node_modules/viem/_esm/actions/public/createContractEventFilter.js
-init_toHex();
-async function createContractEventFilter(client, parameters) {
-  const { address, abi, args, eventName, fromBlock, strict, toBlock } = parameters;
-  const getRequest = createFilterRequestScope(client, {
-    method: "eth_newFilter"
-  });
-  const topics = eventName ? encodeEventTopics({
-    abi,
-    args,
-    eventName
-  }) : undefined;
-  const id = await client.request({
-    method: "eth_newFilter",
-    params: [
-      {
-        address,
-        fromBlock: typeof fromBlock === "bigint" ? numberToHex(fromBlock) : fromBlock,
-        toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock,
-        topics
-      }
-    ]
-  });
-  return {
-    abi,
-    args,
-    eventName,
-    id,
-    request: getRequest(id),
-    strict: Boolean(strict),
-    type: "event"
-  };
-}
-
-// node_modules/viem/_esm/actions/public/createEventFilter.js
-init_toHex();
-async function createEventFilter(client, { address, args, event, events: events_, fromBlock, strict, toBlock } = {}) {
-  const events = events_ ?? (event ? [event] : undefined);
-  const getRequest = createFilterRequestScope(client, {
-    method: "eth_newFilter"
-  });
-  let topics = [];
-  if (events) {
-    const encoded = events.flatMap((event2) => encodeEventTopics({
-      abi: [event2],
-      eventName: event2.name,
-      args
-    }));
-    topics = [encoded];
-    if (event)
-      topics = topics[0];
-  }
-  const id = await client.request({
-    method: "eth_newFilter",
-    params: [
-      {
-        address,
-        fromBlock: typeof fromBlock === "bigint" ? numberToHex(fromBlock) : fromBlock,
-        toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock,
-        ...topics.length ? { topics } : {}
-      }
-    ]
-  });
-  return {
-    abi: events,
-    args,
-    eventName: event ? event.name : undefined,
-    fromBlock,
-    id,
-    request: getRequest(id),
-    strict: Boolean(strict),
-    toBlock,
-    type: "event"
-  };
-}
-
-// node_modules/viem/_esm/actions/public/createPendingTransactionFilter.js
-async function createPendingTransactionFilter(client) {
-  const getRequest = createFilterRequestScope(client, {
-    method: "eth_newPendingTransactionFilter"
-  });
-  const id = await client.request({
-    method: "eth_newPendingTransactionFilter"
-  });
-  return { id, request: getRequest(id), type: "transaction" };
-}
-
-// node_modules/viem/_esm/actions/public/estimateContractGas.js
-init_encodeFunctionData();
-
-// node_modules/viem/_esm/actions/public/estimateGas.js
-init_base();
-
-// node_modules/viem/_esm/accounts/utils/publicKeyToAddress.js
-init_getAddress();
-init_keccak256();
-function publicKeyToAddress(publicKey) {
-  const address = keccak256(`0x${publicKey.substring(4)}`).substring(26);
-  return checksumAddress(`0x${address}`);
-}
-
-// node_modules/viem/_esm/utils/signature/recoverPublicKey.js
-init_size();
-init_fromHex();
-init_toHex();
-async function recoverPublicKey({ hash: hash3, signature }) {
-  const hashHex = isHex(hash3) ? hash3 : toHex(hash3);
-  const { secp256k1: secp256k12 } = await Promise.resolve().then(() => (init_secp256k1(), exports_secp256k1));
-  const signature_ = (() => {
-    if (typeof signature === "object" && "r" in signature && "s" in signature) {
-      const { r, s, v, yParity } = signature;
-      const yParityOrV2 = Number(yParity ?? v);
-      const recoveryBit2 = toRecoveryBit(yParityOrV2);
-      return new secp256k12.Signature(hexToBigInt(r), hexToBigInt(s)).addRecoveryBit(recoveryBit2);
-    }
-    const signatureHex = isHex(signature) ? signature : toHex(signature);
-    if (size2(signatureHex) !== 65)
-      throw new Error("invalid signature length");
-    const yParityOrV = hexToNumber(`0x${signatureHex.slice(130)}`);
-    const recoveryBit = toRecoveryBit(yParityOrV);
-    return secp256k12.Signature.fromCompact(signatureHex.substring(2, 130)).addRecoveryBit(recoveryBit);
-  })();
-  const publicKey = signature_.recoverPublicKey(hashHex.substring(2)).toHex(false);
-  return `0x${publicKey}`;
-}
-function toRecoveryBit(yParityOrV) {
-  if (yParityOrV === 0 || yParityOrV === 1)
-    return yParityOrV;
-  if (yParityOrV === 27)
-    return 0;
-  if (yParityOrV === 28)
-    return 1;
-  throw new Error("Invalid yParityOrV value");
-}
-
-// node_modules/viem/_esm/utils/signature/recoverAddress.js
-async function recoverAddress({ hash: hash3, signature }) {
-  return publicKeyToAddress(await recoverPublicKey({ hash: hash3, signature }));
-}
-
-// node_modules/viem/_esm/utils/authorization/hashAuthorization.js
-init_toBytes();
-init_toHex();
-
-// node_modules/viem/_esm/utils/encoding/toRlp.js
-init_base();
-init_cursor2();
-init_toBytes();
-init_toHex();
-function toRlp(bytes, to = "hex") {
-  const encodable = getEncodable(bytes);
-  const cursor = createCursor(new Uint8Array(encodable.length));
-  encodable.encode(cursor);
-  if (to === "hex")
-    return bytesToHex(cursor.bytes);
-  return cursor.bytes;
-}
-function getEncodable(bytes) {
-  if (Array.isArray(bytes))
-    return getEncodableList(bytes.map((x) => getEncodable(x)));
-  return getEncodableBytes(bytes);
-}
-function getEncodableList(list) {
-  const bodyLength = list.reduce((acc, x) => acc + x.length, 0);
-  const sizeOfBodyLength = getSizeOfLength(bodyLength);
-  const length = (() => {
-    if (bodyLength <= 55)
-      return 1 + bodyLength;
-    return 1 + sizeOfBodyLength + bodyLength;
-  })();
-  return {
-    length,
-    encode(cursor) {
-      if (bodyLength <= 55) {
-        cursor.pushByte(192 + bodyLength);
-      } else {
-        cursor.pushByte(192 + 55 + sizeOfBodyLength);
-        if (sizeOfBodyLength === 1)
-          cursor.pushUint8(bodyLength);
-        else if (sizeOfBodyLength === 2)
-          cursor.pushUint16(bodyLength);
-        else if (sizeOfBodyLength === 3)
-          cursor.pushUint24(bodyLength);
-        else
-          cursor.pushUint32(bodyLength);
-      }
-      for (const { encode: encode3 } of list) {
-        encode3(cursor);
-      }
-    }
-  };
-}
-function getEncodableBytes(bytesOrHex) {
-  const bytes = typeof bytesOrHex === "string" ? hexToBytes(bytesOrHex) : bytesOrHex;
-  const sizeOfBytesLength = getSizeOfLength(bytes.length);
-  const length = (() => {
-    if (bytes.length === 1 && bytes[0] < 128)
-      return 1;
-    if (bytes.length <= 55)
-      return 1 + bytes.length;
-    return 1 + sizeOfBytesLength + bytes.length;
-  })();
-  return {
-    length,
-    encode(cursor) {
-      if (bytes.length === 1 && bytes[0] < 128) {
-        cursor.pushBytes(bytes);
-      } else if (bytes.length <= 55) {
-        cursor.pushByte(128 + bytes.length);
-        cursor.pushBytes(bytes);
-      } else {
-        cursor.pushByte(128 + 55 + sizeOfBytesLength);
-        if (sizeOfBytesLength === 1)
-          cursor.pushUint8(bytes.length);
-        else if (sizeOfBytesLength === 2)
-          cursor.pushUint16(bytes.length);
-        else if (sizeOfBytesLength === 3)
-          cursor.pushUint24(bytes.length);
-        else
-          cursor.pushUint32(bytes.length);
-        cursor.pushBytes(bytes);
-      }
-    }
-  };
-}
-function getSizeOfLength(length) {
-  if (length < 2 ** 8)
-    return 1;
-  if (length < 2 ** 16)
-    return 2;
-  if (length < 2 ** 24)
-    return 3;
-  if (length < 2 ** 32)
-    return 4;
-  throw new BaseError("Length is too large.");
-}
-
-// node_modules/viem/_esm/utils/authorization/hashAuthorization.js
-init_keccak256();
-function hashAuthorization(parameters) {
-  const { chainId, nonce, to } = parameters;
-  const address = parameters.contractAddress ?? parameters.address;
-  const hash3 = keccak256(concatHex([
-    "0x05",
-    toRlp([
-      chainId ? numberToHex(chainId) : "0x",
-      address,
-      nonce ? numberToHex(nonce) : "0x"
-    ])
-  ]));
-  if (to === "bytes")
-    return hexToBytes(hash3);
-  return hash3;
-}
-
-// node_modules/viem/_esm/utils/authorization/recoverAuthorizationAddress.js
-async function recoverAuthorizationAddress(parameters) {
-  const { authorization, signature } = parameters;
-  return recoverAddress({
-    hash: hashAuthorization(authorization),
-    signature: signature ?? authorization
-  });
-}
-
-// node_modules/viem/_esm/actions/public/estimateGas.js
-init_toHex();
-
-// node_modules/viem/_esm/errors/estimateGas.js
-init_formatEther();
-init_formatGwei();
-init_base();
-init_transaction();
-
-class EstimateGasExecutionError extends BaseError {
-  constructor(cause, { account, docsPath: docsPath7, chain, data, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, nonce, to, value }) {
-    const prettyArgs = prettyPrint({
-      from: account?.address,
-      to,
-      value: typeof value !== "undefined" && `${formatEther2(value)} ${chain?.nativeCurrency?.symbol || "ETH"}`,
-      data,
-      gas,
-      gasPrice: typeof gasPrice !== "undefined" && `${formatGwei2(gasPrice)} gwei`,
-      maxFeePerGas: typeof maxFeePerGas !== "undefined" && `${formatGwei2(maxFeePerGas)} gwei`,
-      maxPriorityFeePerGas: typeof maxPriorityFeePerGas !== "undefined" && `${formatGwei2(maxPriorityFeePerGas)} gwei`,
-      nonce
-    });
-    super(cause.shortMessage, {
-      cause,
-      docsPath: docsPath7,
-      metaMessages: [
-        ...cause.metaMessages ? [...cause.metaMessages, " "] : [],
-        "Estimate Gas Arguments:",
-        prettyArgs
-      ].filter(Boolean),
-      name: "EstimateGasExecutionError"
-    });
-    Object.defineProperty(this, "cause", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: undefined
-    });
-    this.cause = cause;
-  }
-}
-
-// node_modules/viem/_esm/utils/errors/getEstimateGasError.js
-init_node();
-init_getNodeError();
-function getEstimateGasError(err, { docsPath: docsPath7, ...args }) {
-  const cause = (() => {
-    const cause2 = getNodeError(err, args);
-    if (cause2 instanceof UnknownNodeError)
-      return err;
-    return cause2;
-  })();
-  return new EstimateGasExecutionError(cause, {
-    docsPath: docsPath7,
-    ...args
-  });
-}
-
-// node_modules/viem/_esm/actions/public/estimateGas.js
-init_transactionRequest();
-init_stateOverride2();
-init_assertRequest();
-// node_modules/viem/_esm/errors/fee.js
-init_formatGwei();
-init_base();
-
-class BaseFeeScalarError extends BaseError {
-  constructor() {
-    super("`baseFeeMultiplier` must be greater than 1.", {
-      name: "BaseFeeScalarError"
-    });
-  }
-}
-
-class Eip1559FeesNotSupportedError extends BaseError {
-  constructor() {
-    super("Chain does not support EIP-1559 fees.", {
-      name: "Eip1559FeesNotSupportedError"
-    });
-  }
-}
-
-class MaxFeePerGasTooLowError extends BaseError {
-  constructor({ maxPriorityFeePerGas }) {
-    super(`\`maxFeePerGas\` cannot be less than the \`maxPriorityFeePerGas\` (${formatGwei2(maxPriorityFeePerGas)} gwei).`, { name: "MaxFeePerGasTooLowError" });
-  }
-}
-
-// node_modules/viem/_esm/actions/public/estimateMaxPriorityFeePerGas.js
-init_fromHex();
-
-// node_modules/viem/_esm/errors/block.js
-init_base();
-
-class BlockNotFoundError extends BaseError {
-  constructor({ blockHash, blockNumber }) {
-    let identifier = "Block";
-    if (blockHash)
-      identifier = `Block at hash "${blockHash}"`;
-    if (blockNumber)
-      identifier = `Block at number "${blockNumber}"`;
-    super(`${identifier} could not be found.`, { name: "BlockNotFoundError" });
-  }
-}
-
-// node_modules/viem/_esm/actions/public/getBlock.js
-init_toHex();
-
-// node_modules/viem/_esm/utils/formatters/transaction.js
-init_fromHex();
-var transactionType = {
-  "0x0": "legacy",
-  "0x1": "eip2930",
-  "0x2": "eip1559",
-  "0x3": "eip4844",
-  "0x4": "eip7702"
-};
-function formatTransaction(transaction, _) {
-  const transaction_ = {
-    ...transaction,
-    blockHash: transaction.blockHash ? transaction.blockHash : null,
-    blockNumber: transaction.blockNumber ? BigInt(transaction.blockNumber) : null,
-    ...transaction.blockTimestamp != null && {
-      blockTimestamp: BigInt(transaction.blockTimestamp)
-    },
-    chainId: transaction.chainId ? hexToNumber(transaction.chainId) : undefined,
-    gas: transaction.gas ? BigInt(transaction.gas) : undefined,
-    gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
-    maxFeePerBlobGas: transaction.maxFeePerBlobGas ? BigInt(transaction.maxFeePerBlobGas) : undefined,
-    maxFeePerGas: transaction.maxFeePerGas ? BigInt(transaction.maxFeePerGas) : undefined,
-    maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? BigInt(transaction.maxPriorityFeePerGas) : undefined,
-    nonce: transaction.nonce ? hexToNumber(transaction.nonce) : undefined,
-    to: transaction.to ? transaction.to : null,
-    transactionIndex: transaction.transactionIndex ? Number(transaction.transactionIndex) : null,
-    type: transaction.type ? transactionType[transaction.type] : undefined,
-    typeHex: transaction.type ? transaction.type : undefined,
-    value: transaction.value ? BigInt(transaction.value) : undefined,
-    v: transaction.v ? BigInt(transaction.v) : undefined
-  };
-  if (transaction.authorizationList)
-    transaction_.authorizationList = formatAuthorizationList2(transaction.authorizationList);
-  transaction_.yParity = (() => {
-    if (transaction.yParity)
-      return Number(transaction.yParity);
-    if (typeof transaction_.v === "bigint") {
-      if (transaction_.v === 0n || transaction_.v === 27n)
-        return 0;
-      if (transaction_.v === 1n || transaction_.v === 28n)
-        return 1;
-      if (transaction_.v >= 35n)
-        return transaction_.v % 2n === 0n ? 1 : 0;
-    }
-    return;
-  })();
-  if (transaction_.type === "legacy") {
-    delete transaction_.accessList;
-    delete transaction_.maxFeePerBlobGas;
-    delete transaction_.maxFeePerGas;
-    delete transaction_.maxPriorityFeePerGas;
-    delete transaction_.yParity;
-  }
-  if (transaction_.type === "eip2930") {
-    delete transaction_.maxFeePerBlobGas;
-    delete transaction_.maxFeePerGas;
-    delete transaction_.maxPriorityFeePerGas;
-  }
-  if (transaction_.type === "eip1559")
-    delete transaction_.maxFeePerBlobGas;
-  return transaction_;
-}
-function formatAuthorizationList2(authorizationList) {
-  return authorizationList.map((authorization) => ({
-    address: authorization.address,
-    chainId: Number(authorization.chainId),
-    nonce: Number(authorization.nonce),
-    r: authorization.r,
-    s: authorization.s,
-    yParity: Number(authorization.yParity)
-  }));
-}
-
-// node_modules/viem/_esm/utils/formatters/block.js
-function formatBlock(block, _) {
-  const transactions = (block.transactions ?? []).map((transaction) => {
-    if (typeof transaction === "string")
-      return transaction;
-    return formatTransaction(transaction);
-  });
-  return {
-    ...block,
-    baseFeePerGas: block.baseFeePerGas ? BigInt(block.baseFeePerGas) : null,
-    blobGasUsed: block.blobGasUsed ? BigInt(block.blobGasUsed) : undefined,
-    difficulty: block.difficulty ? BigInt(block.difficulty) : undefined,
-    excessBlobGas: block.excessBlobGas ? BigInt(block.excessBlobGas) : undefined,
-    gasLimit: block.gasLimit ? BigInt(block.gasLimit) : undefined,
-    gasUsed: block.gasUsed ? BigInt(block.gasUsed) : undefined,
-    hash: block.hash ? block.hash : null,
-    logsBloom: block.logsBloom ? block.logsBloom : null,
-    nonce: block.nonce ? block.nonce : null,
-    number: block.number ? BigInt(block.number) : null,
-    size: block.size ? BigInt(block.size) : undefined,
-    timestamp: block.timestamp ? BigInt(block.timestamp) : undefined,
-    transactions,
-    totalDifficulty: block.totalDifficulty ? BigInt(block.totalDifficulty) : null
-  };
-}
-
-// node_modules/viem/_esm/actions/public/getBlock.js
-async function getBlock(client, { blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest", includeTransactions: includeTransactions_ } = {}) {
-  const includeTransactions = includeTransactions_ ?? false;
-  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
-  let block = null;
-  if (blockHash) {
-    block = await client.request({
-      method: "eth_getBlockByHash",
-      params: [blockHash, includeTransactions]
-    }, { dedupe: true });
-  } else {
-    block = await client.request({
-      method: "eth_getBlockByNumber",
-      params: [blockNumberHex || blockTag, includeTransactions]
-    }, { dedupe: Boolean(blockNumberHex) });
-  }
-  if (!block)
-    throw new BlockNotFoundError({ blockHash, blockNumber });
-  const format2 = client.chain?.formatters?.block?.format || formatBlock;
-  return format2(block, "getBlock");
-}
-
-// node_modules/viem/_esm/actions/public/getGasPrice.js
-async function getGasPrice(client) {
-  const gasPrice = await client.request({
-    method: "eth_gasPrice"
-  });
-  return BigInt(gasPrice);
-}
-
-// node_modules/viem/_esm/actions/public/estimateMaxPriorityFeePerGas.js
-async function estimateMaxPriorityFeePerGas(client, args) {
-  return internal_estimateMaxPriorityFeePerGas(client, args);
-}
-async function internal_estimateMaxPriorityFeePerGas(client, args) {
-  const { block: block_, chain = client.chain, request } = args || {};
-  try {
-    const maxPriorityFeePerGas = chain?.fees?.maxPriorityFeePerGas ?? chain?.fees?.defaultPriorityFee;
-    if (typeof maxPriorityFeePerGas === "function") {
-      const block = block_ || await getAction(client, getBlock, "getBlock")({});
-      const maxPriorityFeePerGas_ = await maxPriorityFeePerGas({
-        block,
-        client,
-        request
-      });
-      if (maxPriorityFeePerGas_ === null)
-        throw new Error;
-      return maxPriorityFeePerGas_;
-    }
-    if (typeof maxPriorityFeePerGas !== "undefined")
-      return maxPriorityFeePerGas;
-    const maxPriorityFeePerGasHex = await client.request({
-      method: "eth_maxPriorityFeePerGas"
-    });
-    return hexToBigInt(maxPriorityFeePerGasHex);
-  } catch {
-    const [block, gasPrice] = await Promise.all([
-      block_ ? Promise.resolve(block_) : getAction(client, getBlock, "getBlock")({}),
-      getAction(client, getGasPrice, "getGasPrice")({})
-    ]);
-    if (typeof block.baseFeePerGas !== "bigint")
-      throw new Eip1559FeesNotSupportedError;
-    const maxPriorityFeePerGas = gasPrice - block.baseFeePerGas;
-    if (maxPriorityFeePerGas < 0n)
-      return 0n;
-    return maxPriorityFeePerGas;
-  }
-}
-
-// node_modules/viem/_esm/actions/public/estimateFeesPerGas.js
-async function estimateFeesPerGas(client, args) {
-  return internal_estimateFeesPerGas(client, args);
-}
-async function internal_estimateFeesPerGas(client, args) {
-  const { block: block_, chain = client.chain, request, type = "eip1559" } = args || {};
-  const baseFeeMultiplier = await (async () => {
-    if (typeof chain?.fees?.baseFeeMultiplier === "function")
-      return chain.fees.baseFeeMultiplier({
-        block: block_,
-        client,
-        request
-      });
-    return chain?.fees?.baseFeeMultiplier ?? 1.2;
-  })();
-  if (baseFeeMultiplier < 1)
-    throw new BaseFeeScalarError;
-  const decimals = baseFeeMultiplier.toString().split(".")[1]?.length ?? 0;
-  const denominator = 10 ** decimals;
-  const multiply = (base) => base * BigInt(Math.round(baseFeeMultiplier * denominator)) / BigInt(denominator);
-  const block = block_ ? block_ : await getAction(client, getBlock, "getBlock")({});
-  if (typeof chain?.fees?.estimateFeesPerGas === "function") {
-    const fees = await chain.fees.estimateFeesPerGas({
-      block: block_,
-      client,
-      multiply,
-      request,
-      type
-    });
-    if (fees !== null)
-      return fees;
-  }
-  if (type === "eip1559") {
-    if (typeof block.baseFeePerGas !== "bigint")
-      throw new Eip1559FeesNotSupportedError;
-    const maxPriorityFeePerGas = typeof request?.maxPriorityFeePerGas === "bigint" ? request.maxPriorityFeePerGas : await internal_estimateMaxPriorityFeePerGas(client, {
-      block,
-      chain,
-      request
-    });
-    const baseFeePerGas = multiply(block.baseFeePerGas);
-    const maxFeePerGas = request?.maxFeePerGas ?? baseFeePerGas + maxPriorityFeePerGas;
-    return {
-      maxFeePerGas,
-      maxPriorityFeePerGas
-    };
-  }
-  const gasPrice = request?.gasPrice ?? multiply(await getAction(client, getGasPrice, "getGasPrice")({}));
-  return {
-    gasPrice
-  };
-}
-
-// node_modules/viem/_esm/actions/public/getTransactionCount.js
-init_formatBlockParameter();
-init_fromHex();
-async function getTransactionCount(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical }) {
-  const block = formatBlockParameter({
-    blockHash,
-    blockNumber,
-    blockTag,
-    requireCanonical
-  });
-  const count = await client.request({
-    method: "eth_getTransactionCount",
-    params: [address, block]
-  }, {
-    dedupe: typeof blockNumber === "bigint" || blockHash !== undefined
-  });
-  return hexToNumber(count);
-}
-
-// node_modules/viem/_esm/actions/wallet/prepareTransactionRequest.js
-init_transaction();
-
-// node_modules/viem/_esm/utils/blob/blobsToCommitments.js
-init_toBytes();
-init_toHex();
-function blobsToCommitments(parameters) {
-  const { kzg } = parameters;
-  const to = parameters.to ?? (typeof parameters.blobs[0] === "string" ? "hex" : "bytes");
-  const blobs = typeof parameters.blobs[0] === "string" ? parameters.blobs.map((x) => hexToBytes(x)) : parameters.blobs;
-  const commitments = [];
-  for (const blob of blobs)
-    commitments.push(Uint8Array.from(kzg.blobToKzgCommitment(blob)));
-  return to === "bytes" ? commitments : commitments.map((x) => bytesToHex(x));
-}
-
-// node_modules/viem/_esm/utils/blob/blobsToProofs.js
-init_toBytes();
-init_toHex();
-function blobsToProofs(parameters) {
-  const { kzg } = parameters;
-  const to = parameters.to ?? (typeof parameters.blobs[0] === "string" ? "hex" : "bytes");
-  const blobs = typeof parameters.blobs[0] === "string" ? parameters.blobs.map((x) => hexToBytes(x)) : parameters.blobs;
-  const commitments = typeof parameters.commitments[0] === "string" ? parameters.commitments.map((x) => hexToBytes(x)) : parameters.commitments;
-  const proofs = [];
-  for (let i = 0;i < blobs.length; i++) {
-    const blob = blobs[i];
-    const commitment = commitments[i];
-    proofs.push(Uint8Array.from(kzg.computeBlobKzgProof(blob, commitment)));
-  }
-  return to === "bytes" ? proofs : proofs.map((x) => bytesToHex(x));
-}
-
-// node_modules/viem/_esm/utils/blob/commitmentToVersionedHash.js
-init_toHex();
-
-// node_modules/@noble/hashes/esm/sha256.js
-init_sha2();
-var sha2563 = sha2562;
-
-// node_modules/viem/_esm/utils/hash/sha256.js
-init_toBytes();
-init_toHex();
-function sha2564(value, to_) {
-  const to = to_ || "hex";
-  const bytes = sha2563(isHex(value, { strict: false }) ? toBytes(value) : value);
-  if (to === "bytes")
-    return bytes;
-  return toHex(bytes);
-}
-
-// node_modules/viem/_esm/utils/blob/commitmentToVersionedHash.js
-function commitmentToVersionedHash(parameters) {
-  const { commitment, version: version5 = 1 } = parameters;
-  const to = parameters.to ?? (typeof commitment === "string" ? "hex" : "bytes");
-  const versionedHash = sha2564(commitment, "bytes");
-  versionedHash.set([version5], 0);
-  return to === "bytes" ? versionedHash : bytesToHex(versionedHash);
-}
-
-// node_modules/viem/_esm/utils/blob/commitmentsToVersionedHashes.js
-function commitmentsToVersionedHashes(parameters) {
-  const { commitments, version: version5 } = parameters;
-  const to = parameters.to ?? (typeof commitments[0] === "string" ? "hex" : "bytes");
-  const hashes = [];
-  for (const commitment of commitments) {
-    hashes.push(commitmentToVersionedHash({
-      commitment,
-      to,
-      version: version5
-    }));
-  }
-  return hashes;
-}
-
-// node_modules/viem/_esm/constants/blob.js
-var blobsPerTransaction = 6;
-var bytesPerFieldElement = 32;
-var fieldElementsPerBlob = 4096;
-var bytesPerBlob = bytesPerFieldElement * fieldElementsPerBlob;
-var maxBytesPerTransaction = bytesPerBlob * blobsPerTransaction - 1 - 1 * fieldElementsPerBlob * blobsPerTransaction;
-
-// node_modules/viem/_esm/errors/blob.js
-init_base();
-
-class BlobSizeTooLargeError extends BaseError {
-  constructor({ maxSize, size: size5 }) {
-    super("Blob size is too large.", {
-      metaMessages: [`Max: ${maxSize} bytes`, `Given: ${size5} bytes`],
-      name: "BlobSizeTooLargeError"
-    });
-  }
-}
-
-class EmptyBlobError extends BaseError {
-  constructor() {
-    super("Blob data must not be empty.", { name: "EmptyBlobError" });
-  }
-}
-
-// node_modules/viem/_esm/utils/blob/toBlobs.js
-init_cursor2();
-init_size();
-init_toBytes();
-init_toHex();
-function toBlobs(parameters) {
-  const to = parameters.to ?? (typeof parameters.data === "string" ? "hex" : "bytes");
-  const data = typeof parameters.data === "string" ? hexToBytes(parameters.data) : parameters.data;
-  const size_ = size2(data);
-  if (!size_)
-    throw new EmptyBlobError;
-  if (size_ > maxBytesPerTransaction)
-    throw new BlobSizeTooLargeError({
-      maxSize: maxBytesPerTransaction,
-      size: size_
-    });
-  const blobs = [];
-  let active = true;
-  let position = 0;
-  while (active) {
-    const blob = createCursor(new Uint8Array(bytesPerBlob));
-    let size5 = 0;
-    while (size5 < fieldElementsPerBlob) {
-      const bytes = data.slice(position, position + (bytesPerFieldElement - 1));
-      blob.pushByte(0);
-      blob.pushBytes(bytes);
-      if (bytes.length < 31) {
-        blob.pushByte(128);
-        active = false;
-        break;
-      }
-      size5++;
-      position += 31;
-    }
-    blobs.push(blob);
-  }
-  return to === "bytes" ? blobs.map((x) => x.bytes) : blobs.map((x) => bytesToHex(x.bytes));
-}
-
-// node_modules/viem/_esm/utils/blob/toBlobSidecars.js
-function toBlobSidecars(parameters) {
-  const { data, kzg, to } = parameters;
-  const blobs = parameters.blobs ?? toBlobs({ data, to });
-  const commitments = parameters.commitments ?? blobsToCommitments({ blobs, kzg, to });
-  const proofs = parameters.proofs ?? blobsToProofs({ blobs, commitments, kzg, to });
-  const sidecars = [];
-  for (let i = 0;i < blobs.length; i++)
-    sidecars.push({
-      blob: blobs[i],
-      commitment: commitments[i],
-      proof: proofs[i]
-    });
-  return sidecars;
-}
-
-// node_modules/viem/_esm/actions/wallet/prepareTransactionRequest.js
-init_lru();
-init_assertRequest();
-
-// node_modules/viem/_esm/utils/transaction/getTransactionType.js
-init_transaction();
-function getTransactionType(transaction) {
-  if (transaction.type)
-    return transaction.type;
-  if (typeof transaction.authorizationList !== "undefined")
-    return "eip7702";
-  if (typeof transaction.blobs !== "undefined" || typeof transaction.blobVersionedHashes !== "undefined" || typeof transaction.maxFeePerBlobGas !== "undefined" || typeof transaction.sidecars !== "undefined")
-    return "eip4844";
-  if (typeof transaction.maxFeePerGas !== "undefined" || typeof transaction.maxPriorityFeePerGas !== "undefined") {
-    return "eip1559";
-  }
-  if (typeof transaction.gasPrice !== "undefined") {
-    if (typeof transaction.accessList !== "undefined")
-      return "eip2930";
-    return "legacy";
-  }
-  throw new InvalidSerializableTransactionError({ transaction });
-}
-// node_modules/viem/_esm/actions/public/fillTransaction.js
-init_transaction();
-
-// node_modules/viem/_esm/utils/errors/getTransactionError.js
-init_node();
-init_transaction();
-init_getNodeError();
-function getTransactionError(err, { docsPath: docsPath7, ...args }) {
-  const cause = (() => {
-    const cause2 = getNodeError(err, args);
-    if (cause2 instanceof UnknownNodeError)
-      return err;
-    return cause2;
-  })();
-  return new TransactionExecutionError(cause, {
-    docsPath: docsPath7,
-    ...args
-  });
-}
-// node_modules/viem/_esm/actions/public/fillTransaction.js
-init_transactionRequest();
-init_assertRequest();
-
-// node_modules/viem/_esm/actions/public/getChainId.js
-init_fromHex();
-async function getChainId(client) {
-  const chainIdHex = await client.request({
-    method: "eth_chainId"
-  }, { dedupe: true });
-  return hexToNumber(chainIdHex);
-}
-
-// node_modules/viem/_esm/actions/public/fillTransaction.js
-async function fillTransaction(client, parameters) {
-  const { account = client.account, accessList, authorizationList, chain = client.chain, blobVersionedHashes, blobs, data, gas, gasPrice, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, nonce: nonce_, nonceManager, to, type, value, ...rest } = parameters;
-  const nonce = await (async () => {
-    if (!account)
-      return nonce_;
-    if (!nonceManager)
-      return nonce_;
-    if (typeof nonce_ !== "undefined")
-      return nonce_;
-    const account_ = parseAccount(account);
-    const chainId = chain ? chain.id : await getAction(client, getChainId, "getChainId")({});
-    return await nonceManager.consume({
-      address: account_.address,
-      chainId,
-      client
-    });
-  })();
-  assertRequest(parameters);
-  const chainFormat = chain?.formatters?.transactionRequest?.format;
-  const format2 = chainFormat || formatTransactionRequest;
-  const request = format2({
-    ...extract(rest, { format: chainFormat }),
-    account: account ? parseAccount(account) : undefined,
-    accessList,
-    authorizationList,
-    blobs,
-    blobVersionedHashes,
-    data,
-    gas,
-    gasPrice,
-    maxFeePerBlobGas,
-    maxFeePerGas,
-    maxPriorityFeePerGas,
-    nonce,
-    to,
-    type,
-    value
-  }, "fillTransaction");
-  try {
-    const response = await client.request({
-      method: "eth_fillTransaction",
-      params: [request]
-    });
-    const format3 = chain?.formatters?.transaction?.format || formatTransaction;
-    const transaction = format3(response.tx);
-    delete transaction.blockHash;
-    delete transaction.blockNumber;
-    delete transaction.r;
-    delete transaction.s;
-    delete transaction.transactionIndex;
-    delete transaction.v;
-    delete transaction.yParity;
-    transaction.data = transaction.input;
-    const hasFeePayerSignature = typeof transaction.feePayerSignature !== "undefined" && transaction.feePayerSignature !== null;
-    if (hasFeePayerSignature && typeof nonce !== "undefined" && transaction.nonce !== nonce)
-      throw new FeePayerNonceMismatchError({
-        filledNonce: transaction.nonce,
-        requestedNonce: nonce
-      });
-    if (!hasFeePayerSignature) {
-      if (transaction.gas)
-        transaction.gas = parameters.gas ?? transaction.gas;
-      if (transaction.gasPrice)
-        transaction.gasPrice = parameters.gasPrice ?? transaction.gasPrice;
-      if (transaction.maxFeePerBlobGas)
-        transaction.maxFeePerBlobGas = parameters.maxFeePerBlobGas ?? transaction.maxFeePerBlobGas;
-      if (transaction.maxFeePerGas)
-        transaction.maxFeePerGas = parameters.maxFeePerGas ?? transaction.maxFeePerGas;
-      if (transaction.maxPriorityFeePerGas)
-        transaction.maxPriorityFeePerGas = parameters.maxPriorityFeePerGas ?? transaction.maxPriorityFeePerGas;
-      if (typeof transaction.nonce !== "undefined")
-        transaction.nonce = parameters.nonce ?? transaction.nonce;
-      const feeMultiplier = await (async () => {
-        if (typeof chain?.fees?.baseFeeMultiplier === "function") {
-          const block = await getAction(client, getBlock, "getBlock")({});
-          return chain.fees.baseFeeMultiplier({
-            block,
-            client,
-            request: parameters
-          });
-        }
-        return chain?.fees?.baseFeeMultiplier ?? 1.2;
-      })();
-      if (feeMultiplier < 1)
-        throw new BaseFeeScalarError;
-      const decimals = feeMultiplier.toString().split(".")[1]?.length ?? 0;
-      const denominator = 10 ** decimals;
-      const multiplyFee = (base) => base * BigInt(Math.round(feeMultiplier * denominator)) / BigInt(denominator);
-      if (transaction.maxFeePerGas && !parameters.maxFeePerGas)
-        transaction.maxFeePerGas = multiplyFee(transaction.maxFeePerGas);
-      if (transaction.gasPrice && !parameters.gasPrice)
-        transaction.gasPrice = multiplyFee(transaction.gasPrice);
-    }
-    return {
-      raw: response.raw,
-      transaction: {
-        from: request.from,
-        ...transaction
-      },
-      ...response.capabilities ? { capabilities: response.capabilities } : {}
-    };
-  } catch (err) {
-    throw getTransactionError(err, {
-      ...parameters,
-      chain: client.chain
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/wallet/prepareTransactionRequest.js
-var defaultParameters = [
-  "blobVersionedHashes",
-  "chainId",
-  "fees",
-  "gas",
-  "nonce",
-  "type"
-];
-var eip1559NetworkCache = /* @__PURE__ */ new Map;
-var supportsFillTransaction = /* @__PURE__ */ new LruMap(128);
-async function prepareTransactionRequest(client, args) {
-  let request = args;
-  request.account ??= client.account;
-  request.parameters ??= defaultParameters;
-  const { account: account_, chain = client.chain, nonceManager, parameters } = request;
-  const prepareTransactionRequest2 = (() => {
-    if (typeof chain?.prepareTransactionRequest === "function")
-      return {
-        fn: chain.prepareTransactionRequest,
-        runAt: ["beforeFillTransaction"]
-      };
-    if (Array.isArray(chain?.prepareTransactionRequest))
-      return {
-        fn: chain.prepareTransactionRequest[0],
-        runAt: chain.prepareTransactionRequest[1].runAt
-      };
-    return;
-  })();
-  let chainId;
-  async function getChainId2() {
-    if (chainId)
-      return chainId;
-    if (typeof request.chainId !== "undefined")
-      return request.chainId;
-    if (chain)
-      return chain.id;
-    const chainId_ = await getAction(client, getChainId, "getChainId")({});
-    chainId = chainId_;
-    return chainId;
-  }
-  let account = account_ ? parseAccount(account_) : account_;
-  let nonce = request.nonce;
-  if (prepareTransactionRequest2?.fn && prepareTransactionRequest2.runAt?.includes("beforeFillTransaction")) {
-    request = await prepareTransactionRequest2.fn({ ...request, chain }, {
-      client,
-      phase: "beforeFillTransaction"
-    });
-    nonce ??= request.nonce;
-    const sender = request.account ?? request.from;
-    account = sender ? parseAccount(sender) : undefined;
-  }
-  if (parameters.includes("nonce") && typeof nonce === "undefined" && account && nonceManager) {
-    const chainId2 = await getChainId2();
-    nonce = await nonceManager.consume({
-      address: account.address,
-      chainId: chainId2,
-      client
-    });
-  }
-  const attemptFill = (() => {
-    if ((parameters.includes("blobVersionedHashes") || parameters.includes("sidecars")) && request.kzg && request.blobs)
-      return false;
-    if (parameters.length > 0 && "feePayer" in request && request.feePayer && !(("feePayerSignature" in request) && request.feePayerSignature))
-      return true;
-    if (supportsFillTransaction.get(client.uid) === false)
-      return false;
-    const shouldAttempt = ["fees", "gas"].some((parameter) => parameters.includes(parameter));
-    if (!shouldAttempt)
-      return false;
-    if (parameters.includes("chainId") && typeof request.chainId !== "number")
-      return true;
-    if (parameters.includes("nonce") && typeof nonce !== "number")
-      return true;
-    if (parameters.includes("fees") && typeof request.gasPrice !== "bigint" && (typeof request.maxFeePerGas !== "bigint" || typeof request.maxPriorityFeePerGas !== "bigint"))
-      return true;
-    if (parameters.includes("gas") && typeof request.gas !== "bigint")
-      return true;
-    return false;
-  })();
-  const fillResult = attemptFill ? await getAction(client, fillTransaction, "fillTransaction")({ ...request, nonce }).then((result) => {
-    const { chainId: chainId2, from: from4, gas: gas2, gasPrice, nonce: nonce2, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, type: type2, ...rest } = result.transaction;
-    const feeToken = "feeToken" in rest ? rest.feeToken : undefined;
-    const hasFilledFeePayerSignature = "feePayerSignature" in rest && rest.feePayerSignature !== null && typeof rest.feePayerSignature !== "undefined";
-    const shouldUseFilledFeeToken = typeof feeToken !== "undefined" && feeToken !== null && (!("feeToken" in request) || hasFilledFeePayerSignature);
-    supportsFillTransaction.set(client.uid, true);
-    return {
-      ...request,
-      ...from4 ? { from: from4 } : {},
-      ...type2 && !request.type ? { type: type2 } : {},
-      ...typeof chainId2 !== "undefined" ? { chainId: chainId2 } : {},
-      ...typeof gas2 !== "undefined" ? { gas: gas2 } : {},
-      ...typeof gasPrice !== "undefined" ? { gasPrice } : {},
-      ...typeof nonce2 !== "undefined" ? { nonce: nonce2 } : {},
-      ...typeof maxFeePerBlobGas !== "undefined" && request.type !== "legacy" && request.type !== "eip2930" ? { maxFeePerBlobGas } : {},
-      ...typeof maxFeePerGas !== "undefined" && request.type !== "legacy" && request.type !== "eip2930" ? { maxFeePerGas } : {},
-      ...typeof maxPriorityFeePerGas !== "undefined" && request.type !== "legacy" && request.type !== "eip2930" ? { maxPriorityFeePerGas } : {},
-      ..."nonceKey" in rest && typeof rest.nonceKey !== "undefined" ? { nonceKey: rest.nonceKey } : {},
-      ..."keyAuthorization" in rest && typeof rest.keyAuthorization !== "undefined" && rest.keyAuthorization !== null && !("keyAuthorization" in request) ? { keyAuthorization: rest.keyAuthorization } : {},
-      ..."feePayerSignature" in rest && typeof rest.feePayerSignature !== "undefined" && rest.feePayerSignature !== null ? { feePayerSignature: rest.feePayerSignature } : {},
-      ...shouldUseFilledFeeToken ? { feeToken } : {},
-      ...result.capabilities ? { _capabilities: result.capabilities } : {}
-    };
-  }).catch((e) => {
-    const error61 = e;
-    if (error61.name !== "TransactionExecutionError")
-      return request;
-    const nonceMismatch = error61.walk?.((error62) => error62 instanceof FeePayerNonceMismatchError);
-    if (nonceMismatch)
-      throw e;
-    const executionReverted = error61.walk?.((e2) => {
-      const error62 = e2;
-      return error62.name === "ExecutionRevertedError";
-    });
-    if (executionReverted)
-      throw e;
-    const unsupported = error61.walk?.((e2) => {
-      const error62 = e2;
-      return error62.name === "MethodNotFoundRpcError" || error62.name === "MethodNotSupportedRpcError" || error62.message?.includes("eth_fillTransaction is not available");
-    });
-    if (unsupported)
-      supportsFillTransaction.set(client.uid, false);
-    return request;
-  }) : request;
-  nonce ??= fillResult.nonce;
-  request = {
-    ...fillResult,
-    ...account ? { from: account?.address } : {},
-    ...typeof nonce !== "undefined" ? { nonce } : {}
-  };
-  const { blobs, gas, kzg, type } = request;
-  if (prepareTransactionRequest2?.fn && prepareTransactionRequest2.runAt?.includes("beforeFillParameters")) {
-    request = await prepareTransactionRequest2.fn({ ...request, chain }, {
-      client,
-      phase: "beforeFillParameters"
-    });
-  }
-  let block;
-  async function getBlock2() {
-    if (block)
-      return block;
-    block = await getAction(client, getBlock, "getBlock")({ blockTag: "latest" });
-    return block;
-  }
-  if (parameters.includes("nonce") && typeof nonce === "undefined" && account && !nonceManager)
-    request.nonce = await getAction(client, getTransactionCount, "getTransactionCount")({
-      address: account.address,
-      blockTag: "pending"
-    });
-  if ((parameters.includes("blobVersionedHashes") || parameters.includes("sidecars")) && blobs && kzg) {
-    const commitments = blobsToCommitments({ blobs, kzg });
-    if (parameters.includes("blobVersionedHashes")) {
-      const versionedHashes = commitmentsToVersionedHashes({
-        commitments,
-        to: "hex"
-      });
-      request.blobVersionedHashes = versionedHashes;
-    }
-    if (parameters.includes("sidecars")) {
-      const proofs = blobsToProofs({ blobs, commitments, kzg });
-      const sidecars = toBlobSidecars({
-        blobs,
-        commitments,
-        proofs,
-        to: "hex"
-      });
-      request.sidecars = sidecars;
-    }
-  }
-  if (parameters.includes("chainId"))
-    request.chainId = await getChainId2();
-  if ((parameters.includes("fees") || parameters.includes("type")) && typeof type === "undefined") {
-    try {
-      request.type = getTransactionType(request);
-    } catch {
-      let isEip1559Network = eip1559NetworkCache.get(client.uid);
-      if (typeof isEip1559Network === "undefined") {
-        const block2 = await getBlock2();
-        isEip1559Network = typeof block2?.baseFeePerGas === "bigint";
-        eip1559NetworkCache.set(client.uid, isEip1559Network);
-      }
-      request.type = isEip1559Network ? "eip1559" : "legacy";
-    }
-  }
-  if (parameters.includes("fees")) {
-    if (request.type !== "legacy" && request.type !== "eip2930") {
-      if (typeof request.maxFeePerGas === "undefined" || typeof request.maxPriorityFeePerGas === "undefined") {
-        const block2 = await getBlock2();
-        const { maxFeePerGas, maxPriorityFeePerGas } = await internal_estimateFeesPerGas(client, {
-          block: block2,
-          chain,
-          request
-        });
-        if (typeof request.maxPriorityFeePerGas === "undefined" && request.maxFeePerGas && request.maxFeePerGas < maxPriorityFeePerGas)
-          throw new MaxFeePerGasTooLowError({
-            maxPriorityFeePerGas
-          });
-        request.maxPriorityFeePerGas = maxPriorityFeePerGas;
-        request.maxFeePerGas = maxFeePerGas;
-      }
-    } else {
-      if (typeof request.maxFeePerGas !== "undefined" || typeof request.maxPriorityFeePerGas !== "undefined")
-        throw new Eip1559FeesNotSupportedError;
-      if (typeof request.gasPrice === "undefined") {
-        const block2 = await getBlock2();
-        const { gasPrice: gasPrice_ } = await internal_estimateFeesPerGas(client, {
-          block: block2,
-          chain,
-          request,
-          type: "legacy"
-        });
-        request.gasPrice = gasPrice_;
-      }
-    }
-  }
-  if (parameters.includes("gas") && typeof gas === "undefined")
-    request.gas = await getAction(client, estimateGas, "estimateGas")({
-      ...request,
-      account,
-      prepare: account?.type === "local" ? [] : ["blobVersionedHashes"]
-    });
-  if (prepareTransactionRequest2?.fn && prepareTransactionRequest2.runAt?.includes("afterFillParameters"))
-    request = await prepareTransactionRequest2.fn({ ...request, chain }, {
-      client,
-      phase: "afterFillParameters"
-    });
-  assertRequest(request);
-  delete request.parameters;
-  return request;
-}
-
-// node_modules/viem/_esm/actions/public/estimateGas.js
-async function estimateGas(client, args) {
-  const { account: account_ = client.account, prepare = true } = args;
-  const account = account_ ? parseAccount(account_) : undefined;
-  const parameters = (() => {
-    if (Array.isArray(prepare))
-      return prepare;
-    if (account?.type !== "local")
-      return ["blobVersionedHashes"];
-    return;
-  })();
-  try {
-    const to = await (async () => {
-      if (args.to)
-        return args.to;
-      if (args.authorizationList && args.authorizationList.length > 0)
-        return await recoverAuthorizationAddress({
-          authorization: args.authorizationList[0]
-        }).catch(() => {
-          throw new BaseError("`to` is required. Could not infer from `authorizationList`");
-        });
-      return;
-    })();
-    const { accessList, authorizationList, blobs, blobVersionedHashes, blockNumber, blockTag, data, gas, gasPrice, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, nonce, value, stateOverride, ...rest } = prepare ? await prepareTransactionRequest(client, {
-      ...args,
-      parameters,
-      to
-    }) : args;
-    if (gas && args.gas !== gas)
-      return gas;
-    const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
-    const block = blockNumberHex || blockTag;
-    const rpcStateOverride = serializeStateOverride(stateOverride);
-    assertRequest(args);
-    const chainFormat = client.chain?.formatters?.transactionRequest?.format;
-    const format2 = chainFormat || formatTransactionRequest;
-    const request = format2({
-      ...extract(rest, { format: chainFormat }),
-      account,
-      accessList,
-      authorizationList,
-      blobs,
-      blobVersionedHashes,
-      data,
-      gasPrice,
-      maxFeePerBlobGas,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
-      nonce,
-      to,
-      value
-    }, "estimateGas");
-    return BigInt(await client.request({
-      method: "eth_estimateGas",
-      params: rpcStateOverride ? [
-        request,
-        block ?? client.experimental_blockTag ?? "latest",
-        rpcStateOverride
-      ] : block ? [request, block] : [request]
-    }));
-  } catch (err) {
-    throw getEstimateGasError(err, {
-      ...args,
-      account,
-      chain: client.chain
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/public/estimateContractGas.js
-async function estimateContractGas(client, parameters) {
-  const { abi, address, args, functionName, dataSuffix = typeof client.dataSuffix === "string" ? client.dataSuffix : client.dataSuffix?.value, ...request } = parameters;
-  const data = encodeFunctionData({
-    abi,
-    args,
-    functionName
-  });
-  try {
-    const gas = await getAction(client, estimateGas, "estimateGas")({
-      data: `${data}${dataSuffix ? dataSuffix.replace("0x", "") : ""}`,
-      to: address,
-      ...request
-    });
-    return gas;
-  } catch (error61) {
-    const account = request.account ? parseAccount(request.account) : undefined;
-    throw getContractError(error61, {
-      abi,
-      address,
-      args,
-      docsPath: "/docs/contract/estimateContractGas",
-      functionName,
-      sender: account?.address
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/public/getBalance.js
-init_abis();
-init_decodeFunctionResult();
-init_encodeFunctionData();
-init_formatBlockParameter();
-init_call();
-async function getBalance(client, { address, blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest", requireCanonical }) {
-  const block = formatBlockParameter({
-    blockHash,
-    blockNumber,
-    blockTag,
-    requireCanonical
-  });
-  if (client.batch?.multicall && client.chain?.contracts?.multicall3) {
-    const multicall3Address = client.chain.contracts.multicall3.address;
-    const calldata = encodeFunctionData({
-      abi: multicall3Abi,
-      functionName: "getEthBalance",
-      args: [address]
-    });
-    const { data } = await getAction(client, call, "call")({
-      to: multicall3Address,
-      data: calldata,
-      blockHash,
-      blockNumber,
-      blockTag,
-      requireCanonical
-    });
-    return decodeFunctionResult({
-      abi: multicall3Abi,
-      functionName: "getEthBalance",
-      args: [address],
-      data: data || "0x"
-    });
-  }
-  const balance = await client.request({
-    method: "eth_getBalance",
-    params: [address, block]
-  });
-  return BigInt(balance);
-}
-
-// node_modules/viem/_esm/actions/public/getBlobBaseFee.js
-async function getBlobBaseFee(client) {
-  const baseFee = await client.request({
-    method: "eth_blobBaseFee"
-  });
-  return BigInt(baseFee);
-}
-
-// node_modules/viem/_esm/utils/promise/withCache.js
-var promiseCache = /* @__PURE__ */ new Map;
-var responseCache = /* @__PURE__ */ new Map;
-function getCache(cacheKey) {
-  const buildCache = (cacheKey2, cache) => ({
-    clear: () => cache.delete(cacheKey2),
-    get: () => cache.get(cacheKey2),
-    set: (data) => cache.set(cacheKey2, data)
-  });
-  const promise2 = buildCache(cacheKey, promiseCache);
-  const response = buildCache(cacheKey, responseCache);
-  return {
-    clear: () => {
-      promise2.clear();
-      response.clear();
-    },
-    promise: promise2,
-    response
-  };
-}
-async function withCache(fn, { cacheKey, cacheTime = Number.POSITIVE_INFINITY }) {
-  const cache = getCache(cacheKey);
-  const response = cache.response.get();
-  if (response && cacheTime > 0) {
-    const age = Date.now() - response.created.getTime();
-    if (age < cacheTime)
-      return response.data;
-  }
-  let promise2 = cache.promise.get();
-  if (!promise2) {
-    promise2 = fn();
-    cache.promise.set(promise2);
-  }
-  try {
-    const data = await promise2;
-    cache.response.set({ created: new Date, data });
-    return data;
-  } finally {
-    cache.promise.clear();
-  }
-}
-
-// node_modules/viem/_esm/actions/public/getBlockNumber.js
-var cacheKey = (id) => `blockNumber.${id}`;
-async function getBlockNumber(client, { cacheTime = client.cacheTime } = {}) {
-  const blockNumberHex = await withCache(() => client.request({
-    method: "eth_blockNumber"
-  }), { cacheKey: cacheKey(client.uid), cacheTime });
-  return BigInt(blockNumberHex);
-}
-
-// node_modules/viem/_esm/actions/public/getBlockReceipts.js
-init_toHex();
-
-// node_modules/viem/_esm/utils/formatters/transactionReceipt.js
-init_fromHex();
-
-// node_modules/viem/_esm/utils/formatters/log.js
-function formatLog(log, { args, eventName } = {}) {
-  return {
-    ...log,
-    blockHash: log.blockHash ? log.blockHash : null,
-    blockNumber: log.blockNumber ? BigInt(log.blockNumber) : null,
-    blockTimestamp: log.blockTimestamp ? BigInt(log.blockTimestamp) : log.blockTimestamp === null ? null : undefined,
-    logIndex: log.logIndex ? Number(log.logIndex) : null,
-    transactionHash: log.transactionHash ? log.transactionHash : null,
-    transactionIndex: log.transactionIndex ? Number(log.transactionIndex) : null,
-    ...eventName ? { args, eventName } : {}
-  };
-}
-
-// node_modules/viem/_esm/utils/formatters/transactionReceipt.js
-var receiptStatuses = {
-  "0x0": "reverted",
-  "0x1": "success"
-};
-function formatTransactionReceipt(transactionReceipt, _) {
-  const receipt = {
-    ...transactionReceipt,
-    blockNumber: transactionReceipt.blockNumber ? BigInt(transactionReceipt.blockNumber) : null,
-    contractAddress: transactionReceipt.contractAddress ? transactionReceipt.contractAddress : null,
-    cumulativeGasUsed: transactionReceipt.cumulativeGasUsed ? BigInt(transactionReceipt.cumulativeGasUsed) : null,
-    effectiveGasPrice: transactionReceipt.effectiveGasPrice ? BigInt(transactionReceipt.effectiveGasPrice) : null,
-    gasUsed: transactionReceipt.gasUsed ? BigInt(transactionReceipt.gasUsed) : null,
-    logs: transactionReceipt.logs ? transactionReceipt.logs.map((log) => formatLog(log)) : null,
-    to: transactionReceipt.to ? transactionReceipt.to : null,
-    transactionIndex: transactionReceipt.transactionIndex ? hexToNumber(transactionReceipt.transactionIndex) : null,
-    status: transactionReceipt.status ? receiptStatuses[transactionReceipt.status] : null,
-    type: transactionReceipt.type ? transactionType[transactionReceipt.type] || transactionReceipt.type : null
-  };
-  if (transactionReceipt.blobGasPrice)
-    receipt.blobGasPrice = BigInt(transactionReceipt.blobGasPrice);
-  if (transactionReceipt.blobGasUsed)
-    receipt.blobGasUsed = BigInt(transactionReceipt.blobGasUsed);
-  return receipt;
-}
-
-// node_modules/viem/_esm/actions/public/getBlockReceipts.js
-async function getBlockReceipts(client, { blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest" } = {}) {
-  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
-  const receipts = await client.request({
-    method: "eth_getBlockReceipts",
-    params: [blockHash || blockNumberHex || blockTag]
-  }, { dedupe: Boolean(blockHash || blockNumberHex) });
-  if (!receipts)
-    throw new BlockNotFoundError({ blockHash, blockNumber });
-  const format2 = client.chain?.formatters?.transactionReceipt?.format || formatTransactionReceipt;
-  return receipts.map((receipt) => format2(receipt, "getBlockReceipts"));
-}
-
-// node_modules/viem/_esm/actions/public/getBlockTransactionCount.js
-init_fromHex();
-init_toHex();
-async function getBlockTransactionCount(client, { blockHash, blockNumber, blockTag = "latest" } = {}) {
-  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
-  let count;
-  if (blockHash) {
-    count = await client.request({
-      method: "eth_getBlockTransactionCountByHash",
-      params: [blockHash]
-    }, { dedupe: true });
-  } else {
-    count = await client.request({
-      method: "eth_getBlockTransactionCountByNumber",
-      params: [blockNumberHex || blockTag]
-    }, { dedupe: Boolean(blockNumberHex) });
-  }
-  return hexToNumber(count);
-}
-
-// node_modules/viem/_esm/actions/public/getCode.js
-init_formatBlockParameter();
-async function getCode(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical }) {
-  const block = formatBlockParameter({
-    blockHash,
-    blockNumber,
-    blockTag,
-    requireCanonical
-  });
-  const hex3 = await client.request({
-    method: "eth_getCode",
-    params: [address, block]
-  }, {
-    dedupe: typeof blockNumber === "bigint" || blockHash !== undefined
-  });
-  if (hex3 === "0x")
-    return;
-  return hex3;
-}
-
-// node_modules/viem/_esm/actions/public/getContractEvents.js
-init_getAbiItem();
-
-// node_modules/viem/_esm/utils/abi/parseEventLogs.js
-init_isAddressEqual();
-init_toBytes();
-init_keccak256();
-init_toEventSelector();
-
-// node_modules/viem/_esm/utils/abi/decodeEventLog.js
-init_abi();
-init_cursor();
-init_size();
-init_toEventSelector();
-init_decodeAbiParameters();
-init_formatAbiItem();
-var docsPath7 = "/docs/contract/decodeEventLog";
-function decodeEventLog(parameters) {
-  const { abi, data, strict: strict_, topics } = parameters;
-  const strict = strict_ ?? true;
-  const [signature, ...argTopics] = topics;
-  if (!signature)
-    throw new AbiEventSignatureEmptyTopicsError({ docsPath: docsPath7 });
-  const abiItem = abi.find((x) => x.type === "event" && signature === toEventSelector(formatAbiItem(x)));
-  if (!(abiItem && ("name" in abiItem)) || abiItem.type !== "event")
-    throw new AbiEventSignatureNotFoundError(signature, { docsPath: docsPath7 });
-  const { name, inputs } = abiItem;
-  const isUnnamed = inputs?.some((x) => !(("name" in x) && x.name));
-  const args = isUnnamed ? [] : {};
-  const indexedInputs = inputs.map((x, i) => [x, i]).filter(([x]) => ("indexed" in x) && x.indexed);
-  const missingIndexedInputs = [];
-  for (let i = 0;i < indexedInputs.length; i++) {
-    const [param, argIndex] = indexedInputs[i];
-    const topic = argTopics[i];
-    if (!topic) {
-      if (strict)
-        throw new DecodeLogTopicsMismatch({
-          abiItem,
-          param
-        });
-      missingIndexedInputs.push([param, argIndex]);
-      continue;
-    }
-    args[isUnnamed ? argIndex : param.name || argIndex] = decodeTopic({
-      param,
-      value: topic
-    });
-  }
-  const nonIndexedInputs = inputs.filter((x) => !(("indexed" in x) && x.indexed));
-  const inputsToDecode = strict ? nonIndexedInputs : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs];
-  if (inputsToDecode.length > 0) {
-    if (data && data !== "0x") {
-      try {
-        const decodedData = decodeAbiParameters(inputsToDecode, data);
-        if (decodedData) {
-          let dataIndex = 0;
-          if (!strict) {
-            for (const [param, argIndex] of missingIndexedInputs) {
-              args[isUnnamed ? argIndex : param.name || argIndex] = decodedData[dataIndex++];
-            }
-          }
-          if (isUnnamed) {
-            for (let i = 0;i < inputs.length; i++)
-              if (args[i] === undefined && dataIndex < decodedData.length)
-                args[i] = decodedData[dataIndex++];
-          } else
-            for (let i = 0;i < nonIndexedInputs.length; i++)
-              args[nonIndexedInputs[i].name] = decodedData[dataIndex++];
-        }
-      } catch (err) {
-        if (strict) {
-          if (err instanceof AbiDecodingDataSizeTooSmallError || err instanceof PositionOutOfBoundsError)
-            throw new DecodeLogDataMismatch({
-              abiItem,
-              data,
-              params: inputsToDecode,
-              size: size2(data)
-            });
-          throw err;
-        }
-      }
-    } else if (strict) {
-      throw new DecodeLogDataMismatch({
-        abiItem,
-        data: "0x",
-        params: inputsToDecode,
-        size: 0
-      });
-    }
-  }
-  return {
-    eventName: name,
-    args: Object.values(args).length > 0 ? args : undefined
-  };
-}
-function decodeTopic({ param, value }) {
-  if (param.type === "string" || param.type === "bytes" || param.type === "tuple" || param.type.match(/^(.*)\[(\d+)?\]$/))
-    return value;
-  const decodedArg = decodeAbiParameters([param], value) || [];
-  return decodedArg[0];
-}
-
-// node_modules/viem/_esm/utils/abi/parseEventLogs.js
-function parseEventLogs(parameters) {
-  const { abi, args, logs, strict = true } = parameters;
-  const eventName = (() => {
-    if (!parameters.eventName)
-      return;
-    if (Array.isArray(parameters.eventName))
-      return parameters.eventName;
-    return [parameters.eventName];
-  })();
-  const abiTopics = abi.filter((abiItem) => abiItem.type === "event").map((abiItem) => ({
-    abi: abiItem,
-    selector: toEventSelector(abiItem)
-  }));
-  return logs.map((log) => {
-    const formattedLog = typeof log.blockNumber === "string" ? formatLog(log) : log;
-    const abiItems = abiTopics.filter((abiTopic) => formattedLog.topics[0] === abiTopic.selector);
-    if (abiItems.length === 0)
-      return null;
-    let event;
-    let abiItem;
-    for (const item of abiItems) {
-      try {
-        event = decodeEventLog({
-          ...formattedLog,
-          abi: [item.abi],
-          strict: true
-        });
-        abiItem = item;
-        break;
-      } catch {}
-    }
-    if (!event && !strict) {
-      abiItem = abiItems[0];
-      try {
-        event = decodeEventLog({
-          data: formattedLog.data,
-          topics: formattedLog.topics,
-          abi: [abiItem.abi],
-          strict: false
-        });
-      } catch {
-        const isUnnamed = abiItem.abi.inputs?.some((x) => !(("name" in x) && x.name));
-        return {
-          ...formattedLog,
-          args: isUnnamed ? [] : {},
-          eventName: abiItem.abi.name
-        };
-      }
-    }
-    if (!event || !abiItem)
-      return null;
-    if (eventName && !eventName.includes(event.eventName))
-      return null;
-    if (!includesArgs({
-      args: event.args,
-      inputs: abiItem.abi.inputs,
-      matchArgs: args
-    }))
-      return null;
-    return { ...event, ...formattedLog };
-  }).filter(Boolean);
-}
-function includesArgs(parameters) {
-  const { args, inputs, matchArgs } = parameters;
-  if (!matchArgs)
-    return true;
-  if (!args)
-    return false;
-  function isEqual(input2, value, arg) {
-    try {
-      if (input2.type === "address")
-        return isAddressEqual(value, arg);
-      if (input2.type === "string" || input2.type === "bytes")
-        return keccak256(toBytes(value)) === arg;
-      return value === arg;
-    } catch {
-      return false;
-    }
-  }
-  if (Array.isArray(args) && Array.isArray(matchArgs)) {
-    return matchArgs.every((value, index2) => {
-      if (value === null || value === undefined)
-        return true;
-      const input2 = inputs[index2];
-      if (!input2)
-        return false;
-      const value_ = Array.isArray(value) ? value : [value];
-      return value_.some((value2) => isEqual(input2, value2, args[index2]));
-    });
-  }
-  if (typeof args === "object" && !Array.isArray(args) && typeof matchArgs === "object" && !Array.isArray(matchArgs))
-    return Object.entries(matchArgs).every(([key, value]) => {
-      if (value === null || value === undefined)
-        return true;
-      const input2 = inputs.find((input3) => input3.name === key);
-      if (!input2)
-        return false;
-      const value_ = Array.isArray(value) ? value : [value];
-      return value_.some((value2) => isEqual(input2, value2, args[key]));
-    });
-  return false;
-}
-
-// node_modules/viem/_esm/actions/public/getLogs.js
-init_toHex();
-async function getLogs(client, { address, blockHash, fromBlock, toBlock, event, events: events_, args, strict: strict_ } = {}) {
-  const strict = strict_ ?? false;
-  const events = events_ ?? (event ? [event] : undefined);
-  let topics = [];
-  if (events) {
-    const encoded = events.flatMap((event2) => encodeEventTopics({
-      abi: [event2],
-      eventName: event2.name,
-      args: events_ ? undefined : args
-    }));
-    topics = [encoded];
-    if (event)
-      topics = topics[0];
-  }
-  let logs;
-  if (blockHash) {
-    logs = await client.request({
-      method: "eth_getLogs",
-      params: [{ address, topics, blockHash }]
-    });
-  } else {
-    logs = await client.request({
-      method: "eth_getLogs",
-      params: [
-        {
-          address,
-          topics,
-          fromBlock: typeof fromBlock === "bigint" ? numberToHex(fromBlock) : fromBlock,
-          toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock
-        }
-      ]
-    });
-  }
-  const formattedLogs = logs.map((log) => formatLog(log));
-  if (!events)
-    return formattedLogs;
-  return parseEventLogs({
-    abi: events,
-    args,
-    logs: formattedLogs,
-    strict
-  });
-}
-
-// node_modules/viem/_esm/actions/public/getContractEvents.js
-async function getContractEvents(client, parameters) {
-  const { abi, address, args, blockHash, eventName, fromBlock, toBlock, strict } = parameters;
-  const event = eventName ? getAbiItem({ abi, name: eventName }) : undefined;
-  const events = !event ? abi.filter((x) => x.type === "event") : undefined;
-  return getAction(client, getLogs, "getLogs")({
-    address,
-    args,
-    blockHash,
-    event,
-    events,
-    fromBlock,
-    toBlock,
-    strict
-  });
-}
-
-// node_modules/viem/_esm/actions/public/getDelegation.js
-init_getAddress();
-init_size();
-init_slice();
-async function getDelegation(client, { address, blockNumber, blockTag = "latest" }) {
-  const code = await getCode(client, {
-    address,
-    ...blockNumber !== undefined ? { blockNumber } : { blockTag }
-  });
-  if (!code)
-    return;
-  if (size2(code) !== 23)
-    return;
-  if (!code.startsWith("0xef0100"))
-    return;
-  return getAddress(slice(code, 3, 23));
-}
-
-// node_modules/viem/_esm/errors/eip712.js
-init_base();
-
-class Eip712DomainNotFoundError extends BaseError {
-  constructor({ address }) {
-    super(`No EIP-712 domain found on contract "${address}".`, {
-      metaMessages: [
-        "Ensure that:",
-        `- The contract is deployed at the address "${address}".`,
-        "- `eip712Domain()` function exists on the contract.",
-        "- `eip712Domain()` function matches signature to ERC-5267 specification."
-      ],
-      name: "Eip712DomainNotFoundError"
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/public/getEip712Domain.js
-async function getEip712Domain(client, parameters) {
-  const { address, factory, factoryData } = parameters;
-  try {
-    const [fields, name, version5, chainId, verifyingContract, salt, extensions] = await getAction(client, readContract, "readContract")({
-      abi,
-      address,
-      functionName: "eip712Domain",
-      factory,
-      factoryData
-    });
-    return {
-      domain: {
-        name,
-        version: version5,
-        chainId: Number(chainId),
-        verifyingContract,
-        salt
-      },
-      extensions,
-      fields
-    };
-  } catch (e) {
-    const error61 = e;
-    if (error61.name === "ContractFunctionExecutionError" && error61.cause.name === "ContractFunctionZeroDataError") {
-      throw new Eip712DomainNotFoundError({ address });
-    }
-    throw error61;
-  }
-}
-var abi = [
-  {
-    inputs: [],
-    name: "eip712Domain",
-    outputs: [
-      { name: "fields", type: "bytes1" },
-      { name: "name", type: "string" },
-      { name: "version", type: "string" },
-      { name: "chainId", type: "uint256" },
-      { name: "verifyingContract", type: "address" },
-      { name: "salt", type: "bytes32" },
-      { name: "extensions", type: "uint256[]" }
-    ],
-    stateMutability: "view",
-    type: "function"
-  }
-];
-
-// node_modules/viem/_esm/actions/public/getFeeHistory.js
-init_toHex();
-
-// node_modules/viem/_esm/utils/formatters/feeHistory.js
-function formatFeeHistory(feeHistory) {
-  return {
-    baseFeePerGas: feeHistory.baseFeePerGas.map((value) => BigInt(value)),
-    gasUsedRatio: feeHistory.gasUsedRatio,
-    oldestBlock: BigInt(feeHistory.oldestBlock),
-    reward: feeHistory.reward?.map((reward) => reward.map((value) => BigInt(value)))
-  };
-}
-
-// node_modules/viem/_esm/actions/public/getFeeHistory.js
-async function getFeeHistory(client, { blockCount, blockNumber, blockTag = "latest", rewardPercentiles }) {
-  const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
-  const feeHistory = await client.request({
-    method: "eth_feeHistory",
-    params: [
-      numberToHex(blockCount),
-      blockNumberHex || blockTag,
-      rewardPercentiles
-    ]
-  }, { dedupe: Boolean(blockNumberHex) });
-  return formatFeeHistory(feeHistory);
-}
-
-// node_modules/viem/_esm/actions/public/getFilterChanges.js
-async function getFilterChanges(_client, { filter }) {
-  const strict = "strict" in filter && filter.strict;
-  const logs = await filter.request({
-    method: "eth_getFilterChanges",
-    params: [filter.id]
-  });
-  if (typeof logs[0] === "string")
-    return logs;
-  const formattedLogs = logs.map((log) => formatLog(log));
-  if (!("abi" in filter) || !filter.abi)
-    return formattedLogs;
-  return parseEventLogs({
-    abi: filter.abi,
-    logs: formattedLogs,
-    strict
-  });
-}
-
-// node_modules/viem/_esm/actions/public/getFilterLogs.js
-async function getFilterLogs(_client, { filter }) {
-  const strict = filter.strict ?? false;
-  const logs = await filter.request({
-    method: "eth_getFilterLogs",
-    params: [filter.id]
-  });
-  const formattedLogs = logs.map((log) => formatLog(log));
-  if (!filter.abi)
-    return formattedLogs;
-  return parseEventLogs({
-    abi: filter.abi,
-    logs: formattedLogs,
-    strict
-  });
-}
-
-// node_modules/viem/_esm/actions/public/getProof.js
-init_formatBlockParameter();
-
-// node_modules/viem/_esm/utils/index.js
-init_encodeFunctionData();
-init_fromHex();
-
-// node_modules/viem/_esm/utils/formatters/proof.js
-function formatStorageProof(storageProof) {
-  return storageProof.map((proof) => ({
-    ...proof,
-    value: BigInt(proof.value)
-  }));
-}
-function formatProof(proof) {
-  return {
-    ...proof,
-    balance: proof.balance ? BigInt(proof.balance) : undefined,
-    nonce: proof.nonce ? hexToNumber(proof.nonce) : undefined,
-    storageProof: proof.storageProof ? formatStorageProof(proof.storageProof) : undefined
-  };
-}
-
-// node_modules/viem/_esm/actions/public/getProof.js
-async function getProof(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical, storageKeys }) {
-  const block = formatBlockParameter({
-    blockHash,
-    blockNumber,
-    blockTag,
-    requireCanonical
-  });
-  const proof = await client.request({
-    method: "eth_getProof",
-    params: [address, storageKeys, block]
-  });
-  return formatProof(proof);
-}
-
-// node_modules/viem/_esm/actions/public/getRawTransaction.js
-init_transaction();
-async function getRawTransaction(client, { hash: hash3 }) {
-  const rawTransaction = await client.request({
-    method: "eth_getRawTransactionByHash",
-    params: [hash3]
-  }, { dedupe: true });
-  if (!rawTransaction)
-    throw new TransactionNotFoundError({ hash: hash3 });
-  return rawTransaction;
-}
-
-// node_modules/viem/_esm/actions/public/getStorageAt.js
-init_formatBlockParameter();
-async function getStorageAt(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical, slot }) {
-  const block = formatBlockParameter({
-    blockHash,
-    blockNumber,
-    blockTag,
-    requireCanonical
-  });
-  const data = await client.request({
-    method: "eth_getStorageAt",
-    params: [address, slot, block]
-  });
-  return data;
-}
-
-// node_modules/viem/_esm/actions/public/getTransaction.js
-init_transaction();
-init_toHex();
-async function getTransaction(client, { blockHash, blockNumber, blockTag: blockTag_, hash: hash3, index: index2, sender, nonce }) {
-  const blockTag = blockTag_ || "latest";
-  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
-  let transaction = null;
-  if (hash3) {
-    transaction = await client.request({
-      method: "eth_getTransactionByHash",
-      params: [hash3]
-    }, { dedupe: true });
-  } else if (blockHash) {
-    transaction = await client.request({
-      method: "eth_getTransactionByBlockHashAndIndex",
-      params: [blockHash, numberToHex(index2)]
-    }, { dedupe: true });
-  } else if ((blockNumberHex || blockTag) && typeof index2 === "number") {
-    transaction = await client.request({
-      method: "eth_getTransactionByBlockNumberAndIndex",
-      params: [blockNumberHex || blockTag, numberToHex(index2)]
-    }, { dedupe: Boolean(blockNumberHex) });
-  } else if (sender && typeof nonce === "number") {
-    transaction = await client.request({
-      method: "eth_getTransactionBySenderAndNonce",
-      params: [sender, numberToHex(nonce)]
-    }, { dedupe: true });
-  }
-  if (!transaction)
-    throw new TransactionNotFoundError({
-      blockHash,
-      blockNumber,
-      blockTag,
-      hash: hash3,
-      index: index2
-    });
-  const format2 = client.chain?.formatters?.transaction?.format || formatTransaction;
-  return format2(transaction, "getTransaction");
-}
-
-// node_modules/viem/_esm/actions/public/getTransactionConfirmations.js
-async function getTransactionConfirmations(client, { hash: hash3, transactionReceipt }) {
-  const [blockNumber, transaction] = await Promise.all([
-    getAction(client, getBlockNumber, "getBlockNumber")({}),
-    hash3 ? getAction(client, getTransaction, "getTransaction")({ hash: hash3 }) : undefined
-  ]);
-  const transactionBlockNumber = transactionReceipt?.blockNumber || transaction?.blockNumber;
-  if (!transactionBlockNumber)
-    return 0n;
-  return blockNumber - transactionBlockNumber + 1n;
-}
-
-// node_modules/viem/_esm/actions/public/getTransactionReceipt.js
-init_transaction();
-async function getTransactionReceipt(client, { hash: hash3 }) {
-  const receipt = await client.request({
-    method: "eth_getTransactionReceipt",
-    params: [hash3]
-  }, { dedupe: true });
-  if (!receipt)
-    throw new TransactionReceiptNotFoundError({ hash: hash3 });
-  const format2 = client.chain?.formatters?.transactionReceipt?.format || formatTransactionReceipt;
-  return format2(receipt, "getTransactionReceipt");
-}
-
-// node_modules/viem/_esm/actions/public/multicall.js
-init_abis();
-init_abi();
-init_base();
-init_contract();
-init_decodeFunctionResult();
-init_encodeFunctionData();
-init_getChainContractAddress();
-init_createBatchScheduler();
-async function multicall(client, parameters) {
-  const { account, authorizationList, allowFailure = true, blockHash, blockNumber, blockOverrides, blockTag, requireCanonical, stateOverride } = parameters;
-  const contracts = parameters.contracts;
-  const batch = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
-  const batchSize = parameters.batchSize ?? batch.batchSize ?? 1024;
-  const deployless = parameters.deployless ?? batch.deployless ?? false;
-  const multicallAddress = (() => {
-    if (parameters.multicallAddress)
-      return parameters.multicallAddress;
-    if (deployless)
-      return null;
-    if (client.chain) {
-      return getChainContractAddress({
-        blockNumber,
-        chain: client.chain,
-        contract: "multicall3"
-      });
-    }
-    throw new Error("client chain not configured. multicallAddress is required.");
-  })();
-  const chunkedCalls = [[]];
-  let currentChunk = 0;
-  let currentChunkSize = 0;
-  for (let i = 0;i < contracts.length; i++) {
-    const { abi: abi2, address, args, functionName } = contracts[i];
-    try {
-      const callData = encodeFunctionData({ abi: abi2, args, functionName });
-      currentChunkSize += (callData.length - 2) / 2;
-      if (batchSize > 0 && currentChunkSize > batchSize && chunkedCalls[currentChunk].length > 0) {
-        currentChunk++;
-        currentChunkSize = (callData.length - 2) / 2;
-        chunkedCalls[currentChunk] = [];
-      }
-      chunkedCalls[currentChunk] = [
-        ...chunkedCalls[currentChunk],
-        {
-          allowFailure: true,
-          callData,
-          target: address
-        }
-      ];
-    } catch (err) {
-      const error61 = getContractError(err, {
-        abi: abi2,
-        address,
-        args,
-        docsPath: "/docs/contract/multicall",
-        functionName,
-        sender: account
-      });
-      if (!allowFailure)
-        throw error61;
-      chunkedCalls[currentChunk] = [
-        ...chunkedCalls[currentChunk],
-        {
-          allowFailure: true,
-          callData: "0x",
-          target: address
-        }
-      ];
-    }
-  }
-  const batching = Boolean(client.batch?.multicall);
-  const batches = batching ? chunkedCalls.flatMap((calls) => calls.map((call2) => [call2])) : chunkedCalls;
-  const aggregate3Results = await Promise.allSettled(batches.map((calls) => {
-    if (batching)
-      return scheduleMulticall2(client, {
-        account,
-        authorizationList,
-        batchSize,
-        blockHash,
-        blockNumber,
-        blockOverrides,
-        blockTag,
-        call: calls[0],
-        multicallAddress,
-        requireCanonical,
-        stateOverride
-      }).then((result) => [result]);
-    return getAction(client, readContract, "readContract")({
-      ...multicallAddress === null ? { code: multicall3Bytecode } : { address: multicallAddress },
-      abi: multicall3Abi,
-      account,
-      args: [calls],
-      authorizationList,
-      blockHash,
-      blockNumber,
-      blockOverrides,
-      blockTag,
-      functionName: "aggregate3",
-      requireCanonical,
-      stateOverride
-    });
-  }));
-  const results = [];
-  for (let i = 0;i < aggregate3Results.length; i++) {
-    const result = aggregate3Results[i];
-    if (result.status === "rejected") {
-      if (!allowFailure)
-        throw result.reason;
-      for (let j = 0;j < batches[i].length; j++) {
-        results.push({
-          status: "failure",
-          error: result.reason,
-          result: undefined
-        });
-      }
-      continue;
-    }
-    const aggregate3Result = result.value;
-    for (let j = 0;j < aggregate3Result.length; j++) {
-      const { returnData, success: success2 } = aggregate3Result[j];
-      const { callData } = batches[i][j];
-      const { abi: abi2, address, functionName, args } = contracts[results.length];
-      try {
-        if (callData === "0x")
-          throw new AbiDecodingZeroDataError;
-        if (!success2)
-          throw new RawContractError({ data: returnData });
-        const result2 = decodeFunctionResult({
-          abi: abi2,
-          args,
-          data: returnData,
-          functionName
-        });
-        results.push(allowFailure ? { result: result2, status: "success" } : result2);
-      } catch (err) {
-        const error61 = getContractError(err, {
-          abi: abi2,
-          address,
-          args,
-          docsPath: "/docs/contract/multicall",
-          functionName
-        });
-        if (!allowFailure)
-          throw error61;
-        results.push({ error: error61, result: undefined, status: "failure" });
-      }
-    }
-  }
-  if (results.length !== contracts.length)
-    throw new BaseError("multicall results mismatch");
-  return results;
-}
-async function scheduleMulticall2(client, parameters) {
-  const { batchSize, call: call2, multicallAddress, ...rest } = parameters;
-  const { wait = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
-  const { schedule } = createBatchScheduler({
-    id: stringify(["multicall", client.uid, batchSize, multicallAddress, rest]),
-    wait,
-    shouldSplitBatch(calls) {
-      if (batchSize === 0)
-        return false;
-      const size6 = calls.reduce((size7, { callData }) => size7 + (callData.length - 2) / 2, 0);
-      return size6 > batchSize;
-    },
-    fn: (calls) => getAction(client, readContract, "readContract")({
-      ...multicallAddress === null ? { code: multicall3Bytecode } : { address: multicallAddress },
-      ...rest,
-      abi: multicall3Abi,
-      args: [calls],
-      functionName: "aggregate3"
-    })
-  });
-  const [result] = await schedule(call2);
-  return result;
-}
-
-// node_modules/viem/_esm/actions/public/simulateBlocks.js
-init_BlockOverrides();
-init_abi();
-init_contract();
-init_node();
-init_decodeFunctionResult();
-init_encodeFunctionData();
-init_toHex();
-init_getNodeError();
-init_transactionRequest();
-init_stateOverride2();
-init_assertRequest();
-async function simulateBlocks(client, parameters) {
-  const { blockNumber, blockTag = client.experimental_blockTag ?? "latest", blocks, returnFullTransactions, traceTransfers, validation } = parameters;
-  try {
-    const blockStateCalls = [];
-    for (const block2 of blocks) {
-      const blockOverrides = block2.blockOverrides ? toRpc2(block2.blockOverrides) : undefined;
-      const calls = block2.calls.map((call_) => {
-        const call2 = call_;
-        const account = call2.account ? parseAccount(call2.account) : undefined;
-        const data = call2.abi ? encodeFunctionData(call2) : call2.data;
-        const request = {
-          ...call2,
-          account,
-          data: call2.dataSuffix ? concat([data || "0x", call2.dataSuffix]) : data,
-          from: call2.from ?? account?.address
-        };
-        assertRequest(request);
-        return formatTransactionRequest(request);
-      });
-      const stateOverrides = block2.stateOverrides ? serializeStateOverride(block2.stateOverrides) : undefined;
-      blockStateCalls.push({
-        blockOverrides,
-        calls,
-        stateOverrides
-      });
-    }
-    const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
-    const block = blockNumberHex || blockTag;
-    const result = await client.request({
-      method: "eth_simulateV1",
-      params: [
-        { blockStateCalls, returnFullTransactions, traceTransfers, validation },
-        block
-      ]
-    });
-    return result.map((block2, i) => ({
-      ...formatBlock(block2),
-      calls: block2.calls.map((call2, j) => {
-        const { abi: abi2, args, functionName, to } = blocks[i].calls[j];
-        const data = call2.error?.data ?? call2.returnData;
-        const gasUsed = BigInt(call2.gasUsed);
-        const logs = call2.logs?.map((log) => formatLog(log));
-        const status = call2.status === "0x1" ? "success" : "failure";
-        const result2 = abi2 && status === "success" && data !== "0x" ? decodeFunctionResult({
-          abi: abi2,
-          data,
-          functionName
-        }) : null;
-        const error61 = (() => {
-          if (status === "success")
-            return;
-          let error62;
-          if (data === "0x")
-            error62 = new AbiDecodingZeroDataError;
-          else if (data)
-            error62 = new RawContractError({ data });
-          if (!error62)
-            return;
-          return getContractError(error62, {
-            abi: abi2 ?? [],
-            address: to ?? "0x",
-            args,
-            functionName: functionName ?? "<unknown>"
-          });
-        })();
-        return {
-          data,
-          gasUsed,
-          logs,
-          status,
-          ...status === "success" ? {
-            result: result2
-          } : {
-            error: error61
-          }
-        };
-      })
-    }));
-  } catch (e) {
-    const cause = e;
-    const error61 = getNodeError(cause, {});
-    if (error61 instanceof UnknownNodeError)
-      throw cause;
-    throw error61;
-  }
-}
-
-// node_modules/ox/_esm/core/AbiItem.js
-init_exports();
-init_Errors();
-
-// node_modules/ox/_esm/core/Hash.js
-init_sha3();
-init_Bytes();
-init_Hex();
-function keccak2563(value, options = {}) {
-  const { as = typeof value === "string" ? "Hex" : "Bytes" } = options;
-  const bytes = keccak_256(from2(value));
-  if (as === "Bytes")
-    return bytes;
-  return fromBytes(bytes);
-}
-
-// node_modules/ox/_esm/core/AbiItem.js
-init_Hex();
-
-// node_modules/ox/_esm/core/Address.js
-init_Bytes();
-
-// node_modules/ox/_esm/core/internal/lru.js
-class LruMap2 extends Map {
-  constructor(size6) {
-    super();
-    Object.defineProperty(this, "maxSize", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: undefined
-    });
-    this.maxSize = size6;
-  }
-  get(key) {
-    const value = super.get(key);
-    if (super.has(key) && value !== undefined) {
-      this.delete(key);
-      super.set(key, value);
-    }
-    return value;
-  }
-  set(key, value) {
-    super.set(key, value);
-    if (this.maxSize && this.size > this.maxSize) {
-      const firstKey = this.keys().next().value;
-      if (firstKey)
-        this.delete(firstKey);
-    }
-    return this;
-  }
-}
-
-// node_modules/ox/_esm/core/Caches.js
-var caches = {
-  checksum: /* @__PURE__ */ new LruMap2(8192)
-};
-var checksum = caches.checksum;
-
-// node_modules/ox/_esm/core/Address.js
-init_Errors();
-
-// node_modules/ox/_esm/core/PublicKey.js
-init_Bytes();
-init_Errors();
-init_Hex();
-function assert4(publicKey, options = {}) {
-  const { compressed } = options;
-  const { prefix, x, y } = publicKey;
-  if (compressed === false || typeof x === "bigint" && typeof y === "bigint") {
-    if (prefix !== 4)
-      throw new InvalidPrefixError({
-        prefix,
-        cause: new InvalidUncompressedPrefixError
-      });
-    return;
-  }
-  if (compressed === true || typeof x === "bigint" && typeof y === "undefined") {
-    if (prefix !== 3 && prefix !== 2)
-      throw new InvalidPrefixError({
-        prefix,
-        cause: new InvalidCompressedPrefixError
-      });
-    return;
-  }
-  throw new InvalidError({ publicKey });
-}
-function from4(value) {
-  const publicKey = (() => {
-    if (validate3(value))
-      return fromHex3(value);
-    if (validate2(value))
-      return fromBytes3(value);
-    const { prefix, x, y } = value;
-    if (typeof x === "bigint" && typeof y === "bigint")
-      return { prefix: prefix ?? 4, x, y };
-    return { prefix, x };
-  })();
-  assert4(publicKey);
-  return publicKey;
-}
-function fromBytes3(publicKey) {
-  return fromHex3(fromBytes(publicKey));
-}
-function fromHex3(publicKey) {
-  if (publicKey.length !== 132 && publicKey.length !== 130 && publicKey.length !== 68)
-    throw new InvalidSerializedSizeError({ publicKey });
-  if (publicKey.length === 130) {
-    const x2 = BigInt(slice3(publicKey, 0, 32));
-    const y = BigInt(slice3(publicKey, 32, 64));
-    return {
-      prefix: 4,
-      x: x2,
-      y
-    };
-  }
-  if (publicKey.length === 132) {
-    const prefix2 = Number(slice3(publicKey, 0, 1));
-    const x2 = BigInt(slice3(publicKey, 1, 33));
-    const y = BigInt(slice3(publicKey, 33, 65));
-    return {
-      prefix: prefix2,
-      x: x2,
-      y
-    };
-  }
-  const prefix = Number(slice3(publicKey, 0, 1));
-  const x = BigInt(slice3(publicKey, 1, 33));
-  return {
-    prefix,
-    x
-  };
-}
-function toHex3(publicKey, options = {}) {
-  assert4(publicKey);
-  const { prefix, x, y } = publicKey;
-  const { includePrefix = true } = options;
-  const publicKey_ = concat2(includePrefix ? fromNumber(prefix, { size: 1 }) : "0x", fromNumber(x, { size: 32 }), typeof y === "bigint" ? fromNumber(y, { size: 32 }) : "0x");
-  return publicKey_;
-}
-class InvalidError extends BaseError3 {
-  constructor({ publicKey }) {
-    super(`Value \`${stringify2(publicKey)}\` is not a valid public key.`, {
-      metaMessages: [
-        "Public key must contain:",
-        "- an `x` and `prefix` value (compressed)",
-        "- an `x`, `y`, and `prefix` value (uncompressed)"
-      ]
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "PublicKey.InvalidError"
-    });
-  }
-}
-
-class InvalidPrefixError extends BaseError3 {
-  constructor({ prefix, cause }) {
-    super(`Prefix "${prefix}" is invalid.`, {
-      cause
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "PublicKey.InvalidPrefixError"
-    });
-  }
-}
-
-class InvalidCompressedPrefixError extends BaseError3 {
-  constructor() {
-    super("Prefix must be 2 or 3 for compressed public keys.");
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "PublicKey.InvalidCompressedPrefixError"
-    });
-  }
-}
-
-class InvalidUncompressedPrefixError extends BaseError3 {
-  constructor() {
-    super("Prefix must be 4 for uncompressed public keys.");
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "PublicKey.InvalidUncompressedPrefixError"
-    });
-  }
-}
-
-class InvalidSerializedSizeError extends BaseError3 {
-  constructor({ publicKey }) {
-    super(`Value \`${publicKey}\` is an invalid public key size.`, {
-      metaMessages: [
-        "Expected: 33 bytes (compressed + prefix), 64 bytes (uncompressed) or 65 bytes (uncompressed + prefix).",
-        `Received ${size4(from3(publicKey))} bytes.`
-      ]
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "PublicKey.InvalidSerializedSizeError"
-    });
-  }
-}
-
-// node_modules/ox/_esm/core/Address.js
-var addressRegex2 = /^0x[a-fA-F0-9]{40}$/;
-function assert5(value, options = {}) {
-  const { strict = true } = options;
-  if (!addressRegex2.test(value))
-    throw new InvalidAddressError2({
-      address: value,
-      cause: new InvalidInputError
-    });
-  if (strict) {
-    if (value.toLowerCase() === value)
-      return;
-    if (checksum2(value) !== value)
-      throw new InvalidAddressError2({
-        address: value,
-        cause: new InvalidChecksumError
-      });
-  }
-}
-function checksum2(address) {
-  if (checksum.has(address))
-    return checksum.get(address);
-  assert5(address, { strict: false });
-  const hexAddress = address.substring(2).toLowerCase();
-  const hash3 = keccak2563(fromString(hexAddress), { as: "Bytes" });
-  const characters = hexAddress.split("");
-  for (let i = 0;i < 40; i += 2) {
-    if (hash3[i >> 1] >> 4 >= 8 && characters[i]) {
-      characters[i] = characters[i].toUpperCase();
-    }
-    if ((hash3[i >> 1] & 15) >= 8 && characters[i + 1]) {
-      characters[i + 1] = characters[i + 1].toUpperCase();
-    }
-  }
-  const result = `0x${characters.join("")}`;
-  checksum.set(address, result);
-  return result;
-}
-function from5(address, options = {}) {
-  const { checksum: checksumVal = false } = options;
-  assert5(address);
-  if (checksumVal)
-    return checksum2(address);
-  return address;
-}
-function fromPublicKey(publicKey, options = {}) {
-  const address = keccak2563(`0x${toHex3(publicKey).slice(4)}`).substring(26);
-  return from5(`0x${address}`, options);
-}
-function validate4(address, options = {}) {
-  const { strict = true } = options ?? {};
-  try {
-    assert5(address, { strict });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-class InvalidAddressError2 extends BaseError3 {
-  constructor({ address, cause }) {
-    super(`Address "${address}" is invalid.`, {
-      cause
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Address.InvalidAddressError"
-    });
-  }
-}
-
-class InvalidInputError extends BaseError3 {
-  constructor() {
-    super("Address is not a 20 byte (40 hexadecimal character) value.");
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Address.InvalidInputError"
-    });
-  }
-}
-
-class InvalidChecksumError extends BaseError3 {
-  constructor() {
-    super("Address does not match its checksum counterpart.");
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Address.InvalidChecksumError"
-    });
-  }
-}
-
-// node_modules/ox/_esm/core/internal/abiItem.js
-init_Errors();
-function normalizeSignature2(signature) {
-  let active = true;
-  let current = "";
-  let level = 0;
-  let result = "";
-  let valid = false;
-  for (let i = 0;i < signature.length; i++) {
-    const char = signature[i];
-    if (["(", ")", ","].includes(char))
-      active = true;
-    if (char === "(")
-      level++;
-    if (char === ")")
-      level--;
-    if (!active)
-      continue;
-    if (level === 0) {
-      if (char === " " && ["event", "function", "error", ""].includes(result))
-        result = "";
-      else {
-        result += char;
-        if (char === ")") {
-          valid = true;
-          break;
-        }
-      }
-      continue;
-    }
-    if (char === " ") {
-      if (signature[i - 1] !== "," && current !== "," && current !== ",(") {
-        current = "";
-        active = false;
-      }
-      continue;
-    }
-    result += char;
-    current += char;
-  }
-  if (!valid)
-    throw new BaseError3("Unable to normalize signature.");
-  return result;
-}
-function isArgOfType2(arg, abiParameter) {
-  const argType = typeof arg;
-  const abiParameterType = abiParameter.type;
-  switch (abiParameterType) {
-    case "address":
-      return validate4(arg, { strict: false });
-    case "bool":
-      return argType === "boolean";
-    case "function":
-      return argType === "string";
-    case "string":
-      return argType === "string";
-    default: {
-      if (abiParameterType === "tuple" && "components" in abiParameter)
-        return Object.values(abiParameter.components).every((component, index2) => {
-          return isArgOfType2(Object.values(arg)[index2], component);
-        });
-      if (/^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/.test(abiParameterType))
-        return argType === "number" || argType === "bigint";
-      if (/^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/.test(abiParameterType))
-        return argType === "string" || arg instanceof Uint8Array;
-      if (/[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/.test(abiParameterType)) {
-        return Array.isArray(arg) && arg.every((x) => isArgOfType2(x, {
-          ...abiParameter,
-          type: abiParameterType.replace(/(\[[0-9]{0,}\])$/, "")
-        }));
-      }
-      return false;
-    }
-  }
-}
-function getAmbiguousTypes2(sourceParameters, targetParameters, args) {
-  for (const parameterIndex in sourceParameters) {
-    const sourceParameter = sourceParameters[parameterIndex];
-    const targetParameter = targetParameters[parameterIndex];
-    if (sourceParameter.type === "tuple" && targetParameter.type === "tuple" && "components" in sourceParameter && "components" in targetParameter)
-      return getAmbiguousTypes2(sourceParameter.components, targetParameter.components, args[parameterIndex]);
-    const types = [sourceParameter.type, targetParameter.type];
-    const ambiguous = (() => {
-      if (types.includes("address") && types.includes("bytes20"))
-        return true;
-      if (types.includes("address") && types.includes("string"))
-        return validate4(args[parameterIndex], {
-          strict: false
-        });
-      if (types.includes("address") && types.includes("bytes"))
-        return validate4(args[parameterIndex], {
-          strict: false
-        });
-      return false;
-    })();
-    if (ambiguous)
-      return types;
-  }
-  return;
-}
-
-// node_modules/ox/_esm/core/AbiItem.js
-function from6(abiItem, options = {}) {
-  const { prepare = true } = options;
-  const item = (() => {
-    if (Array.isArray(abiItem))
-      return parseAbiItem(abiItem);
-    if (typeof abiItem === "string")
-      return parseAbiItem(abiItem);
-    return abiItem;
-  })();
-  return {
-    ...item,
-    ...prepare ? { hash: getSignatureHash(item) } : {}
-  };
-}
-function fromAbi(abi2, name, options) {
-  const { args = [], prepare = true } = options ?? {};
-  const isSelector = validate3(name, { strict: false });
-  const abiItems = abi2.filter((abiItem2) => {
-    if (isSelector) {
-      if (abiItem2.type === "function" || abiItem2.type === "error")
-        return getSelector(abiItem2) === slice3(name, 0, 4);
-      if (abiItem2.type === "event")
-        return getSignatureHash(abiItem2) === name;
-      return false;
-    }
-    return "name" in abiItem2 && abiItem2.name === name;
-  });
-  if (abiItems.length === 0)
-    throw new NotFoundError({ name });
-  if (abiItems.length === 1)
-    return {
-      ...abiItems[0],
-      ...prepare ? { hash: getSignatureHash(abiItems[0]) } : {}
-    };
-  let matchedAbiItem;
-  for (const abiItem2 of abiItems) {
-    if (!("inputs" in abiItem2))
-      continue;
-    if (!args || args.length === 0) {
-      if (!abiItem2.inputs || abiItem2.inputs.length === 0)
-        return {
-          ...abiItem2,
-          ...prepare ? { hash: getSignatureHash(abiItem2) } : {}
-        };
-      continue;
-    }
-    if (!abiItem2.inputs)
-      continue;
-    if (abiItem2.inputs.length === 0)
-      continue;
-    if (abiItem2.inputs.length !== args.length)
-      continue;
-    const matched = args.every((arg, index2) => {
-      const abiParameter = "inputs" in abiItem2 && abiItem2.inputs[index2];
-      if (!abiParameter)
-        return false;
-      return isArgOfType2(arg, abiParameter);
-    });
-    if (matched) {
-      if (matchedAbiItem && "inputs" in matchedAbiItem && matchedAbiItem.inputs) {
-        const ambiguousTypes = getAmbiguousTypes2(abiItem2.inputs, matchedAbiItem.inputs, args);
-        if (ambiguousTypes)
-          throw new AmbiguityError({
-            abiItem: abiItem2,
-            type: ambiguousTypes[0]
-          }, {
-            abiItem: matchedAbiItem,
-            type: ambiguousTypes[1]
-          });
-      }
-      matchedAbiItem = abiItem2;
-    }
-  }
-  const abiItem = (() => {
-    if (matchedAbiItem)
-      return matchedAbiItem;
-    const [abiItem2, ...overloads] = abiItems;
-    return { ...abiItem2, overloads };
-  })();
-  if (!abiItem)
-    throw new NotFoundError({ name });
-  return {
-    ...abiItem,
-    ...prepare ? { hash: getSignatureHash(abiItem) } : {}
-  };
-}
-function getSelector(...parameters) {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi2, name] = parameters;
-      return fromAbi(abi2, name);
-    }
-    return parameters[0];
-  })();
-  return slice3(getSignatureHash(abiItem), 0, 4);
-}
-function getSignature(...parameters) {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi2, name] = parameters;
-      return fromAbi(abi2, name);
-    }
-    return parameters[0];
-  })();
-  const signature = (() => {
-    if (typeof abiItem === "string")
-      return abiItem;
-    return formatAbiItem2(abiItem);
-  })();
-  return normalizeSignature2(signature);
-}
-function getSignatureHash(...parameters) {
-  const abiItem = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi2, name] = parameters;
-      return fromAbi(abi2, name);
-    }
-    return parameters[0];
-  })();
-  if (typeof abiItem !== "string" && "hash" in abiItem && abiItem.hash)
-    return abiItem.hash;
-  return keccak2563(fromString2(getSignature(abiItem)));
-}
-
-class AmbiguityError extends BaseError3 {
-  constructor(x, y) {
-    super("Found ambiguous types in overloaded ABI Items.", {
-      metaMessages: [
-        `\`${x.type}\` in \`${normalizeSignature2(formatAbiItem2(x.abiItem))}\`, and`,
-        `\`${y.type}\` in \`${normalizeSignature2(formatAbiItem2(y.abiItem))}\``,
-        "",
-        "These types encode differently and cannot be distinguished at runtime.",
-        "Remove one of the ambiguous items in the ABI."
-      ]
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiItem.AmbiguityError"
-    });
-  }
-}
-
-class NotFoundError extends BaseError3 {
-  constructor({ name, data, type = "item" }) {
-    const selector = (() => {
-      if (name)
-        return ` with name "${name}"`;
-      if (data)
-        return ` with data "${data}"`;
-      return "";
-    })();
-    super(`ABI ${type}${selector} not found.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiItem.NotFoundError"
-    });
-  }
-}
-
-// node_modules/ox/_esm/core/AbiParameters.js
-init_exports();
-init_Bytes();
-init_Errors();
-init_Hex();
-
-// node_modules/ox/_esm/core/internal/abiParameters.js
-init_Bytes();
-init_Errors();
-init_Hex();
-
-// node_modules/ox/_esm/core/Solidity.js
-var arrayRegex2 = /^(.*)\[([0-9]*)\]$/;
-var bytesRegex4 = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/;
-var integerRegex4 = /^(u?int)(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/;
-var maxInt82 = 2n ** (8n - 1n) - 1n;
-var maxInt162 = 2n ** (16n - 1n) - 1n;
-var maxInt242 = 2n ** (24n - 1n) - 1n;
-var maxInt322 = 2n ** (32n - 1n) - 1n;
-var maxInt402 = 2n ** (40n - 1n) - 1n;
-var maxInt482 = 2n ** (48n - 1n) - 1n;
-var maxInt562 = 2n ** (56n - 1n) - 1n;
-var maxInt642 = 2n ** (64n - 1n) - 1n;
-var maxInt722 = 2n ** (72n - 1n) - 1n;
-var maxInt802 = 2n ** (80n - 1n) - 1n;
-var maxInt882 = 2n ** (88n - 1n) - 1n;
-var maxInt962 = 2n ** (96n - 1n) - 1n;
-var maxInt1042 = 2n ** (104n - 1n) - 1n;
-var maxInt1122 = 2n ** (112n - 1n) - 1n;
-var maxInt1202 = 2n ** (120n - 1n) - 1n;
-var maxInt1282 = 2n ** (128n - 1n) - 1n;
-var maxInt1362 = 2n ** (136n - 1n) - 1n;
-var maxInt1442 = 2n ** (144n - 1n) - 1n;
-var maxInt1522 = 2n ** (152n - 1n) - 1n;
-var maxInt1602 = 2n ** (160n - 1n) - 1n;
-var maxInt1682 = 2n ** (168n - 1n) - 1n;
-var maxInt1762 = 2n ** (176n - 1n) - 1n;
-var maxInt1842 = 2n ** (184n - 1n) - 1n;
-var maxInt1922 = 2n ** (192n - 1n) - 1n;
-var maxInt2002 = 2n ** (200n - 1n) - 1n;
-var maxInt2082 = 2n ** (208n - 1n) - 1n;
-var maxInt2162 = 2n ** (216n - 1n) - 1n;
-var maxInt2242 = 2n ** (224n - 1n) - 1n;
-var maxInt2322 = 2n ** (232n - 1n) - 1n;
-var maxInt2402 = 2n ** (240n - 1n) - 1n;
-var maxInt2482 = 2n ** (248n - 1n) - 1n;
-var maxInt2562 = 2n ** (256n - 1n) - 1n;
-var minInt82 = -(2n ** (8n - 1n));
-var minInt162 = -(2n ** (16n - 1n));
-var minInt242 = -(2n ** (24n - 1n));
-var minInt322 = -(2n ** (32n - 1n));
-var minInt402 = -(2n ** (40n - 1n));
-var minInt482 = -(2n ** (48n - 1n));
-var minInt562 = -(2n ** (56n - 1n));
-var minInt642 = -(2n ** (64n - 1n));
-var minInt722 = -(2n ** (72n - 1n));
-var minInt802 = -(2n ** (80n - 1n));
-var minInt882 = -(2n ** (88n - 1n));
-var minInt962 = -(2n ** (96n - 1n));
-var minInt1042 = -(2n ** (104n - 1n));
-var minInt1122 = -(2n ** (112n - 1n));
-var minInt1202 = -(2n ** (120n - 1n));
-var minInt1282 = -(2n ** (128n - 1n));
-var minInt1362 = -(2n ** (136n - 1n));
-var minInt1442 = -(2n ** (144n - 1n));
-var minInt1522 = -(2n ** (152n - 1n));
-var minInt1602 = -(2n ** (160n - 1n));
-var minInt1682 = -(2n ** (168n - 1n));
-var minInt1762 = -(2n ** (176n - 1n));
-var minInt1842 = -(2n ** (184n - 1n));
-var minInt1922 = -(2n ** (192n - 1n));
-var minInt2002 = -(2n ** (200n - 1n));
-var minInt2082 = -(2n ** (208n - 1n));
-var minInt2162 = -(2n ** (216n - 1n));
-var minInt2242 = -(2n ** (224n - 1n));
-var minInt2322 = -(2n ** (232n - 1n));
-var minInt2402 = -(2n ** (240n - 1n));
-var minInt2482 = -(2n ** (248n - 1n));
-var minInt2562 = -(2n ** (256n - 1n));
-var maxUint82 = 2n ** 8n - 1n;
-var maxUint162 = 2n ** 16n - 1n;
-var maxUint242 = 2n ** 24n - 1n;
-var maxUint322 = 2n ** 32n - 1n;
-var maxUint402 = 2n ** 40n - 1n;
-var maxUint482 = 2n ** 48n - 1n;
-var maxUint562 = 2n ** 56n - 1n;
-var maxUint642 = 2n ** 64n - 1n;
-var maxUint722 = 2n ** 72n - 1n;
-var maxUint802 = 2n ** 80n - 1n;
-var maxUint882 = 2n ** 88n - 1n;
-var maxUint962 = 2n ** 96n - 1n;
-var maxUint1042 = 2n ** 104n - 1n;
-var maxUint1122 = 2n ** 112n - 1n;
-var maxUint1202 = 2n ** 120n - 1n;
-var maxUint1282 = 2n ** 128n - 1n;
-var maxUint1362 = 2n ** 136n - 1n;
-var maxUint1442 = 2n ** 144n - 1n;
-var maxUint1522 = 2n ** 152n - 1n;
-var maxUint1602 = 2n ** 160n - 1n;
-var maxUint1682 = 2n ** 168n - 1n;
-var maxUint1762 = 2n ** 176n - 1n;
-var maxUint1842 = 2n ** 184n - 1n;
-var maxUint1922 = 2n ** 192n - 1n;
-var maxUint2002 = 2n ** 200n - 1n;
-var maxUint2082 = 2n ** 208n - 1n;
-var maxUint2162 = 2n ** 216n - 1n;
-var maxUint2242 = 2n ** 224n - 1n;
-var maxUint2322 = 2n ** 232n - 1n;
-var maxUint2402 = 2n ** 240n - 1n;
-var maxUint2482 = 2n ** 248n - 1n;
-var maxUint2562 = 2n ** 256n - 1n;
-
-// node_modules/ox/_esm/core/internal/abiParameters.js
-function decodeParameter2(cursor, param, options) {
-  const { checksumAddress: checksumAddress2, staticPosition } = options;
-  const arrayComponents = getArrayComponents2(param.type);
-  if (arrayComponents) {
-    const [length, type] = arrayComponents;
-    return decodeArray2(cursor, { ...param, type }, { checksumAddress: checksumAddress2, length, staticPosition });
-  }
-  if (param.type === "tuple")
-    return decodeTuple2(cursor, param, {
-      checksumAddress: checksumAddress2,
-      staticPosition
-    });
-  if (param.type === "address")
-    return decodeAddress3(cursor, { checksum: checksumAddress2 });
-  if (param.type === "bool")
-    return decodeBool2(cursor);
-  if (param.type.startsWith("bytes"))
-    return decodeBytes2(cursor, param, { staticPosition });
-  if (param.type.startsWith("uint") || param.type.startsWith("int"))
-    return decodeNumber2(cursor, param);
-  if (param.type === "string")
-    return decodeString2(cursor, { staticPosition });
-  throw new InvalidTypeError(param.type);
-}
-var sizeOfLength2 = 32;
-var sizeOfOffset2 = 32;
-function decodeAddress3(cursor, options = {}) {
-  const { checksum: checksum3 = false } = options;
-  const value = cursor.readBytes(32);
-  const wrap = (address) => checksum3 ? checksum2(address) : address;
-  return [wrap(fromBytes(slice2(value, -20))), 32];
-}
-function decodeArray2(cursor, param, options) {
-  const { checksumAddress: checksumAddress2, length, staticPosition } = options;
-  if (length === null) {
-    const offset = toNumber2(cursor.readBytes(sizeOfOffset2));
-    const start = staticPosition + offset;
-    const startOfData = start + sizeOfLength2;
-    cursor.setPosition(start);
-    const length2 = toNumber2(cursor.readBytes(sizeOfLength2));
-    const dynamicChild = hasDynamicChild2(param);
-    let consumed2 = 0;
-    const value2 = [];
-    for (let i = 0;i < length2; ++i) {
-      cursor.setPosition(startOfData + (dynamicChild ? i * 32 : consumed2));
-      const [data, consumed_] = decodeParameter2(cursor, param, {
-        checksumAddress: checksumAddress2,
-        staticPosition: startOfData
-      });
-      consumed2 += consumed_;
-      value2.push(data);
-      if (consumed_ === 0) {
-        cursor.assertReadLimit();
-        cursor._touch();
-      }
-    }
-    cursor.setPosition(staticPosition + 32);
-    return [value2, 32];
-  }
-  if (hasDynamicChild2(param)) {
-    const offset = toNumber2(cursor.readBytes(sizeOfOffset2));
-    const start = staticPosition + offset;
-    const value2 = [];
-    for (let i = 0;i < length; ++i) {
-      cursor.setPosition(start + i * 32);
-      const [data] = decodeParameter2(cursor, param, {
-        checksumAddress: checksumAddress2,
-        staticPosition: start
-      });
-      value2.push(data);
-    }
-    cursor.setPosition(staticPosition + 32);
-    return [value2, 32];
-  }
-  let consumed = 0;
-  const value = [];
-  for (let i = 0;i < length; ++i) {
-    const [data, consumed_] = decodeParameter2(cursor, param, {
-      checksumAddress: checksumAddress2,
-      staticPosition: staticPosition + consumed
-    });
-    consumed += consumed_;
-    value.push(data);
-    if (consumed_ === 0) {
-      cursor.assertReadLimit();
-      cursor._touch();
-    }
-  }
-  return [value, consumed];
-}
-function decodeBool2(cursor) {
-  return [toBoolean(cursor.readBytes(32), { size: 32 }), 32];
-}
-function decodeBytes2(cursor, param, { staticPosition }) {
-  const [_, size6] = param.type.split("bytes");
-  if (!size6) {
-    const offset = toNumber2(cursor.readBytes(32));
-    cursor.setPosition(staticPosition + offset);
-    const length = toNumber2(cursor.readBytes(32));
-    if (length === 0) {
-      cursor.setPosition(staticPosition + 32);
-      return ["0x", 32];
-    }
-    const data = cursor.readBytes(length);
-    cursor.setPosition(staticPosition + 32);
-    return [fromBytes(data), 32];
-  }
-  const value = fromBytes(cursor.readBytes(Number.parseInt(size6, 10), 32));
-  return [value, 32];
-}
-function decodeNumber2(cursor, param) {
-  const signed = param.type.startsWith("int");
-  const size6 = Number.parseInt(param.type.split("int")[1] || "256", 10);
-  const value = cursor.readBytes(32);
-  return [
-    size6 > 48 ? toBigInt2(value, { signed }) : toNumber2(value, { signed }),
-    32
-  ];
-}
-function decodeTuple2(cursor, param, options) {
-  const { checksumAddress: checksumAddress2, staticPosition } = options;
-  const hasUnnamedChild = param.components.length === 0 || param.components.some(({ name }) => !name);
-  const value = hasUnnamedChild ? [] : {};
-  let consumed = 0;
-  if (hasDynamicChild2(param)) {
-    const offset = toNumber2(cursor.readBytes(sizeOfOffset2));
-    const start = staticPosition + offset;
-    for (let i = 0;i < param.components.length; ++i) {
-      const component = param.components[i];
-      cursor.setPosition(start + consumed);
-      const [data, consumed_] = decodeParameter2(cursor, component, {
-        checksumAddress: checksumAddress2,
-        staticPosition: start
-      });
-      consumed += consumed_;
-      value[hasUnnamedChild ? i : component?.name] = data;
-    }
-    cursor.setPosition(staticPosition + 32);
-    return [value, 32];
-  }
-  for (let i = 0;i < param.components.length; ++i) {
-    const component = param.components[i];
-    const [data, consumed_] = decodeParameter2(cursor, component, {
-      checksumAddress: checksumAddress2,
-      staticPosition
-    });
-    value[hasUnnamedChild ? i : component?.name] = data;
-    consumed += consumed_;
-  }
-  return [value, consumed];
-}
-function decodeString2(cursor, { staticPosition }) {
-  const offset = toNumber2(cursor.readBytes(32));
-  const start = staticPosition + offset;
-  cursor.setPosition(start);
-  const length = toNumber2(cursor.readBytes(32));
-  if (length === 0) {
-    cursor.setPosition(staticPosition + 32);
-    return ["", 32];
-  }
-  const data = cursor.readBytes(length, 32);
-  const value = toString(trimLeft(data));
-  cursor.setPosition(staticPosition + 32);
-  return [value, 32];
-}
-function prepareParameters({ checksumAddress: checksumAddress2, parameters, values }) {
-  const preparedParameters = [];
-  for (let i = 0;i < parameters.length; i++) {
-    preparedParameters.push(prepareParameter({
-      checksumAddress: checksumAddress2,
-      parameter: parameters[i],
-      value: values[i]
-    }));
-  }
-  return preparedParameters;
-}
-function prepareParameter({ checksumAddress: checksumAddress2 = false, parameter: parameter_, value }) {
-  const parameter = parameter_;
-  const arrayComponents = getArrayComponents2(parameter.type);
-  if (arrayComponents) {
-    const [length, type] = arrayComponents;
-    return encodeArray2(value, {
-      checksumAddress: checksumAddress2,
-      length,
-      parameter: {
-        ...parameter,
-        type
-      }
-    });
-  }
-  if (parameter.type === "tuple") {
-    return encodeTuple2(value, {
-      checksumAddress: checksumAddress2,
-      parameter
-    });
-  }
-  if (parameter.type === "address") {
-    return encodeAddress2(value, {
-      checksum: checksumAddress2
-    });
-  }
-  if (parameter.type === "bool") {
-    return encodeBoolean(value);
-  }
-  if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
-    const signed = parameter.type.startsWith("int");
-    const [, , size6 = "256"] = integerRegex4.exec(parameter.type) ?? [];
-    return encodeNumber2(value, {
-      signed,
-      size: Number(size6)
-    });
-  }
-  if (parameter.type.startsWith("bytes")) {
-    return encodeBytes2(value, { type: parameter.type });
-  }
-  if (parameter.type === "string") {
-    return encodeString2(value);
-  }
-  throw new InvalidTypeError(parameter.type);
-}
-function encode3(preparedParameters) {
-  let staticSize = 0;
-  for (let i = 0;i < preparedParameters.length; i++) {
-    const { dynamic, encoded } = preparedParameters[i];
-    if (dynamic)
-      staticSize += 32;
-    else
-      staticSize += size4(encoded);
-  }
-  const staticParameters = [];
-  const dynamicParameters = [];
-  let dynamicSize = 0;
-  for (let i = 0;i < preparedParameters.length; i++) {
-    const { dynamic, encoded } = preparedParameters[i];
-    if (dynamic) {
-      staticParameters.push(fromNumber(staticSize + dynamicSize, { size: 32 }));
-      dynamicParameters.push(encoded);
-      dynamicSize += size4(encoded);
-    } else {
-      staticParameters.push(encoded);
-    }
-  }
-  return concat2(...staticParameters, ...dynamicParameters);
-}
-function encodeAddress2(value, options) {
-  const { checksum: checksum3 = false } = options;
-  assert5(value, { strict: checksum3 });
-  return {
-    dynamic: false,
-    encoded: padLeft(value.toLowerCase())
-  };
-}
-function encodeArray2(value, options) {
-  const { checksumAddress: checksumAddress2, length, parameter } = options;
-  const dynamic = length === null;
-  if (!Array.isArray(value))
-    throw new InvalidArrayError2(value);
-  if (!dynamic && value.length !== length)
-    throw new ArrayLengthMismatchError({
-      expectedLength: length,
-      givenLength: value.length,
-      type: `${parameter.type}[${length}]`
-    });
-  let dynamicChild = value.length === 0 && hasDynamicChild2(parameter);
-  const preparedParameters = [];
-  for (let i = 0;i < value.length; i++) {
-    const preparedParam = prepareParameter({
-      checksumAddress: checksumAddress2,
-      parameter,
-      value: value[i]
-    });
-    if (preparedParam.dynamic)
-      dynamicChild = true;
-    preparedParameters.push(preparedParam);
-  }
-  if (dynamic || dynamicChild) {
-    const data = encode3(preparedParameters);
-    if (dynamic) {
-      const length2 = fromNumber(preparedParameters.length, { size: 32 });
-      return {
-        dynamic: true,
-        encoded: preparedParameters.length > 0 ? concat2(length2, data) : length2
-      };
-    }
-    if (dynamicChild)
-      return { dynamic: true, encoded: data };
-  }
-  return {
-    dynamic: false,
-    encoded: concat2(...preparedParameters.map(({ encoded }) => encoded))
-  };
-}
-function encodeBytes2(value, { type }) {
-  const [, parametersize] = type.split("bytes");
-  const bytesSize = size4(value);
-  if (!parametersize) {
-    let value_ = value;
-    if (bytesSize % 32 !== 0)
-      value_ = padRight(value_, Math.ceil((value.length - 2) / 2 / 32) * 32);
-    return {
-      dynamic: true,
-      encoded: concat2(padLeft(fromNumber(bytesSize, { size: 32 })), value_)
-    };
-  }
-  if (bytesSize !== Number.parseInt(parametersize, 10))
-    throw new BytesSizeMismatchError2({
-      expectedSize: Number.parseInt(parametersize, 10),
-      value
-    });
-  return { dynamic: false, encoded: padRight(value) };
-}
-function encodeBoolean(value) {
-  if (typeof value !== "boolean")
-    throw new BaseError3(`Invalid boolean value: "${value}" (type: ${typeof value}). Expected: \`true\` or \`false\`.`);
-  return { dynamic: false, encoded: padLeft(fromBoolean(value)) };
-}
-function encodeNumber2(value, { signed, size: size6 }) {
-  if (typeof size6 === "number") {
-    const max = 2n ** (BigInt(size6) - (signed ? 1n : 0n)) - 1n;
-    const min = signed ? -max - 1n : 0n;
-    if (value > max || value < min)
-      throw new IntegerOutOfRangeError2({
-        max: max.toString(),
-        min: min.toString(),
-        signed,
-        size: size6 / 8,
-        value: value.toString()
-      });
-  }
-  return {
-    dynamic: false,
-    encoded: fromNumber(value, {
-      size: 32,
-      signed
-    })
-  };
-}
-function encodeString2(value) {
-  const hexValue = fromString2(value);
-  const partsLength = Math.ceil(size4(hexValue) / 32);
-  const parts = [];
-  for (let i = 0;i < partsLength; i++) {
-    parts.push(padRight(slice3(hexValue, i * 32, (i + 1) * 32)));
-  }
-  return {
-    dynamic: true,
-    encoded: concat2(padRight(fromNumber(size4(hexValue), { size: 32 })), ...parts)
-  };
-}
-function encodeTuple2(value, options) {
-  const { checksumAddress: checksumAddress2, parameter } = options;
-  let dynamic = false;
-  const preparedParameters = [];
-  for (let i = 0;i < parameter.components.length; i++) {
-    const param_ = parameter.components[i];
-    const index2 = Array.isArray(value) ? i : param_.name;
-    const preparedParam = prepareParameter({
-      checksumAddress: checksumAddress2,
-      parameter: param_,
-      value: value[index2]
-    });
-    preparedParameters.push(preparedParam);
-    if (preparedParam.dynamic)
-      dynamic = true;
-  }
-  return {
-    dynamic,
-    encoded: dynamic ? encode3(preparedParameters) : concat2(...preparedParameters.map(({ encoded }) => encoded))
-  };
-}
-function getArrayComponents2(type) {
-  const matches = type.match(/^(.*)\[(\d+)?\]$/);
-  return matches ? [matches[2] ? Number(matches[2]) : null, matches[1]] : undefined;
-}
-function hasDynamicChild2(param) {
-  const { type } = param;
-  if (type === "string")
-    return true;
-  if (type === "bytes")
-    return true;
-  if (type.endsWith("[]"))
-    return true;
-  if (type === "tuple")
-    return param.components?.some(hasDynamicChild2);
-  const arrayComponents = getArrayComponents2(param.type);
-  if (arrayComponents && hasDynamicChild2({
-    ...param,
-    type: arrayComponents[1]
-  }))
-    return true;
-  return false;
-}
-
-// node_modules/ox/_esm/core/internal/cursor.js
-init_Errors();
-var staticCursor2 = {
-  bytes: new Uint8Array,
-  dataView: new DataView(new ArrayBuffer(0)),
-  position: 0,
-  positionReadCount: new Map,
-  recursiveReadCount: 0,
-  recursiveReadLimit: Number.POSITIVE_INFINITY,
-  assertReadLimit() {
-    if (this.recursiveReadCount >= this.recursiveReadLimit)
-      throw new RecursiveReadLimitExceededError2({
-        count: this.recursiveReadCount + 1,
-        limit: this.recursiveReadLimit
-      });
-  },
-  assertPosition(position) {
-    if (position < 0 || position > this.bytes.length - 1)
-      throw new PositionOutOfBoundsError2({
-        length: this.bytes.length,
-        position
-      });
-  },
-  decrementPosition(offset) {
-    if (offset < 0)
-      throw new NegativeOffsetError2({ offset });
-    const position = this.position - offset;
-    this.assertPosition(position);
-    this.position = position;
-  },
-  getReadCount(position) {
-    return this.positionReadCount.get(position || this.position) || 0;
-  },
-  incrementPosition(offset) {
-    if (offset < 0)
-      throw new NegativeOffsetError2({ offset });
-    const position = this.position + offset;
-    this.assertPosition(position);
-    this.position = position;
-  },
-  inspectByte(position_) {
-    const position = position_ ?? this.position;
-    this.assertPosition(position);
-    return this.bytes[position];
-  },
-  inspectBytes(length, position_) {
-    const position = position_ ?? this.position;
-    this.assertPosition(position + length - 1);
-    return this.bytes.subarray(position, position + length);
-  },
-  inspectUint8(position_) {
-    const position = position_ ?? this.position;
-    this.assertPosition(position);
-    return this.bytes[position];
-  },
-  inspectUint16(position_) {
-    const position = position_ ?? this.position;
-    this.assertPosition(position + 1);
-    return this.dataView.getUint16(position);
-  },
-  inspectUint24(position_) {
-    const position = position_ ?? this.position;
-    this.assertPosition(position + 2);
-    return (this.dataView.getUint16(position) << 8) + this.dataView.getUint8(position + 2);
-  },
-  inspectUint32(position_) {
-    const position = position_ ?? this.position;
-    this.assertPosition(position + 3);
-    return this.dataView.getUint32(position);
-  },
-  pushByte(byte) {
-    this.assertPosition(this.position);
-    this.bytes[this.position] = byte;
-    this.position++;
-  },
-  pushBytes(bytes) {
-    this.assertPosition(this.position + bytes.length - 1);
-    this.bytes.set(bytes, this.position);
-    this.position += bytes.length;
-  },
-  pushUint8(value) {
-    this.assertPosition(this.position);
-    this.bytes[this.position] = value;
-    this.position++;
-  },
-  pushUint16(value) {
-    this.assertPosition(this.position + 1);
-    this.dataView.setUint16(this.position, value);
-    this.position += 2;
-  },
-  pushUint24(value) {
-    this.assertPosition(this.position + 2);
-    this.dataView.setUint16(this.position, value >> 8);
-    this.dataView.setUint8(this.position + 2, value & ~4294967040);
-    this.position += 3;
-  },
-  pushUint32(value) {
-    this.assertPosition(this.position + 3);
-    this.dataView.setUint32(this.position, value);
-    this.position += 4;
-  },
-  readByte() {
-    this.assertReadLimit();
-    this._touch();
-    const value = this.inspectByte();
-    this.position++;
-    return value;
-  },
-  readBytes(length, size6) {
-    this.assertReadLimit();
-    this._touch();
-    const value = this.inspectBytes(length);
-    this.position += size6 ?? length;
-    return value;
-  },
-  readUint8() {
-    this.assertReadLimit();
-    this._touch();
-    const value = this.inspectUint8();
-    this.position += 1;
-    return value;
-  },
-  readUint16() {
-    this.assertReadLimit();
-    this._touch();
-    const value = this.inspectUint16();
-    this.position += 2;
-    return value;
-  },
-  readUint24() {
-    this.assertReadLimit();
-    this._touch();
-    const value = this.inspectUint24();
-    this.position += 3;
-    return value;
-  },
-  readUint32() {
-    this.assertReadLimit();
-    this._touch();
-    const value = this.inspectUint32();
-    this.position += 4;
-    return value;
-  },
-  get remaining() {
-    return this.bytes.length - this.position;
-  },
-  setPosition(position) {
-    const oldPosition = this.position;
-    this.assertPosition(position);
-    this.position = position;
-    return () => this.position = oldPosition;
-  },
-  _touch() {
-    if (this.recursiveReadLimit === Number.POSITIVE_INFINITY)
-      return;
-    const count = this.getReadCount();
-    this.positionReadCount.set(this.position, count + 1);
-    if (count > 0)
-      this.recursiveReadCount++;
-  }
-};
-function create(bytes, { recursiveReadLimit = 8192 } = {}) {
-  const cursor = Object.create(staticCursor2);
-  cursor.bytes = bytes;
-  cursor.dataView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  cursor.positionReadCount = new Map;
-  cursor.recursiveReadLimit = recursiveReadLimit;
-  return cursor;
-}
-
-class NegativeOffsetError2 extends BaseError3 {
-  constructor({ offset }) {
-    super(`Offset \`${offset}\` cannot be negative.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Cursor.NegativeOffsetError"
-    });
-  }
-}
-
-class PositionOutOfBoundsError2 extends BaseError3 {
-  constructor({ length, position }) {
-    super(`Position \`${position}\` is out of bounds (\`0 < position < ${length}\`).`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Cursor.PositionOutOfBoundsError"
-    });
-  }
-}
-
-class RecursiveReadLimitExceededError2 extends BaseError3 {
-  constructor({ count, limit }) {
-    super(`Recursive read limit of \`${limit}\` exceeded (recursive read count: \`${count}\`).`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Cursor.RecursiveReadLimitExceededError"
-    });
-  }
-}
-
-// node_modules/ox/_esm/core/AbiParameters.js
-function decode3(parameters, data, options = {}) {
-  const { as = "Array", checksumAddress: checksumAddress2 = false } = options;
-  const bytes = typeof data === "string" ? fromHex(data) : data;
-  const cursor = create(bytes);
-  if (size3(bytes) === 0 && parameters.length > 0)
-    throw new ZeroDataError;
-  if (size3(bytes) && size3(bytes) < 32)
-    throw new DataSizeTooSmallError({
-      data: typeof data === "string" ? data : fromBytes(data),
-      parameters,
-      size: size3(bytes)
-    });
-  let consumed = 0;
-  const values = as === "Array" ? [] : {};
-  for (let i = 0;i < parameters.length; ++i) {
-    const param = parameters[i];
-    if (consumed < bytes.length)
-      cursor.setPosition(consumed);
-    const [data2, consumed_] = decodeParameter2(cursor, param, {
-      checksumAddress: checksumAddress2,
-      staticPosition: 0
-    });
-    consumed += consumed_;
-    if (as === "Array")
-      values.push(data2);
-    else
-      values[param.name ?? i] = data2;
-  }
-  return values;
-}
-function encode4(parameters, values, options) {
-  const { checksumAddress: checksumAddress2 = false } = options ?? {};
-  if (parameters.length !== values.length)
-    throw new LengthMismatchError({
-      expectedLength: parameters.length,
-      givenLength: values.length
-    });
-  const preparedParameters = prepareParameters({
-    checksumAddress: checksumAddress2,
-    parameters,
-    values
-  });
-  const data = encode3(preparedParameters);
-  if (data.length === 0)
-    return "0x";
-  return data;
-}
-function encodePacked2(types, values) {
-  if (types.length !== values.length)
-    throw new LengthMismatchError({
-      expectedLength: types.length,
-      givenLength: values.length
-    });
-  const data = [];
-  for (let i = 0;i < types.length; i++) {
-    const type = types[i];
-    const value = values[i];
-    data.push(encodePacked2.encode(type, value));
-  }
-  return concat2(...data);
-}
-(function(encodePacked3) {
-  function encode5(type, value, isArray = false) {
-    if (type === "address") {
-      const address = value;
-      assert5(address);
-      return padLeft(address.toLowerCase(), isArray ? 32 : 0);
-    }
-    if (type === "string")
-      return fromString2(value);
-    if (type === "bytes")
-      return value;
-    if (type === "bool")
-      return padLeft(fromBoolean(value), isArray ? 32 : 1);
-    const intMatch = type.match(integerRegex4);
-    if (intMatch) {
-      const [_type, baseType, bits = "256"] = intMatch;
-      const size6 = Number.parseInt(bits, 10) / 8;
-      return fromNumber(value, {
-        size: isArray ? 32 : size6,
-        signed: baseType === "int"
-      });
-    }
-    const bytesMatch = type.match(bytesRegex4);
-    if (bytesMatch) {
-      const [_type, size6] = bytesMatch;
-      if (Number.parseInt(size6, 10) !== (value.length - 2) / 2)
-        throw new BytesSizeMismatchError2({
-          expectedSize: Number.parseInt(size6, 10),
-          value
-        });
-      return padRight(value, isArray ? 32 : 0);
-    }
-    const arrayMatch = type.match(arrayRegex2);
-    if (arrayMatch && Array.isArray(value)) {
-      const [_type, childType] = arrayMatch;
-      const data = [];
-      for (let i = 0;i < value.length; i++) {
-        data.push(encode5(childType, value[i], true));
-      }
-      if (data.length === 0)
-        return "0x";
-      return concat2(...data);
-    }
-    throw new InvalidTypeError(type);
-  }
-  encodePacked3.encode = encode5;
-})(encodePacked2 || (encodePacked2 = {}));
-function from7(parameters) {
-  if (Array.isArray(parameters) && typeof parameters[0] === "string")
-    return parseAbiParameters(parameters);
-  if (typeof parameters === "string")
-    return parseAbiParameters(parameters);
-  return parameters;
-}
-
-class DataSizeTooSmallError extends BaseError3 {
-  constructor({ data, parameters, size: size6 }) {
-    super(`Data size of ${size6} bytes is too small for given parameters.`, {
-      metaMessages: [
-        `Params: (${formatAbiParameters(parameters)})`,
-        `Data:   ${data} (${size6} bytes)`
-      ]
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.DataSizeTooSmallError"
-    });
-  }
-}
-
-class ZeroDataError extends BaseError3 {
-  constructor() {
-    super('Cannot decode zero data ("0x") with ABI parameters.');
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.ZeroDataError"
-    });
-  }
-}
-
-class ArrayLengthMismatchError extends BaseError3 {
-  constructor({ expectedLength, givenLength, type }) {
-    super(`Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.ArrayLengthMismatchError"
-    });
-  }
-}
-
-class BytesSizeMismatchError2 extends BaseError3 {
-  constructor({ expectedSize, value }) {
-    super(`Size of bytes "${value}" (bytes${size4(value)}) does not match expected size (bytes${expectedSize}).`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.BytesSizeMismatchError"
-    });
-  }
-}
-
-class LengthMismatchError extends BaseError3 {
-  constructor({ expectedLength, givenLength }) {
-    super([
-      "ABI encoding parameters/values length mismatch.",
-      `Expected length (parameters): ${expectedLength}`,
-      `Given length (values): ${givenLength}`
-    ].join(`
-`));
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.LengthMismatchError"
-    });
-  }
-}
-
-class InvalidArrayError2 extends BaseError3 {
-  constructor(value) {
-    super(`Value \`${value}\` is not a valid array.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.InvalidArrayError"
-    });
-  }
-}
-
-class InvalidTypeError extends BaseError3 {
-  constructor(type) {
-    super(`Type \`${type}\` is not a valid ABI Type.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "AbiParameters.InvalidTypeError"
-    });
-  }
-}
-
-// node_modules/ox/_esm/core/AbiConstructor.js
-init_Hex();
-function encode5(...parameters) {
-  const [abiConstructor, options] = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi2, options2] = parameters;
-      return [fromAbi2(abi2), options2];
-    }
-    return parameters;
-  })();
-  const { bytecode, args } = options;
-  return concat2(bytecode, abiConstructor.inputs?.length && args?.length ? encode4(abiConstructor.inputs, args) : "0x");
-}
-function from8(abiConstructor) {
-  return from6(abiConstructor);
-}
-function fromAbi2(abi2) {
-  const item = abi2.find((item2) => item2.type === "constructor");
-  if (!item)
-    throw new NotFoundError({ name: "constructor" });
-  return item;
-}
-
-// node_modules/ox/_esm/core/AbiEvent.js
-function from9(abiEvent, options = {}) {
-  return from6(abiEvent, options);
-}
-function getSelector2(abiItem) {
-  return getSignatureHash(abiItem);
-}
-
-// node_modules/ox/_esm/core/AbiFunction.js
-init_Hex();
-function decodeResult(...parameters) {
-  const [abiFunction, data, options = {}] = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi2, name, data2, options2] = parameters;
-      return [fromAbi3(abi2, name), data2, options2];
-    }
-    return parameters;
-  })();
-  const values = decode3(abiFunction.outputs, data, options);
-  if (values && Object.keys(values).length === 0)
-    return;
-  if (values && Object.keys(values).length === 1) {
-    if (Array.isArray(values))
-      return values[0];
-    return Object.values(values)[0];
-  }
-  return values;
-}
-function encodeData(...parameters) {
-  const [abiFunction, args = []] = (() => {
-    if (Array.isArray(parameters[0])) {
-      const [abi2, name, args3] = parameters;
-      return [fromAbi3(abi2, name, { args: args3 }), args3];
-    }
-    const [abiFunction2, args2] = parameters;
-    return [abiFunction2, args2];
-  })();
-  const { overloads } = abiFunction;
-  const item = overloads ? fromAbi3([abiFunction, ...overloads], abiFunction.name, {
-    args
-  }) : abiFunction;
-  const selector = getSelector3(item);
-  const data = args.length > 0 ? encode4(item.inputs, args) : undefined;
-  return data ? concat2(selector, data) : selector;
-}
-function from10(abiFunction, options = {}) {
-  return from6(abiFunction, options);
-}
-function fromAbi3(abi2, name, options) {
-  const item = fromAbi(abi2, name, options);
-  if (item.type !== "function")
-    throw new NotFoundError({ name, type: "function" });
-  return item;
-}
-function getSelector3(abiItem) {
-  return getSelector(abiItem);
-}
-// node_modules/viem/_esm/constants/address.js
-var ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-var zeroAddress = "0x0000000000000000000000000000000000000000";
-
-// node_modules/viem/_esm/actions/public/simulateCalls.js
-init_base();
-init_contract();
-init_node();
-init_pad();
-init_fromHex();
-init_call();
-var getBalanceCode = "0x6080604052348015600e575f80fd5b5061016d8061001c5f395ff3fe608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063f8b2cb4f1461002d575b5f80fd5b610047600480360381019061004291906100db565b61005d565b604051610054919061011e565b60405180910390f35b5f8173ffffffffffffffffffffffffffffffffffffffff16319050919050565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6100aa82610081565b9050919050565b6100ba816100a0565b81146100c4575f80fd5b50565b5f813590506100d5816100b1565b92915050565b5f602082840312156100f0576100ef61007d565b5b5f6100fd848285016100c7565b91505092915050565b5f819050919050565b61011881610106565b82525050565b5f6020820190506101315f83018461010f565b9291505056fea26469706673582212203b9fe929fe995c7cf9887f0bdba8a36dd78e8b73f149b17d2d9ad7cd09d2dc6264736f6c634300081a0033";
-var staticCallCode = "0x608060405234801561000f575f5ffd5b5060043610610029575f3560e01c8063fd00430c1461002d575b5f5ffd5b6100476004803603810190610042919061012b565b610049565b005b80825f375f5f825f865afa610060573d5f5f3e3d5ffd5b3d5f5f3e3d5ff35b5f5ffd5b5f5ffd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61009982610070565b9050919050565b6100a98161008f565b81146100b3575f5ffd5b50565b5f813590506100c4816100a0565b92915050565b5f5ffd5b5f5ffd5b5f5ffd5b5f5f83601f8401126100eb576100ea6100ca565b5b8235905067ffffffffffffffff811115610108576101076100ce565b5b602083019150836001820283011115610124576101236100d2565b5b9250929050565b5f5f5f6040848603121561014257610141610068565b5b5f61014f868287016100b6565b935050602084013567ffffffffffffffff8111156101705761016f61006c565b5b61017c868287016100d6565b9250925050925092509256fea2646970667358221220635ed99185cacf3f2acba6921f23687c969cec2bbaf5f9ad599f507e6e105e6964736f6c63430008230033";
-var staticCallAddressBase = 0x00000000000000000000000000000000deadbeefn;
-var transferEventSelector = getSelector2(from9("event Transfer(address indexed from, address indexed to, uint256 value)"));
-var balanceOfFunction = from10("function balanceOf(address) returns (uint256)");
-var decimalsFunction = from10("function decimals() returns (uint256)");
-var tokenUriFunction = from10("function tokenURI(uint256) returns (string)");
-var symbolFunction = from10("function symbol() returns (string)");
-var staticCallFunction = from10("function query(address target, bytes data)");
-async function simulateCalls(client, parameters) {
-  const { blockNumber, blockTag, calls, stateOverrides, traceAssetChanges, traceTransfers, validation } = parameters;
-  const account = parameters.account ? parseAccount(parameters.account) : undefined;
-  if (traceAssetChanges && !account)
-    throw new BaseError("`account` is required when `traceAssetChanges` is true");
-  const getBalanceData = account ? encode5(from8("constructor(bytes, bytes)"), {
-    bytecode: deploylessCallViaBytecodeBytecode,
-    args: [
-      getBalanceCode,
-      encodeData(from10("function getBalance(address)"), [account.address])
-    ]
-  }) : undefined;
-  const blockTag_ = blockTag ?? client.experimental_blockTag ?? "latest";
-  let baseBlockNumber = blockNumber;
-  if (traceAssetChanges && typeof baseBlockNumber !== "bigint" && blockTag_ !== "earliest" && blockTag_ !== "pending") {
-    if (blockTag_ === "latest")
-      baseBlockNumber = await getBlockNumber(client, { cacheTime: 0 });
-    else {
-      const block2 = await getBlock(client, { blockTag: blockTag_ });
-      if (typeof block2.number !== "bigint")
-        throw new BaseError(`Block tag \`${blockTag_}\` did not resolve to a number.`);
-      baseBlockNumber = block2.number;
-    }
-  }
-  const block_ = typeof baseBlockNumber === "bigint" ? { blockNumber: baseBlockNumber } : { blockTag: blockTag_ };
-  const discovery = traceAssetChanges ? await simulateBlocks(client, {
-    ...block_,
-    blocks: [
-      {
-        calls: calls.map((call2) => ({
-          ...call2,
-          from: account.address
-        })),
-        stateOverrides
-      }
-    ],
-    traceTransfers,
-    validation
-  }) : undefined;
-  const assetAddresses = discovery ? [
-    ...new Set([
-      ...tokensFromLogs(discovery[0].calls.flatMap((call2) => call2.logs ?? []), account.address),
-      ...parameters.calls.map((call2) => call2.to?.toLowerCase())
-    ])
-  ].filter((address) => Boolean(address) && address !== ethAddress && address !== zeroAddress) : [];
-  const staticCallAddress = getStaticCallAddress([
-    ...account ? [account.address] : [],
-    ...assetAddresses,
-    ...stateOverrides?.map(({ address }) => address) ?? []
-  ]);
-  const staticCallStateOverrides = [
-    { address: staticCallAddress, code: staticCallCode }
-  ];
-  const [balanceCallsPre, blocks] = await Promise.all([
-    traceAssetChanges ? Promise.all([
-      readBalance(client, {
-        account: account.address,
-        ...block_,
-        data: getBalanceData,
-        stateOverride: stateOverrides
-      }),
-      ...assetAddresses.map((address) => readBalance(client, {
-        account: account.address,
-        address,
-        ...block_,
-        data: encodeData(balanceOfFunction, [
-          account.address
-        ]),
-        staticCallAddress,
-        stateOverride: stateOverrides
-      }))
-    ]) : [],
-    simulateBlocks(client, {
-      ...block_,
-      blocks: [
-        {
-          calls: [...calls, { to: zeroAddress }].map((call2) => ({
-            ...call2,
-            from: account?.address
-          })),
-          stateOverrides
-        },
-        ...traceAssetChanges ? [
-          {
-            calls: [{ data: getBalanceData }]
-          },
-          {
-            calls: assetAddresses.map((address) => ({
-              to: staticCallAddress,
-              data: encodeStaticCall(address, encodeData(balanceOfFunction, [
-                account.address
-              ]))
-            })),
-            stateOverrides: staticCallStateOverrides
-          },
-          {
-            calls: assetAddresses.map((address) => ({
-              to: staticCallAddress,
-              data: encodeStaticCall(address, encodeData(decimalsFunction))
-            })),
-            stateOverrides: staticCallStateOverrides
-          },
-          {
-            calls: assetAddresses.map((address) => ({
-              to: staticCallAddress,
-              data: encodeStaticCall(address, encodeData(tokenUriFunction, [0n]))
-            })),
-            stateOverrides: staticCallStateOverrides
-          },
-          {
-            calls: assetAddresses.map((address) => ({
-              to: staticCallAddress,
-              data: encodeStaticCall(address, encodeData(symbolFunction))
-            })),
-            stateOverrides: staticCallStateOverrides
-          }
-        ] : []
-      ],
-      traceTransfers,
-      validation
-    })
-  ]);
-  const block_results = blocks[0];
-  const [block_ethPost, block_assetsPost, block_decimals, block_tokenURI, block_symbols] = traceAssetChanges ? blocks.slice(1) : [];
-  const { calls: block_calls, ...block } = block_results;
-  const results = block_calls.slice(0, -1);
-  const balancesPre = balanceCallsPre.map((call2) => isBalance(call2) ? hexToBigInt(call2.data) : null);
-  const ethPost = block_ethPost?.calls ?? [];
-  const assetsPost = block_assetsPost?.calls ?? [];
-  const balanceCallsPost = [...ethPost, ...assetsPost];
-  const balancesPost = balanceCallsPost.map((call2) => isBalance(call2) ? hexToBigInt(call2.data) : null);
-  const decimals = (block_decimals?.calls ?? []).map((call2) => decodeAssetResult(call2, decimalsFunction));
-  const symbols = (block_symbols?.calls ?? []).map((call2) => decodeAssetResult(call2, symbolFunction));
-  const tokenURI = (block_tokenURI?.calls ?? []).map((call2) => decodeAssetResult(call2, tokenUriFunction));
-  const changes = [];
-  for (const [i, balancePost] of balancesPost.entries()) {
-    const balancePre_ = balancesPre[i];
-    const preCall = balanceCallsPre[i];
-    const balancePre = typeof balancePre_ === "bigint" ? balancePre_ : i > 0 && preCall?.status === "success" && preCall.data === "0x" ? 0n : null;
-    if (typeof balancePost !== "bigint")
-      continue;
-    if (typeof balancePre !== "bigint")
-      continue;
-    const decimals_ = decimals[i - 1];
-    const symbol_ = symbols[i - 1];
-    const tokenURI_ = tokenURI[i - 1];
-    const token = (() => {
-      if (i === 0)
-        return {
-          address: ethAddress,
-          decimals: 18,
-          symbol: "ETH"
-        };
-      return {
-        address: assetAddresses[i - 1],
-        decimals: tokenURI_ || decimals_ ? Number(decimals_ ?? 1) : undefined,
-        symbol: symbol_ ?? undefined
-      };
-    })();
-    changes.push({
-      token,
-      value: {
-        pre: balancePre,
-        post: balancePost,
-        diff: balancePost - balancePre
-      }
-    });
-  }
-  return {
-    assetChanges: changes,
-    block,
-    results
-  };
-}
-function encodeStaticCall(address, data) {
-  return encodeData(staticCallFunction, [address, data]);
-}
-function tokensFromLogs(logs, account) {
-  const account_ = pad(account.toLowerCase(), { size: 32 });
-  return logs.filter((log) => {
-    if (log.topics[0]?.toLowerCase() !== transferEventSelector)
-      return false;
-    if (log.address.toLowerCase() === ethAddress)
-      return false;
-    return log.topics[1]?.toLowerCase() === account_ || log.topics[2]?.toLowerCase() === account_;
-  }).map((log) => log.address.toLowerCase());
-}
-function isBalance(call2) {
-  return call2.status === "success" && /^0x[\da-f]{64}$/i.test(call2.data);
-}
-function decodeAssetResult(call2, abiFunction) {
-  if (call2.status === "failure" || call2.data === "0x")
-    return null;
-  try {
-    return decodeResult(abiFunction, call2.data);
-  } catch {
-    return null;
-  }
-}
-async function readBalance(client, parameters) {
-  const { account, address, blockNumber, blockTag, data, staticCallAddress, stateOverride } = parameters;
-  try {
-    const result = await call({ ...client, ccipRead: false }, {
-      account: address ? zeroAddress : account,
-      data: address ? encodeStaticCall(address, data) : data,
-      stateOverride: address && staticCallAddress ? [
-        ...stateOverride ?? [],
-        { address: staticCallAddress, code: staticCallCode }
-      ] : stateOverride,
-      ...address ? { to: staticCallAddress } : {},
-      ...typeof blockNumber === "bigint" ? { blockNumber } : { blockTag }
-    });
-    return { data: result.data ?? "0x", status: "success" };
-  } catch (error61) {
-    if (!(error61 instanceof CallExecutionError) || !(error61.cause instanceof ExecutionRevertedError))
-      throw error61;
-    return { data: "0x", status: "failure" };
-  }
-}
-function getStaticCallAddress(addresses) {
-  const occupied = new Set(addresses.map((address) => address.toLowerCase()));
-  let value = staticCallAddressBase;
-  while (occupied.has(`0x${value.toString(16).padStart(40, "0")}`))
-    value++;
-  return `0x${value.toString(16).padStart(40, "0")}`;
-}
-
-// node_modules/viem/_esm/actions/public/simulateContract.js
-init_decodeFunctionResult();
-init_encodeFunctionData();
-init_call();
-async function simulateContract(client, parameters) {
-  const { abi: abi2, address, args, functionName, dataSuffix = typeof client.dataSuffix === "string" ? client.dataSuffix : client.dataSuffix?.value, ...callRequest } = parameters;
-  const account = callRequest.account ? parseAccount(callRequest.account) : client.account;
-  const calldata = encodeFunctionData({ abi: abi2, args, functionName });
-  try {
-    const { data } = await getAction(client, call, "call")({
-      batch: false,
-      data: `${calldata}${dataSuffix ? dataSuffix.replace("0x", "") : ""}`,
-      to: address,
-      ...callRequest,
-      account
-    });
-    const result = decodeFunctionResult({
-      abi: abi2,
-      args,
-      functionName,
-      data: data || "0x"
-    });
-    const minimizedAbi = abi2.filter((abiItem) => ("name" in abiItem) && abiItem.name === parameters.functionName);
-    return {
-      result,
-      request: {
-        abi: minimizedAbi,
-        address,
-        args,
-        dataSuffix,
-        functionName,
-        ...callRequest,
-        account
-      }
-    };
-  } catch (error61) {
-    throw getContractError(error61, {
-      abi: abi2,
-      address,
-      args,
-      docsPath: "/docs/contract/simulateContract",
-      functionName,
-      sender: account?.address
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/public/uninstallFilter.js
-async function uninstallFilter(_client, { filter }) {
-  return filter.request({
-    method: "eth_uninstallFilter",
-    params: [filter.id]
-  });
-}
-
-// node_modules/ox/_esm/erc6492/SignatureErc6492.js
-var exports_SignatureErc6492 = {};
-__export(exports_SignatureErc6492, {
-  InvalidWrappedSignatureError: () => InvalidWrappedSignatureError,
-  assert: () => assert6,
-  from: () => from11,
-  magicBytes: () => magicBytes,
-  universalSignatureValidatorAbi: () => universalSignatureValidatorAbi,
-  universalSignatureValidatorBytecode: () => universalSignatureValidatorBytecode,
-  unwrap: () => unwrap,
-  validate: () => validate5,
-  wrap: () => wrap
-});
-init_Errors();
-init_Hex();
-var magicBytes = "0x6492649264926492649264926492649264926492649264926492649264926492";
-var universalSignatureValidatorBytecode = "0x608060405234801561001057600080fd5b5060405161069438038061069483398101604081905261002f9161051e565b600061003c848484610048565b9050806000526001601ff35b60007f64926492649264926492649264926492649264926492649264926492649264926100748361040c565b036101e7576000606080848060200190518101906100929190610577565b60405192955090935091506000906001600160a01b038516906100b69085906105dd565b6000604051808303816000865af19150503d80600081146100f3576040519150601f19603f3d011682016040523d82523d6000602084013e6100f8565b606091505b50509050876001600160a01b03163b60000361016057806101605760405162461bcd60e51b815260206004820152601e60248201527f5369676e617475726556616c696461746f723a206465706c6f796d656e74000060448201526064015b60405180910390fd5b604051630b135d3f60e11b808252906001600160a01b038a1690631626ba7e90610190908b9087906004016105f9565b602060405180830381865afa1580156101ad573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101d19190610633565b6001600160e01b03191614945050505050610405565b6001600160a01b0384163b1561027a57604051630b135d3f60e11b808252906001600160a01b03861690631626ba7e9061022790879087906004016105f9565b602060405180830381865afa158015610244573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102689190610633565b6001600160e01b031916149050610405565b81516041146102df5760405162461bcd60e51b815260206004820152603a602482015260008051602061067483398151915260448201527f3a20696e76616c6964207369676e6174757265206c656e6774680000000000006064820152608401610157565b6102e7610425565b5060208201516040808401518451859392600091859190811061030c5761030c61065d565b016020015160f81c9050601b811480159061032b57508060ff16601c14155b1561038c5760405162461bcd60e51b815260206004820152603b602482015260008051602061067483398151915260448201527f3a20696e76616c6964207369676e617475726520762076616c756500000000006064820152608401610157565b60408051600081526020810180835289905260ff83169181019190915260608101849052608081018390526001600160a01b0389169060019060a0016020604051602081039080840390855afa1580156103ea573d6000803e3d6000fd5b505050602060405103516001600160a01b0316149450505050505b9392505050565b600060208251101561041d57600080fd5b508051015190565b60405180606001604052806003906020820280368337509192915050565b6001600160a01b038116811461045857600080fd5b50565b634e487b7160e01b600052604160045260246000fd5b60005b8381101561048c578181015183820152602001610474565b50506000910152565b600082601f8301126104a657600080fd5b81516001600160401b038111156104bf576104bf61045b565b604051601f8201601f19908116603f011681016001600160401b03811182821017156104ed576104ed61045b565b60405281815283820160200185101561050557600080fd5b610516826020830160208701610471565b949350505050565b60008060006060848603121561053357600080fd5b835161053e81610443565b6020850151604086015191945092506001600160401b0381111561056157600080fd5b61056d86828701610495565b9150509250925092565b60008060006060848603121561058c57600080fd5b835161059781610443565b60208501519093506001600160401b038111156105b357600080fd5b6105bf86828701610495565b604086015190935090506001600160401b0381111561056157600080fd5b600082516105ef818460208701610471565b9190910192915050565b828152604060208201526000825180604084015261061e816060850160208701610471565b601f01601f1916919091016060019392505050565b60006020828403121561064557600080fd5b81516001600160e01b03198116811461040557600080fd5b634e487b7160e01b600052603260045260246000fdfe5369676e617475726556616c696461746f72237265636f7665725369676e6572";
-var universalSignatureValidatorAbi = [
-  {
-    inputs: [
-      {
-        name: "_signer",
-        type: "address"
-      },
-      {
-        name: "_hash",
-        type: "bytes32"
-      },
-      {
-        name: "_signature",
-        type: "bytes"
-      }
-    ],
-    stateMutability: "nonpayable",
-    type: "constructor"
-  },
-  {
-    inputs: [
-      {
-        name: "_signer",
-        type: "address"
-      },
-      {
-        name: "_hash",
-        type: "bytes32"
-      },
-      {
-        name: "_signature",
-        type: "bytes"
-      }
-    ],
-    outputs: [
-      {
-        type: "bool"
-      }
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-    name: "isValidSig"
-  }
-];
-function assert6(wrapped) {
-  if (slice3(wrapped, -32) !== magicBytes)
-    throw new InvalidWrappedSignatureError(wrapped);
-}
-function from11(wrapped) {
-  if (typeof wrapped === "string")
-    return unwrap(wrapped);
-  return wrapped;
-}
-function unwrap(wrapped) {
-  assert6(wrapped);
-  const [to, data, signature] = decode3(from7("address, bytes, bytes"), wrapped);
-  return { data, signature, to };
-}
-function wrap(value) {
-  const { data, signature, to } = value;
-  return concat2(encode4(from7("address, bytes, bytes"), [
-    to,
-    data,
-    signature
-  ]), magicBytes);
-}
-function validate5(wrapped) {
-  try {
-    assert6(wrapped);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-class InvalidWrappedSignatureError extends BaseError3 {
-  constructor(wrapped) {
-    super(`Value \`${wrapped}\` is an invalid ERC-6492 wrapped signature.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "SignatureErc6492.InvalidWrappedSignatureError"
-    });
-  }
-}
-// node_modules/ox/_esm/erc8010/SignatureErc8010.js
-var exports_SignatureErc8010 = {};
-__export(exports_SignatureErc8010, {
-  InvalidWrappedSignatureError: () => InvalidWrappedSignatureError2,
-  assert: () => assert8,
-  from: () => from15,
-  magicBytes: () => magicBytes2,
-  suffixParameters: () => suffixParameters,
-  unwrap: () => unwrap2,
-  validate: () => validate6,
-  wrap: () => wrap2
-});
-
-// node_modules/ox/_esm/core/Authorization.js
-init_Hex();
-
-// node_modules/ox/_esm/core/Rlp.js
-init_Bytes();
-init_Errors();
-init_Hex();
-function from12(value, options) {
-  const { as } = options;
-  const encodable = getEncodable2(value);
-  const cursor = create(new Uint8Array(encodable.length));
-  encodable.encode(cursor);
-  if (as === "Hex")
-    return fromBytes(cursor.bytes);
-  return cursor.bytes;
-}
-function fromHex4(hex3, options = {}) {
-  const { as = "Hex" } = options;
-  return from12(hex3, { as });
-}
-function getEncodable2(bytes) {
-  if (Array.isArray(bytes))
-    return getEncodableList2(bytes.map((x) => getEncodable2(x)));
-  return getEncodableBytes2(bytes);
-}
-function getEncodableList2(list) {
-  const bodyLength = list.reduce((acc, x) => acc + x.length, 0);
-  const sizeOfBodyLength = getSizeOfLength2(bodyLength);
-  const length = (() => {
-    if (bodyLength <= 55)
-      return 1 + bodyLength;
-    return 1 + sizeOfBodyLength + bodyLength;
-  })();
-  return {
-    length,
-    encode(cursor) {
-      if (bodyLength <= 55) {
-        cursor.pushByte(192 + bodyLength);
-      } else {
-        cursor.pushByte(192 + 55 + sizeOfBodyLength);
-        if (sizeOfBodyLength === 1)
-          cursor.pushUint8(bodyLength);
-        else if (sizeOfBodyLength === 2)
-          cursor.pushUint16(bodyLength);
-        else if (sizeOfBodyLength === 3)
-          cursor.pushUint24(bodyLength);
-        else
-          cursor.pushUint32(bodyLength);
-      }
-      for (const { encode: encode6 } of list) {
-        encode6(cursor);
-      }
-    }
-  };
-}
-function getEncodableBytes2(bytesOrHex) {
-  const bytes = typeof bytesOrHex === "string" ? fromHex(bytesOrHex) : bytesOrHex;
-  const sizeOfBytesLength = getSizeOfLength2(bytes.length);
-  const length = (() => {
-    if (bytes.length === 1 && bytes[0] < 128)
-      return 1;
-    if (bytes.length <= 55)
-      return 1 + bytes.length;
-    return 1 + sizeOfBytesLength + bytes.length;
-  })();
-  return {
-    length,
-    encode(cursor) {
-      if (bytes.length === 1 && bytes[0] < 128) {
-        cursor.pushBytes(bytes);
-      } else if (bytes.length <= 55) {
-        cursor.pushByte(128 + bytes.length);
-        cursor.pushBytes(bytes);
-      } else {
-        cursor.pushByte(128 + 55 + sizeOfBytesLength);
-        if (sizeOfBytesLength === 1)
-          cursor.pushUint8(bytes.length);
-        else if (sizeOfBytesLength === 2)
-          cursor.pushUint16(bytes.length);
-        else if (sizeOfBytesLength === 3)
-          cursor.pushUint24(bytes.length);
-        else
-          cursor.pushUint32(bytes.length);
-        cursor.pushBytes(bytes);
-      }
-    }
-  };
-}
-function getSizeOfLength2(length) {
-  if (length <= 255)
-    return 1;
-  if (length <= 65535)
-    return 2;
-  if (length <= 16777215)
-    return 3;
-  if (length <= 4294967295)
-    return 4;
-  throw new BaseError3("Length is too large.");
-}
-
-// node_modules/ox/_esm/core/Signature.js
-init_Errors();
-init_Hex();
-function assert7(signature, options = {}) {
-  const { recovered } = options;
-  if (typeof signature.r === "undefined")
-    throw new MissingPropertiesError({ signature });
-  if (typeof signature.s === "undefined")
-    throw new MissingPropertiesError({ signature });
-  if (recovered && typeof signature.yParity === "undefined")
-    throw new MissingPropertiesError({ signature });
-  if (signature.r < 0n || signature.r > maxUint2562)
-    throw new InvalidRError({ value: signature.r });
-  if (signature.s < 0n || signature.s > maxUint2562)
-    throw new InvalidSError({ value: signature.s });
-  if (typeof signature.yParity === "number" && signature.yParity !== 0 && signature.yParity !== 1)
-    throw new InvalidYParityError({ value: signature.yParity });
-}
-function fromBytes4(signature) {
-  return fromHex5(fromBytes(signature));
-}
-function fromHex5(signature) {
-  if (signature.length !== 130 && signature.length !== 132)
-    throw new InvalidSerializedSizeError2({ signature });
-  const r = BigInt(slice3(signature, 0, 32));
-  const s = BigInt(slice3(signature, 32, 64));
-  const yParity = (() => {
-    const yParity2 = Number(`0x${signature.slice(130)}`);
-    if (Number.isNaN(yParity2))
-      return;
-    try {
-      return vToYParity(yParity2);
-    } catch {
-      throw new InvalidYParityError({ value: yParity2 });
-    }
-  })();
-  if (typeof yParity === "undefined")
-    return {
-      r,
-      s
-    };
-  return {
-    r,
-    s,
-    yParity
-  };
-}
-function extract3(value) {
-  if (typeof value.r === "undefined")
-    return;
-  if (typeof value.s === "undefined")
-    return;
-  return from13(value);
-}
-function from13(signature) {
-  const signature_ = (() => {
-    if (typeof signature === "string")
-      return fromHex5(signature);
-    if (signature instanceof Uint8Array)
-      return fromBytes4(signature);
-    if (typeof signature.r === "string")
-      return fromRpc2(signature);
-    if (signature.v)
-      return fromLegacy(signature);
-    return {
-      r: signature.r,
-      s: signature.s,
-      ...typeof signature.yParity !== "undefined" ? { yParity: signature.yParity } : {}
-    };
-  })();
-  assert7(signature_);
-  return signature_;
-}
-function fromLegacy(signature) {
-  return {
-    r: signature.r,
-    s: signature.s,
-    yParity: vToYParity(signature.v)
-  };
-}
-function fromRpc2(signature) {
-  const yParity = (() => {
-    const v = signature.v ? Number(signature.v) : undefined;
-    let yParity2 = signature.yParity ? Number(signature.yParity) : undefined;
-    if (typeof v === "number" && typeof yParity2 !== "number")
-      yParity2 = vToYParity(v);
-    if (typeof yParity2 !== "number")
-      throw new InvalidYParityError({ value: signature.yParity });
-    return yParity2;
-  })();
-  return {
-    r: BigInt(signature.r),
-    s: BigInt(signature.s),
-    yParity
-  };
-}
-function toTuple(signature) {
-  const { r, s, yParity } = signature;
-  return [
-    yParity ? "0x01" : "0x",
-    r === 0n ? "0x" : trimLeft2(fromNumber(r)),
-    s === 0n ? "0x" : trimLeft2(fromNumber(s))
-  ];
-}
-function vToYParity(v) {
-  if (v === 0 || v === 27)
-    return 0;
-  if (v === 1 || v === 28)
-    return 1;
-  if (v >= 35)
-    return v % 2 === 0 ? 1 : 0;
-  throw new InvalidVError({ value: v });
-}
-class InvalidSerializedSizeError2 extends BaseError3 {
-  constructor({ signature }) {
-    super(`Value \`${signature}\` is an invalid signature size.`, {
-      metaMessages: [
-        "Expected: 64 bytes or 65 bytes.",
-        `Received ${size4(from3(signature))} bytes.`
-      ]
-    });
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Signature.InvalidSerializedSizeError"
-    });
-  }
-}
-
-class MissingPropertiesError extends BaseError3 {
-  constructor({ signature }) {
-    super(`Signature \`${stringify2(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Signature.MissingPropertiesError"
-    });
-  }
-}
-
-class InvalidRError extends BaseError3 {
-  constructor({ value }) {
-    super(`Value \`${value}\` is an invalid r value. r must be a positive integer less than 2^256.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Signature.InvalidRError"
-    });
-  }
-}
-
-class InvalidSError extends BaseError3 {
-  constructor({ value }) {
-    super(`Value \`${value}\` is an invalid s value. s must be a positive integer less than 2^256.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Signature.InvalidSError"
-    });
-  }
-}
-
-class InvalidYParityError extends BaseError3 {
-  constructor({ value }) {
-    super(`Value \`${value}\` is an invalid y-parity value. Y-parity must be 0 or 1.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Signature.InvalidYParityError"
-    });
-  }
-}
-
-class InvalidVError extends BaseError3 {
-  constructor({ value }) {
-    super(`Value \`${value}\` is an invalid v value. v must be 27, 28 or >=35.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "Signature.InvalidVError"
-    });
-  }
-}
-
-// node_modules/ox/_esm/core/Authorization.js
-function from14(authorization, options = {}) {
-  if (typeof authorization.chainId === "string")
-    return fromRpc3(authorization);
-  return { ...authorization, ...options.signature };
-}
-function fromRpc3(authorization) {
-  const { address, chainId, nonce } = authorization;
-  const signature = extract3(authorization);
-  return {
-    address,
-    chainId: Number(chainId),
-    nonce: BigInt(nonce),
-    ...signature
-  };
-}
-function getSignPayload(authorization) {
-  return hash3(authorization, { presign: true });
-}
-function hash3(authorization, options = {}) {
-  const { presign } = options;
-  return keccak2563(concat2("0x05", fromHex4(toTuple2(presign ? {
-    address: authorization.address,
-    chainId: authorization.chainId,
-    nonce: authorization.nonce
-  } : authorization))));
-}
-function toTuple2(authorization) {
-  const { address, chainId, nonce } = authorization;
-  const signature = extract3(authorization);
-  return [
-    chainId ? fromNumber(chainId) : "0x",
-    address,
-    nonce ? fromNumber(nonce) : "0x",
-    ...signature ? toTuple(signature) : []
-  ];
-}
-
-// node_modules/ox/_esm/erc8010/SignatureErc8010.js
-init_Errors();
-init_Hex();
-
-// node_modules/ox/_esm/core/Secp256k1.js
-init_secp256k1();
-init_Bytes();
-init_Hex();
-function recoverAddress3(options) {
-  return fromPublicKey(recoverPublicKey3(options));
-}
-function recoverPublicKey3(options) {
-  const { payload, signature } = options;
-  const { r, s, yParity } = signature;
-  const signature_ = new secp256k1.Signature(BigInt(r), BigInt(s)).addRecoveryBit(yParity);
-  const point = signature_.recoverPublicKey(from3(payload).substring(2));
-  return from4(point);
-}
-var fromSeedDomain = fromString("ox.secp256k1.fromSeed.v1");
-
-// node_modules/ox/_esm/erc8010/SignatureErc8010.js
-var magicBytes2 = "0x8010801080108010801080108010801080108010801080108010801080108010";
-var suffixParameters = from7("(uint256 chainId, address delegation, uint256 nonce, uint8 yParity, uint256 r, uint256 s), address to, bytes data");
-function assert8(value) {
-  if (typeof value === "string") {
-    if (slice3(value, -32) !== magicBytes2)
-      throw new InvalidWrappedSignatureError2(value);
-  } else
-    assert7(value.authorization);
-}
-function from15(value) {
-  if (typeof value === "string")
-    return unwrap2(value);
-  return value;
-}
-function unwrap2(wrapped) {
-  assert8(wrapped);
-  const suffixLength = toNumber(slice3(wrapped, -64, -32));
-  const suffix = slice3(wrapped, -suffixLength - 64, -64);
-  const signature = slice3(wrapped, 0, -suffixLength - 64);
-  const [auth, to, data] = decode3(suffixParameters, suffix);
-  const authorization = from14({
-    address: auth.delegation,
-    chainId: Number(auth.chainId),
-    nonce: auth.nonce,
-    yParity: auth.yParity,
-    r: auth.r,
-    s: auth.s
-  });
-  return {
-    authorization,
-    signature,
-    ...data && data !== "0x" ? { data, to } : {}
-  };
-}
-function wrap2(value) {
-  const { data, signature } = value;
-  assert8(value);
-  const self = recoverAddress3({
-    payload: getSignPayload(value.authorization),
-    signature: from13(value.authorization)
-  });
-  const suffix = encode4(suffixParameters, [
-    {
-      ...value.authorization,
-      delegation: value.authorization.address,
-      chainId: BigInt(value.authorization.chainId)
-    },
-    value.to ?? self,
-    data ?? "0x"
-  ]);
-  const suffixLength = fromNumber(size4(suffix), { size: 32 });
-  return concat2(signature, suffix, suffixLength, magicBytes2);
-}
-function validate6(value) {
-  try {
-    assert8(value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-class InvalidWrappedSignatureError2 extends BaseError3 {
-  constructor(wrapped) {
-    super(`Value \`${wrapped}\` is an invalid ERC-8010 wrapped signature.`);
-    Object.defineProperty(this, "name", {
-      enumerable: true,
-      configurable: true,
-      writable: true,
-      value: "SignatureErc8010.InvalidWrappedSignatureError"
-    });
-  }
-}
-// node_modules/viem/_esm/actions/public/verifyHash.js
-init_abis();
-init_contract();
-init_encodeDeployData();
-init_encodeFunctionData();
-init_getAddress();
-init_isAddressEqual();
-
-// node_modules/viem/_esm/utils/authorization/verifyAuthorization.js
-init_getAddress();
-init_isAddressEqual();
-async function verifyAuthorization2({ address, authorization, signature }) {
-  return isAddressEqual(getAddress(address), await recoverAuthorizationAddress({
-    authorization,
-    signature
-  }));
-}
-
-// node_modules/viem/_esm/actions/public/verifyHash.js
-init_fromHex();
-init_toHex();
-
-// node_modules/viem/_esm/utils/signature/serializeSignature.js
-init_secp256k1();
-init_fromHex();
-init_toBytes();
-function serializeSignature({ r, s, to = "hex", v, yParity }) {
-  const yParity_ = (() => {
-    if (yParity === 0 || yParity === 1)
-      return yParity;
-    if (v && (v === 27n || v === 28n || v >= 35n))
-      return v % 2n === 0n ? 1 : 0;
-    throw new Error("Invalid `v` or `yParity` value");
-  })();
-  const signature = `0x${new secp256k1.Signature(hexToBigInt(r), hexToBigInt(s)).toCompactHex()}${yParity_ === 0 ? "1b" : "1c"}`;
-  if (to === "hex")
-    return signature;
-  return hexToBytes(signature);
-}
-
-// node_modules/viem/_esm/actions/public/verifyHash.js
-init_call();
-async function verifyHash2(client, parameters) {
-  const { address, chain = client.chain, hash: hash4, erc6492VerifierAddress: verifierAddress = parameters.universalSignatureVerifierAddress ?? chain?.contracts?.erc6492Verifier?.address, multicallAddress = parameters.multicallAddress ?? chain?.contracts?.multicall3?.address, mode = "auto" } = parameters;
-  if (chain?.verifyHash)
-    return await chain.verifyHash(client, parameters);
-  const signature = (() => {
-    const signature2 = parameters.signature;
-    if (isHex(signature2))
-      return signature2;
-    if (typeof signature2 === "object" && "r" in signature2 && "s" in signature2)
-      return serializeSignature(signature2);
-    return bytesToHex(signature2);
-  })();
-  try {
-    if (mode === "eoa") {
-      try {
-        const verified = isAddressEqual(getAddress(address), await recoverAddress({ hash: hash4, signature }));
-        if (verified)
-          return true;
-      } catch {}
-    }
-    if (exports_SignatureErc8010.validate(signature))
-      return await verifyErc8010(client, {
-        ...parameters,
-        multicallAddress,
-        signature
-      });
-    return await verifyErc6492(client, {
-      ...parameters,
-      verifierAddress,
-      signature
-    });
-  } catch (error61) {
-    if (mode !== "eoa") {
-      try {
-        const verified = isAddressEqual(getAddress(address), await recoverAddress({ hash: hash4, signature }));
-        if (verified)
-          return true;
-      } catch {}
-    }
-    if (error61 instanceof VerificationError) {
-      return false;
-    }
-    throw error61;
-  }
-}
-async function verifyErc8010(client, parameters) {
-  const { address, blockHash, blockNumber, blockTag, hash: hash4, multicallAddress, requireCanonical } = parameters;
-  const { authorization: authorization_ox, data: initData, signature, to } = exports_SignatureErc8010.unwrap(parameters.signature);
-  const code = await getCode(client, {
-    address,
-    blockHash,
-    blockNumber,
-    blockTag,
-    requireCanonical
-  });
-  if (code === concatHex(["0xef0100", authorization_ox.address]))
-    return await verifyErc1271(client, {
-      ...parameters,
-      signature
-    });
-  const authorization = {
-    address: authorization_ox.address,
-    chainId: Number(authorization_ox.chainId),
-    nonce: Number(authorization_ox.nonce),
-    r: numberToHex(authorization_ox.r, { size: 32 }),
-    s: numberToHex(authorization_ox.s, { size: 32 }),
-    yParity: authorization_ox.yParity
-  };
-  const valid = await verifyAuthorization2({
-    address,
-    authorization
-  });
-  if (!valid)
-    throw new VerificationError;
-  const results = await getAction(client, readContract, "readContract")({
-    ...multicallAddress ? { address: multicallAddress } : { code: multicall3Bytecode },
-    authorizationList: [authorization],
-    abi: multicall3Abi,
-    blockHash,
-    blockNumber,
-    blockTag: "pending",
-    functionName: "aggregate3",
-    requireCanonical,
-    args: [
-      [
-        ...initData ? [
-          {
-            allowFailure: true,
-            target: to ?? address,
-            callData: initData
-          }
-        ] : [],
-        {
-          allowFailure: true,
-          target: address,
-          callData: encodeFunctionData({
-            abi: erc1271Abi,
-            functionName: "isValidSignature",
-            args: [hash4, signature]
-          })
-        }
-      ]
-    ]
-  });
-  const data = results[results.length - 1]?.returnData;
-  if (data?.startsWith("0x1626ba7e"))
-    return true;
-  throw new VerificationError;
-}
-async function verifyErc6492(client, parameters) {
-  const { address, factory, factoryData, hash: hash4, signature, verifierAddress, ...rest } = parameters;
-  const wrappedSignature = await (async () => {
-    if (!factory && !factoryData)
-      return signature;
-    if (exports_SignatureErc6492.validate(signature))
-      return signature;
-    return exports_SignatureErc6492.wrap({
-      data: factoryData,
-      signature,
-      to: factory
-    });
-  })();
-  const args = verifierAddress ? {
-    to: verifierAddress,
-    data: encodeFunctionData({
-      abi: erc6492SignatureValidatorAbi,
-      functionName: "isValidSig",
-      args: [address, hash4, wrappedSignature]
-    }),
-    ...rest
-  } : {
-    data: encodeDeployData({
-      abi: erc6492SignatureValidatorAbi,
-      args: [address, hash4, wrappedSignature],
-      bytecode: erc6492SignatureValidatorByteCode
-    }),
-    ...rest
-  };
-  const { data } = await getAction(client, call, "call")(args).catch((error61) => {
-    if (error61 instanceof CallExecutionError)
-      throw new VerificationError;
-    throw error61;
-  });
-  if (hexToBool(data ?? "0x0"))
-    return true;
-  throw new VerificationError;
-}
-async function verifyErc1271(client, parameters) {
-  const { address, blockHash, blockNumber, blockTag, hash: hash4, requireCanonical, signature } = parameters;
-  const result = await getAction(client, readContract, "readContract")({
-    address,
-    abi: erc1271Abi,
-    args: [hash4, signature],
-    blockHash,
-    blockNumber,
-    blockTag,
-    functionName: "isValidSignature",
-    requireCanonical
-  }).catch((error61) => {
-    if (error61 instanceof ContractFunctionExecutionError)
-      throw new VerificationError;
-    throw error61;
-  });
-  if (result.startsWith("0x1626ba7e"))
-    return true;
-  throw new VerificationError;
-}
-
-class VerificationError extends Error {
-}
-
-// node_modules/viem/_esm/utils/signature/hashMessage.js
-init_keccak256();
-
-// node_modules/viem/_esm/constants/strings.js
-var presignMessagePrefix = `\x19Ethereum Signed Message:
-`;
-
-// node_modules/viem/_esm/utils/signature/toPrefixedMessage.js
-init_size();
-init_toHex();
-function toPrefixedMessage(message_) {
-  const message = (() => {
-    if (typeof message_ === "string")
-      return stringToHex(message_);
-    if (typeof message_.raw === "string")
-      return message_.raw;
-    return bytesToHex(message_.raw);
-  })();
-  const prefix = stringToHex(`${presignMessagePrefix}${size2(message)}`);
-  return concat([prefix, message]);
-}
-
-// node_modules/viem/_esm/utils/signature/hashMessage.js
-function hashMessage2(message, to_) {
-  return keccak256(toPrefixedMessage(message), to_);
-}
-
-// node_modules/viem/_esm/actions/public/verifyMessage.js
-async function verifyMessage2(client, { address, message, factory, factoryData, signature, ...callRequest }) {
-  const hash4 = hashMessage2(message);
-  return getAction(client, verifyHash2, "verifyHash")({
-    address,
-    factory,
-    factoryData,
-    hash: hash4,
-    signature,
-    ...callRequest
-  });
-}
-
-// node_modules/viem/_esm/utils/signature/hashTypedData.js
-init_encodeAbiParameters();
-init_toHex();
-init_keccak256();
-
-// node_modules/viem/_esm/utils/typedData.js
-init_abi();
-init_address();
-
-// node_modules/viem/_esm/errors/typedData.js
-init_base();
-
-class InvalidDomainError extends BaseError {
-  constructor({ domain: domain2 }) {
-    super(`Invalid domain "${stringify(domain2)}".`, {
-      metaMessages: ["Must be a valid EIP-712 domain."]
-    });
-  }
-}
-
-class InvalidPrimaryTypeError extends BaseError {
-  constructor({ primaryType, types }) {
-    super(`Invalid primary type \`${primaryType}\` must be one of \`${JSON.stringify(Object.keys(types))}\`.`, {
-      docsPath: "/api/glossary/Errors#typeddatainvalidprimarytypeerror",
-      metaMessages: ["Check that the primary type is a key in `types`."]
-    });
-  }
-}
-
-class InvalidStructTypeError extends BaseError {
-  constructor({ type }) {
-    super(`Struct type "${type}" is invalid.`, {
-      metaMessages: ["Struct type must not be a Solidity type."],
-      name: "InvalidStructTypeError"
-    });
-  }
-}
-
-class InvalidTypedDataTypeError extends BaseError {
-  constructor({ type }) {
-    const canonicalType = type.replace(/^(u?int)/, "$&256");
-    super(`Type "${type}" is not a valid EIP-712 type.`, {
-      metaMessages: [`Use "${canonicalType}" instead.`],
-      name: "InvalidTypedDataTypeError"
-    });
-  }
-}
-
-// node_modules/viem/_esm/utils/typedData.js
-init_isAddress();
-init_size();
-init_toHex();
-init_regex();
-function validateTypedData2(parameters) {
-  const { domain: domain2, message, primaryType, types } = parameters;
-  const validateData = (struct, data) => {
-    for (const param of struct) {
-      const { name, type } = param;
-      const value = data[name];
-      const baseType = type.replace(/(\[[0-9]*\])+$/, "");
-      if (baseType === "int" || baseType === "uint")
-        throw new InvalidTypedDataTypeError({ type });
-      const integerMatch = type.match(integerRegex);
-      if (integerMatch && (typeof value === "number" || typeof value === "bigint")) {
-        const [_type, base, size_] = integerMatch;
-        numberToHex(value, {
-          signed: base === "int",
-          size: Number.parseInt(size_, 10) / 8
-        });
-      }
-      if (type === "address" && typeof value === "string" && !isAddress(value))
-        throw new InvalidAddressError({ address: value });
-      const bytesMatch = type.match(bytesRegex);
-      if (bytesMatch) {
-        const [_type, size_] = bytesMatch;
-        if (size_ && size2(value) !== Number.parseInt(size_, 10))
-          throw new BytesSizeMismatchError({
-            expectedSize: Number.parseInt(size_, 10),
-            givenSize: size2(value)
-          });
-      }
-      const struct2 = types[type];
-      if (struct2) {
-        validateReference(type);
-        validateData(struct2, value);
-      }
-    }
-  };
-  if (types.EIP712Domain && domain2) {
-    if (typeof domain2 !== "object")
-      throw new InvalidDomainError({ domain: domain2 });
-    validateData(types.EIP712Domain, domain2);
-  }
-  if (primaryType !== "EIP712Domain") {
-    if (types[primaryType])
-      validateData(types[primaryType], message);
-    else
-      throw new InvalidPrimaryTypeError({ primaryType, types });
-  }
-}
-function getTypesForEIP712Domain({ domain: domain2 }) {
-  return [
-    typeof domain2?.name === "string" && { name: "name", type: "string" },
-    domain2?.version && { name: "version", type: "string" },
-    (typeof domain2?.chainId === "number" || typeof domain2?.chainId === "bigint") && {
-      name: "chainId",
-      type: "uint256"
-    },
-    domain2?.verifyingContract && {
-      name: "verifyingContract",
-      type: "address"
-    },
-    domain2?.salt && { name: "salt", type: "bytes32" }
-  ].filter(Boolean);
-}
-function validateReference(type) {
-  if (type === "address" || type === "bool" || type === "string" || type.startsWith("bytes") || type.startsWith("uint") || type.startsWith("int"))
-    throw new InvalidStructTypeError({ type });
-}
-
-// node_modules/viem/_esm/utils/signature/hashTypedData.js
-function hashTypedData2(parameters) {
-  const { domain: domain2 = {}, message, primaryType } = parameters;
-  const types = {
-    EIP712Domain: getTypesForEIP712Domain({ domain: domain2 }),
-    ...parameters.types
-  };
-  validateTypedData2({
-    domain: domain2,
-    message,
-    primaryType,
-    types
-  });
-  const parts = ["0x1901"];
-  if (domain2)
-    parts.push(hashDomain({
-      domain: domain2,
-      types
-    }));
-  if (primaryType !== "EIP712Domain")
-    parts.push(hashStruct2({
-      data: message,
-      primaryType,
-      types
-    }));
-  return keccak256(concat(parts));
-}
-function hashDomain({ domain: domain2, types }) {
-  return hashStruct2({
-    data: domain2,
-    primaryType: "EIP712Domain",
-    types
-  });
-}
-function hashStruct2({ data, primaryType, types }) {
-  const encoded = encodeData2({
-    data,
-    primaryType,
-    types
-  });
-  return keccak256(encoded);
-}
-function encodeData2({ data, primaryType, types }) {
-  const encodedTypes = [{ type: "bytes32" }];
-  const encodedValues = [hashType({ primaryType, types })];
-  for (const field of types[primaryType]) {
-    const [type, value] = encodeField({
-      types,
-      name: field.name,
-      type: field.type,
-      value: data[field.name]
-    });
-    encodedTypes.push(type);
-    encodedValues.push(value);
-  }
-  return encodeAbiParameters(encodedTypes, encodedValues);
-}
-function hashType({ primaryType, types }) {
-  const encodedHashType = toHex(encodeType({ primaryType, types }));
-  return keccak256(encodedHashType);
-}
-function encodeType({ primaryType, types }) {
-  let result = "";
-  const unsortedDeps = findTypeDependencies({ primaryType, types });
-  unsortedDeps.delete(primaryType);
-  const deps = [primaryType, ...Array.from(unsortedDeps).sort()];
-  for (const type of deps) {
-    result += `${type}(${types[type].map(({ name, type: t }) => `${t} ${name}`).join(",")})`;
-  }
-  return result;
-}
-function findTypeDependencies({ primaryType: primaryType_, types }, results = new Set) {
-  const match2 = primaryType_.match(/^\w*/u);
-  const primaryType = match2?.[0];
-  if (results.has(primaryType) || types[primaryType] === undefined) {
-    return results;
-  }
-  results.add(primaryType);
-  for (const field of types[primaryType]) {
-    findTypeDependencies({ primaryType: field.type, types }, results);
-  }
-  return results;
-}
-function encodeField({ types, name, type, value }) {
-  if (types[type] !== undefined) {
-    return [
-      { type: "bytes32" },
-      keccak256(encodeData2({ data: value, primaryType: type, types }))
-    ];
-  }
-  if (type === "bytes")
-    return [{ type: "bytes32" }, keccak256(value)];
-  if (type === "string")
-    return [{ type: "bytes32" }, keccak256(toHex(value))];
-  if (type.lastIndexOf("]") === type.length - 1) {
-    const parsedType2 = type.slice(0, type.lastIndexOf("["));
-    const typeValuePairs = value.map((item) => encodeField({
-      name,
-      type: parsedType2,
-      types,
-      value: item
-    }));
-    return [
-      { type: "bytes32" },
-      keccak256(encodeAbiParameters(typeValuePairs.map(([t]) => t), typeValuePairs.map(([, v]) => v)))
-    ];
-  }
-  return [{ type }, value];
-}
-
-// node_modules/viem/_esm/actions/public/verifyTypedData.js
-async function verifyTypedData2(client, parameters) {
-  const { address, factory, factoryData, signature, message, primaryType, types, domain: domain2, ...callRequest } = parameters;
-  const hash4 = hashTypedData2({ message, primaryType, types, domain: domain2 });
-  return getAction(client, verifyHash2, "verifyHash")({
-    address,
-    factory,
-    factoryData,
-    hash: hash4,
-    signature,
-    ...callRequest
-  });
-}
-
-// node_modules/viem/_esm/actions/public/waitForTransactionReceipt.js
-init_transaction();
-
-// node_modules/viem/_esm/utils/observe.js
-var listenersCache = /* @__PURE__ */ new Map;
-var cleanupCache = /* @__PURE__ */ new Map;
-var callbackCount = 0;
-function observe(observerId, callbacks, fn) {
-  const callbackId = ++callbackCount;
-  const getListeners = () => listenersCache.get(observerId) || [];
-  const unsubscribe = () => {
-    const listeners2 = getListeners();
-    const nextListeners = listeners2.filter((cb) => cb.id !== callbackId);
-    if (nextListeners.length === 0) {
-      listenersCache.delete(observerId);
-      cleanupCache.delete(observerId);
-      return;
-    }
-    listenersCache.set(observerId, nextListeners);
-  };
-  const unwatch = () => {
-    const listeners2 = getListeners();
-    if (!listeners2.some((cb) => cb.id === callbackId))
-      return;
-    const cleanup2 = cleanupCache.get(observerId);
-    if (listeners2.length === 1 && cleanup2) {
-      const p = cleanup2();
-      if (p instanceof Promise)
-        p.catch(() => {});
-    }
-    unsubscribe();
-  };
-  const listeners = getListeners();
-  listenersCache.set(observerId, [
-    ...listeners,
-    { id: callbackId, fns: callbacks }
-  ]);
-  if (listeners && listeners.length > 0)
-    return unwatch;
-  const emit = {};
-  for (const key in callbacks) {
-    emit[key] = (...args) => {
-      const listeners2 = getListeners();
-      if (listeners2.length === 0)
-        return;
-      for (const listener of listeners2)
-        listener.fns[key]?.(...args);
-    };
-  }
-  const cleanup = fn(emit);
-  if (typeof cleanup === "function")
-    cleanupCache.set(observerId, cleanup);
-  return unwatch;
-}
-// node_modules/viem/_esm/utils/wait.js
-async function wait(time3, { signal } = {}) {
-  return new Promise((resolve, reject) => {
-    if (signal?.aborted) {
-      reject(getAbortError(signal));
-      return;
-    }
-    const cleanup = () => signal?.removeEventListener("abort", onAbort);
-    const timeout = setTimeout(() => {
-      cleanup();
-      resolve();
-    }, time3);
-    const onAbort = () => {
-      clearTimeout(timeout);
-      cleanup();
-      reject(getAbortError(signal));
-    };
-    signal?.addEventListener("abort", onAbort, { once: true });
-  });
-}
-
-// node_modules/viem/_esm/utils/promise/withRetry.js
-function withRetry(fn, { delay: delay_ = 100, retryCount = 2, shouldRetry = () => true, signal } = {}) {
-  return new Promise((resolve, reject) => {
-    const attemptRetry = async ({ count = 0 } = {}) => {
-      if (signal?.aborted) {
-        reject(getAbortError(signal));
-        return;
-      }
-      const retry = async ({ error: error61 }) => {
-        const delay = typeof delay_ === "function" ? delay_({ count, error: error61 }) : delay_;
-        if (delay) {
-          try {
-            await wait(delay, { signal });
-          } catch (err) {
-            reject(err);
-            return;
-          }
-        }
-        return attemptRetry({ count: count + 1 });
-      };
-      try {
-        const data = await fn();
-        resolve(data);
-      } catch (err) {
-        if (signal?.aborted) {
-          reject(getAbortError(signal));
-          return;
-        }
-        if (isAbortError(err)) {
-          reject(err);
-          return;
-        }
-        if (count < retryCount && await shouldRetry({ count, error: err }))
-          return retry({ error: err });
-        reject(err);
-      }
-    };
-    attemptRetry().catch(reject);
-  });
-}
-// node_modules/viem/_esm/actions/public/watchBlockNumber.js
-init_fromHex();
-
-// node_modules/viem/_esm/utils/poll.js
-function poll(fn, { emitOnBegin, initialWaitTime, interval }) {
-  let active = true;
-  const unwatch = () => active = false;
-  const watch = async () => {
-    let data;
-    if (emitOnBegin)
-      data = await fn({ unpoll: unwatch });
-    const initialWait = await initialWaitTime?.(data) ?? interval;
-    await wait(initialWait);
-    const poll2 = async () => {
-      if (!active)
-        return;
-      await fn({ unpoll: unwatch });
-      await wait(interval);
-      poll2();
-    };
-    poll2();
-  };
-  watch();
-  return unwatch;
-}
-// node_modules/viem/_esm/actions/public/watchBlockNumber.js
-function watchBlockNumber(client, { emitOnBegin = false, emitMissed = false, onBlockNumber, onError, poll: poll_, pollingInterval = client.pollingInterval }) {
-  const enablePolling = (() => {
-    if (typeof poll_ !== "undefined")
-      return poll_;
-    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
-      return false;
-    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
-      return false;
-    return true;
-  })();
-  let prevBlockNumber;
-  const pollBlockNumber = () => {
-    const observerId = stringify([
-      "watchBlockNumber",
-      client.uid,
-      emitOnBegin,
-      emitMissed,
-      pollingInterval
-    ]);
-    return observe(observerId, { onBlockNumber, onError }, (emit) => poll(async () => {
-      try {
-        const blockNumber = await getAction(client, getBlockNumber, "getBlockNumber")({ cacheTime: 0 });
-        if (prevBlockNumber !== undefined) {
-          if (blockNumber === prevBlockNumber)
-            return;
-          if (blockNumber - prevBlockNumber > 1 && emitMissed) {
-            for (let i = prevBlockNumber + 1n;i < blockNumber; i++) {
-              emit.onBlockNumber(i, prevBlockNumber);
-              prevBlockNumber = i;
-            }
-          }
-        }
-        if (prevBlockNumber === undefined || blockNumber > prevBlockNumber) {
-          emit.onBlockNumber(blockNumber, prevBlockNumber);
-          prevBlockNumber = blockNumber;
-        }
-      } catch (err) {
-        emit.onError?.(err);
-      }
-    }, {
-      emitOnBegin,
-      interval: pollingInterval
-    }));
-  };
-  const subscribeBlockNumber = () => {
-    const observerId = stringify([
-      "watchBlockNumber",
-      client.uid,
-      emitOnBegin,
-      emitMissed
-    ]);
-    return observe(observerId, { onBlockNumber, onError }, (emit) => {
-      let active = true;
-      let unsubscribe = () => active = false;
-      (async () => {
-        try {
-          const transport = (() => {
-            if (client.transport.type === "fallback") {
-              const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
-              if (!transport2)
-                return client.transport;
-              return transport2.value;
-            }
-            return client.transport;
-          })();
-          const { unsubscribe: unsubscribe_ } = await transport.subscribe({
-            params: ["newHeads"],
-            onData(data) {
-              if (!active)
-                return;
-              const blockNumber = hexToBigInt(data.result?.number);
-              emit.onBlockNumber(blockNumber, prevBlockNumber);
-              prevBlockNumber = blockNumber;
-            },
-            onError(error61) {
-              emit.onError?.(error61);
-            }
-          });
-          unsubscribe = unsubscribe_;
-          if (!active)
-            unsubscribe();
-        } catch (err) {
-          onError?.(err);
-        }
-      })();
-      return () => unsubscribe();
-    });
-  };
-  return enablePolling ? pollBlockNumber() : subscribeBlockNumber();
-}
-
-// node_modules/viem/_esm/actions/public/waitForTransactionReceipt.js
-async function waitForTransactionReceipt(client, parameters) {
-  const {
-    checkReplacement = client.chain?.supportsTransactionReplacementDetection ?? true,
-    confirmations = 1,
-    hash: hash4,
-    onReplaced,
-    retryCount = 6,
-    retryDelay = ({ count }) => ~~(1 << count) * 200,
-    timeout = 180000
-  } = parameters;
-  const observerId = stringify(["waitForTransactionReceipt", client.uid, hash4]);
-  const pollingInterval = (() => {
-    if (parameters.pollingInterval)
-      return parameters.pollingInterval;
-    if (client.chain?.experimental_preconfirmationTime)
-      return client.chain.experimental_preconfirmationTime;
-    return client.pollingInterval;
-  })();
-  let transaction;
-  let replacedTransaction;
-  let receipt;
-  let retrying = false;
-  let _unobserve;
-  let _unwatch;
-  const { promise: promise2, resolve, reject } = withResolvers();
-  const timer = timeout ? setTimeout(() => {
-    _unwatch?.();
-    _unobserve?.();
-    reject(new WaitForTransactionReceiptTimeoutError({ hash: hash4 }));
-  }, timeout) : undefined;
-  _unobserve = observe(observerId, { onReplaced, resolve, reject }, async (emit) => {
-    receipt = await getAction(client, getTransactionReceipt, "getTransactionReceipt")({ hash: hash4 }).catch(() => {
-      return;
-    });
-    if (receipt && confirmations <= 1) {
-      clearTimeout(timer);
-      emit.resolve(receipt);
-      _unobserve?.();
-      return;
-    }
-    _unwatch = getAction(client, watchBlockNumber, "watchBlockNumber")({
-      emitMissed: true,
-      emitOnBegin: true,
-      poll: true,
-      pollingInterval,
-      async onBlockNumber(blockNumber_) {
-        const done = (fn) => {
-          clearTimeout(timer);
-          _unwatch?.();
-          fn();
-          _unobserve?.();
-        };
-        let blockNumber = blockNumber_;
-        if (retrying)
-          return;
-        try {
-          if (receipt) {
-            if (confirmations > 1 && (!receipt.blockNumber || blockNumber - receipt.blockNumber + 1n < confirmations))
-              return;
-            done(() => emit.resolve(receipt));
-            return;
-          }
-          if (checkReplacement && !transaction) {
-            retrying = true;
-            await withRetry(async () => {
-              transaction = await getAction(client, getTransaction, "getTransaction")({ hash: hash4 });
-              if (transaction.blockNumber)
-                blockNumber = transaction.blockNumber;
-            }, {
-              delay: retryDelay,
-              retryCount
-            });
-            retrying = false;
-          }
-          receipt = await getAction(client, getTransactionReceipt, "getTransactionReceipt")({ hash: hash4 });
-          if (confirmations > 1 && (!receipt.blockNumber || blockNumber - receipt.blockNumber + 1n < confirmations))
-            return;
-          done(() => emit.resolve(receipt));
-        } catch (err) {
-          if (err instanceof TransactionNotFoundError || err instanceof TransactionReceiptNotFoundError) {
-            if (!transaction) {
-              retrying = false;
-              return;
-            }
-            try {
-              replacedTransaction = transaction;
-              retrying = true;
-              const block = await withRetry(() => getAction(client, getBlock, "getBlock")({
-                blockNumber,
-                includeTransactions: true
-              }), {
-                delay: retryDelay,
-                retryCount,
-                shouldRetry: ({ error: error61 }) => error61 instanceof BlockNotFoundError
-              });
-              retrying = false;
-              const replacementTransaction = block.transactions.find(({ from: from16, nonce }) => from16 === replacedTransaction.from && nonce === replacedTransaction.nonce);
-              if (!replacementTransaction)
-                return;
-              receipt = await getAction(client, getTransactionReceipt, "getTransactionReceipt")({
-                hash: replacementTransaction.hash
-              });
-              if (confirmations > 1 && (!receipt.blockNumber || blockNumber - receipt.blockNumber + 1n < confirmations))
-                return;
-              let reason = "replaced";
-              if (replacementTransaction.to === replacedTransaction.to && replacementTransaction.value === replacedTransaction.value && replacementTransaction.input === replacedTransaction.input) {
-                reason = "repriced";
-              } else if (replacementTransaction.from === replacementTransaction.to && replacementTransaction.value === 0n) {
-                reason = "cancelled";
-              }
-              done(() => {
-                emit.onReplaced?.({
-                  reason,
-                  replacedTransaction,
-                  transaction: replacementTransaction,
-                  transactionReceipt: receipt
-                });
-                emit.resolve(receipt);
-              });
-            } catch (err_) {
-              done(() => emit.reject(err_));
-            }
-          } else {
-            done(() => emit.reject(err));
-          }
-        }
-      }
-    });
-  });
-  return promise2;
-}
-
-// node_modules/viem/_esm/actions/public/watchBlockHeaders.js
-var blockFields = [
-  "size",
-  "totalDifficulty",
-  "transactions",
-  "uncles",
-  "withdrawals"
-];
-function watchBlockHeaders(client, { onBlockHeader, onError }) {
-  let prevBlockHeader;
-  const observerId = stringify(["watchBlockHeaders", client.uid]);
-  return observe(observerId, { onBlockHeader, onError }, (emit) => {
-    let active = true;
-    let subscribed = false;
-    let unsubscribe = () => active = false;
-    (async () => {
-      try {
-        const transport = (() => {
-          if (client.transport.type === "fallback") {
-            const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
-            if (!transport2)
-              return client.transport;
-            return transport2.value;
-          }
-          return client.transport;
-        })();
-        const { unsubscribe: unsubscribe_ } = await transport.subscribe({
-          params: ["newHeads"],
-          onData(data) {
-            if (!active)
-              return;
-            const blockHeader = (client.chain?.formatters?.block?.format || formatBlock)(data.result, "watchBlockHeaders");
-            for (const field of blockFields)
-              delete blockHeader[field];
-            emit.onBlockHeader(blockHeader, prevBlockHeader);
-            prevBlockHeader = blockHeader;
-          },
-          onError(error61) {
-            if (subscribed)
-              emit.onError?.(error61);
-          }
-        });
-        subscribed = true;
-        unsubscribe = unsubscribe_;
-        if (!active)
-          unsubscribe();
-      } catch (err) {
-        emit.onError?.(err);
-      }
-    })();
-    return () => unsubscribe();
-  });
-}
-// node_modules/viem/_esm/actions/public/watchBlocks.js
-function watchBlocks(client, { blockTag = client.experimental_blockTag ?? "latest", emitMissed = false, emitOnBegin = false, onBlock, onError, includeTransactions: includeTransactions_, poll: poll_, pollingInterval = client.pollingInterval }) {
-  const enablePolling = (() => {
-    if (typeof poll_ !== "undefined")
-      return poll_;
-    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
-      return false;
-    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
-      return false;
-    return true;
-  })();
-  const includeTransactions = includeTransactions_ ?? false;
-  let prevBlock;
-  const pollBlocks = () => {
-    const observerId = stringify([
-      "watchBlocks",
-      client.uid,
-      blockTag,
-      emitMissed,
-      emitOnBegin,
-      includeTransactions,
-      pollingInterval
-    ]);
-    return observe(observerId, { onBlock, onError }, (emit) => poll(async () => {
-      try {
-        const block = await getAction(client, getBlock, "getBlock")({
-          blockTag,
-          includeTransactions
-        });
-        if (block.number !== null && prevBlock?.number != null) {
-          if (block.number === prevBlock.number)
-            return;
-          if (block.number - prevBlock.number > 1 && emitMissed) {
-            for (let i = prevBlock?.number + 1n;i < block.number; i++) {
-              const block2 = await getAction(client, getBlock, "getBlock")({
-                blockNumber: i,
-                includeTransactions
-              });
-              emit.onBlock(block2, prevBlock);
-              prevBlock = block2;
-            }
-          }
-        }
-        if (prevBlock?.number == null || blockTag === "pending" && block?.number == null || block.number !== null && block.number > prevBlock.number) {
-          emit.onBlock(block, prevBlock);
-          prevBlock = block;
-        }
-      } catch (err) {
-        emit.onError?.(err);
-      }
-    }, {
-      emitOnBegin,
-      interval: pollingInterval
-    }));
-  };
-  const subscribeBlocks = () => {
-    let active = true;
-    let emitFetched = true;
-    let unsubscribe = () => active = false;
-    (async () => {
-      try {
-        if (emitOnBegin) {
-          getAction(client, getBlock, "getBlock")({
-            blockTag,
-            includeTransactions
-          }).then((block) => {
-            if (!active)
-              return;
-            if (!emitFetched)
-              return;
-            onBlock(block, undefined);
-            emitFetched = false;
-          }).catch(onError);
-        }
-        const transport = (() => {
-          if (client.transport.type === "fallback") {
-            const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
-            if (!transport2)
-              return client.transport;
-            return transport2.value;
-          }
-          return client.transport;
-        })();
-        const { unsubscribe: unsubscribe_ } = await transport.subscribe({
-          params: ["newHeads"],
-          async onData(data) {
-            if (!active)
-              return;
-            const block = await getAction(client, getBlock, "getBlock")({
-              blockNumber: data.result?.number,
-              includeTransactions
-            }).catch(() => {});
-            if (!active)
-              return;
-            onBlock(block, prevBlock);
-            emitFetched = false;
-            prevBlock = block;
-          },
-          onError(error61) {
-            onError?.(error61);
-          }
-        });
-        unsubscribe = unsubscribe_;
-        if (!active)
-          unsubscribe();
-      } catch (err) {
-        onError?.(err);
-      }
-    })();
-    return () => unsubscribe();
-  };
-  return enablePolling ? pollBlocks() : subscribeBlocks();
-}
-
-// node_modules/viem/_esm/actions/public/watchContractEvent.js
-init_abi();
-init_rpc();
-function watchContractEvent(client, parameters) {
-  const { abi: abi2, address, args, batch = true, eventName, fromBlock, onError, onLogs, poll: poll_, pollingInterval = client.pollingInterval, strict: strict_ } = parameters;
-  const enablePolling = (() => {
-    if (typeof poll_ !== "undefined")
-      return poll_;
-    if (typeof fromBlock === "bigint")
-      return true;
-    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
-      return false;
-    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
-      return false;
-    return true;
-  })();
-  const pollContractEvent = () => {
-    const strict = strict_ ?? false;
-    const observerId = stringify([
-      "watchContractEvent",
-      address,
-      args,
-      batch,
-      client.uid,
-      eventName,
-      pollingInterval,
-      strict,
-      fromBlock
-    ]);
-    return observe(observerId, { onLogs, onError }, (emit) => {
-      let previousBlockNumber;
-      if (fromBlock !== undefined)
-        previousBlockNumber = fromBlock - 1n;
-      let filter;
-      let initialized = false;
-      const unwatch = poll(async () => {
-        if (!initialized) {
-          try {
-            filter = await getAction(client, createContractEventFilter, "createContractEventFilter")({
-              abi: abi2,
-              address,
-              args,
-              eventName,
-              strict,
-              fromBlock
-            });
-          } catch {}
-          initialized = true;
-          return;
-        }
-        try {
-          let logs;
-          if (filter) {
-            logs = await getAction(client, getFilterChanges, "getFilterChanges")({ filter });
-          } else {
-            const blockNumber = await getAction(client, getBlockNumber, "getBlockNumber")({});
-            if (previousBlockNumber && previousBlockNumber < blockNumber) {
-              logs = await getAction(client, getContractEvents, "getContractEvents")({
-                abi: abi2,
-                address,
-                args,
-                eventName,
-                fromBlock: previousBlockNumber + 1n,
-                toBlock: blockNumber,
-                strict
-              });
-            } else {
-              logs = [];
-            }
-            previousBlockNumber = blockNumber;
-          }
-          if (logs.length === 0)
-            return;
-          if (batch)
-            emit.onLogs(logs);
-          else
-            for (const log of logs)
-              emit.onLogs([log]);
-        } catch (err) {
-          if (filter && err instanceof InvalidInputRpcError)
-            initialized = false;
-          emit.onError?.(err);
-        }
-      }, {
-        emitOnBegin: true,
-        interval: pollingInterval
-      });
-      return async () => {
-        if (filter)
-          await getAction(client, uninstallFilter, "uninstallFilter")({ filter });
-        unwatch();
-      };
-    });
-  };
-  const subscribeContractEvent = () => {
-    const strict = strict_ ?? false;
-    const observerId = stringify([
-      "watchContractEvent",
-      address,
-      args,
-      batch,
-      client.uid,
-      eventName,
-      pollingInterval,
-      strict
-    ]);
-    let active = true;
-    let unsubscribe = () => active = false;
-    return observe(observerId, { onLogs, onError }, (emit) => {
-      (async () => {
-        try {
-          const transport = (() => {
-            if (client.transport.type === "fallback") {
-              const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
-              if (!transport2)
-                return client.transport;
-              return transport2.value;
-            }
-            return client.transport;
-          })();
-          const topics = eventName ? encodeEventTopics({
-            abi: abi2,
-            eventName,
-            args
-          }) : [];
-          const { unsubscribe: unsubscribe_ } = await transport.subscribe({
-            params: ["logs", { address, topics }],
-            onData(data) {
-              if (!active)
-                return;
-              const log = data.result;
-              try {
-                const { eventName: eventName2, args: args2 } = decodeEventLog({
-                  abi: abi2,
-                  data: log.data,
-                  topics: log.topics,
-                  strict: strict_
-                });
-                const formatted = formatLog(log, {
-                  args: args2,
-                  eventName: eventName2
-                });
-                emit.onLogs([formatted]);
-              } catch (err) {
-                let eventName2;
-                let isUnnamed;
-                if (err instanceof DecodeLogDataMismatch || err instanceof DecodeLogTopicsMismatch) {
-                  if (strict_)
-                    return;
-                  eventName2 = err.abiItem.name;
-                  isUnnamed = err.abiItem.inputs?.some((x) => !(("name" in x) && x.name));
-                }
-                const formatted = formatLog(log, {
-                  args: isUnnamed ? [] : {},
-                  eventName: eventName2
-                });
-                emit.onLogs([formatted]);
-              }
-            },
-            onError(error61) {
-              emit.onError?.(error61);
-            }
-          });
-          unsubscribe = unsubscribe_;
-          if (!active)
-            unsubscribe();
-        } catch (err) {
-          onError?.(err);
-        }
-      })();
-      return () => unsubscribe();
-    });
-  };
-  return enablePolling ? pollContractEvent() : subscribeContractEvent();
-}
-
-// node_modules/viem/_esm/actions/public/watchEvent.js
-init_abi();
-init_rpc();
-function watchEvent(client, { address, args, batch = true, event, events, fromBlock, onError, onLogs, poll: poll_, pollingInterval = client.pollingInterval, strict: strict_ }) {
-  const enablePolling = (() => {
-    if (typeof poll_ !== "undefined")
-      return poll_;
-    if (typeof fromBlock === "bigint")
-      return true;
-    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
-      return false;
-    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
-      return false;
-    return true;
-  })();
-  const strict = strict_ ?? false;
-  const pollEvent = () => {
-    const observerId = stringify([
-      "watchEvent",
-      address,
-      args,
-      batch,
-      client.uid,
-      event,
-      pollingInterval,
-      fromBlock
-    ]);
-    return observe(observerId, { onLogs, onError }, (emit) => {
-      let previousBlockNumber;
-      if (fromBlock !== undefined)
-        previousBlockNumber = fromBlock - 1n;
-      let filter;
-      let initialized = false;
-      const unwatch = poll(async () => {
-        if (!initialized) {
-          try {
-            filter = await getAction(client, createEventFilter, "createEventFilter")({
-              address,
-              args,
-              event,
-              events,
-              strict,
-              fromBlock
-            });
-          } catch {}
-          initialized = true;
-          return;
-        }
-        try {
-          let logs;
-          if (filter) {
-            logs = await getAction(client, getFilterChanges, "getFilterChanges")({ filter });
-          } else {
-            const blockNumber = await getAction(client, getBlockNumber, "getBlockNumber")({});
-            if (previousBlockNumber && previousBlockNumber !== blockNumber) {
-              logs = await getAction(client, getLogs, "getLogs")({
-                address,
-                args,
-                event,
-                events,
-                fromBlock: previousBlockNumber + 1n,
-                toBlock: blockNumber
-              });
-            } else {
-              logs = [];
-            }
-            previousBlockNumber = blockNumber;
-          }
-          if (logs.length === 0)
-            return;
-          if (batch)
-            emit.onLogs(logs);
-          else
-            for (const log of logs)
-              emit.onLogs([log]);
-        } catch (err) {
-          if (filter && err instanceof InvalidInputRpcError)
-            initialized = false;
-          emit.onError?.(err);
-        }
-      }, {
-        emitOnBegin: true,
-        interval: pollingInterval
-      });
-      return async () => {
-        if (filter)
-          await getAction(client, uninstallFilter, "uninstallFilter")({ filter });
-        unwatch();
-      };
-    });
-  };
-  const subscribeEvent = () => {
-    let active = true;
-    let unsubscribe = () => active = false;
-    (async () => {
-      try {
-        const transport = (() => {
-          if (client.transport.type === "fallback") {
-            const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
-            if (!transport2)
-              return client.transport;
-            return transport2.value;
-          }
-          return client.transport;
-        })();
-        const events_ = events ?? (event ? [event] : undefined);
-        let topics = [];
-        if (events_) {
-          const encoded = events_.flatMap((event2) => encodeEventTopics({
-            abi: [event2],
-            eventName: event2.name,
-            args
-          }));
-          topics = [encoded];
-          if (event)
-            topics = topics[0];
-        }
-        const { unsubscribe: unsubscribe_ } = await transport.subscribe({
-          params: ["logs", { address, topics }],
-          onData(data) {
-            if (!active)
-              return;
-            const log = data.result;
-            try {
-              const { eventName, args: args2 } = decodeEventLog({
-                abi: events_ ?? [],
-                data: log.data,
-                topics: log.topics,
-                strict
-              });
-              const formatted = formatLog(log, { args: args2, eventName });
-              onLogs([formatted]);
-            } catch (err) {
-              let eventName;
-              let isUnnamed;
-              if (err instanceof DecodeLogDataMismatch || err instanceof DecodeLogTopicsMismatch) {
-                if (strict_)
-                  return;
-                eventName = err.abiItem.name;
-                isUnnamed = err.abiItem.inputs?.some((x) => !(("name" in x) && x.name));
-              }
-              const formatted = formatLog(log, {
-                args: isUnnamed ? [] : {},
-                eventName
-              });
-              onLogs([formatted]);
-            }
-          },
-          onError(error61) {
-            onError?.(error61);
-          }
-        });
-        unsubscribe = unsubscribe_;
-        if (!active)
-          unsubscribe();
-      } catch (err) {
-        onError?.(err);
-      }
-    })();
-    return () => unsubscribe();
-  };
-  return enablePolling ? pollEvent() : subscribeEvent();
-}
-// node_modules/viem/_esm/actions/public/watchPendingTransactions.js
-function watchPendingTransactions(client, { batch = true, onError, onTransactions, poll: poll_, pollingInterval = client.pollingInterval }) {
-  const enablePolling = typeof poll_ !== "undefined" ? poll_ : client.transport.type !== "webSocket" && client.transport.type !== "ipc";
-  const pollPendingTransactions = () => {
-    const observerId = stringify([
-      "watchPendingTransactions",
-      client.uid,
-      batch,
-      pollingInterval
-    ]);
-    return observe(observerId, { onTransactions, onError }, (emit) => {
-      let filter;
-      const unwatch = poll(async () => {
-        try {
-          if (!filter) {
-            try {
-              filter = await getAction(client, createPendingTransactionFilter, "createPendingTransactionFilter")({});
-              return;
-            } catch (err) {
-              unwatch();
-              throw err;
-            }
-          }
-          const hashes = await getAction(client, getFilterChanges, "getFilterChanges")({ filter });
-          if (hashes.length === 0)
-            return;
-          if (batch)
-            emit.onTransactions(hashes);
-          else
-            for (const hash4 of hashes)
-              emit.onTransactions([hash4]);
-        } catch (err) {
-          emit.onError?.(err);
-        }
-      }, {
-        emitOnBegin: true,
-        interval: pollingInterval
-      });
-      return async () => {
-        if (filter)
-          await getAction(client, uninstallFilter, "uninstallFilter")({ filter });
-        unwatch();
-      };
-    });
-  };
-  const subscribePendingTransactions = () => {
-    let active = true;
-    let unsubscribe = () => active = false;
-    (async () => {
-      try {
-        const { unsubscribe: unsubscribe_ } = await client.transport.subscribe({
-          params: ["newPendingTransactions"],
-          onData(data) {
-            if (!active)
-              return;
-            const transaction = data.result;
-            onTransactions([transaction]);
-          },
-          onError(error61) {
-            onError?.(error61);
-          }
-        });
-        unsubscribe = unsubscribe_;
-        if (!active)
-          unsubscribe();
-      } catch (err) {
-        onError?.(err);
-      }
-    })();
-    return () => unsubscribe();
-  };
-  return enablePolling ? pollPendingTransactions() : subscribePendingTransactions();
-}
-
-// node_modules/viem/_esm/utils/siwe/parseSiweMessage.js
-var siweDateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
-function isValidSiweDateTime(value) {
-  if (!siweDateTimeRegex.test(value))
-    return false;
-  return !Number.isNaN(new Date(value).getTime());
-}
-function parseSiweDateTime(value) {
-  if (!isValidSiweDateTime(value))
-    return new Date(Number.NaN);
-  return new Date(value);
-}
-function parseSiweMessage(message) {
-  const { scheme, statement, ...prefix } = message.match(prefixRegex)?.groups ?? {};
-  const { chainId, expirationTime, issuedAt, notBefore, requestId, ...suffix } = message.match(suffixRegex)?.groups ?? {};
-  const resources = message.split("Resources:")[1]?.split(`
-- `).slice(1);
-  return {
-    ...prefix,
-    ...suffix,
-    ...chainId ? { chainId: Number(chainId) } : {},
-    ...expirationTime ? { expirationTime: parseSiweDateTime(expirationTime) } : {},
-    ...issuedAt ? { issuedAt: parseSiweDateTime(issuedAt) } : {},
-    ...notBefore ? { notBefore: parseSiweDateTime(notBefore) } : {},
-    ...requestId ? { requestId } : {},
-    ...resources ? { resources } : {},
-    ...scheme ? { scheme } : {},
-    ...statement ? { statement } : {}
-  };
-}
-var prefixRegex = /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/;
-var suffixRegex = /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.+))?/;
-
-// node_modules/viem/_esm/utils/siwe/validateSiweMessage.js
-init_isAddress();
-init_isAddressEqual();
-function validateSiweMessage(parameters) {
-  const { address, domain: domain2, message, nonce, scheme, time: time3 = new Date } = parameters;
-  if (domain2 && message.domain !== domain2)
-    return false;
-  if (nonce && message.nonce !== nonce)
-    return false;
-  if (scheme && message.scheme !== scheme)
-    return false;
-  if (Number.isNaN(time3.getTime()))
-    return false;
-  if (message.expirationTime) {
-    if (Number.isNaN(message.expirationTime.getTime()))
-      return false;
-    if (time3 >= message.expirationTime)
-      return false;
-  }
-  if (message.notBefore) {
-    if (Number.isNaN(message.notBefore.getTime()))
-      return false;
-    if (time3 < message.notBefore)
-      return false;
-  }
-  try {
-    if (!message.address)
-      return false;
-    if (!isAddress(message.address, { strict: false }))
-      return false;
-    if (address && !isAddressEqual(message.address, address))
-      return false;
-  } catch {
-    return false;
-  }
-  return true;
-}
-
-// node_modules/viem/_esm/actions/siwe/verifySiweMessage.js
-async function verifySiweMessage(client, parameters) {
-  const { address, domain: domain2, message, nonce, scheme, signature, time: time3 = new Date, ...callRequest } = parameters;
-  const parsed2 = parseSiweMessage(message);
-  if (!parsed2.address)
-    return false;
-  const isValid = validateSiweMessage({
-    address,
-    domain: domain2,
-    message: parsed2,
-    nonce,
-    scheme,
-    time: time3
-  });
-  if (!isValid)
-    return false;
-  const hash4 = hashMessage2(message);
-  return verifyHash2(client, {
-    address: parsed2.address,
-    hash: hash4,
-    signature,
-    ...callRequest
-  });
-}
-// node_modules/viem/_esm/actions/token/getAllowance.js
-init_abis();
-
-// node_modules/viem/_esm/actions/token/internal.js
-init_abis();
-init_isAddress();
-init_isAddressEqual();
-
-// node_modules/viem/_esm/utils/unit/formatUnits.js
-init_Value();
-function formatUnits2(value, decimals) {
-  return format(value, decimals);
-}
-
-// node_modules/viem/_esm/utils/unit/parseUnits.js
-init_Value();
-function parseUnits2(value, decimals) {
-  return from(value, decimals);
-}
-
-// node_modules/viem/_esm/actions/token/internal.js
-function toAmount(amount, decimals) {
-  return { amount, decimals, formatted: formatUnits2(amount, decimals) };
-}
-function resolveToken(client, parameters) {
-  const { decimals, token } = parameters;
-  const declared = findDeclaredToken(client, token);
-  if (declared)
-    return {
-      address: declared.address,
-      decimals: decimals ?? declared.decimals
-    };
-  if (isAddress(token, { strict: false }))
-    return {
-      address: token,
-      decimals: decimals ?? inferDecimals(client, token)
-    };
-  throw new Error(`Token "${token}" is not a declared ERC-20 token on the client's \`tokens\` array (with an address for the client's chain), and is not a valid address.`);
-}
-function findDeclaredToken(client, token) {
-  const tokens = client.tokens;
-  const chainId = client.chain?.id;
-  if (!tokens || chainId === undefined)
-    return;
-  const bySymbol = findTokenBySymbol(tokens, token);
-  if (bySymbol)
-    return resolveTokenForChain(bySymbol, chainId);
-  if (isAddress(token, { strict: false }))
-    for (const token_ of tokens) {
-      const resolved = resolveTokenForChain(token_, chainId);
-      if (resolved && isAddressEqual(resolved.address, token))
-        return resolved;
-    }
-  return;
-}
-function resolveTokenForChain(token, chainId) {
-  const address = token.addresses[chainId];
-  if (!address)
-    return;
-  return {
-    address,
-    currency: token.currency,
-    decimals: token.decimals,
-    name: token.name,
-    popular: token.popular,
-    symbol: token.symbol
-  };
-}
-function findTokenBySymbol(tokens, symbol2) {
-  const lowerSymbol = symbol2.toLowerCase();
-  for (const token of tokens) {
-    if (token.symbol?.toLowerCase() === lowerSymbol)
-      return token;
-  }
-  return;
-}
-function inferDecimals(client, address) {
-  const tokens = client.tokens;
-  const chainId = client.chain?.id;
-  if (tokens && chainId !== undefined)
-    for (const token of tokens) {
-      const resolved = resolveTokenForChain(token, chainId);
-      if (resolved && isAddressEqual(resolved.address, address))
-        return resolved.decimals;
-    }
-  return;
-}
-async function resolveTokenWithDecimals(client, parameters) {
-  const { address, decimals } = resolveToken(client, parameters);
-  if (decimals !== undefined)
-    return { address, decimals };
-  return {
-    address,
-    decimals: await readContract(client, {
-      abi: erc20Abi,
-      address,
-      functionName: "decimals"
-    })
-  };
-}
-function defineCall(call2) {
-  return {
-    ...call2,
-    data: encodeFunctionData(call2),
-    to: call2.address
-  };
-}
-
-// node_modules/viem/_esm/actions/token/getAllowance.js
-async function getAllowance(client, parameters) {
-  const { account, decimals, spender, token, ...rest } = parameters;
-  const [amount, { decimals: resolved }] = await Promise.all([
-    readContract(client, {
-      ...rest,
-      ...getAllowance.call(client, { account, spender, token })
-    }),
-    resolveTokenWithDecimals(client, {
-      decimals,
-      token
-    })
-  ]);
-  return toAmount(amount, resolved);
-}
-(function(getAllowance2) {
-  function call2(client, args) {
-    return defineCall({
-      address: resolveToken(client, args).address,
-      abi: erc20Abi,
-      functionName: "allowance",
-      args: [args.account, args.spender]
-    });
-  }
-  getAllowance2.call = call2;
-})(getAllowance || (getAllowance = {}));
-// node_modules/viem/_esm/actions/token/getBalance.js
-init_abis();
-
-// node_modules/viem/_esm/errors/account.js
-init_base();
-
-class AccountNotFoundError extends BaseError {
-  constructor({ docsPath: docsPath8 } = {}) {
-    super([
-      "Could not find an Account to execute with this Action.",
-      "Please provide an Account with the `account` argument on the Action, or by supplying an `account` to the Client."
-    ].join(`
-`), {
-      docsPath: docsPath8,
-      docsSlug: "account",
-      name: "AccountNotFoundError"
-    });
-  }
-}
-
-// node_modules/viem/_esm/actions/token/getBalance.js
-async function getBalance2(client, parameters) {
-  const { account: account_ = client.account, decimals, token, ...rest } = parameters;
-  if (!account_)
-    throw new AccountNotFoundError;
-  const account = parseAccount(account_).address;
-  const [amount, { decimals: resolved }] = await Promise.all([
-    readContract(client, {
-      ...rest,
-      ...getBalance2.call(client, { account, token })
-    }),
-    resolveTokenWithDecimals(client, {
-      decimals,
-      token
-    })
-  ]);
-  return toAmount(amount, resolved);
-}
-(function(getBalance3) {
-  function call2(client, args) {
-    const account_ = args.account ?? client.account;
-    if (!account_)
-      throw new AccountNotFoundError;
-    const account = parseAccount(account_).address;
-    return defineCall({
-      address: resolveToken(client, args).address,
-      abi: erc20Abi,
-      functionName: "balanceOf",
-      args: [account]
-    });
-  }
-  getBalance3.call = call2;
-})(getBalance2 || (getBalance2 = {}));
-// node_modules/viem/_esm/actions/token/getMetadata.js
-init_abis();
-async function getMetadata(client, parameters) {
-  const { token, ...rest } = parameters;
-  const { address } = resolveToken(client, { token });
-  const declared = findDeclaredToken(client, token);
-  const [decimals_, name, symbol2] = await Promise.all([
-    declared?.decimals ?? readContract(client, {
-      ...rest,
-      abi: erc20Abi,
-      address,
-      functionName: "decimals"
-    }),
-    declared?.name ?? readContract(client, {
-      ...rest,
-      abi: erc20Abi,
-      address,
-      functionName: "name"
-    }),
-    declared?.symbol ?? readContract(client, {
-      ...rest,
-      abi: erc20Abi,
-      address,
-      functionName: "symbol"
-    })
-  ]);
-  return {
-    decimals: decimals_,
-    name,
-    symbol: symbol2
-  };
-}
-// node_modules/viem/_esm/actions/token/getTotalSupply.js
-init_abis();
-async function getTotalSupply(client, parameters) {
-  const { decimals, token, ...rest } = parameters;
-  const [amount, { decimals: resolved }] = await Promise.all([
-    readContract(client, {
-      ...rest,
-      ...getTotalSupply.call(client, { token })
-    }),
-    resolveTokenWithDecimals(client, {
-      decimals,
-      token
-    })
-  ]);
-  return toAmount(amount, resolved);
-}
-(function(getTotalSupply2) {
-  function call2(client, args) {
-    return defineCall({
-      address: resolveToken(client, args).address,
-      abi: erc20Abi,
-      args: [],
-      functionName: "totalSupply"
-    });
-  }
-  getTotalSupply2.call = call2;
-})(getTotalSupply || (getTotalSupply = {}));
-// node_modules/viem/_esm/actions/wallet/sendRawTransaction.js
-async function sendRawTransaction(client, { serializedTransaction }) {
-  return client.request({
-    method: "eth_sendRawTransaction",
-    params: [serializedTransaction]
-  }, { retryCount: 0 });
-}
-
-// node_modules/viem/_esm/actions/wallet/sendRawTransactionSync.js
-init_transaction();
-async function sendRawTransactionSync(client, { serializedTransaction, throwOnReceiptRevert, timeout }) {
-  const receipt = await client.request({
-    method: "eth_sendRawTransactionSync",
-    params: timeout ? [serializedTransaction, timeout] : [serializedTransaction]
-  }, { retryCount: 0 });
-  const format2 = client.chain?.formatters?.transactionReceipt?.format || formatTransactionReceipt;
-  const formatted = format2(receipt);
-  if (formatted.status === "reverted" && throwOnReceiptRevert)
-    throw new TransactionReceiptRevertedError({ receipt: formatted });
-  return formatted;
-}
-
-// node_modules/viem/_esm/clients/decorators/public.js
-function publicActions(client) {
-  return {
-    call: (args) => call(client, args),
-    createAccessList: (args) => createAccessList(client, args),
-    createBlockFilter: () => createBlockFilter(client),
-    createContractEventFilter: (args) => createContractEventFilter(client, args),
-    createEventFilter: (args) => createEventFilter(client, args),
-    createPendingTransactionFilter: () => createPendingTransactionFilter(client),
-    estimateContractGas: (args) => estimateContractGas(client, args),
-    estimateGas: (args) => estimateGas(client, args),
-    getBalance: (args) => getBalance(client, args),
-    getBlobBaseFee: () => getBlobBaseFee(client),
-    getBlock: (args) => getBlock(client, args),
-    getBlockNumber: (args) => getBlockNumber(client, args),
-    getBlockReceipts: (args) => getBlockReceipts(client, args),
-    getBlockTransactionCount: (args) => getBlockTransactionCount(client, args),
-    getBytecode: (args) => getCode(client, args),
-    getChainId: () => getChainId(client),
-    getCode: (args) => getCode(client, args),
-    getContractEvents: (args) => getContractEvents(client, args),
-    getDelegation: (args) => getDelegation(client, args),
-    getEip712Domain: (args) => getEip712Domain(client, args),
-    getEnsAddress: (args) => getEnsAddress(client, args),
-    getEnsAvatar: (args) => getEnsAvatar(client, args),
-    getEnsName: (args) => getEnsName(client, args),
-    getEnsResolver: (args) => getEnsResolver(client, args),
-    getEnsText: (args) => getEnsText(client, args),
-    getFeeHistory: (args) => getFeeHistory(client, args),
-    estimateFeesPerGas: (args) => estimateFeesPerGas(client, args),
-    getFilterChanges: (args) => getFilterChanges(client, args),
-    getFilterLogs: (args) => getFilterLogs(client, args),
-    getGasPrice: () => getGasPrice(client),
-    getLogs: (args) => getLogs(client, args),
-    getProof: (args) => getProof(client, args),
-    estimateMaxPriorityFeePerGas: (args) => estimateMaxPriorityFeePerGas(client, args),
-    fillTransaction: (args) => fillTransaction(client, args),
-    getRawTransaction: (args) => getRawTransaction(client, args),
-    getStorageAt: (args) => getStorageAt(client, args),
-    getTransaction: (args) => getTransaction(client, args),
-    getTransactionConfirmations: (args) => getTransactionConfirmations(client, args),
-    getTransactionCount: (args) => getTransactionCount(client, args),
-    getTransactionReceipt: (args) => getTransactionReceipt(client, args),
-    multicall: (args) => multicall(client, args),
-    prepareTransactionRequest: (args) => prepareTransactionRequest(client, args),
-    readContract: (args) => readContract(client, args),
-    sendRawTransaction: (args) => sendRawTransaction(client, args),
-    sendRawTransactionSync: (args) => sendRawTransactionSync(client, args),
-    simulate: (args) => simulateBlocks(client, args),
-    simulateBlocks: (args) => simulateBlocks(client, args),
-    simulateCalls: (args) => simulateCalls(client, args),
-    simulateContract: (args) => simulateContract(client, args),
-    verifyHash: (args) => verifyHash2(client, args),
-    verifyMessage: (args) => verifyMessage2(client, args),
-    verifySiweMessage: (args) => verifySiweMessage(client, args),
-    verifyTypedData: (args) => verifyTypedData2(client, args),
-    uninstallFilter: (args) => uninstallFilter(client, args),
-    waitForTransactionReceipt: (args) => waitForTransactionReceipt(client, args),
-    watchBlockHeaders: (args) => watchBlockHeaders(client, args),
-    watchBlocks: (args) => watchBlocks(client, args),
-    watchBlockNumber: (args) => watchBlockNumber(client, args),
-    watchContractEvent: (args) => watchContractEvent(client, args),
-    watchEvent: (args) => watchEvent(client, args),
-    watchPendingTransactions: (args) => watchPendingTransactions(client, args),
-    token: bindPublicToken(client)
-  };
-}
-function bindPublicToken(client) {
-  return {
-    getAllowance: bindActionDecorators(client, getAllowance),
-    getBalance: bindActionDecorators(client, getBalance2),
-    getMetadata: bindActionDecorators(client, getMetadata),
-    getTotalSupply: bindActionDecorators(client, getTotalSupply)
-  };
-}
-
-// node_modules/viem/_esm/clients/createPublicClient.js
-function createPublicClient(parameters) {
-  const { key = "public", name = "Public Client" } = parameters;
-  const client = createClient({
-    ...parameters,
-    key,
-    name,
-    type: "publicClient"
-  });
-  return client.extend(publicActions);
-}
-// node_modules/viem/_esm/clients/transports/http.js
-init_request();
-
-// node_modules/viem/_esm/errors/transport.js
-init_base();
-
-class UrlRequiredError extends BaseError {
-  constructor() {
-    super("No URL was provided to the Transport. Please provide a valid RPC URL to the Transport.", {
-      docsPath: "/docs/clients/intro",
-      name: "UrlRequiredError"
-    });
-  }
-}
-
-// node_modules/viem/_esm/clients/transports/http.js
-init_createBatchScheduler();
-
-// node_modules/viem/_esm/utils/rpc/http.js
-init_request();
-
-// node_modules/viem/_esm/utils/promise/withTimeout.js
-function withTimeout(fn, { errorInstance = new Error("timed out"), timeout, signal }) {
-  return new Promise((resolve, reject) => {
-    (async () => {
-      let timeoutId;
-      const controller = new AbortController;
-      try {
-        if (timeout > 0) {
-          timeoutId = setTimeout(() => {
-            if (signal) {
-              controller.abort();
-            } else {
-              reject(errorInstance);
-            }
-          }, timeout);
-        }
-        resolve(await fn({ signal: controller?.signal || null }));
-      } catch (err) {
-        if (controller?.signal.aborted && isAbortError(err)) {
-          reject(errorInstance);
-          return;
-        }
-        reject(err);
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    })();
-  });
-}
-// node_modules/viem/_esm/utils/rpc/id.js
-function createIdStore() {
-  return {
-    current: 0,
-    take() {
-      return this.current++;
-    },
-    reset() {
-      this.current = 0;
-    }
-  };
-}
-var idCache = /* @__PURE__ */ createIdStore();
-
-// node_modules/viem/_esm/utils/rpc/http.js
-var defaultMaxResponseBodySize = 10485760;
-function getHttpRpcClient2(url_, options = {}) {
-  const { url: url2, headers: headers_url } = parseUrl(url_);
-  return {
-    async request(params) {
-      const { body, fetchFn = options.fetchFn ?? fetch, maxResponseBodySize = options.maxResponseBodySize ?? defaultMaxResponseBodySize, onRequest = options.onRequest, onResponse = options.onResponse, timeout = options.timeout ?? 1e4 } = params;
-      const fetchOptions = {
-        ...options.fetchOptions ?? {},
-        ...params.fetchOptions ?? {}
-      };
-      const { headers, method, signal: signal_ } = fetchOptions;
-      try {
-        const response = await withTimeout(async ({ signal }) => {
-          const init = {
-            ...fetchOptions,
-            body: Array.isArray(body) ? stringify(body.map((body2) => ({
-              jsonrpc: "2.0",
-              id: body2.id ?? idCache.take(),
-              ...body2
-            }))) : stringify({
-              jsonrpc: "2.0",
-              id: body.id ?? idCache.take(),
-              ...body
-            }),
-            headers: {
-              ...headers_url,
-              "Content-Type": "application/json",
-              ...headers
-            },
-            method: method || "POST",
-            signal: signal_ || (timeout > 0 ? signal : null)
-          };
-          const request = new Request(url2, init);
-          const args = await onRequest?.(request, init) ?? { ...init, url: url2 };
-          const response2 = await fetchFn(args.url ?? url2, args);
-          return response2;
-        }, {
-          errorInstance: new TimeoutError({ body, url: url2 }),
-          timeout,
-          signal: true
-        });
-        if (onResponse)
-          await onResponse(response);
-        let data;
-        const responseBody = await readResponseBody(response, {
-          maxResponseBodySize
-        });
-        if (response.headers.get("Content-Type")?.startsWith("application/json"))
-          data = JSON.parse(responseBody);
-        else {
-          data = responseBody;
-          try {
-            data = JSON.parse(data || "{}");
-          } catch (err) {
-            if (response.ok)
-              throw err;
-            data = { error: data };
-          }
-        }
-        if (!response.ok) {
-          if (typeof data.error?.code === "number" && typeof data.error?.message === "string")
-            return data;
-          throw new HttpRequestError({
-            body,
-            details: stringify(data.error) || response.statusText,
-            headers: response.headers,
-            status: response.status,
-            url: url2
-          });
-        }
-        return data;
-      } catch (err) {
-        if (signal_?.aborted)
-          throw getAbortError(signal_);
-        if (isAbortError(err))
-          throw err;
-        if (err instanceof HttpRequestError)
-          throw err;
-        if (err instanceof ResponseBodyTooLargeError)
-          throw err;
-        if (err instanceof TimeoutError)
-          throw err;
-        throw new HttpRequestError({
-          body,
-          cause: err,
-          url: url2
-        });
-      }
-    }
-  };
-}
-async function readResponseBody(response, { maxResponseBodySize }) {
-  if (maxResponseBodySize === false)
-    return response.text();
-  const contentLength = response.headers.get("Content-Length");
-  if (contentLength) {
-    const size7 = Number(contentLength);
-    if (size7 > maxResponseBodySize)
-      throw new ResponseBodyTooLargeError({
-        maxSize: maxResponseBodySize,
-        size: size7
-      });
-  }
-  if (!response.body) {
-    const body2 = await response.text();
-    const size7 = new TextEncoder().encode(body2).length;
-    if (size7 > maxResponseBodySize)
-      throw new ResponseBodyTooLargeError({
-        maxSize: maxResponseBodySize,
-        size: size7
-      });
-    return body2;
-  }
-  const reader = response.body.getReader();
-  const decoder2 = new TextDecoder;
-  let body = "";
-  let size6 = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done)
-        break;
-      size6 += value.byteLength;
-      if (size6 > maxResponseBodySize) {
-        await reader.cancel();
-        throw new ResponseBodyTooLargeError({
-          maxSize: maxResponseBodySize,
-          size: size6
-        });
-      }
-      body += decoder2.decode(value, { stream: true });
-    }
-    body += decoder2.decode();
-    return body;
-  } finally {
-    reader.releaseLock();
-  }
-}
-function parseUrl(url_) {
-  try {
-    const url2 = new URL(url_);
-    const result = (() => {
-      if (url2.username) {
-        const credentials = `${decodeURIComponent(url2.username)}:${decodeURIComponent(url2.password)}`;
-        url2.username = "";
-        url2.password = "";
-        return {
-          url: url2.toString(),
-          headers: { Authorization: `Basic ${btoa(credentials)}` }
-        };
-      }
-      return;
-    })();
-    return { url: url2.toString(), ...result };
-  } catch {
-    return { url: url_ };
-  }
-}
-
-// node_modules/viem/_esm/utils/buildRequest.js
-init_base();
-init_request();
-init_rpc();
-
-// node_modules/viem/_esm/utils/promise/withDedupe.js
-init_lru();
-var promiseCache2 = /* @__PURE__ */ new LruMap(8192);
-function withDedupe(fn, { enabled = true, id }) {
-  if (!enabled || !id)
-    return fn();
-  if (promiseCache2.get(id))
-    return promiseCache2.get(id);
-  const promise2 = fn().finally(() => promiseCache2.delete(id));
-  promiseCache2.set(id, promise2);
-  return promise2;
-}
-
-// node_modules/viem/_esm/utils/buildRequest.js
-function buildRequest2(request, options = {}) {
-  return async (args, overrideOptions = {}) => {
-    const { dedupe = false, methods, retryDelay = 150, retryCount = 3, signal, uid: uid2 } = {
-      ...options,
-      ...overrideOptions
-    };
-    const { method } = args;
-    if (methods?.exclude?.includes(method))
-      throw new MethodNotSupportedRpcError(new Error("method not supported"), {
-        method
-      });
-    if (methods?.include && !methods.include.includes(method))
-      throw new MethodNotSupportedRpcError(new Error("method not supported"), {
-        method
-      });
-    if (signal?.aborted)
-      throw getAbortError(signal);
-    const requestId = dedupe ? hashString(`${uid2}.${stringify(args)}`) : undefined;
-    return withDedupe(() => withRetry(async () => {
-      try {
-        return await request(args, signal ? { signal } : undefined);
-      } catch (err_) {
-        if (signal?.aborted)
-          throw getAbortError(signal);
-        if (isAbortError(err_))
-          throw err_;
-        const err = err_;
-        switch (err.code) {
-          case ParseRpcError.code:
-            throw new ParseRpcError(err);
-          case InvalidRequestRpcError.code:
-            throw new InvalidRequestRpcError(err);
-          case MethodNotFoundRpcError.code:
-            throw new MethodNotFoundRpcError(err, { method: args.method });
-          case InvalidParamsRpcError.code:
-            throw new InvalidParamsRpcError(err);
-          case InternalRpcError.code:
-            throw new InternalRpcError(err);
-          case InvalidInputRpcError.code:
-            throw new InvalidInputRpcError(err);
-          case ResourceNotFoundRpcError.code:
-            throw new ResourceNotFoundRpcError(err);
-          case ResourceUnavailableRpcError.code:
-            throw new ResourceUnavailableRpcError(err);
-          case TransactionRejectedRpcError.code:
-            throw new TransactionRejectedRpcError(err);
-          case MethodNotSupportedRpcError.code:
-            throw new MethodNotSupportedRpcError(err, {
-              method: args.method
-            });
-          case LimitExceededRpcError.code:
-            throw new LimitExceededRpcError(err);
-          case JsonRpcVersionUnsupportedError.code:
-            throw new JsonRpcVersionUnsupportedError(err);
-          case UserRejectedRequestError.code:
-            throw new UserRejectedRequestError(err);
-          case UnauthorizedProviderError.code:
-            throw new UnauthorizedProviderError(err);
-          case UnsupportedProviderMethodError.code:
-            throw new UnsupportedProviderMethodError(err);
-          case ProviderDisconnectedError.code:
-            throw new ProviderDisconnectedError(err);
-          case ChainDisconnectedError.code:
-            throw new ChainDisconnectedError(err);
-          case SwitchChainError.code:
-            throw new SwitchChainError(err);
-          case UnsupportedNonOptionalCapabilityError.code:
-            throw new UnsupportedNonOptionalCapabilityError(err);
-          case UnsupportedChainIdError.code:
-            throw new UnsupportedChainIdError(err);
-          case DuplicateIdError.code:
-            throw new DuplicateIdError(err);
-          case UnknownBundleIdError.code:
-            throw new UnknownBundleIdError(err);
-          case BundleTooLargeError.code:
-            throw new BundleTooLargeError(err);
-          case AtomicReadyWalletRejectedUpgradeError.code:
-            throw new AtomicReadyWalletRejectedUpgradeError(err);
-          case AtomicityNotSupportedError.code:
-            throw new AtomicityNotSupportedError(err);
-          case 5000:
-            throw new UserRejectedRequestError(err);
-          case WalletConnectSessionSettlementError.code:
-            throw new WalletConnectSessionSettlementError(err);
-          default:
-            if (err_ instanceof BaseError)
-              throw err_;
-            throw new UnknownRpcError(err);
-        }
-      }
-    }, {
-      delay: ({ count, error: error61 }) => {
-        if (error61 && error61 instanceof HttpRequestError) {
-          const retryAfter = error61?.headers?.get("Retry-After");
-          if (retryAfter?.match(/\d/))
-            return Number.parseInt(retryAfter, 10) * 1000;
-        }
-        return ~~(1 << count) * retryDelay;
-      },
-      retryCount,
-      signal,
-      shouldRetry: ({ error: error61 }) => shouldRetry(error61)
-    }), { enabled: dedupe, id: requestId });
-  };
-}
-function shouldRetry(error61) {
-  if (isAbortError(error61))
-    return false;
-  if ("code" in error61 && typeof error61.code === "number") {
-    if (error61.code === -1)
-      return true;
-    if (error61.code === LimitExceededRpcError.code)
-      return true;
-    if (error61.code === InternalRpcError.code)
-      return true;
-    if (error61.code === 429)
-      return true;
-    return false;
-  }
-  if (error61 instanceof HttpRequestError && error61.status) {
-    if (error61.status === 403)
-      return true;
-    if (error61.status === 408)
-      return true;
-    if (error61.status === 413)
-      return true;
-    if (error61.status === 429)
-      return true;
-    if (error61.status === 500)
-      return true;
-    if (error61.status === 502)
-      return true;
-    if (error61.status === 503)
-      return true;
-    if (error61.status === 504)
-      return true;
-    return false;
-  }
-  return true;
-}
-function hashString(str, seed = 0) {
-  let h1 = 3735928559 ^ seed;
-  let h2 = 1103547991 ^ seed;
-  for (let i = 0;i < str.length; i++) {
-    const ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507);
-  h1 ^= Math.imul(h2 ^ h2 >>> 16, 3266489909);
-  h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507);
-  h2 ^= Math.imul(h1 ^ h1 >>> 16, 3266489909);
-  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
-}
-
-// node_modules/viem/_esm/clients/transports/createTransport.js
-function createTransport({ key, methods, name, request, retryCount = 3, retryDelay = 150, timeout, type }, value) {
-  const uid2 = uid();
-  return {
-    config: {
-      key,
-      methods,
-      name,
-      request,
-      retryCount,
-      retryDelay,
-      timeout,
-      type
-    },
-    request: buildRequest2(request, { methods, retryCount, retryDelay, uid: uid2 }),
-    value
-  };
-}
-
-// node_modules/viem/_esm/clients/transports/http.js
-var signalId = 0;
-var signalIds = new WeakMap;
-function getSignalId(signal) {
-  if (!signal)
-    return "default";
-  const id = signalIds.get(signal);
-  if (id !== undefined)
-    return id;
-  const nextId = signalId++;
-  signalIds.set(signal, nextId);
-  return nextId;
-}
-function http(url2, config2 = {}) {
-  const { batch, fetchFn, fetchOptions, key = "http", maxResponseBodySize, methods, name = "HTTP JSON-RPC", onFetchRequest, onFetchResponse, retryDelay, raw: raw2 } = config2;
-  return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
-    const { batchSize = 1000, wait: wait2 = 0 } = typeof batch === "object" ? batch : {};
-    const retryCount = config2.retryCount ?? retryCount_;
-    const timeout = timeout_ ?? config2.timeout ?? 1e4;
-    const url_ = url2 || chain?.rpcUrls.default.http[0];
-    if (!url_)
-      throw new UrlRequiredError;
-    const rpcClient = getHttpRpcClient2(url_, {
-      fetchFn,
-      fetchOptions,
-      maxResponseBodySize,
-      onRequest: onFetchRequest,
-      onResponse: onFetchResponse,
-      timeout
-    });
-    return createTransport({
-      key,
-      methods,
-      name,
-      async request({ method, params }, options) {
-        const body = { method, params };
-        const fetchOptions2 = options?.signal ? { signal: options.signal } : undefined;
-        const { schedule } = createBatchScheduler({
-          id: `${url_}.${getSignalId(options?.signal)}`,
-          wait: wait2,
-          shouldSplitBatch(requests) {
-            return requests.length > batchSize;
-          },
-          fn: (body2) => rpcClient.request({
-            body: body2,
-            fetchOptions: fetchOptions2
-          }),
-          sort: (a, b) => a.id - b.id
-        });
-        const fn = async (body2) => batch ? schedule(body2) : [
-          await rpcClient.request({
-            body: body2,
-            fetchOptions: fetchOptions2
-          })
-        ];
-        const [{ error: error61, result }] = await fn(body);
-        if (raw2)
-          return { error: error61, result };
-        if (error61)
-          throw new RpcRequestError({
-            body,
-            error: error61,
-            url: url_
-          });
-        return result;
-      },
-      retryCount,
-      retryDelay,
-      timeout,
-      type: "http"
-    }, {
-      fetchOptions,
-      url: url_
-    });
-  };
-}
-
-// node_modules/viem/_esm/index.js
-init_decodeAbiParameters();
-init_decodeFunctionData();
-init_getAddress();
-init_isAddress();
-
-// node_modules/viem/_esm/utils/unit/parseEther.js
-init_Value();
-function parseEther2(ether, unit = "wei") {
-  return fromEther(ether, unit);
-}
-// node_modules/viem/_esm/utils/chain/defineChain.js
-function defineChain3(chain) {
-  const chainInstance = {
-    formatters: undefined,
-    fees: undefined,
-    serializers: undefined,
-    ...chain
-  };
-  function extend2(base) {
-    return (fnOrExtended) => {
-      const properties = typeof fnOrExtended === "function" ? fnOrExtended(base) : fnOrExtended;
-      const combined = { ...base, ...properties };
-      return Object.assign(combined, { extend: extend2(combined) });
-    };
-  }
-  return Object.assign(chainInstance, {
-    extend: extend2(chainInstance)
-  });
-}
-
-// node_modules/viem/_esm/chains/definitions/bscTestnet.js
-var bscTestnet = /* @__PURE__ */ defineChain3({
-  id: 97,
-  name: "BNB Smart Chain Testnet",
-  nativeCurrency: {
-    decimals: 18,
-    name: "BNB",
-    symbol: "tBNB"
-  },
-  rpcUrls: {
-    default: { http: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"] }
-  },
-  blockExplorers: {
-    default: {
-      name: "BscScan",
-      url: "https://testnet.bscscan.com",
-      apiUrl: "https://api-testnet.bscscan.com/api"
-    }
-  },
-  contracts: {
-    multicall3: {
-      address: "0xca11bde05977b3631167028862be2a173976ca11",
-      blockCreated: 17422483
-    }
-  },
-  testnet: true
-});
-// src/lib/viem.ts
-var publicClient = createPublicClient({
-  chain: bscTestnet,
-  transport: http(env.BNB_RPC_URL)
-});
-
-// src/routes/health.ts
-var healthRoute = new Hono2;
-healthRoute.get("/", async (c) => {
-  let blockNumber = null;
-  try {
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("RPC query timeout")), 2500));
-    const bn = await Promise.race([publicClient.getBlockNumber(), timeoutPromise]);
-    blockNumber = bn.toString();
-  } catch (error61) {
-    console.warn("[HEALTH] RPC blockNumber probe timed out or failed:", error61 instanceof Error ? error61.message : String(error61));
-  }
-  return c.json({
-    ok: true,
-    service: "txsentry-api",
-    blockchain: {
-      chain: "BNB Smart Chain Testnet",
-      connected: blockNumber !== null,
-      ...blockNumber ? { blockNumber } : {}
-    }
-  });
-});
 
 // node_modules/openai/internal/tslib.mjs
 function __classPrivateFieldSet(receiver, state, value, kind, f) {
@@ -38070,18 +30009,18 @@ function __classPrivateFieldGet(receiver, state, kind, f) {
 
 // node_modules/openai/internal/utils/uuid.mjs
 var uuid42 = function() {
-  const { crypto: crypto3 } = globalThis;
-  if (crypto3?.randomUUID) {
-    uuid42 = crypto3.randomUUID.bind(crypto3);
-    return crypto3.randomUUID();
+  const { crypto: crypto2 } = globalThis;
+  if (crypto2?.randomUUID) {
+    uuid42 = crypto2.randomUUID.bind(crypto2);
+    return crypto2.randomUUID();
   }
   const u8 = new Uint8Array(1);
-  const randomByte = crypto3 ? () => crypto3.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
+  const randomByte = crypto2 ? () => crypto2.getRandomValues(u8)[0] : () => Math.random() * 255 & 255;
   return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (+c ^ randomByte() & 15 >> +c / 4).toString(16));
 };
 
 // node_modules/openai/internal/errors.mjs
-function isAbortError2(err) {
+function isAbortError(err) {
   return typeof err === "object" && err !== null && (("name" in err) && err.name === "AbortError" || ("message" in err) && String(err.message).includes("FetchRequestCanceledException"));
 }
 var castToError = (err) => {
@@ -38151,7 +30090,7 @@ class APIError extends OpenAIError {
       return new PermissionDeniedError(status, error61, message, headers);
     }
     if (status === 404) {
-      return new NotFoundError2(status, error61, message, headers);
+      return new NotFoundError(status, error61, message, headers);
     }
     if (status === 409) {
       return new ConflictError(status, error61, message, headers);
@@ -38198,7 +30137,7 @@ class AuthenticationError extends APIError {
 class PermissionDeniedError extends APIError {
 }
 
-class NotFoundError2 extends APIError {
+class NotFoundError extends APIError {
 }
 
 class ConflictError extends APIError {
@@ -38378,13 +30317,13 @@ async function CancelReadableStream(stream) {
 // node_modules/openai/internal/utils/bytes.mjs
 var encodeUTF8_;
 function encodeUTF8(str) {
-  let encoder5;
-  return (encodeUTF8_ ?? (encoder5 = new globalThis.TextEncoder, encodeUTF8_ = encoder5.encode.bind(encoder5)))(str);
+  let encoder;
+  return (encodeUTF8_ ?? (encoder = new globalThis.TextEncoder, encodeUTF8_ = encoder.encode.bind(encoder)))(str);
 }
 var decodeUTF8_;
 function decodeUTF8(bytes) {
-  let decoder2;
-  return (decodeUTF8_ ?? (decoder2 = new globalThis.TextDecoder, decodeUTF8_ = decoder2.decode.bind(decoder2)))(bytes);
+  let decoder;
+  return (decodeUTF8_ ?? (decoder = new globalThis.TextDecoder, decodeUTF8_ = decoder.decode.bind(decoder)))(bytes);
 }
 
 // node_modules/openai/internal/decoders/line.mjs
@@ -38463,9 +30402,9 @@ class LineDecoder {
       const length = __classPrivateFieldGet(this, _LineDecoder_end, "f") - __classPrivateFieldGet(this, _LineDecoder_start, "f");
       if (length <= MAX_RETAINED_BUFFER_BYTES || __classPrivateFieldGet(this, _LineDecoder_buffer, "f").length > length * 4) {
         const capacity = length <= MAX_RETAINED_BUFFER_BYTES ? Math.min(Math.max(length * 2, 256), MAX_RETAINED_BUFFER_BYTES) : length * 2;
-        const buffer2 = new Uint8Array(capacity);
-        buffer2.set(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(__classPrivateFieldGet(this, _LineDecoder_start, "f"), __classPrivateFieldGet(this, _LineDecoder_end, "f")));
-        __classPrivateFieldSet(this, _LineDecoder_buffer, buffer2, "f");
+        const buffer = new Uint8Array(capacity);
+        buffer.set(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(__classPrivateFieldGet(this, _LineDecoder_start, "f"), __classPrivateFieldGet(this, _LineDecoder_end, "f")));
+        __classPrivateFieldSet(this, _LineDecoder_buffer, buffer, "f");
         __classPrivateFieldSet(this, _LineDecoder_start, 0, "f");
         __classPrivateFieldSet(this, _LineDecoder_end, length, "f");
         __classPrivateFieldSet(this, _LineDecoder_searchIndex, length, "f");
@@ -38489,9 +30428,9 @@ _LineDecoder_buffer = new WeakMap, _LineDecoder_start = new WeakMap, _LineDecode
       __classPrivateFieldGet(this, _LineDecoder_buffer, "f").copyWithin(0, __classPrivateFieldGet(this, _LineDecoder_start, "f"), __classPrivateFieldGet(this, _LineDecoder_end, "f"));
     } else {
       const capacity = Math.max(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").length * 2, length + chunk.length, 256);
-      const buffer2 = new Uint8Array(capacity);
-      buffer2.set(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(__classPrivateFieldGet(this, _LineDecoder_start, "f"), __classPrivateFieldGet(this, _LineDecoder_end, "f")));
-      __classPrivateFieldSet(this, _LineDecoder_buffer, buffer2, "f");
+      const buffer = new Uint8Array(capacity);
+      buffer.set(__classPrivateFieldGet(this, _LineDecoder_buffer, "f").subarray(__classPrivateFieldGet(this, _LineDecoder_start, "f"), __classPrivateFieldGet(this, _LineDecoder_end, "f")));
+      __classPrivateFieldSet(this, _LineDecoder_buffer, buffer, "f");
     }
     __classPrivateFieldSet(this, _LineDecoder_searchIndex, __classPrivateFieldGet(this, _LineDecoder_searchIndex, "f") - __classPrivateFieldGet(this, _LineDecoder_start, "f"), "f");
     __classPrivateFieldSet(this, _LineDecoder_end, length, "f");
@@ -38503,25 +30442,25 @@ _LineDecoder_buffer = new WeakMap, _LineDecoder_start = new WeakMap, _LineDecode
 LineDecoder.NEWLINE_CHARS = new Set([`
 `, "\r"]);
 LineDecoder.NEWLINE_REGEXP = /\r\n|[\n\r]/g;
-function findNewlineIndex(buffer2, start, end) {
+function findNewlineIndex(buffer, start, end) {
   const newline = 10;
   const carriage = 13;
   for (let i = start;i < end; i++) {
-    if (buffer2[i] === newline) {
+    if (buffer[i] === newline) {
       return { preceding: i, index: i + 1, carriage: false };
     }
-    if (buffer2[i] === carriage) {
+    if (buffer[i] === carriage) {
       return { preceding: i, index: i + 1, carriage: true };
     }
   }
   return null;
 }
-function findDoubleNewlineIndex(buffer2) {
-  for (let i = 0;i < buffer2.length - 1; i++) {
-    const firstEndingLength = lineEndingLength(buffer2, i);
+function findDoubleNewlineIndex(buffer) {
+  for (let i = 0;i < buffer.length - 1; i++) {
+    const firstEndingLength = lineEndingLength(buffer, i);
     if (firstEndingLength > 0) {
       const secondEndingIndex = i + firstEndingLength;
-      const secondEndingLength = lineEndingLength(buffer2, secondEndingIndex);
+      const secondEndingLength = lineEndingLength(buffer, secondEndingIndex);
       if (secondEndingLength > 0) {
         return secondEndingIndex + secondEndingLength;
       }
@@ -38529,14 +30468,14 @@ function findDoubleNewlineIndex(buffer2) {
   }
   return -1;
 }
-function lineEndingLength(buffer2, index2) {
+function lineEndingLength(buffer, index) {
   const newline = 10;
   const carriage = 13;
-  if (buffer2[index2] === newline) {
+  if (buffer[index] === newline) {
     return 1;
   }
-  if (buffer2[index2] === carriage) {
-    return buffer2[index2 + 1] === newline ? 2 : 1;
+  if (buffer[index] === carriage) {
+    return buffer[index + 1] === newline ? 2 : 1;
   }
   return 0;
 }
@@ -38756,7 +30695,7 @@ class Stream {
         }
         done = true;
       } catch (e) {
-        if (receivedCompletionSentinel || isAbortError2(e) || controller.signal.aborted && e === controller.signal.reason) {
+        if (receivedCompletionSentinel || isAbortError(e) || controller.signal.aborted && e === controller.signal.reason) {
           return;
         }
         throw e;
@@ -38846,7 +30785,7 @@ class Stream {
         }
         done = true;
       } catch (e) {
-        if (controller.signal.aborted || isAbortError2(e)) {
+        if (controller.signal.aborted || isAbortError(e)) {
           return;
         }
         throw e;
@@ -38957,7 +30896,7 @@ function createAbortableSSESource(body, signal) {
         }
         return { value: result.value, done: false };
       } catch (error61) {
-        if (signal.aborted && (isAbortError2(error61) || error61 === signal.reason)) {
+        if (signal.aborted && (isAbortError(error61) || error61 === signal.reason)) {
           return ended;
         }
         throw error61;
@@ -39064,7 +31003,7 @@ async function* _iterSSEMessages(response, controller) {
     }
   } catch (error61) {
     failed = true;
-    if (!signal.aborted || !isAbortError2(error61) && error61 !== signal.reason) {
+    if (!signal.aborted || !isAbortError(error61) && error61 !== signal.reason) {
       throw error61;
     }
   } finally {
@@ -39161,9 +31100,9 @@ class SSEDecoder {
   }
 }
 function partition(str, delimiter) {
-  const index2 = str.indexOf(delimiter);
-  if (index2 !== -1) {
-    return [str.slice(0, index2), delimiter, str.slice(index2 + delimiter.length)];
+  const index = str.indexOf(delimiter);
+  if (index !== -1) {
+    return [str.slice(0, index), delimiter, str.slice(index + delimiter.length)];
   }
   return [str, "", ""];
 }
@@ -39215,7 +31154,7 @@ async function defaultParseResponse(client, props) {
   return body;
 }
 function asAbortError(error61, signal) {
-  if (!signal.aborted || error61 !== signal.reason || isAbortError2(error61)) {
+  if (!signal.aborted || error61 !== signal.reason || isAbortError(error61)) {
     return error61;
   }
   const message = "This operation was aborted";
@@ -39437,7 +31376,7 @@ var hex_table = /* @__PURE__ */ (() => {
   return array2;
 })();
 var limit = 1024;
-var encode6 = (str, _defaultEncoder, charset, _kind, format2) => {
+var encode3 = (str, _defaultEncoder, charset, _kind, format) => {
   if (str.length === 0) {
     return str;
   }
@@ -39460,7 +31399,7 @@ var encode6 = (str, _defaultEncoder, charset, _kind, format2) => {
     const arr = [];
     for (let i = 0;i < segment.length; ++i) {
       let c = segment.charCodeAt(i);
-      if (c === 45 || c === 46 || c === 95 || c === 126 || c >= 48 && c <= 57 || c >= 65 && c <= 90 || c >= 97 && c <= 122 || format2 === RFC1738 && (c === 40 || c === 41)) {
+      if (c === 45 || c === 46 || c === 95 || c === 126 || c >= 48 && c <= 57 || c >= 65 && c <= 90 || c >= 97 && c <= 122 || format === RFC1738 && (c === 40 || c === 41)) {
         arr[arr.length] = segment.charAt(i);
         continue;
       }
@@ -39529,7 +31468,7 @@ var defaults = {
   delimiter: "&",
   encode: true,
   encodeDotInKeys: false,
-  encoder: encode6,
+  encoder: encode3,
   encodeValuesOnly: false,
   format: default_format,
   formatter: default_formatter,
@@ -39544,23 +31483,23 @@ function is_non_nullish_primitive(v) {
   return typeof v === "string" || typeof v === "number" || typeof v === "boolean" || typeof v === "symbol" || typeof v === "bigint";
 }
 var sentinel = {};
-function inner_stringify(object2, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder5, filter, sort, allowDots, serializeDate, format2, formatter, encodeValuesOnly, charset, sideChannel) {
+function inner_stringify(object2, prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, sideChannel) {
   let obj = object2;
   let tmp_sc = sideChannel;
-  let step2 = 0;
+  let step = 0;
   let find_flag = false;
   while ((tmp_sc = tmp_sc.get(sentinel)) !== undefined && !find_flag) {
     const pos = tmp_sc.get(object2);
-    step2 += 1;
+    step += 1;
     if (pos !== undefined) {
-      if (pos === step2) {
+      if (pos === step) {
         throw new RangeError("Cyclic object value");
       } else {
         find_flag = true;
       }
     }
     if (tmp_sc.get(sentinel) === undefined) {
-      step2 = 0;
+      step = 0;
     }
   }
   if (typeof filter === "function") {
@@ -39577,15 +31516,15 @@ function inner_stringify(object2, prefix, generateArrayPrefix, commaRoundTrip, a
   }
   if (obj === null) {
     if (strictNullHandling) {
-      return encoder5 && !encodeValuesOnly ? encoder5(prefix, defaults.encoder, charset, "key", format2) : prefix;
+      return encoder && !encodeValuesOnly ? encoder(prefix, defaults.encoder, charset, "key", format) : prefix;
     }
     obj = "";
   }
   if (is_non_nullish_primitive(obj) || is_buffer(obj)) {
-    if (encoder5) {
-      const key_value = encodeValuesOnly ? prefix : encoder5(prefix, defaults.encoder, charset, "key", format2);
+    if (encoder) {
+      const key_value = encodeValuesOnly ? prefix : encoder(prefix, defaults.encoder, charset, "key", format);
       return [
-        formatter?.(key_value) + "=" + formatter?.(encoder5(obj, defaults.encoder, charset, "value", format2))
+        formatter?.(key_value) + "=" + formatter?.(encoder(obj, defaults.encoder, charset, "value", format))
       ];
     }
     return [formatter?.(prefix) + "=" + formatter?.(String(obj))];
@@ -39596,8 +31535,8 @@ function inner_stringify(object2, prefix, generateArrayPrefix, commaRoundTrip, a
   }
   let obj_keys;
   if (generateArrayPrefix === "comma" && isArray(obj)) {
-    if (encodeValuesOnly && encoder5) {
-      obj = maybe_map(obj, encoder5);
+    if (encodeValuesOnly && encoder) {
+      obj = maybe_map(obj, encoder);
     }
     obj_keys = [{ value: obj.length > 0 ? obj.join(",") || null : undefined }];
   } else if (isArray(filter)) {
@@ -39626,9 +31565,9 @@ function inner_stringify(object2, prefix, generateArrayPrefix, commaRoundTrip, a
     } else {
       key_prefix = adjusted_prefix + (allowDots ? "." + encoded_key : "[" + encoded_key + "]");
     }
-    sideChannel.set(object2, step2);
+    sideChannel.set(object2, step);
     const valueSideChannel = new WeakMap([[sentinel, sideChannel]]);
-    push_to_array(values, inner_stringify(value, key_prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, generateArrayPrefix === "comma" && encodeValuesOnly && isArray(obj) ? null : encoder5, filter, sort, allowDots, serializeDate, format2, formatter, encodeValuesOnly, charset, valueSideChannel));
+    push_to_array(values, inner_stringify(value, key_prefix, generateArrayPrefix, commaRoundTrip, allowEmptyArrays, strictNullHandling, skipNulls, encodeDotInKeys, generateArrayPrefix === "comma" && encodeValuesOnly && isArray(obj) ? null : encoder, filter, sort, allowDots, serializeDate, format, formatter, encodeValuesOnly, charset, valueSideChannel));
   }
   return values;
 }
@@ -39646,14 +31585,14 @@ function normalize_stringify_options(opts = defaults) {
   if (opts.charset !== undefined && opts.charset !== "utf-8" && opts.charset !== "iso-8859-1") {
     throw new TypeError("The charset option must be either utf-8, iso-8859-1, or undefined");
   }
-  let format2 = default_format;
+  let format = default_format;
   if (opts.format !== undefined) {
     if (!has(formatters, opts.format)) {
       throw new TypeError("Unknown format option provided.");
     }
-    format2 = opts.format;
+    format = opts.format;
   }
-  const formatter = formatters[format2];
+  const formatter = formatters[format];
   let filter = defaults.filter;
   if (typeof opts.filter === "function" || isArray(opts.filter)) {
     filter = opts.filter;
@@ -39689,7 +31628,7 @@ function normalize_stringify_options(opts = defaults) {
     encoder: typeof opts.encoder === "function" ? opts.encoder : defaults.encoder,
     encodeValuesOnly: typeof opts.encodeValuesOnly === "boolean" ? opts.encodeValuesOnly : defaults.encodeValuesOnly,
     filter,
-    format: format2,
+    format,
     formatter,
     serializeDate: typeof opts.serializeDate === "function" ? opts.serializeDate : defaults.serializeDate,
     skipNulls: typeof opts.skipNulls === "boolean" ? opts.skipNulls : defaults.skipNulls,
@@ -39697,7 +31636,7 @@ function normalize_stringify_options(opts = defaults) {
     strictNullHandling: typeof opts.strictNullHandling === "boolean" ? opts.strictNullHandling : defaults.strictNullHandling
   };
 }
-function stringify5(object2, opts = {}) {
+function stringify(object2, opts = {}) {
   let obj = object2;
   const options = normalize_stringify_options(opts);
   let obj_keys;
@@ -39738,7 +31677,7 @@ function stringify5(object2, opts = {}) {
 
 // node_modules/openai/internal/utils/query.mjs
 function stringifyQuery(query) {
-  return stringify5(query, { arrayFormat: "brackets" });
+  return stringify(query, { arrayFormat: "brackets" });
 }
 
 // node_modules/openai/internal/data-residency.mjs
@@ -40859,9 +32798,9 @@ _a3 = X509WorkloadIdentityAuth, _X509WorkloadIdentityAuth_identityProviderId = n
   if (attempt.controller.signal.aborted && attempt.generation !== __classPrivateFieldGet(this, _X509WorkloadIdentityAuth_tokenGeneration, "f")) {
     return await this.getToken(options, context);
   }
-  const fallback2 = __classPrivateFieldGet(this, _X509WorkloadIdentityAuth_instances, "m", _X509WorkloadIdentityAuth_fallbackToken).call(this, error61, cached2, scope);
-  if (fallback2 !== undefined) {
-    return fallback2;
+  const fallback = __classPrivateFieldGet(this, _X509WorkloadIdentityAuth_instances, "m", _X509WorkloadIdentityAuth_fallbackToken).call(this, error61, cached2, scope);
+  if (fallback !== undefined) {
+    return fallback;
   }
   if (error61 && typeof error61 === "object" && !(error61 instanceof OAuthError)) {
     const oauth = findX509OAuthError2(error61);
@@ -41183,9 +33122,9 @@ var createForm = async (body, fetch2, options = {}) => {
   if (!await supportsFormData(fetch2)) {
     throw new TypeError("The provided fetch function does not support file uploads with the current global FormData class.");
   }
-  const form2 = new FormData;
-  await Promise.all(Object.entries(body || {}).map(([key, value]) => addFormValue(form2, key, value, options)));
-  return form2;
+  const form = new FormData;
+  await Promise.all(Object.entries(body || {}).map(([key, value]) => addFormValue(form, key, value, options)));
+  return form;
 };
 var isBlob = (value) => value instanceof Blob;
 var isReadableStream = (value) => typeof value === "object" && value !== null && ("getReader" in value) && typeof value.getReader === "function";
@@ -41322,8 +33261,8 @@ function validateStreamingFileType(type) {
   if (typeof type !== "string") {
     throw new TypeError("Streaming upload content type must be a string");
   }
-  for (let index2 = 0;index2 < type.length; index2 += 1) {
-    const character = type.codePointAt(index2) ?? 0;
+  for (let index = 0;index < type.length; index += 1) {
+    const character = type.codePointAt(index) ?? 0;
     if (character <= 31 || character === 127) {
       throw new TypeError("Streaming upload content type must not contain control characters");
     }
@@ -41369,7 +33308,7 @@ function escapeHeaderValue(value) {
     return codePoint <= 31 || codePoint === 127 || character === '"' || character === "\\" ? encodeURIComponent(character) : character;
   }).join("");
 }
-var addFormValue = async (form2, key, value, options) => {
+var addFormValue = async (form, key, value, options) => {
   if (value === undefined) {
     return;
   }
@@ -41377,18 +33316,18 @@ var addFormValue = async (form2, key, value, options) => {
     throw new TypeError(`Received null for "${key}"; to pass null in FormData, you must use the string 'null'`);
   }
   if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    form2.append(key, String(value));
+    form.append(key, String(value));
   } else if (value instanceof Response) {
     const blob = await value.blob();
-    form2.append(key, makeFile([blob], getName(value, { stripFilename: options.stripFilenames }), { type: blob.type }));
+    form.append(key, makeFile([blob], getName(value, { stripFilename: options.stripFilenames }), { type: blob.type }));
   } else if (isAsyncIterable(value)) {
-    form2.append(key, makeFile([await new Response(ReadableStreamFrom(value)).blob()], getName(value, { stripFilename: options.stripFilenames })));
+    form.append(key, makeFile([await new Response(ReadableStreamFrom(value)).blob()], getName(value, { stripFilename: options.stripFilenames })));
   } else if (isBlob(value)) {
     const filename = getName(value, { stripFilename: options.stripFilenames });
     if (filename === undefined) {
-      form2.append(key, value);
+      form.append(key, value);
     } else {
-      form2.append(key, value, filename);
+      form.append(key, value, filename);
     }
   } else if (Array.isArray(value)) {
     const entries = await Promise.all(value.map(async (entry) => {
@@ -41401,11 +33340,11 @@ var addFormValue = async (form2, key, value, options) => {
         continue;
       }
       for (const [entryKey, entryValue] of entryForm.entries()) {
-        form2.append(entryKey, entryValue);
+        form.append(entryKey, entryValue);
       }
     }
   } else if (typeof value === "object") {
-    await Promise.all(Object.entries(value).map(([name, prop]) => addFormValue(form2, `${key}[${name}]`, prop, options)));
+    await Promise.all(Object.entries(value).map(([name, prop]) => addFormValue(form, `${key}[${name}]`, prop, options)));
   } else {
     throw new TypeError(`Invalid value given to form, expected a string, number, boolean, object, Array, File or Blob but got ${value} instead`);
   }
@@ -41491,15 +33430,15 @@ var createPathTagFunction = (pathEncoder = encodeURIPath) => function path(stati
   let postPath = false;
   const invalidSegments = [];
   let path2 = "";
-  for (let index2 = 0;index2 < statics.length; index2 += 1) {
-    if (index2 in statics) {
-      const currentValue = statics[index2];
+  for (let index = 0;index < statics.length; index += 1) {
+    if (index in statics) {
+      const currentValue = statics[index];
       if (/[?#]/.test(currentValue)) {
         postPath = true;
       }
-      const value = params[index2];
+      const value = params[index];
       let encoded = (postPath ? encodeURIComponent : pathEncoder)("" + value);
-      if (index2 !== params.length && (value == null || typeof value === "object" && value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
+      if (index !== params.length && (value == null || typeof value === "object" && value.toString === Object.getPrototypeOf(Object.getPrototypeOf(value.hasOwnProperty ?? EMPTY) ?? EMPTY)?.toString)) {
         encoded = value + "";
         invalidSegments.push({
           start: path2.length + currentValue.length,
@@ -41507,7 +33446,7 @@ var createPathTagFunction = (pathEncoder = encodeURIPath) => function path(stati
           error: `Value of type ${Object.prototype.toString.call(value).slice(8, -1)} is not a valid path parameter`
         });
       }
-      path2 += currentValue + (index2 === params.length ? "" : encoded);
+      path2 += currentValue + (index === params.length ? "" : encoded);
     }
   }
   const pathOnly = path2.split(/[?#]/, 1)[0];
@@ -41553,15 +33492,15 @@ function isChatCompletionFunctionTool(tool) {
 function isAutoParsableResponseFormat(response_format) {
   return response_format?.["$brand"] === "auto-parseable-response-format";
 }
-function isParseableResponseFormat(format2) {
-  return isAutoParsableResponseFormat(format2) || format2?.type === "json_schema";
+function isParseableResponseFormat(format) {
+  return isAutoParsableResponseFormat(format) || format?.type === "json_schema";
 }
-function parseResponseFormatContent(format2, content) {
-  if (!isParseableResponseFormat(format2)) {
+function parseResponseFormatContent(format, content) {
+  if (!isParseableResponseFormat(format)) {
     return null;
   }
-  if (typeof format2 === "object" && format2 !== null && "$parseRaw" in format2 && typeof format2.$parseRaw === "function") {
-    return format2.$parseRaw(content);
+  if (typeof format === "object" && format !== null && "$parseRaw" in format && typeof format.$parseRaw === "function") {
+    return format.$parseRaw(content);
   }
   try {
     return JSON.parse(content);
@@ -41730,7 +33669,7 @@ var trustedIntrinsicPrototypes = new Set([
   InternalServerError.prototype,
   InvalidWebhookSignatureError.prototype,
   LengthFinishReasonError.prototype,
-  NotFoundError2.prototype,
+  NotFoundError.prototype,
   OAuthError.prototype,
   PermissionDeniedError.prototype,
   RateLimitError.prototype,
@@ -42042,18 +33981,18 @@ function getRetainedStorageBrand(current) {
 }
 function estimateRetainedBufferBytes(current, visit2, depth) {
   if (ArrayBuffer.isView(current)) {
-    let buffer2;
+    let buffer;
     let kind2 = "typed-array";
     try {
-      buffer2 = typedArrayBufferGetter?.call(current);
+      buffer = typedArrayBufferGetter?.call(current);
     } catch {
       kind2 = "data-view";
-      buffer2 = dataViewBufferGetter?.call(current);
+      buffer = dataViewBufferGetter?.call(current);
     }
-    if (typeof buffer2 !== "object" || buffer2 === null) {
+    if (typeof buffer !== "object" || buffer === null) {
       return { bytes: Number.POSITIVE_INFINITY, kind: kind2 };
     }
-    visit2(buffer2, depth + 1);
+    visit2(buffer, depth + 1);
     return { bytes: 0, kind: kind2 };
   }
   const brand = getRetainedStorageBrand(current);
@@ -42144,8 +34083,8 @@ function getInspectableEventKeys(current, kind, availableBytes) {
     if (typeof key !== "string") {
       return true;
     }
-    const index2 = Number(key);
-    return !Number.isInteger(index2) || index2 < 0 || index2 >= length || String(index2) !== key;
+    const index = Number(key);
+    return !Number.isInteger(index) || index < 0 || index >= length || String(index) !== key;
   });
 }
 function visitInspectableEventProperties(current, kind, depth, availableBytes, charge, visit2) {
@@ -42695,9 +34634,9 @@ class EventStream {
       __classPrivateFieldGet(this, _EventStream_instances, "m", _EventStream_removeEmittedListener).call(this, event, emittedRegistration.registration);
       return this;
     }
-    const index2 = listeners.findIndex((l) => !l.removed && l.listener === listener);
-    if (index2 !== -1) {
-      listeners.splice(index2, 1);
+    const index = listeners.findIndex((l) => !l.removed && l.listener === listener);
+    if (index !== -1) {
+      listeners.splice(index, 1);
     }
     return this;
   }
@@ -42829,10 +34768,10 @@ class EventStream {
         }
         if (typeof value === "object" && value !== null && sdkOwnedBufferedEventArguments.has(value)) {
           const argumentsTuple = value;
-          for (let index2 = 0;index2 < argumentsTuple.length; index2 += 1) {
-            const argument = argumentsTuple[index2];
+          for (let index = 0;index < argumentsTuple.length; index += 1) {
+            const argument = argumentsTuple[index];
             if (typeof argument === "string") {
-              argumentsTuple[index2] = bufferedJSONParse(bufferedJSONStringify(argument));
+              argumentsTuple[index] = bufferedJSONParse(bufferedJSONStringify(argument));
             }
           }
         }
@@ -43484,70 +35423,70 @@ function parseJSON(jsonString, allowPartial = Allow.ALL) {
 }
 var _parseJSON = (jsonString, allow) => {
   const length = jsonString.length;
-  let index2 = 0;
+  let index = 0;
   const markPartialJSON = (msg) => {
-    throw new PartialJSON(`${msg} at position ${index2}`);
+    throw new PartialJSON(`${msg} at position ${index}`);
   };
   const throwMalformedError = (msg) => {
-    throw new MalformedJSON(`${msg} at position ${index2}`);
+    throw new MalformedJSON(`${msg} at position ${index}`);
   };
   const parseAny = () => {
     skipBlank();
-    if (index2 >= length) {
+    if (index >= length) {
       markPartialJSON("Unexpected end of input");
     }
-    if (jsonString[index2] === '"') {
+    if (jsonString[index] === '"') {
       return parseStr();
     }
-    if (jsonString[index2] === "{") {
+    if (jsonString[index] === "{") {
       return parseObj();
     }
-    if (jsonString[index2] === "[") {
+    if (jsonString[index] === "[") {
       return parseArr();
     }
-    if (jsonString.substring(index2, index2 + 4) === "null" || Allow.NULL & allow && length - index2 < 4 && "null".startsWith(jsonString.substring(index2))) {
-      index2 += 4;
+    if (jsonString.substring(index, index + 4) === "null" || Allow.NULL & allow && length - index < 4 && "null".startsWith(jsonString.substring(index))) {
+      index += 4;
       return null;
     }
-    if (jsonString.substring(index2, index2 + 4) === "true" || Allow.BOOL & allow && length - index2 < 4 && "true".startsWith(jsonString.substring(index2))) {
-      index2 += 4;
+    if (jsonString.substring(index, index + 4) === "true" || Allow.BOOL & allow && length - index < 4 && "true".startsWith(jsonString.substring(index))) {
+      index += 4;
       return true;
     }
-    if (jsonString.substring(index2, index2 + 5) === "false" || Allow.BOOL & allow && length - index2 < 5 && "false".startsWith(jsonString.substring(index2))) {
-      index2 += 5;
+    if (jsonString.substring(index, index + 5) === "false" || Allow.BOOL & allow && length - index < 5 && "false".startsWith(jsonString.substring(index))) {
+      index += 5;
       return false;
     }
-    if (jsonString.substring(index2, index2 + 8) === "Infinity" || Allow.INFINITY & allow && length - index2 < 8 && "Infinity".startsWith(jsonString.substring(index2))) {
-      index2 += 8;
+    if (jsonString.substring(index, index + 8) === "Infinity" || Allow.INFINITY & allow && length - index < 8 && "Infinity".startsWith(jsonString.substring(index))) {
+      index += 8;
       return Infinity;
     }
-    if (jsonString.substring(index2, index2 + 9) === "-Infinity" || Allow.MINUS_INFINITY & allow && length - index2 > 1 && length - index2 < 9 && "-Infinity".startsWith(jsonString.substring(index2))) {
-      index2 += 9;
+    if (jsonString.substring(index, index + 9) === "-Infinity" || Allow.MINUS_INFINITY & allow && length - index > 1 && length - index < 9 && "-Infinity".startsWith(jsonString.substring(index))) {
+      index += 9;
       return -Infinity;
     }
-    if (jsonString.substring(index2, index2 + 3) === "NaN" || Allow.NAN & allow && length - index2 < 3 && "NaN".startsWith(jsonString.substring(index2))) {
-      index2 += 3;
+    if (jsonString.substring(index, index + 3) === "NaN" || Allow.NAN & allow && length - index < 3 && "NaN".startsWith(jsonString.substring(index))) {
+      index += 3;
       return Number.NaN;
     }
     return parseNum();
   };
   const parseStr = () => {
-    const start = index2;
+    const start = index;
     let escape2 = false;
-    index2++;
-    while (index2 < length && (jsonString[index2] !== '"' || escape2 && jsonString[index2 - 1] === "\\")) {
-      escape2 = jsonString[index2] === "\\" ? !escape2 : false;
-      index2++;
+    index++;
+    while (index < length && (jsonString[index] !== '"' || escape2 && jsonString[index - 1] === "\\")) {
+      escape2 = jsonString[index] === "\\" ? !escape2 : false;
+      index++;
     }
-    if (jsonString.charAt(index2) === '"') {
+    if (jsonString.charAt(index) === '"') {
       try {
-        return JSON.parse(jsonString.substring(start, ++index2 - Number(escape2)));
+        return JSON.parse(jsonString.substring(start, ++index - Number(escape2)));
       } catch (e) {
         throwMalformedError(String(e));
       }
     } else if (Allow.STR & allow) {
       try {
-        return JSON.parse(jsonString.substring(start, index2 - Number(escape2)) + '"');
+        return JSON.parse(jsonString.substring(start, index - Number(escape2)) + '"');
       } catch {
         return JSON.parse(jsonString.substring(start, jsonString.lastIndexOf("\\")) + '"');
       }
@@ -43555,18 +35494,18 @@ var _parseJSON = (jsonString, allow) => {
     markPartialJSON("Unterminated string literal");
   };
   const parseObj = () => {
-    index2++;
+    index++;
     skipBlank();
     const obj = {};
     try {
-      while (jsonString[index2] !== "}") {
+      while (jsonString[index] !== "}") {
         skipBlank();
-        if (index2 >= length && Allow.OBJ & allow) {
+        if (index >= length && Allow.OBJ & allow) {
           return obj;
         }
         const key = parseStr();
         skipBlank();
-        index2++;
+        index++;
         try {
           const value = parseAny();
           Object.defineProperty(obj, key, { value, writable: true, enumerable: true, configurable: true });
@@ -43577,8 +35516,8 @@ var _parseJSON = (jsonString, allow) => {
           throw e;
         }
         skipBlank();
-        if (jsonString[index2] === ",") {
-          index2++;
+        if (jsonString[index] === ",") {
+          index++;
         }
       }
     } catch {
@@ -43587,18 +35526,18 @@ var _parseJSON = (jsonString, allow) => {
       }
       markPartialJSON("Expected '}' at end of object");
     }
-    index2++;
+    index++;
     return obj;
   };
   const parseArr = () => {
-    index2++;
+    index++;
     const arr = [];
     try {
-      while (jsonString[index2] !== "]") {
+      while (jsonString[index] !== "]") {
         arr.push(parseAny());
         skipBlank();
-        if (jsonString[index2] === ",") {
-          index2++;
+        if (jsonString[index] === ",") {
+          index++;
         }
       }
     } catch {
@@ -43607,11 +35546,11 @@ var _parseJSON = (jsonString, allow) => {
       }
       markPartialJSON("Expected ']' at end of array");
     }
-    index2++;
+    index++;
     return arr;
   };
   const parseNum = () => {
-    if (index2 === 0) {
+    if (index === 0) {
       if (jsonString === "-" && Allow.NUM & allow) {
         markPartialJSON("Not sure what '-' is");
       }
@@ -43629,20 +35568,20 @@ var _parseJSON = (jsonString, allow) => {
         throwMalformedError(String(e));
       }
     }
-    const start = index2;
-    if (jsonString[index2] === "-") {
-      index2++;
+    const start = index;
+    if (jsonString[index] === "-") {
+      index++;
     }
-    while (jsonString[index2] && !",]}".includes(jsonString[index2])) {
-      index2++;
+    while (jsonString[index] && !",]}".includes(jsonString[index])) {
+      index++;
     }
-    if (index2 === length && !(Allow.NUM & allow)) {
+    if (index === length && !(Allow.NUM & allow)) {
       markPartialJSON("Unterminated number literal");
     }
     try {
-      return JSON.parse(jsonString.substring(start, index2));
+      return JSON.parse(jsonString.substring(start, index));
     } catch {
-      if (jsonString.substring(start, index2) === "-" && Allow.NUM & allow) {
+      if (jsonString.substring(start, index) === "-" && Allow.NUM & allow) {
         markPartialJSON("Not sure what '-' is");
       }
       try {
@@ -43653,9 +35592,9 @@ var _parseJSON = (jsonString, allow) => {
     }
   };
   const skipBlank = () => {
-    while (index2 < length && ` 
-\r	`.includes(jsonString[index2])) {
-      index2++;
+    while (index < length && ` 
+\r	`.includes(jsonString[index])) {
+      index++;
     }
   };
   return parseAny();
@@ -43866,8 +35805,8 @@ function captureSnapshotArray(snapshot, property, maximum, kind) {
   }
   return descriptor.value;
 }
-function captureSnapshotArrayItem(array2, index2) {
-  const descriptor = Object.getOwnPropertyDescriptor(array2, index2);
+function captureSnapshotArrayItem(array2, index) {
+  const descriptor = Object.getOwnPropertyDescriptor(array2, index);
   if (!descriptor) {
     return;
   }
@@ -43884,15 +35823,15 @@ function mapCapturedSnapshotArray(array2, maximum, kind, map2) {
   }
   const mapped = [];
   mapped.length = length;
-  for (let index2 = 0;index2 < length; index2 += 1) {
-    const item = Object.getOwnPropertyDescriptor(array2, index2);
+  for (let index = 0;index < length; index += 1) {
+    const item = Object.getOwnPropertyDescriptor(array2, index);
     if (!item) {
       continue;
     }
     if (!("value" in item)) {
       throw new OpenAIError("Chat completion stream contains an unsafe structured JSON snapshot");
     }
-    mapped[index2] = map2(item.value, index2);
+    mapped[index] = map2(item.value, index);
   }
   return mapped;
 }
@@ -43960,10 +35899,10 @@ function snapshotChatCompletionParserParams(params) {
     const lengthDescriptor = Object.getOwnPropertyDescriptor(params.tools, "length");
     const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined;
     const toolCount = typeof length === "number" && Number.isSafeInteger(length) && length >= 0 ? Math.min(length, MAX_STREAM_TOOL_CALLS) : 0;
-    for (let index2 = 0;index2 < toolCount; index2 += 1) {
-      const item = Object.getOwnPropertyDescriptor(params.tools, String(index2));
+    for (let index = 0;index < toolCount; index += 1) {
+      const item = Object.getOwnPropertyDescriptor(params.tools, String(index));
       if (!item || !("value" in item)) {
-        stableTools.length = index2 + 1;
+        stableTools.length = index + 1;
         continue;
       }
       const tool = item.value;
@@ -43982,7 +35921,7 @@ function snapshotChatCompletionParserParams(params) {
           value: cloneParserConfigObject(stableTool.function, ["name", "strict"])
         };
       }
-      stableTools[index2] = Object.create(Object.getPrototypeOf(tool), descriptors);
+      stableTools[index] = Object.create(Object.getPrototypeOf(tool), descriptors);
     }
     snapshot.tools = stableTools;
   }
@@ -44061,8 +36000,8 @@ function canonicalSerializedParserSchema(value, budget) {
           return UNSAFE_SERIALIZED_PARSER_VALUE;
         }
         const items = [];
-        for (let index2 = 0;index2 < length; index2 += 1) {
-          const key = String(index2);
+        for (let index = 0;index < length; index += 1) {
+          const key = String(index);
           const descriptor = Object.getOwnPropertyDescriptor(current, key);
           if (!descriptor) {
             if (Object.getOwnPropertyDescriptor(Array.prototype, key) || Object.getOwnPropertyDescriptor(Object.prototype, key)) {
@@ -44218,9 +36157,9 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
   const originalToolOwners = new WeakMap;
   const originalSchemaSignatures = new WeakMap;
   if (body.tools) {
-    for (let index2 = 0;index2 < body.tools.length && index2 < MAX_STREAM_TOOL_CALLS; index2 += 1) {
-      const owner = ownSerializedParserObject(body.tools, String(index2));
-      const source = initial.tools?.[index2];
+    for (let index = 0;index < body.tools.length && index < MAX_STREAM_TOOL_CALLS; index += 1) {
+      const owner = ownSerializedParserObject(body.tools, String(index));
+      const source = initial.tools?.[index];
       if (owner && source) {
         originalToolOwners.set(owner, source);
         const originalFunction = ownSerializedParserObject(source, "function");
@@ -44233,7 +36172,7 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
   if (initial.response_format) {
     rememberSerializedParserSchema(originalSchemaSignatures, initial.response_format, initial.response_format, "json_schema");
   }
-  let root2;
+  let root;
   let tools;
   let responseFormat;
   let responseFrame;
@@ -44243,8 +36182,8 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
   let functionFrames = new WeakMap;
   return observeJSONRequestBody(body, {
     value(holder, key, value) {
-      if (!root2 && key === "" && typeof value === "object" && value !== null) {
-        root2 = value;
+      if (!root && key === "" && typeof value === "object" && value !== null) {
+        root = value;
         tools = undefined;
         responseFormat = undefined;
         responseFrame = undefined;
@@ -44254,7 +36193,7 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
         functionFrames = new WeakMap;
         return;
       }
-      if (holder === root2 && key === "response_format") {
+      if (holder === root && key === "response_format") {
         if (typeof value === "object" && value !== null) {
           responseFormat = value;
           const owner = ownSerializedParserObject(holder, key);
@@ -44265,15 +36204,15 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
         }
         return;
       }
-      if (holder === root2 && key === "tools") {
+      if (holder === root && key === "tools") {
         if (Array.isArray(value)) {
           tools = new Proxy(value, {
             get(target, property) {
               const actual = Reflect.get(target, property, target);
               if (typeof property === "string") {
-                const index2 = Number(property);
-                if (Number.isSafeInteger(index2) && index2 >= 0 && index2 < MAX_STREAM_TOOL_CALLS && String(index2) === property) {
-                  actualToolOwners.set(index2, typeof actual === "object" && actual !== null ? actual : undefined);
+                const index = Number(property);
+                if (Number.isSafeInteger(index) && index >= 0 && index < MAX_STREAM_TOOL_CALLS && String(index) === property) {
+                  actualToolOwners.set(index, typeof actual === "object" && actual !== null ? actual : undefined);
                 }
               }
               return actual;
@@ -44284,14 +36223,14 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
         return;
       }
       if (holder === tools) {
-        const index2 = Number(key);
-        if (!Number.isSafeInteger(index2) || index2 < 0 || index2 >= MAX_STREAM_TOOL_CALLS || typeof value !== "object" || value === null) {
+        const index = Number(key);
+        if (!Number.isSafeInteger(index) || index < 0 || index >= MAX_STREAM_TOOL_CALLS || typeof value !== "object" || value === null) {
           return;
         }
-        const owner = actualToolOwners.get(index2);
+        const owner = actualToolOwners.get(index);
         const source = owner ? originalToolOwners.get(owner) : undefined;
         const frame = { source };
-        frames[index2] = frame;
+        frames[index] = frame;
         toolFrames.set(value, frame);
         return;
       }
@@ -44327,16 +36266,16 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
       return;
     },
     complete() {
-      if (!root2) {
+      if (!root) {
         return;
       }
       const snapshot = cloneParserConfigObject(initial);
       if (tools) {
         const serializedTools = [];
-        for (let index2 = 0;index2 < frames.length; index2 += 1) {
-          const frame = frames[index2];
+        for (let index = 0;index < frames.length; index += 1) {
+          const frame = frames[index];
           if (frame) {
-            serializedTools[index2] = snapshotSerializedParserTool(frame);
+            serializedTools[index] = snapshotSerializedParserTool(frame);
           }
         }
         snapshot.tools = serializedTools;
@@ -44349,7 +36288,7 @@ function observeSerializedChatCompletionParserParams(body, initial, update) {
         delete snapshot.response_format;
       }
       update(snapshot);
-      root2 = undefined;
+      root = undefined;
       tools = undefined;
       responseFormat = undefined;
       responseFrame = undefined;
@@ -44379,8 +36318,8 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
     const lengthDescriptor = tools && Object.getOwnPropertyDescriptor(tools, "length");
     const length = lengthDescriptor && "value" in lengthDescriptor ? lengthDescriptor.value : undefined;
     if (tools && typeof length === "number" && Number.isSafeInteger(length) && length >= 0) {
-      for (let index2 = 0;index2 < Math.min(length, MAX_STREAM_TOOL_CALLS); index2 += 1) {
-        const descriptor = Object.getOwnPropertyDescriptor(tools, String(index2));
+      for (let index = 0;index < Math.min(length, MAX_STREAM_TOOL_CALLS); index += 1) {
+        const descriptor = Object.getOwnPropertyDescriptor(tools, String(index));
         if (!descriptor || !("value" in descriptor)) {
           continue;
         }
@@ -44442,8 +36381,8 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
         const message = getChatCompletionReadableStreamMessage(item);
         if (__classPrivateFieldGet(this, _ChatCompletionStream_currentChatCompletionSnapshot, "f")) {
           const toolCalls = __classPrivateFieldGet(this, _ChatCompletionStream_currentChatCompletionSnapshot, "f").choices[0]?.message.tool_calls;
-          for (const [index2, id] of message.tool_call_ids?.entries() ?? []) {
-            const toolCall = toolCalls?.[index2];
+          for (const [index, id] of message.tool_call_ids?.entries() ?? []) {
+            const toolCall = toolCalls?.[index];
             if (toolCall && id) {
               toolCall.id = id;
             }
@@ -44696,8 +36635,8 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
       if (parseableContent && !refusal && typeof content === "string") {
         validateStructuredJSONSnapshot(content, finalJSONBudget, __classPrivateFieldGet(this, _ChatCompletionStream_partialJSONParseBudget, "f"));
       }
-      for (const [index2, identity] of state2?.tool_call_identities ?? []) {
-        const toolCall = toolCalls && captureSnapshotArrayItem(toolCalls, index2);
+      for (const [index, identity] of state2?.tool_call_identities ?? []) {
+        const toolCall = toolCalls && captureSnapshotArrayItem(toolCalls, index);
         if (!toolCall) {
           throw new OpenAIError("Chat completion stream contains a changed tool call identity");
         }
@@ -44789,16 +36728,16 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
     const requestedChoiceCount = __classPrivateFieldGet(this, _ChatCompletionStream_params, "f")?.n;
     const maxChoices = typeof requestedChoiceCount === "number" && Number.isSafeInteger(requestedChoiceCount) && requestedChoiceCount > 0 ? Math.min(requestedChoiceCount, MAX_STREAM_CHOICES) : MAX_STREAM_CHOICES;
     for (const chunkChoice of chunk.choices) {
-      const { delta, finish_reason, index: index2, logprobs = null, ...other } = chunkChoice;
+      const { delta, finish_reason, index, logprobs = null, ...other } = chunkChoice;
       const capturedToolCalls = [];
-      capturedChoiceFrames.set(chunkChoice, Object.freeze({ index: index2, tool_calls: capturedToolCalls }));
-      if (!Number.isSafeInteger(index2) || index2 < 0 || index2 >= maxChoices) {
-        throw new OpenAIError(`Chat completion stream contains an invalid choice index: ${index2}`);
+      capturedChoiceFrames.set(chunkChoice, Object.freeze({ index, tool_calls: capturedToolCalls }));
+      if (!Number.isSafeInteger(index) || index < 0 || index >= maxChoices) {
+        throw new OpenAIError(`Chat completion stream contains an invalid choice index: ${index}`);
       }
-      let choice = snapshot.choices[index2];
+      let choice = snapshot.choices[index];
       if (!choice) {
-        const newChoice = { finish_reason, index: index2, message: {}, logprobs: null, ...other };
-        snapshot.choices[index2] = newChoice;
+        const newChoice = { finish_reason, index, message: {}, logprobs: null, ...other };
+        snapshot.choices[index] = newChoice;
         choice = newChoice;
       }
       if (isParseableResponseFormat(__classPrivateFieldGet(this, _ChatCompletionStream_params, "f")?.response_format) || __classPrivateFieldGet(this, _ChatCompletionStream_hasAutoParseableTool, "f")) {
@@ -44843,14 +36782,14 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
         Object.freeze(capturedToolCalls);
         continue;
       }
-      __classPrivateFieldGet(this, _ChatCompletionStream_audioDoneChoiceIndexes, "f").delete(index2);
+      __classPrivateFieldGet(this, _ChatCompletionStream_audioDoneChoiceIndexes, "f").delete(index);
       const { audio, content, refusal, function_call, role, ...capturedDeltaFields } = delta;
       const { tool_calls: capturedToolCallDelta, ...rest2 } = capturedDeltaFields;
       const tool_calls = hasOwn(capturedDeltaFields, "tool_calls") ? capturedToolCallDelta : delta.tool_calls;
       assertIsEmpty(rest2);
       assignOwnProperties(choice.message, rest2);
       if (audio?.expires_at != null && audio.id == null && audio.data == null && audio.transcript == null && content == null && refusal == null && function_call == null && role == null && tool_calls == null && Object.keys(rest2).length === 0) {
-        __classPrivateFieldGet(this, _ChatCompletionStream_audioDoneChoiceIndexes, "f").add(index2);
+        __classPrivateFieldGet(this, _ChatCompletionStream_audioDoneChoiceIndexes, "f").add(index);
       }
       if (refusal) {
         choice.message.refusal = (choice.message.refusal || "") + refusal;
@@ -44907,15 +36846,15 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
       if (tool_calls) {
         const toolCallSnapshots = (_e = choice.message).tool_calls ?? (_e.tool_calls = []);
         for (const toolCallDelta of tool_calls) {
-          const { index: index3, id, type, function: fn, custom: custom3, ...rest3 } = toolCallDelta;
-          if (!Number.isSafeInteger(index3) || index3 < 0 || index3 >= MAX_STREAM_TOOL_CALLS) {
-            throw new OpenAIError(`Chat completion stream contains an invalid tool call index: ${index3}`);
+          const { index: index2, id, type, function: fn, custom: custom2, ...rest3 } = toolCallDelta;
+          if (!Number.isSafeInteger(index2) || index2 < 0 || index2 >= MAX_STREAM_TOOL_CALLS) {
+            throw new OpenAIError(`Chat completion stream contains an invalid tool call index: ${index2}`);
           }
           let argumentsDelta = "";
-          const tool_call = toolCallSnapshots[index3] ?? (toolCallSnapshots[index3] = {});
+          const tool_call = toolCallSnapshots[index2] ?? (toolCallSnapshots[index2] = {});
           const functionName = fn?.name;
           const eventState = __classPrivateFieldGet(this, _ChatCompletionStream_hasAutoParseableTool, "f") ? __classPrivateFieldGet(this, _ChatCompletionStream_instances, "m", _ChatCompletionStream_getChoiceEventState).call(this, choice) : undefined;
-          let boundIdentity = eventState?.tool_call_identities.get(index3);
+          let boundIdentity = eventState?.tool_call_identities.get(index2);
           if (boundIdentity) {
             assertBoundToolCallIdentity(tool_call, boundIdentity);
             if (type !== undefined && type !== boundIdentity.type || functionName !== undefined && functionName !== boundIdentity.name) {
@@ -44929,13 +36868,13 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
           if (type) {
             tool_call.type = type;
           }
-          if (custom3) {
-            const customSnapshot = tool_call.custom ?? (tool_call.custom = { name: custom3.name ?? "", input: "" });
-            if (custom3.name) {
-              customSnapshot.name = custom3.name;
+          if (custom2) {
+            const customSnapshot = tool_call.custom ?? (tool_call.custom = { name: custom2.name ?? "", input: "" });
+            if (custom2.name) {
+              customSnapshot.name = custom2.name;
             }
-            if (custom3.input) {
-              customSnapshot.input += custom3.input;
+            if (custom2.input) {
+              customSnapshot.input += custom2.input;
             }
           }
           if (fn) {
@@ -44954,14 +36893,14 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
                     function: { name: identity.name }
                   })
                 };
-                eventState.tool_call_identities.set(index3, boundIdentity);
+                eventState.tool_call_identities.set(index2, boundIdentity);
                 if (!boundIdentity.parseable) {
-                  const provisionalState = eventState.tool_call_parse_states.get(index3);
+                  const provisionalState = eventState.tool_call_parse_states.get(index2);
                   if (provisionalState) {
                     __classPrivateFieldGet(this, _ChatCompletionStream_partialJSONParseBudget, "f").bytes -= provisionalState.bytes;
                     __classPrivateFieldGet(this, _ChatCompletionStream_partialJSONParseBudget, "f").fragments -= provisionalState.fragments;
                     __classPrivateFieldGet(this, _ChatCompletionStream_partialJSONParseBudget, "f").work -= provisionalState.work;
-                    eventState.tool_call_parse_states.delete(index3);
+                    eventState.tool_call_parse_states.delete(index2);
                   }
                 }
               }
@@ -44970,10 +36909,10 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
             if (argumentFragment != null) {
               argumentsDelta = argumentFragment;
               if (eventState && boundIdentity?.parseable !== false) {
-                let parseState = eventState.tool_call_parse_states.get(index3);
+                let parseState = eventState.tool_call_parse_states.get(index2);
                 if (!parseState) {
                   parseState = createPartialJSONParseState();
-                  eventState.tool_call_parse_states.set(index3, parseState);
+                  eventState.tool_call_parse_states.set(index2, parseState);
                 }
                 const shouldParse = recordPartialJSONFragment(parseState, __classPrivateFieldGet(this, _ChatCompletionStream_partialJSONParseBudget, "f"), argumentFragment);
                 const previousArguments = captureStructuredJSONSnapshot(functionSnapshot, "arguments");
@@ -44992,7 +36931,7 @@ class ChatCompletionStream extends AbstractChatCompletionRunner {
               }
             }
           }
-          capturedToolCalls.push(Object.freeze({ index: index3, arguments_delta: argumentsDelta }));
+          capturedToolCalls.push(Object.freeze({ index: index2, arguments_delta: argumentsDelta }));
         }
       }
       Object.freeze(capturedToolCalls);
@@ -45025,7 +36964,7 @@ function finalizeChatCompletion(snapshot, params, audioDoneChoiceIndexes, valida
           return property === "message" ? validated.message : Reflect.get(target, property, receiver);
         }
       });
-      const { message: sourceMessage, finish_reason, index: index2, logprobs, ...choiceRest } = stableChoice;
+      const { message: sourceMessage, finish_reason, index, logprobs, ...choiceRest } = stableChoice;
       const message = new Proxy(sourceMessage, {
         get(target, property, receiver) {
           if (property === "content") {
@@ -45041,22 +36980,22 @@ function finalizeChatCompletion(snapshot, params, audioDoneChoiceIndexes, valida
         }
       });
       const { content = null, function_call, tool_calls, audio, ...messageRest } = message;
-      const finishReason = finish_reason ?? (audioDoneChoiceIndexes.has(index2) && isCompleteAudio(audio) ? "stop" : null);
+      const finishReason = finish_reason ?? (audioDoneChoiceIndexes.has(index) && isCompleteAudio(audio) ? "stop" : null);
       if (!finishReason) {
-        throw new OpenAIError(`missing finish_reason for choice ${index2}`);
+        throw new OpenAIError(`missing finish_reason for choice ${index}`);
       }
       const audioResponse = audio ? { audio } : {};
       const role = message.role;
       if (!role) {
-        throw new OpenAIError(`missing role for choice ${index2}`);
+        throw new OpenAIError(`missing role for choice ${index}`);
       }
       if (function_call) {
         const { arguments: args, name } = function_call;
         if (args == null) {
-          throw new OpenAIError(`missing function_call.arguments for choice ${index2}`);
+          throw new OpenAIError(`missing function_call.arguments for choice ${index}`);
         }
         if (!name) {
-          throw new OpenAIError(`missing function_call.name for choice ${index2}`);
+          throw new OpenAIError(`missing function_call.name for choice ${index}`);
         }
         return {
           ...choiceRest,
@@ -45068,14 +37007,14 @@ function finalizeChatCompletion(snapshot, params, audioDoneChoiceIndexes, valida
             refusal: message.refusal ?? null
           },
           finish_reason: finishReason,
-          index: index2,
+          index,
           logprobs
         };
       }
       if (tool_calls) {
         return {
           ...choiceRest,
-          index: index2,
+          index,
           finish_reason: finishReason,
           logprobs,
           message: {
@@ -45121,13 +37060,13 @@ function finalizeChatCompletion(snapshot, params, audioDoneChoiceIndexes, valida
                 }
               }) : tool_call;
               if (stableTool.type == null) {
-                throw new OpenAIError(`missing choices[${index2}].tool_calls[${i}].type`);
+                throw new OpenAIError(`missing choices[${index}].tool_calls[${i}].type`);
               }
               if (stableTool.type === "custom") {
-                const { custom: custom3, type: type2, id: id3, ...toolRest2 } = stableTool;
-                const { input: input2 = "", name: name2, ...customRest } = custom3 || {};
+                const { custom: custom2, type: type2, id: id3, ...toolRest2 } = stableTool;
+                const { input: input2 = "", name: name2, ...customRest } = custom2 || {};
                 if (name2 == null) {
-                  throw new OpenAIError(`missing choices[${index2}].tool_calls[${i}].custom.name`);
+                  throw new OpenAIError(`missing choices[${index}].tool_calls[${i}].custom.name`);
                 }
                 return {
                   ...toolRest2,
@@ -45139,10 +37078,10 @@ function finalizeChatCompletion(snapshot, params, audioDoneChoiceIndexes, valida
               const { function: fn, type, id: id2, ...toolRest } = stableTool;
               const { arguments: args, name, ...fnRest } = fn || {};
               if (name == null) {
-                throw new OpenAIError(`missing choices[${index2}].tool_calls[${i}].function.name`);
+                throw new OpenAIError(`missing choices[${index}].tool_calls[${i}].function.name`);
               }
               if (args == null) {
-                throw new OpenAIError(`missing choices[${index2}].tool_calls[${i}].function.arguments`);
+                throw new OpenAIError(`missing choices[${index}].tool_calls[${i}].function.arguments`);
               }
               return {
                 ...toolRest,
@@ -45158,7 +37097,7 @@ function finalizeChatCompletion(snapshot, params, audioDoneChoiceIndexes, valida
         ...choiceRest,
         message: { ...messageRest, ...audioResponse, content, role, refusal: message.refusal ?? null },
         finish_reason: finishReason,
-        index: index2,
+        index,
         logprobs
       };
     }),
@@ -46718,8 +38657,8 @@ function isPrimitiveAssistantStreamArrayDelta(accumulator, delta) {
 function countOwnAssistantStreamArrayEntries(accumulator) {
   let count = 0;
   for (const key of Object.keys(accumulator)) {
-    const index2 = Number(key);
-    if (Number.isSafeInteger(index2) && index2 >= 0 && index2 < accumulator.length && String(index2) === key) {
+    const index = Number(key);
+    if (Number.isSafeInteger(index) && index >= 0 && index < accumulator.length && String(index) === key) {
       count += 1;
     }
   }
@@ -46735,18 +38674,18 @@ function getAssistantStreamArrayOwnEntryCount(accumulator, enforceSparseHoleBudg
   return countOwnAssistantStreamArrayEntries(accumulator);
 }
 function getAssistantStreamDeltaIndex(deltaEntry, kind, baselineLength) {
-  const { index: index2 } = deltaEntry;
-  if (kind === "array" && (index2 === null || index2 === undefined)) {
+  const { index } = deltaEntry;
+  if (kind === "array" && (index === null || index === undefined)) {
     throw new Error("Expected array delta entry to have an `index` property");
   }
-  if (kind === "array" && typeof index2 !== "number") {
+  if (kind === "array" && typeof index !== "number") {
     throw new TypeError("Expected array delta entry `index` property to be a number but got an invalid value");
   }
-  if (!Number.isSafeInteger(index2) || index2 < 0 || index2 >= baselineLength + MAX_ASSISTANT_STREAM_ARRAY_GROWTH || index2 >= MAX_EXTERNALLY_MUTABLE_ASSISTANT_STREAM_ARRAY_LENGTH) {
-    const safeIndex = typeof index2 === "number" ? index2 : "unknown";
+  if (!Number.isSafeInteger(index) || index < 0 || index >= baselineLength + MAX_ASSISTANT_STREAM_ARRAY_GROWTH || index >= MAX_EXTERNALLY_MUTABLE_ASSISTANT_STREAM_ARRAY_LENGTH) {
+    const safeIndex = typeof index === "number" ? index : "unknown";
     throw new OpenAIError(`Assistant stream delta contains an invalid ${kind} index: ${safeIndex}`);
   }
-  return index2;
+  return index;
 }
 function assertValidAssistantStreamArrayDelta(accumulator, delta, kind, projection, validateRecord) {
   let projectedArray = projection.arrays.get(accumulator);
@@ -46835,11 +38774,11 @@ function markAssistantStreamValueExternallyMutable(value) {
     }
   }
 }
-function defineAssistantStreamArrayEntry(accumulator, index2, value) {
+function defineAssistantStreamArrayEntry(accumulator, index, value) {
   if (externallyMutableAssistantStreamValues.has(accumulator)) {
     markAssistantStreamValueExternallyMutable(value);
   }
-  Object.defineProperty(accumulator, index2, {
+  Object.defineProperty(accumulator, index, {
     configurable: true,
     enumerable: true,
     value,
@@ -46847,14 +38786,14 @@ function defineAssistantStreamArrayEntry(accumulator, index2, value) {
   });
 }
 function getRequiredAssistantStreamArrayIndex(deltaEntry) {
-  const { index: index2 } = deltaEntry;
-  if (index2 === null || index2 === undefined) {
+  const { index } = deltaEntry;
+  if (index === null || index === undefined) {
     throw new Error("Expected array delta entry to have an `index` property");
   }
-  if (typeof index2 !== "number") {
+  if (typeof index !== "number") {
     throw new TypeError("Expected array delta entry `index` property to be a number but got an invalid value");
   }
-  return index2;
+  return index;
 }
 function applyAssistantStreamArrayDelta(accumulator, delta, applyRecord) {
   if (isPrimitiveAssistantStreamArrayDelta(accumulator, delta)) {
@@ -46866,19 +38805,19 @@ function applyAssistantStreamArrayDelta(accumulator, delta, applyRecord) {
     if (!isObj(deltaEntry)) {
       throw new Error("Expected array delta entry to be an object but got an invalid value");
     }
-    const index2 = getRequiredAssistantStreamArrayIndex(deltaEntry);
-    if (hasOwn(accumulator, index2)) {
-      const accumulatedEntry = accumulator[index2];
+    const index = getRequiredAssistantStreamArrayIndex(deltaEntry);
+    if (hasOwn(accumulator, index)) {
+      const accumulatedEntry = accumulator[index];
       if (accumulatedEntry === null || accumulatedEntry === undefined) {
         if (externallyMutableAssistantStreamValues.has(accumulator)) {
           markAssistantStreamValueExternallyMutable(deltaEntry);
         }
-        accumulator[index2] = deltaEntry;
+        accumulator[index] = deltaEntry;
       } else {
-        accumulator[index2] = applyRecord(accumulatedEntry, deltaEntry);
+        accumulator[index] = applyRecord(accumulatedEntry, deltaEntry);
       }
     } else {
-      defineAssistantStreamArrayEntry(accumulator, index2, deltaEntry);
+      defineAssistantStreamArrayEntry(accumulator, index, deltaEntry);
     }
   }
 }
@@ -48062,9 +40001,9 @@ function createEmbedding(client, body, options) {
     if (data && data.data) {
       const embeddings = data.data;
       const { length } = embeddings;
-      for (let index2 = 0;index2 < length; index2 += 1) {
-        if (index2 in embeddings) {
-          const embeddingBase64Obj = embeddings[index2];
+      for (let index = 0;index < length; index += 1) {
+        if (index in embeddings) {
+          const embeddingBase64Obj = embeddings[index];
           const embeddingBase64Str = embeddingBase64Obj.embedding;
           embeddingBase64Obj.embedding = toFloat32Array(embeddingBase64Str);
         }
@@ -48422,16 +40361,16 @@ async function encodedMultipartFormRequestOptions(options, client, encodings, ra
     delete body[name];
   }
   const multipart = await multipartFormRequestOptions({ ...options, body }, client);
-  const form2 = multipart.body;
-  if (!(form2 instanceof FormData)) {
-    await form2.cancel();
+  const form = multipart.body;
+  if (!(form instanceof FormData)) {
+    await form.cancel();
     throw new TypeError("Unexpected streaming upload in typed multipart request body");
   }
   for (const [name, part] of encoded)
-    form2.append(name, part, "");
+    form.append(name, part, "");
   return {
     ...options,
-    body: form2,
+    body: form,
     headers: buildHeaders([options.headers, { "content-type": null }])
   };
 }
@@ -48641,15 +40580,15 @@ class OutputTextIndex {
     if (this.size === this.capacity) {
       this.grow();
     }
-    const index2 = this.size;
+    const index = this.size;
     this.size += 1;
-    this.update(index2, value);
+    this.update(index, value);
   }
-  update(index2, value) {
-    if (!Number.isSafeInteger(index2) || index2 < 0 || index2 >= this.size) {
-      throw new RangeError(`missing output at index ${index2}`);
+  update(index, value) {
+    if (!Number.isSafeInteger(index) || index < 0 || index >= this.size) {
+      throw new RangeError(`missing output at index ${index}`);
     }
-    let node2 = this.capacity + index2;
+    let node2 = this.capacity + index;
     const difference = value - (this.values[node2] ?? 0);
     if (difference === 0) {
       return;
@@ -48684,11 +40623,11 @@ class OutputTextIndex {
     const previousCapacity = this.capacity;
     this.capacity *= 2;
     const values2 = Array.from({ length: this.capacity * 2 }, () => 0);
-    for (let index2 = 0;index2 < this.size; index2 += 1) {
-      values2[this.capacity + index2] = this.values[previousCapacity + index2] ?? 0;
+    for (let index = 0;index < this.size; index += 1) {
+      values2[this.capacity + index] = this.values[previousCapacity + index] ?? 0;
     }
-    for (let index2 = this.capacity - 1;index2 > 0; index2 -= 1) {
-      values2[index2] = (values2[index2 * 2] ?? 0) + (values2[index2 * 2 + 1] ?? 0);
+    for (let index = this.capacity - 1;index > 0; index -= 1) {
+      values2[index] = (values2[index * 2] ?? 0) + (values2[index * 2 + 1] ?? 0);
     }
     this.values = values2;
   }
@@ -48763,8 +40702,8 @@ function getPrecedingContentTextLength(context, output2, contentIndex, nextText)
   }
   if (contentIndex < output2.content.length - contentIndex - 1) {
     let precedingContentLength = 0;
-    for (let index2 = 0;index2 < contentIndex; index2 += 1) {
-      const precedingContent = output2.content[index2];
+    for (let index = 0;index < contentIndex; index += 1) {
+      const precedingContent = output2.content[index];
       if (precedingContent?.type === "output_text") {
         precedingContentLength += precedingContent.text.length;
       }
@@ -48772,8 +40711,8 @@ function getPrecedingContentTextLength(context, output2, contentIndex, nextText)
     return precedingContentLength;
   }
   let followingContentLength = 0;
-  for (let index2 = contentIndex + 1;index2 < output2.content.length; index2 += 1) {
-    const followingContent = output2.content[index2];
+  for (let index = contentIndex + 1;index < output2.content.length; index += 1) {
+    const followingContent = output2.content[index];
     if (followingContent?.type === "output_text") {
       followingContentLength += followingContent.text.length;
     }
@@ -48801,16 +40740,16 @@ function updateOutputText(context, snapshot, outputIndex, previousText, nextText
 
 // node_modules/openai/internal/responses/response-accumulator.mjs
 var responseOutputIdentityIndexes = new WeakMap;
-function validateArrayIndex(collection, index2, kind, allowAppend = false) {
-  if (!Number.isSafeInteger(index2) || index2 < 0 || index2 > collection.length || (index2 === collection.length ? !allowAppend || index2 in collection : !hasOwn(collection, index2))) {
-    throw new OpenAIError(`missing ${kind} at index ${index2}`);
+function validateArrayIndex(collection, index, kind, allowAppend = false) {
+  if (!Number.isSafeInteger(index) || index < 0 || index > collection.length || (index === collection.length ? !allowAppend || index in collection : !hasOwn(collection, index))) {
+    throw new OpenAIError(`missing ${kind} at index ${index}`);
   }
 }
-function validateArrayAppend(collection, index2, kind) {
-  if (index2 !== collection.length) {
-    throw new OpenAIError(`missing ${kind} at index ${index2}`);
+function validateArrayAppend(collection, index, kind) {
+  if (index !== collection.length) {
+    throw new OpenAIError(`missing ${kind} at index ${index}`);
   }
-  validateArrayIndex(collection, index2, kind, true);
+  validateArrayIndex(collection, index, kind, true);
 }
 function getOutput(snapshot, outputIndex) {
   validateArrayIndex(snapshot.output, outputIndex, "output");
@@ -48865,8 +40804,8 @@ function createResponseOutputIdentityIndex(snapshot) {
     length: snapshot.output.length,
     identities: new Set
   };
-  for (let index2 = 0;index2 < snapshot.output.length; index2 += 1) {
-    const output2 = getOutput(snapshot, index2);
+  for (let index = 0;index < snapshot.output.length; index += 1) {
+    const output2 = getOutput(snapshot, index);
     addOutputItemIdentities(identityIndex.identities, getOutputItemIdentityKeys(output2, "response snapshot"));
   }
   return identityIndex;
@@ -49960,9 +41899,9 @@ class Content2 extends APIResource {
 
 // node_modules/openai/resources/skills/versions/content.mjs
 class Content3 extends APIResource {
-  retrieve(version5, params, options) {
+  retrieve(version2, params, options) {
     const { skill_id } = params;
-    return this._client.get(path`/skills/${skill_id}/versions/${version5}/content`, {
+    return this._client.get(path`/skills/${skill_id}/versions/${version2}/content`, {
       ...options,
       headers: buildHeaders([{ Accept: "application/binary" }, options?.headers]),
       __security: { bearerAuth: true },
@@ -49982,9 +41921,9 @@ class Versions extends APIResource {
       stripFilenames: false
     }));
   }
-  retrieve(version5, params, options) {
+  retrieve(version2, params, options) {
     const { skill_id } = params;
-    return this._client.get(path`/skills/${skill_id}/versions/${version5}`, {
+    return this._client.get(path`/skills/${skill_id}/versions/${version2}`, {
       ...options,
       __security: { bearerAuth: true }
     });
@@ -49996,9 +41935,9 @@ class Versions extends APIResource {
       __security: { bearerAuth: true }
     });
   }
-  delete(version5, params, options) {
+  delete(version2, params, options) {
     const { skill_id } = params;
-    return this._client.delete(path`/skills/${skill_id}/versions/${version5}`, {
+    return this._client.delete(path`/skills/${skill_id}/versions/${version2}`, {
       ...options,
       __security: { bearerAuth: true }
     });
@@ -50117,8 +42056,8 @@ async function uploadAndPollVectorStoreFileBatch(resource, client, vectorStoreId
   }
   const workers = [];
   workers.length = concurrencyLimit;
-  for (let index2 = 0;index2 < workers.length; index2 += 1) {
-    workers[index2] = processFiles(fileIterator);
+  for (let index = 0;index < workers.length; index += 1) {
+    workers[index] = processFiles(fileIterator);
   }
   await allSettledWithThrow(workers);
   return await resource.createAndPoll(vectorStoreId, { file_ids: allFileIds }, options);
@@ -50385,8 +42324,8 @@ function selectMatchingSignature(signatureHeader, expectedSignature, firstSignat
       continue;
     }
     let difference = 0;
-    for (const [index2, byte] of signatureBytes.entries()) {
-      difference |= byte ^ (expectedSignature[index2] ?? 0);
+    for (const [index, byte] of signatureBytes.entries()) {
+      difference |= byte ^ (expectedSignature[index] ?? 0);
     }
     if (difference === 0) {
       matchingSignature = signatureBytes;
@@ -51066,7 +43005,7 @@ https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
       if (callerSignal?.aborted || req.signal?.aborted) {
         throw this._makeUserAbortError(callerSignal?.aborted ? callerSignal : req.signal);
       }
-      const isTimeout = isAbortError2(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
+      const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ("cause" in response ? String(response.cause) : ""));
       if (retriesRemaining && !hasStreamingBody && (!x509Authentication || isTransientX509ConnectionError2(response))) {
         loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} - ${retryMessage}`);
         loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? "timed out" : "failed"} (${retryMessage})`, formatRequestDetails({
@@ -51132,8 +43071,8 @@ https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
         };
         return this.makeRequest(replayOptions, x509Authentication ? retriesRemaining - 1 : retriesRemaining, retryOfRequestLogID ?? requestLogID);
       }
-      const shouldRetry2 = rejectedX509Credential && options.__metadata?.["workloadIdentityTokenRefreshed"] ? false : await this.shouldRetry(response);
-      if (retriesRemaining && shouldRetry2 && !hasStreamingBody) {
+      const shouldRetry = rejectedX509Credential && options.__metadata?.["workloadIdentityTokenRefreshed"] ? false : await this.shouldRetry(response);
+      if (retriesRemaining && shouldRetry && !hasStreamingBody) {
         const retryMessage2 = `retrying, ${retriesRemaining} attempts remaining`;
         if (x509Authentication) {
           CancelReadableStream(response.body).catch(() => {
@@ -51152,7 +43091,7 @@ https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety
         }));
         return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
       }
-      const retryMessage = shouldRetry2 ? hasStreamingBody ? `error; streaming body cannot be retried` : `error; no more retries left` : `error; not retryable`;
+      const retryMessage = shouldRetry ? hasStreamingBody ? `error; streaming body cannot be retried` : `error; no more retries left` : `error; not retryable`;
       loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
       const errText = x509Authentication ? await this.readX509ResponseError(response, options, timeout, controller, x509Authentication) : await response.text().catch((err2) => castToError(err2).message);
       const errJSON = safeJSON(errText);
@@ -51453,7 +43392,7 @@ OpenAI.APIError = APIError;
 OpenAI.APIConnectionError = APIConnectionError;
 OpenAI.APIConnectionTimeoutError = APIConnectionTimeoutError;
 OpenAI.APIUserAbortError = APIUserAbortError;
-OpenAI.NotFoundError = NotFoundError2;
+OpenAI.NotFoundError = NotFoundError;
 OpenAI.ConflictError = ConflictError;
 OpenAI.RateLimitError = RateLimitError;
 OpenAI.BadRequestError = BadRequestError;
@@ -51550,6 +43489,19 @@ var baseUrls = {
   openrouter: "https://openrouter.ai/api/v1",
   openai: "https://api.openai.com/v1"
 };
+function logAiStatus() {
+  const hasKey = Boolean(env.AI_API_KEY && env.AI_API_KEY.trim().length > 0 && env.AI_API_KEY !== "YOUR_AI_API_KEY");
+  console.log(`[AI] provider=${env.AI_PROVIDER}`);
+  console.log(`[AI] model=${env.AI_MODEL}`);
+  console.log(`[AI] apiKeyConfigured=${hasKey}`);
+  if (env.AI_PROVIDER === "heuristics") {
+    console.log(`[AI] DISABLED
+reason=HEURISTICS_PROVIDER`);
+  } else if (!hasKey) {
+    console.log(`[AI] DISABLED
+reason=MISSING_API_KEY`);
+  }
+}
 var _aiClient = null;
 function getAiClient() {
   if (!_aiClient) {
@@ -51558,7 +43510,7 @@ function getAiClient() {
     _aiClient = new OpenAI({
       apiKey: env.AI_API_KEY || "heuristics-mode",
       baseURL,
-      timeout: 15000,
+      timeout: 8000,
       maxRetries: 0
     });
   }
@@ -51570,6 +43522,8067 @@ var ai = new Proxy({}, {
     const val = client[prop];
     return typeof val === "function" ? val.bind(client) : val;
   }
+});
+// node_modules/viem/_esm/utils/uid.js
+var size = 256;
+var index = size;
+var buffer;
+function uid(length = 11) {
+  if (!buffer || index + length > size * 2) {
+    buffer = "";
+    index = 0;
+    for (let i = 0;i < size; i++) {
+      buffer += (256 + Math.random() * 256 | 0).toString(16).substring(1);
+    }
+  }
+  return buffer.substring(index, index++ + length);
+}
+
+// node_modules/viem/_esm/clients/createClient.js
+function createClient(parameters) {
+  const { batch, chain, ccipRead, dataSuffix, key = "base", name = "Base Client", tokens, type = "base" } = parameters;
+  const experimental_blockTag = parameters.experimental_blockTag ?? (typeof chain?.experimental_preconfirmationTime === "number" ? "pending" : undefined);
+  const blockTime = chain?.blockTime ?? 12000;
+  const defaultPollingInterval = Math.min(Math.max(Math.floor(blockTime / 2), 500), 4000);
+  const pollingInterval = parameters.pollingInterval ?? defaultPollingInterval;
+  const cacheTime = parameters.cacheTime ?? pollingInterval;
+  const account = parameters.account ? parseAccount(parameters.account) : undefined;
+  const { config: config2, request, value } = parameters.transport({
+    account,
+    chain,
+    pollingInterval
+  });
+  const transport = { ...config2, ...value };
+  const client = {
+    account,
+    batch,
+    cacheTime,
+    ccipRead,
+    chain,
+    dataSuffix,
+    key,
+    name,
+    pollingInterval,
+    request,
+    tokens,
+    transport,
+    type,
+    uid: uid(),
+    ...experimental_blockTag ? { experimental_blockTag } : {}
+  };
+  function extend2(base) {
+    return (extendFn) => {
+      const extended = extendFn(base);
+      for (const key2 in client)
+        delete extended[key2];
+      const combined = { ...base, ...extended };
+      for (const key2 in extended) {
+        const a = base[key2];
+        const b = extended[key2];
+        if (isPlainObject2(a) && isPlainObject2(b))
+          combined[key2] = { ...a, ...b };
+      }
+      return Object.assign(combined, { extend: extend2(combined) });
+    };
+  }
+  return Object.assign(client, { extend: extend2(client) });
+}
+function isPlainObject2(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+function bindActionDecorators(client, action) {
+  const wrapped = (parameters = {}) => action(client, parameters);
+  for (const key of [
+    "call",
+    "calls",
+    "callWithPeriod",
+    "estimateGas",
+    "prepare",
+    "prepareRecipient",
+    "predict",
+    "simulate"
+  ])
+    if (Object.hasOwn(action, key)) {
+      const helper = action[key];
+      wrapped[key] = (args = {}) => {
+        if (helper.length === 1)
+          return helper(args);
+        return helper(client, args);
+      };
+    }
+  for (const key of ["extractEvent", "extractEvents"])
+    if (Object.hasOwn(action, key))
+      wrapped[key] = action[key];
+  return wrapped;
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsAddress.js
+init_abis();
+init_decodeFunctionResult();
+init_encodeFunctionData();
+init_getAddress();
+init_getChainContractAddress();
+init_size();
+init_toHex();
+
+// node_modules/viem/_esm/utils/ens/errors.js
+init_base();
+init_contract();
+function isNullUniversalResolverError(err) {
+  if (!(err instanceof BaseError))
+    return false;
+  const cause = err.walk((e) => e instanceof ContractFunctionRevertedError);
+  if (!(cause instanceof ContractFunctionRevertedError))
+    return false;
+  if (cause.data?.errorName === "HttpError")
+    return true;
+  if (cause.data?.errorName === "ResolverError")
+    return true;
+  if (cause.data?.errorName === "ResolverNotContract")
+    return true;
+  if (cause.data?.errorName === "ResolverNotFound")
+    return true;
+  if (cause.data?.errorName === "ReverseAddressMismatch")
+    return true;
+  if (cause.data?.errorName === "UnsupportedResolverProfile")
+    return true;
+  return false;
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsAddress.js
+init_localBatchGatewayRequest();
+
+// node_modules/viem/_esm/utils/ens/namehash.js
+init_toBytes();
+init_toHex();
+init_keccak256();
+
+// node_modules/viem/_esm/utils/ens/encodedLabelToLabelhash.js
+function encodedLabelToLabelhash(label) {
+  if (label.length !== 66)
+    return null;
+  if (label.indexOf("[") !== 0)
+    return null;
+  if (label.indexOf("]") !== 65)
+    return null;
+  const hash3 = `0x${label.slice(1, 65)}`;
+  if (!isHex(hash3))
+    return null;
+  return hash3;
+}
+
+// node_modules/viem/_esm/utils/ens/namehash.js
+function namehash(name) {
+  let result = new Uint8Array(32).fill(0);
+  if (!name)
+    return bytesToHex(result);
+  const labels = name.split(".");
+  for (let i = labels.length - 1;i >= 0; i -= 1) {
+    const hashFromEncodedLabel = encodedLabelToLabelhash(labels[i]);
+    const hashed = hashFromEncodedLabel ? toBytes(hashFromEncodedLabel) : keccak256(stringToBytes(labels[i]), "bytes");
+    result = keccak256(concat([result, hashed]), "bytes");
+  }
+  return bytesToHex(result);
+}
+
+// node_modules/viem/_esm/utils/ens/packetToBytes.js
+init_toBytes();
+
+// node_modules/viem/_esm/utils/ens/encodeLabelhash.js
+function encodeLabelhash(hash3) {
+  return `[${hash3.slice(2)}]`;
+}
+
+// node_modules/viem/_esm/utils/ens/labelhash.js
+init_toBytes();
+init_toHex();
+init_keccak256();
+function labelhash(label) {
+  const result = new Uint8Array(32).fill(0);
+  if (!label)
+    return bytesToHex(result);
+  return encodedLabelToLabelhash(label) || keccak256(stringToBytes(label));
+}
+
+// node_modules/viem/_esm/utils/ens/packetToBytes.js
+function packetToBytes(packet) {
+  const value = packet.replace(/^\.|\.$/gm, "");
+  if (value.length === 0)
+    return new Uint8Array(1);
+  const bytes = new Uint8Array(stringToBytes(value).byteLength + 2);
+  let offset = 0;
+  const list = value.split(".");
+  for (let i = 0;i < list.length; i++) {
+    let encoded = stringToBytes(list[i]);
+    if (encoded.byteLength > 255)
+      encoded = stringToBytes(encodeLabelhash(labelhash(list[i])));
+    bytes[offset] = encoded.length;
+    bytes.set(encoded, offset + 1);
+    offset += encoded.length + 1;
+  }
+  if (bytes.byteLength !== offset + 1)
+    return bytes.slice(0, offset + 1);
+  return bytes;
+}
+
+// node_modules/viem/_esm/utils/getAction.js
+function getAction(client, actionFn, name) {
+  const action_implicit = client[actionFn.name];
+  if (typeof action_implicit === "function")
+    return action_implicit;
+  const action_explicit = client[name];
+  if (typeof action_explicit === "function")
+    return action_explicit;
+  return (params) => actionFn(client, params);
+}
+
+// node_modules/viem/_esm/actions/public/readContract.js
+init_decodeFunctionResult();
+init_encodeFunctionData();
+
+// node_modules/viem/_esm/utils/errors/getContractError.js
+init_abi();
+init_base();
+init_contract();
+init_request();
+init_rpc();
+var EXECUTION_REVERTED_ERROR_CODE = 3;
+function getContractError(err, { abi, address, args, docsPath: docsPath5, functionName, sender }) {
+  const error62 = err instanceof RawContractError ? err : err instanceof BaseError ? err.walk((err2) => ("data" in err2)) || err.walk() : {};
+  const { code, data, details, message, shortMessage } = error62;
+  const cause = (() => {
+    if (err instanceof AbiDecodingZeroDataError)
+      return new ContractFunctionZeroDataError({ functionName, cause: err });
+    if ([EXECUTION_REVERTED_ERROR_CODE, InternalRpcError.code].includes(code) && (data || details || message || shortMessage) || code === InvalidInputRpcError.code && details === "execution reverted" && data) {
+      return new ContractFunctionRevertedError({
+        abi,
+        data: typeof data === "object" ? data.data : data,
+        functionName,
+        message: error62 instanceof RpcRequestError ? details : shortMessage ?? message,
+        cause: err
+      });
+    }
+    return err;
+  })();
+  return new ContractFunctionExecutionError(cause, {
+    abi,
+    args,
+    contractAddress: address,
+    docsPath: docsPath5,
+    functionName,
+    sender
+  });
+}
+
+// node_modules/viem/_esm/actions/public/readContract.js
+init_call();
+async function readContract(client, parameters) {
+  const { abi, address, args, functionName, ...rest } = parameters;
+  const calldata = encodeFunctionData({
+    abi,
+    args,
+    functionName
+  });
+  try {
+    const { data } = await getAction(client, call, "call")({
+      ...rest,
+      data: calldata,
+      to: address
+    });
+    return decodeFunctionResult({
+      abi,
+      args,
+      functionName,
+      data: data || "0x"
+    });
+  } catch (error62) {
+    throw getContractError(error62, {
+      abi,
+      address,
+      args,
+      docsPath: "/docs/contract/readContract",
+      functionName
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsAddress.js
+async function getEnsAddress(client, parameters) {
+  const { blockNumber, blockTag, coinType, name, gatewayUrls, strict } = parameters;
+  const { chain } = client;
+  const universalResolverAddress = (() => {
+    if (parameters.universalResolverAddress)
+      return parameters.universalResolverAddress;
+    if (!chain)
+      throw new Error("client chain not configured. universalResolverAddress is required.");
+    return getChainContractAddress({
+      blockNumber,
+      chain,
+      contract: "ensUniversalResolver"
+    });
+  })();
+  const tlds = chain?.ensTlds;
+  if (tlds && !tlds.some((tld) => name.endsWith(tld)))
+    return null;
+  const args = (() => {
+    if (coinType != null)
+      return [namehash(name), BigInt(coinType)];
+    return [namehash(name)];
+  })();
+  try {
+    const functionData = encodeFunctionData({
+      abi: addressResolverAbi,
+      functionName: "addr",
+      args
+    });
+    const readContractParameters = {
+      address: universalResolverAddress,
+      abi: universalResolverResolveAbi,
+      functionName: "resolveWithGateways",
+      args: [
+        toHex(packetToBytes(name)),
+        functionData,
+        gatewayUrls ?? [localBatchGatewayUrl]
+      ],
+      blockNumber,
+      blockTag
+    };
+    const readContractAction = getAction(client, readContract, "readContract");
+    const res = await readContractAction(readContractParameters);
+    if (res[0] === "0x")
+      return null;
+    const address = decodeAddress2({ coinType, data: res[0], args });
+    if (address === "0x")
+      return null;
+    if (trim(address) === "0x00")
+      return null;
+    return address;
+  } catch (err) {
+    if (strict)
+      throw err;
+    if (isNullUniversalResolverError(err))
+      return null;
+    throw err;
+  }
+}
+function decodeAddress2({ coinType, data, args }) {
+  try {
+    return decodeFunctionResult({
+      abi: addressResolverAbi,
+      args,
+      functionName: "addr",
+      data
+    });
+  } catch (err) {
+    if (coinType == null)
+      throw err;
+    const address = trim(data);
+    if (size2(address) === 20)
+      return getAddress(address);
+    throw err;
+  }
+}
+
+// node_modules/viem/_esm/errors/ens.js
+init_base();
+
+class EnsAvatarInvalidMetadataError extends BaseError {
+  constructor({ data }) {
+    super("Unable to extract image from metadata. The metadata may be malformed or invalid.", {
+      metaMessages: [
+        "- Metadata must be a JSON object with at least an `image`, `image_url` or `image_data` property.",
+        "",
+        `Provided data: ${JSON.stringify(data)}`
+      ],
+      name: "EnsAvatarInvalidMetadataError"
+    });
+  }
+}
+
+class EnsAvatarInvalidNftUriError extends BaseError {
+  constructor({ reason }) {
+    super(`ENS NFT avatar URI is invalid. ${reason}`, {
+      name: "EnsAvatarInvalidNftUriError"
+    });
+  }
+}
+
+class EnsAvatarUriResolutionError extends BaseError {
+  constructor({ uri }) {
+    super(`Unable to resolve ENS avatar URI "${uri}". The URI may be malformed, invalid, or does not respond with a valid image.`, { name: "EnsAvatarUriResolutionError" });
+  }
+}
+
+class EnsAvatarUnsupportedNamespaceError extends BaseError {
+  constructor({ namespace }) {
+    super(`ENS NFT avatar namespace "${namespace}" is not supported. Must be "erc721" or "erc1155".`, { name: "EnsAvatarUnsupportedNamespaceError" });
+  }
+}
+
+// node_modules/viem/_esm/utils/ens/avatar/utils.js
+var networkRegex = /(?<protocol>https?:\/\/[^/]*|ipfs:\/|ipns:\/|ar:\/)?(?<root>\/)?(?<subpath>ipfs\/|ipns\/)?(?<target>[\w\-.]+)(?<subtarget>\/.*)?/;
+var ipfsHashRegex = /^(Qm[1-9A-HJ-NP-Za-km-z]{44,}|b[A-Za-z2-7]{58,}|B[A-Z2-7]{58,}|z[1-9A-HJ-NP-Za-km-z]{48,}|F[0-9A-F]{50,})(\/(?<target>[\w\-.]+))?(?<subtarget>\/.*)?$/;
+var base64Regex = /^data:([a-zA-Z\-/+]*);base64,([^"].*)/;
+var dataURIRegex = /^data:([a-zA-Z\-/+]*)?(;[a-zA-Z0-9].*?)?(,)/;
+async function isImageUri(uri) {
+  try {
+    const res = await fetch(uri, { method: "HEAD" });
+    if (res.status === 200) {
+      const contentType = res.headers.get("content-type");
+      return contentType?.startsWith("image/");
+    }
+    return false;
+  } catch (error62) {
+    if (typeof error62 === "object" && typeof error62.response !== "undefined") {
+      return false;
+    }
+    if (!Object.hasOwn(globalThis, "Image"))
+      return false;
+    return new Promise((resolve) => {
+      const img = new Image;
+      img.onload = () => {
+        resolve(true);
+      };
+      img.onerror = () => {
+        resolve(false);
+      };
+      img.src = uri;
+    });
+  }
+}
+function getGateway(custom2, defaultGateway) {
+  if (!custom2)
+    return defaultGateway;
+  if (custom2.endsWith("/"))
+    return custom2.slice(0, -1);
+  return custom2;
+}
+function resolveAvatarUri({ uri, gatewayUrls }) {
+  const isEncoded = base64Regex.test(uri);
+  if (isEncoded)
+    return { uri, isOnChain: true, isEncoded };
+  const ipfsGateway = getGateway(gatewayUrls?.ipfs, "https://ipfs.io");
+  const arweaveGateway = getGateway(gatewayUrls?.arweave, "https://arweave.net");
+  const networkRegexMatch = uri.match(networkRegex);
+  const { protocol, subpath, target, subtarget = "" } = networkRegexMatch?.groups || {};
+  const isIPNS = protocol === "ipns:/" || subpath === "ipns/";
+  const isIPFS = protocol === "ipfs:/" || subpath === "ipfs/" || ipfsHashRegex.test(uri);
+  if (uri.startsWith("http") && !isIPNS && !isIPFS) {
+    let replacedUri = uri;
+    if (gatewayUrls?.arweave)
+      replacedUri = uri.replace(/https:\/\/arweave.net/g, gatewayUrls?.arweave);
+    return { uri: replacedUri, isOnChain: false, isEncoded: false };
+  }
+  if ((isIPNS || isIPFS) && target) {
+    return {
+      uri: `${ipfsGateway}/${isIPNS ? "ipns" : "ipfs"}/${target}${subtarget}`,
+      isOnChain: false,
+      isEncoded: false
+    };
+  }
+  if (protocol === "ar:/" && target) {
+    return {
+      uri: `${arweaveGateway}/${target}${subtarget || ""}`,
+      isOnChain: false,
+      isEncoded: false
+    };
+  }
+  let parsedUri = uri.replace(dataURIRegex, "");
+  if (parsedUri.startsWith("<svg")) {
+    parsedUri = `data:image/svg+xml;base64,${btoa(parsedUri)}`;
+  }
+  if (parsedUri.startsWith("data:") || parsedUri.startsWith("{")) {
+    return {
+      uri: parsedUri,
+      isOnChain: true,
+      isEncoded: false
+    };
+  }
+  throw new EnsAvatarUriResolutionError({ uri });
+}
+function getJsonImage(data) {
+  if (typeof data !== "object" || !("image" in data) && !("image_url" in data) && !("image_data" in data)) {
+    throw new EnsAvatarInvalidMetadataError({ data });
+  }
+  return data.image || data.image_url || data.image_data;
+}
+async function getMetadataAvatarUri({ gatewayUrls, uri }) {
+  try {
+    const res = await fetch(uri).then((res2) => res2.json());
+    const image = await parseAvatarUri({
+      gatewayUrls,
+      uri: getJsonImage(res)
+    });
+    return image;
+  } catch {
+    throw new EnsAvatarUriResolutionError({ uri });
+  }
+}
+async function parseAvatarUri({ gatewayUrls, uri }) {
+  const { uri: resolvedURI, isOnChain } = resolveAvatarUri({ uri, gatewayUrls });
+  if (isOnChain)
+    return resolvedURI;
+  const isImage = await isImageUri(resolvedURI);
+  if (isImage)
+    return resolvedURI;
+  throw new EnsAvatarUriResolutionError({ uri });
+}
+function parseNftUri(uri_) {
+  let uri = uri_;
+  if (uri.startsWith("did:nft:")) {
+    uri = uri.replace("did:nft:", "").replace(/_/g, "/");
+  }
+  const [reference, asset_namespace, tokenID] = uri.split("/");
+  const [eip_namespace, chainID] = reference.split(":");
+  const [erc_namespace, contractAddress] = asset_namespace.split(":");
+  if (!eip_namespace || eip_namespace.toLowerCase() !== "eip155")
+    throw new EnsAvatarInvalidNftUriError({ reason: "Only EIP-155 supported" });
+  if (!chainID)
+    throw new EnsAvatarInvalidNftUriError({ reason: "Chain ID not found" });
+  if (!contractAddress)
+    throw new EnsAvatarInvalidNftUriError({
+      reason: "Contract address not found"
+    });
+  if (!tokenID)
+    throw new EnsAvatarInvalidNftUriError({ reason: "Token ID not found" });
+  if (!erc_namespace)
+    throw new EnsAvatarInvalidNftUriError({ reason: "ERC namespace not found" });
+  return {
+    chainID: Number.parseInt(chainID, 10),
+    namespace: erc_namespace.toLowerCase(),
+    contractAddress,
+    tokenID
+  };
+}
+async function getNftTokenUri(client, { nft }) {
+  if (nft.namespace === "erc721") {
+    return readContract(client, {
+      address: nft.contractAddress,
+      abi: [
+        {
+          name: "tokenURI",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "tokenId", type: "uint256" }],
+          outputs: [{ name: "", type: "string" }]
+        }
+      ],
+      functionName: "tokenURI",
+      args: [BigInt(nft.tokenID)]
+    });
+  }
+  if (nft.namespace === "erc1155") {
+    return readContract(client, {
+      address: nft.contractAddress,
+      abi: [
+        {
+          name: "uri",
+          type: "function",
+          stateMutability: "view",
+          inputs: [{ name: "_id", type: "uint256" }],
+          outputs: [{ name: "", type: "string" }]
+        }
+      ],
+      functionName: "uri",
+      args: [BigInt(nft.tokenID)]
+    });
+  }
+  throw new EnsAvatarUnsupportedNamespaceError({ namespace: nft.namespace });
+}
+
+// node_modules/viem/_esm/utils/ens/avatar/parseAvatarRecord.js
+async function parseAvatarRecord(client, { gatewayUrls, record: record2 }) {
+  if (/eip155:/i.test(record2))
+    return parseNftAvatarUri(client, { gatewayUrls, record: record2 });
+  return parseAvatarUri({ uri: record2, gatewayUrls });
+}
+async function parseNftAvatarUri(client, { gatewayUrls, record: record2 }) {
+  const nft = parseNftUri(record2);
+  const nftUri = await getNftTokenUri(client, { nft });
+  const { uri: resolvedNftUri, isOnChain, isEncoded } = resolveAvatarUri({ uri: nftUri, gatewayUrls });
+  if (isOnChain && (resolvedNftUri.includes("data:application/json;base64,") || resolvedNftUri.startsWith("{"))) {
+    const encodedJson = isEncoded ? atob(resolvedNftUri.replace("data:application/json;base64,", "")) : resolvedNftUri;
+    const decoded = JSON.parse(encodedJson);
+    return parseAvatarUri({ uri: getJsonImage(decoded), gatewayUrls });
+  }
+  let uriTokenId = nft.tokenID;
+  if (nft.namespace === "erc1155")
+    uriTokenId = uriTokenId.replace("0x", "").padStart(64, "0");
+  return getMetadataAvatarUri({
+    gatewayUrls,
+    uri: resolvedNftUri.replace(/(?:0x)?{id}/, uriTokenId)
+  });
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsText.js
+init_abis();
+init_decodeFunctionResult();
+init_encodeFunctionData();
+init_getChainContractAddress();
+init_toHex();
+init_localBatchGatewayRequest();
+async function getEnsText(client, parameters) {
+  const { blockNumber, blockTag, key, name, gatewayUrls, strict } = parameters;
+  const { chain } = client;
+  const universalResolverAddress = (() => {
+    if (parameters.universalResolverAddress)
+      return parameters.universalResolverAddress;
+    if (!chain)
+      throw new Error("client chain not configured. universalResolverAddress is required.");
+    return getChainContractAddress({
+      blockNumber,
+      chain,
+      contract: "ensUniversalResolver"
+    });
+  })();
+  const tlds = chain?.ensTlds;
+  if (tlds && !tlds.some((tld) => name.endsWith(tld)))
+    return null;
+  try {
+    const readContractParameters = {
+      address: universalResolverAddress,
+      abi: universalResolverResolveAbi,
+      args: [
+        toHex(packetToBytes(name)),
+        encodeFunctionData({
+          abi: textResolverAbi,
+          functionName: "text",
+          args: [namehash(name), key]
+        }),
+        gatewayUrls ?? [localBatchGatewayUrl]
+      ],
+      functionName: "resolveWithGateways",
+      blockNumber,
+      blockTag
+    };
+    const readContractAction = getAction(client, readContract, "readContract");
+    const res = await readContractAction(readContractParameters);
+    if (res[0] === "0x")
+      return null;
+    const record2 = decodeFunctionResult({
+      abi: textResolverAbi,
+      functionName: "text",
+      data: res[0]
+    });
+    return record2 === "" ? null : record2;
+  } catch (err) {
+    if (strict)
+      throw err;
+    if (isNullUniversalResolverError(err))
+      return null;
+    throw err;
+  }
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsAvatar.js
+async function getEnsAvatar(client, { blockNumber, blockTag, assetGatewayUrls, name, gatewayUrls, strict, universalResolverAddress }) {
+  const record2 = await getAction(client, getEnsText, "getEnsText")({
+    blockNumber,
+    blockTag,
+    key: "avatar",
+    name,
+    universalResolverAddress,
+    gatewayUrls,
+    strict
+  });
+  if (!record2)
+    return null;
+  try {
+    return await parseAvatarRecord(client, {
+      record: record2,
+      gatewayUrls: assetGatewayUrls
+    });
+  } catch {
+    return null;
+  }
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsName.js
+init_abis();
+init_getChainContractAddress();
+init_localBatchGatewayRequest();
+async function getEnsName(client, parameters) {
+  const { address, blockNumber, blockTag, coinType = 60n, gatewayUrls, strict } = parameters;
+  const { chain } = client;
+  const universalResolverAddress = (() => {
+    if (parameters.universalResolverAddress)
+      return parameters.universalResolverAddress;
+    if (!chain)
+      throw new Error("client chain not configured. universalResolverAddress is required.");
+    return getChainContractAddress({
+      blockNumber,
+      chain,
+      contract: "ensUniversalResolver"
+    });
+  })();
+  try {
+    const readContractParameters = {
+      address: universalResolverAddress,
+      abi: universalResolverReverseAbi,
+      args: [address, coinType, gatewayUrls ?? [localBatchGatewayUrl]],
+      functionName: "reverseWithGateways",
+      blockNumber,
+      blockTag
+    };
+    const readContractAction = getAction(client, readContract, "readContract");
+    const [name] = await readContractAction(readContractParameters);
+    return name || null;
+  } catch (err) {
+    if (strict)
+      throw err;
+    if (isNullUniversalResolverError(err))
+      return null;
+    throw err;
+  }
+}
+
+// node_modules/viem/_esm/actions/ens/getEnsResolver.js
+init_getChainContractAddress();
+init_toHex();
+async function getEnsResolver(client, parameters) {
+  const { blockNumber, blockTag, name } = parameters;
+  const { chain } = client;
+  const universalResolverAddress = (() => {
+    if (parameters.universalResolverAddress)
+      return parameters.universalResolverAddress;
+    if (!chain)
+      throw new Error("client chain not configured. universalResolverAddress is required.");
+    return getChainContractAddress({
+      blockNumber,
+      chain,
+      contract: "ensUniversalResolver"
+    });
+  })();
+  const tlds = chain?.ensTlds;
+  if (tlds && !tlds.some((tld) => name.endsWith(tld)))
+    throw new Error(`${name} is not a valid ENS TLD (${tlds?.join(", ")}) for chain "${chain.name}" (id: ${chain.id}).`);
+  const [resolverAddress] = await getAction(client, readContract, "readContract")({
+    address: universalResolverAddress,
+    abi: [
+      {
+        inputs: [{ type: "bytes" }],
+        name: "findResolver",
+        outputs: [
+          { type: "address" },
+          { type: "bytes32" },
+          { type: "uint256" }
+        ],
+        stateMutability: "view",
+        type: "function"
+      }
+    ],
+    functionName: "findResolver",
+    args: [toHex(packetToBytes(name))],
+    blockNumber,
+    blockTag
+  });
+  return resolverAddress;
+}
+
+// node_modules/viem/_esm/clients/decorators/public.js
+init_call();
+
+// node_modules/viem/_esm/actions/public/createAccessList.js
+init_base();
+init_toHex();
+init_getCallError();
+init_transactionRequest();
+init_assertRequest();
+async function createAccessList(client, args) {
+  const { account: account_ = client.account, blockNumber, blockTag = "latest", blobs, data, gas, gasPrice, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, to, value, ...rest } = args;
+  const account = account_ ? parseAccount(account_) : undefined;
+  try {
+    assertRequest(args);
+    const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
+    const block = blockNumberHex || blockTag;
+    const chainFormat = client.chain?.formatters?.transactionRequest?.format;
+    const format2 = chainFormat || formatTransactionRequest;
+    const request = format2({
+      ...extract(rest, { format: chainFormat }),
+      account,
+      blobs,
+      data,
+      gas,
+      gasPrice,
+      maxFeePerBlobGas,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      to,
+      value
+    }, "createAccessList");
+    const response = await client.request({
+      method: "eth_createAccessList",
+      params: [request, block]
+    });
+    if (response.error)
+      throw new BaseError(response.error, { details: response.error });
+    return {
+      accessList: response.accessList,
+      gasUsed: BigInt(response.gasUsed)
+    };
+  } catch (err) {
+    throw getCallError(err, {
+      ...args,
+      account,
+      chain: client.chain
+    });
+  }
+}
+
+// node_modules/viem/_esm/utils/filters/createFilterRequestScope.js
+function createFilterRequestScope(client, { method }) {
+  const requestMap = {};
+  if (client.transport.type === "fallback")
+    client.transport.onResponse?.(({ method: method_, response: id, status, transport }) => {
+      if (status === "success" && method === method_)
+        requestMap[id] = transport.request;
+    });
+  return (id) => requestMap[id] || client.request;
+}
+
+// node_modules/viem/_esm/actions/public/createBlockFilter.js
+async function createBlockFilter(client) {
+  const getRequest = createFilterRequestScope(client, {
+    method: "eth_newBlockFilter"
+  });
+  const id = await client.request({
+    method: "eth_newBlockFilter"
+  });
+  return { id, request: getRequest(id), type: "block" };
+}
+
+// node_modules/viem/_esm/utils/abi/encodeEventTopics.js
+init_abi();
+
+// node_modules/viem/_esm/errors/log.js
+init_base();
+
+class FilterTypeNotSupportedError extends BaseError {
+  constructor(type) {
+    super(`Filter type "${type}" is not supported.`, {
+      name: "FilterTypeNotSupportedError"
+    });
+  }
+}
+
+// node_modules/viem/_esm/utils/abi/encodeEventTopics.js
+init_toBytes();
+init_keccak256();
+init_toEventSelector();
+init_encodeAbiParameters();
+init_formatAbiItem();
+init_getAbiItem();
+var docsPath6 = "/docs/contract/encodeEventTopics";
+function encodeEventTopics(parameters) {
+  const { abi, eventName, args } = parameters;
+  let abiItem = abi[0];
+  if (eventName) {
+    const item = getAbiItem({ abi, name: eventName });
+    if (!item)
+      throw new AbiEventNotFoundError(eventName, { docsPath: docsPath6 });
+    abiItem = item;
+  }
+  if (abiItem.type !== "event")
+    throw new AbiEventNotFoundError(undefined, { docsPath: docsPath6 });
+  let topics = [];
+  if (args && "inputs" in abiItem) {
+    const indexedInputs = abiItem.inputs?.filter((param) => ("indexed" in param) && param.indexed);
+    const args_ = Array.isArray(args) ? args : Object.values(args).length > 0 ? indexedInputs?.map((x) => args[x.name]) ?? [] : [];
+    if (args_.length > 0) {
+      topics = indexedInputs?.map((param, i) => {
+        if (Array.isArray(args_[i]))
+          return args_[i].map((_, j) => encodeArg({ param, value: args_[i][j] }));
+        return typeof args_[i] !== "undefined" && args_[i] !== null ? encodeArg({ param, value: args_[i] }) : null;
+      }) ?? [];
+    }
+  }
+  if (abiItem.anonymous)
+    return topics;
+  const definition = formatAbiItem(abiItem);
+  const signature = toEventSelector(definition);
+  return [signature, ...topics];
+}
+function encodeArg({ param, value }) {
+  if (param.type === "string" || param.type === "bytes")
+    return keccak256(toBytes(value));
+  if (param.type === "tuple" || param.type.match(/^(.*)\[(\d+)?\]$/))
+    throw new FilterTypeNotSupportedError(param.type);
+  return encodeAbiParameters([param], [value]);
+}
+
+// node_modules/viem/_esm/actions/public/createContractEventFilter.js
+init_toHex();
+async function createContractEventFilter(client, parameters) {
+  const { address, abi, args, eventName, fromBlock, strict, toBlock } = parameters;
+  const getRequest = createFilterRequestScope(client, {
+    method: "eth_newFilter"
+  });
+  const topics = eventName ? encodeEventTopics({
+    abi,
+    args,
+    eventName
+  }) : undefined;
+  const id = await client.request({
+    method: "eth_newFilter",
+    params: [
+      {
+        address,
+        fromBlock: typeof fromBlock === "bigint" ? numberToHex(fromBlock) : fromBlock,
+        toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock,
+        topics
+      }
+    ]
+  });
+  return {
+    abi,
+    args,
+    eventName,
+    id,
+    request: getRequest(id),
+    strict: Boolean(strict),
+    type: "event"
+  };
+}
+
+// node_modules/viem/_esm/actions/public/createEventFilter.js
+init_toHex();
+async function createEventFilter(client, { address, args, event, events: events_, fromBlock, strict, toBlock } = {}) {
+  const events = events_ ?? (event ? [event] : undefined);
+  const getRequest = createFilterRequestScope(client, {
+    method: "eth_newFilter"
+  });
+  let topics = [];
+  if (events) {
+    const encoded = events.flatMap((event2) => encodeEventTopics({
+      abi: [event2],
+      eventName: event2.name,
+      args
+    }));
+    topics = [encoded];
+    if (event)
+      topics = topics[0];
+  }
+  const id = await client.request({
+    method: "eth_newFilter",
+    params: [
+      {
+        address,
+        fromBlock: typeof fromBlock === "bigint" ? numberToHex(fromBlock) : fromBlock,
+        toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock,
+        ...topics.length ? { topics } : {}
+      }
+    ]
+  });
+  return {
+    abi: events,
+    args,
+    eventName: event ? event.name : undefined,
+    fromBlock,
+    id,
+    request: getRequest(id),
+    strict: Boolean(strict),
+    toBlock,
+    type: "event"
+  };
+}
+
+// node_modules/viem/_esm/actions/public/createPendingTransactionFilter.js
+async function createPendingTransactionFilter(client) {
+  const getRequest = createFilterRequestScope(client, {
+    method: "eth_newPendingTransactionFilter"
+  });
+  const id = await client.request({
+    method: "eth_newPendingTransactionFilter"
+  });
+  return { id, request: getRequest(id), type: "transaction" };
+}
+
+// node_modules/viem/_esm/actions/public/estimateContractGas.js
+init_encodeFunctionData();
+
+// node_modules/viem/_esm/actions/public/estimateGas.js
+init_base();
+
+// node_modules/viem/_esm/accounts/utils/publicKeyToAddress.js
+init_getAddress();
+init_keccak256();
+function publicKeyToAddress(publicKey) {
+  const address = keccak256(`0x${publicKey.substring(4)}`).substring(26);
+  return checksumAddress(`0x${address}`);
+}
+
+// node_modules/viem/_esm/utils/signature/recoverPublicKey.js
+init_size();
+init_fromHex();
+init_toHex();
+async function recoverPublicKey({ hash: hash3, signature }) {
+  const hashHex = isHex(hash3) ? hash3 : toHex(hash3);
+  const { secp256k1: secp256k12 } = await Promise.resolve().then(() => (init_secp256k1(), exports_secp256k1));
+  const signature_ = (() => {
+    if (typeof signature === "object" && "r" in signature && "s" in signature) {
+      const { r, s, v, yParity } = signature;
+      const yParityOrV2 = Number(yParity ?? v);
+      const recoveryBit2 = toRecoveryBit(yParityOrV2);
+      return new secp256k12.Signature(hexToBigInt(r), hexToBigInt(s)).addRecoveryBit(recoveryBit2);
+    }
+    const signatureHex = isHex(signature) ? signature : toHex(signature);
+    if (size2(signatureHex) !== 65)
+      throw new Error("invalid signature length");
+    const yParityOrV = hexToNumber(`0x${signatureHex.slice(130)}`);
+    const recoveryBit = toRecoveryBit(yParityOrV);
+    return secp256k12.Signature.fromCompact(signatureHex.substring(2, 130)).addRecoveryBit(recoveryBit);
+  })();
+  const publicKey = signature_.recoverPublicKey(hashHex.substring(2)).toHex(false);
+  return `0x${publicKey}`;
+}
+function toRecoveryBit(yParityOrV) {
+  if (yParityOrV === 0 || yParityOrV === 1)
+    return yParityOrV;
+  if (yParityOrV === 27)
+    return 0;
+  if (yParityOrV === 28)
+    return 1;
+  throw new Error("Invalid yParityOrV value");
+}
+
+// node_modules/viem/_esm/utils/signature/recoverAddress.js
+async function recoverAddress({ hash: hash3, signature }) {
+  return publicKeyToAddress(await recoverPublicKey({ hash: hash3, signature }));
+}
+
+// node_modules/viem/_esm/utils/authorization/hashAuthorization.js
+init_toBytes();
+init_toHex();
+
+// node_modules/viem/_esm/utils/encoding/toRlp.js
+init_base();
+init_cursor2();
+init_toBytes();
+init_toHex();
+function toRlp(bytes, to = "hex") {
+  const encodable = getEncodable(bytes);
+  const cursor = createCursor(new Uint8Array(encodable.length));
+  encodable.encode(cursor);
+  if (to === "hex")
+    return bytesToHex(cursor.bytes);
+  return cursor.bytes;
+}
+function getEncodable(bytes) {
+  if (Array.isArray(bytes))
+    return getEncodableList(bytes.map((x) => getEncodable(x)));
+  return getEncodableBytes(bytes);
+}
+function getEncodableList(list) {
+  const bodyLength = list.reduce((acc, x) => acc + x.length, 0);
+  const sizeOfBodyLength = getSizeOfLength(bodyLength);
+  const length = (() => {
+    if (bodyLength <= 55)
+      return 1 + bodyLength;
+    return 1 + sizeOfBodyLength + bodyLength;
+  })();
+  return {
+    length,
+    encode(cursor) {
+      if (bodyLength <= 55) {
+        cursor.pushByte(192 + bodyLength);
+      } else {
+        cursor.pushByte(192 + 55 + sizeOfBodyLength);
+        if (sizeOfBodyLength === 1)
+          cursor.pushUint8(bodyLength);
+        else if (sizeOfBodyLength === 2)
+          cursor.pushUint16(bodyLength);
+        else if (sizeOfBodyLength === 3)
+          cursor.pushUint24(bodyLength);
+        else
+          cursor.pushUint32(bodyLength);
+      }
+      for (const { encode: encode4 } of list) {
+        encode4(cursor);
+      }
+    }
+  };
+}
+function getEncodableBytes(bytesOrHex) {
+  const bytes = typeof bytesOrHex === "string" ? hexToBytes(bytesOrHex) : bytesOrHex;
+  const sizeOfBytesLength = getSizeOfLength(bytes.length);
+  const length = (() => {
+    if (bytes.length === 1 && bytes[0] < 128)
+      return 1;
+    if (bytes.length <= 55)
+      return 1 + bytes.length;
+    return 1 + sizeOfBytesLength + bytes.length;
+  })();
+  return {
+    length,
+    encode(cursor) {
+      if (bytes.length === 1 && bytes[0] < 128) {
+        cursor.pushBytes(bytes);
+      } else if (bytes.length <= 55) {
+        cursor.pushByte(128 + bytes.length);
+        cursor.pushBytes(bytes);
+      } else {
+        cursor.pushByte(128 + 55 + sizeOfBytesLength);
+        if (sizeOfBytesLength === 1)
+          cursor.pushUint8(bytes.length);
+        else if (sizeOfBytesLength === 2)
+          cursor.pushUint16(bytes.length);
+        else if (sizeOfBytesLength === 3)
+          cursor.pushUint24(bytes.length);
+        else
+          cursor.pushUint32(bytes.length);
+        cursor.pushBytes(bytes);
+      }
+    }
+  };
+}
+function getSizeOfLength(length) {
+  if (length < 2 ** 8)
+    return 1;
+  if (length < 2 ** 16)
+    return 2;
+  if (length < 2 ** 24)
+    return 3;
+  if (length < 2 ** 32)
+    return 4;
+  throw new BaseError("Length is too large.");
+}
+
+// node_modules/viem/_esm/utils/authorization/hashAuthorization.js
+init_keccak256();
+function hashAuthorization(parameters) {
+  const { chainId, nonce, to } = parameters;
+  const address = parameters.contractAddress ?? parameters.address;
+  const hash3 = keccak256(concatHex([
+    "0x05",
+    toRlp([
+      chainId ? numberToHex(chainId) : "0x",
+      address,
+      nonce ? numberToHex(nonce) : "0x"
+    ])
+  ]));
+  if (to === "bytes")
+    return hexToBytes(hash3);
+  return hash3;
+}
+
+// node_modules/viem/_esm/utils/authorization/recoverAuthorizationAddress.js
+async function recoverAuthorizationAddress(parameters) {
+  const { authorization, signature } = parameters;
+  return recoverAddress({
+    hash: hashAuthorization(authorization),
+    signature: signature ?? authorization
+  });
+}
+
+// node_modules/viem/_esm/actions/public/estimateGas.js
+init_toHex();
+
+// node_modules/viem/_esm/errors/estimateGas.js
+init_formatEther();
+init_formatGwei();
+init_base();
+init_transaction();
+
+class EstimateGasExecutionError extends BaseError {
+  constructor(cause, { account, docsPath: docsPath7, chain, data, gas, gasPrice, maxFeePerGas, maxPriorityFeePerGas, nonce, to, value }) {
+    const prettyArgs = prettyPrint({
+      from: account?.address,
+      to,
+      value: typeof value !== "undefined" && `${formatEther2(value)} ${chain?.nativeCurrency?.symbol || "ETH"}`,
+      data,
+      gas,
+      gasPrice: typeof gasPrice !== "undefined" && `${formatGwei2(gasPrice)} gwei`,
+      maxFeePerGas: typeof maxFeePerGas !== "undefined" && `${formatGwei2(maxFeePerGas)} gwei`,
+      maxPriorityFeePerGas: typeof maxPriorityFeePerGas !== "undefined" && `${formatGwei2(maxPriorityFeePerGas)} gwei`,
+      nonce
+    });
+    super(cause.shortMessage, {
+      cause,
+      docsPath: docsPath7,
+      metaMessages: [
+        ...cause.metaMessages ? [...cause.metaMessages, " "] : [],
+        "Estimate Gas Arguments:",
+        prettyArgs
+      ].filter(Boolean),
+      name: "EstimateGasExecutionError"
+    });
+    Object.defineProperty(this, "cause", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: undefined
+    });
+    this.cause = cause;
+  }
+}
+
+// node_modules/viem/_esm/utils/errors/getEstimateGasError.js
+init_node();
+init_getNodeError();
+function getEstimateGasError(err, { docsPath: docsPath7, ...args }) {
+  const cause = (() => {
+    const cause2 = getNodeError(err, args);
+    if (cause2 instanceof UnknownNodeError)
+      return err;
+    return cause2;
+  })();
+  return new EstimateGasExecutionError(cause, {
+    docsPath: docsPath7,
+    ...args
+  });
+}
+
+// node_modules/viem/_esm/actions/public/estimateGas.js
+init_transactionRequest();
+init_stateOverride2();
+init_assertRequest();
+// node_modules/viem/_esm/errors/fee.js
+init_formatGwei();
+init_base();
+
+class BaseFeeScalarError extends BaseError {
+  constructor() {
+    super("`baseFeeMultiplier` must be greater than 1.", {
+      name: "BaseFeeScalarError"
+    });
+  }
+}
+
+class Eip1559FeesNotSupportedError extends BaseError {
+  constructor() {
+    super("Chain does not support EIP-1559 fees.", {
+      name: "Eip1559FeesNotSupportedError"
+    });
+  }
+}
+
+class MaxFeePerGasTooLowError extends BaseError {
+  constructor({ maxPriorityFeePerGas }) {
+    super(`\`maxFeePerGas\` cannot be less than the \`maxPriorityFeePerGas\` (${formatGwei2(maxPriorityFeePerGas)} gwei).`, { name: "MaxFeePerGasTooLowError" });
+  }
+}
+
+// node_modules/viem/_esm/actions/public/estimateMaxPriorityFeePerGas.js
+init_fromHex();
+
+// node_modules/viem/_esm/errors/block.js
+init_base();
+
+class BlockNotFoundError extends BaseError {
+  constructor({ blockHash, blockNumber }) {
+    let identifier = "Block";
+    if (blockHash)
+      identifier = `Block at hash "${blockHash}"`;
+    if (blockNumber)
+      identifier = `Block at number "${blockNumber}"`;
+    super(`${identifier} could not be found.`, { name: "BlockNotFoundError" });
+  }
+}
+
+// node_modules/viem/_esm/actions/public/getBlock.js
+init_toHex();
+
+// node_modules/viem/_esm/utils/formatters/transaction.js
+init_fromHex();
+var transactionType = {
+  "0x0": "legacy",
+  "0x1": "eip2930",
+  "0x2": "eip1559",
+  "0x3": "eip4844",
+  "0x4": "eip7702"
+};
+function formatTransaction(transaction, _) {
+  const transaction_ = {
+    ...transaction,
+    blockHash: transaction.blockHash ? transaction.blockHash : null,
+    blockNumber: transaction.blockNumber ? BigInt(transaction.blockNumber) : null,
+    ...transaction.blockTimestamp != null && {
+      blockTimestamp: BigInt(transaction.blockTimestamp)
+    },
+    chainId: transaction.chainId ? hexToNumber(transaction.chainId) : undefined,
+    gas: transaction.gas ? BigInt(transaction.gas) : undefined,
+    gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
+    maxFeePerBlobGas: transaction.maxFeePerBlobGas ? BigInt(transaction.maxFeePerBlobGas) : undefined,
+    maxFeePerGas: transaction.maxFeePerGas ? BigInt(transaction.maxFeePerGas) : undefined,
+    maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? BigInt(transaction.maxPriorityFeePerGas) : undefined,
+    nonce: transaction.nonce ? hexToNumber(transaction.nonce) : undefined,
+    to: transaction.to ? transaction.to : null,
+    transactionIndex: transaction.transactionIndex ? Number(transaction.transactionIndex) : null,
+    type: transaction.type ? transactionType[transaction.type] : undefined,
+    typeHex: transaction.type ? transaction.type : undefined,
+    value: transaction.value ? BigInt(transaction.value) : undefined,
+    v: transaction.v ? BigInt(transaction.v) : undefined
+  };
+  if (transaction.authorizationList)
+    transaction_.authorizationList = formatAuthorizationList2(transaction.authorizationList);
+  transaction_.yParity = (() => {
+    if (transaction.yParity)
+      return Number(transaction.yParity);
+    if (typeof transaction_.v === "bigint") {
+      if (transaction_.v === 0n || transaction_.v === 27n)
+        return 0;
+      if (transaction_.v === 1n || transaction_.v === 28n)
+        return 1;
+      if (transaction_.v >= 35n)
+        return transaction_.v % 2n === 0n ? 1 : 0;
+    }
+    return;
+  })();
+  if (transaction_.type === "legacy") {
+    delete transaction_.accessList;
+    delete transaction_.maxFeePerBlobGas;
+    delete transaction_.maxFeePerGas;
+    delete transaction_.maxPriorityFeePerGas;
+    delete transaction_.yParity;
+  }
+  if (transaction_.type === "eip2930") {
+    delete transaction_.maxFeePerBlobGas;
+    delete transaction_.maxFeePerGas;
+    delete transaction_.maxPriorityFeePerGas;
+  }
+  if (transaction_.type === "eip1559")
+    delete transaction_.maxFeePerBlobGas;
+  return transaction_;
+}
+function formatAuthorizationList2(authorizationList) {
+  return authorizationList.map((authorization) => ({
+    address: authorization.address,
+    chainId: Number(authorization.chainId),
+    nonce: Number(authorization.nonce),
+    r: authorization.r,
+    s: authorization.s,
+    yParity: Number(authorization.yParity)
+  }));
+}
+
+// node_modules/viem/_esm/utils/formatters/block.js
+function formatBlock(block, _) {
+  const transactions = (block.transactions ?? []).map((transaction) => {
+    if (typeof transaction === "string")
+      return transaction;
+    return formatTransaction(transaction);
+  });
+  return {
+    ...block,
+    baseFeePerGas: block.baseFeePerGas ? BigInt(block.baseFeePerGas) : null,
+    blobGasUsed: block.blobGasUsed ? BigInt(block.blobGasUsed) : undefined,
+    difficulty: block.difficulty ? BigInt(block.difficulty) : undefined,
+    excessBlobGas: block.excessBlobGas ? BigInt(block.excessBlobGas) : undefined,
+    gasLimit: block.gasLimit ? BigInt(block.gasLimit) : undefined,
+    gasUsed: block.gasUsed ? BigInt(block.gasUsed) : undefined,
+    hash: block.hash ? block.hash : null,
+    logsBloom: block.logsBloom ? block.logsBloom : null,
+    nonce: block.nonce ? block.nonce : null,
+    number: block.number ? BigInt(block.number) : null,
+    size: block.size ? BigInt(block.size) : undefined,
+    timestamp: block.timestamp ? BigInt(block.timestamp) : undefined,
+    transactions,
+    totalDifficulty: block.totalDifficulty ? BigInt(block.totalDifficulty) : null
+  };
+}
+
+// node_modules/viem/_esm/actions/public/getBlock.js
+async function getBlock(client, { blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest", includeTransactions: includeTransactions_ } = {}) {
+  const includeTransactions = includeTransactions_ ?? false;
+  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
+  let block = null;
+  if (blockHash) {
+    block = await client.request({
+      method: "eth_getBlockByHash",
+      params: [blockHash, includeTransactions]
+    }, { dedupe: true });
+  } else {
+    block = await client.request({
+      method: "eth_getBlockByNumber",
+      params: [blockNumberHex || blockTag, includeTransactions]
+    }, { dedupe: Boolean(blockNumberHex) });
+  }
+  if (!block)
+    throw new BlockNotFoundError({ blockHash, blockNumber });
+  const format2 = client.chain?.formatters?.block?.format || formatBlock;
+  return format2(block, "getBlock");
+}
+
+// node_modules/viem/_esm/actions/public/getGasPrice.js
+async function getGasPrice(client) {
+  const gasPrice = await client.request({
+    method: "eth_gasPrice"
+  });
+  return BigInt(gasPrice);
+}
+
+// node_modules/viem/_esm/actions/public/estimateMaxPriorityFeePerGas.js
+async function estimateMaxPriorityFeePerGas(client, args) {
+  return internal_estimateMaxPriorityFeePerGas(client, args);
+}
+async function internal_estimateMaxPriorityFeePerGas(client, args) {
+  const { block: block_, chain = client.chain, request } = args || {};
+  try {
+    const maxPriorityFeePerGas = chain?.fees?.maxPriorityFeePerGas ?? chain?.fees?.defaultPriorityFee;
+    if (typeof maxPriorityFeePerGas === "function") {
+      const block = block_ || await getAction(client, getBlock, "getBlock")({});
+      const maxPriorityFeePerGas_ = await maxPriorityFeePerGas({
+        block,
+        client,
+        request
+      });
+      if (maxPriorityFeePerGas_ === null)
+        throw new Error;
+      return maxPriorityFeePerGas_;
+    }
+    if (typeof maxPriorityFeePerGas !== "undefined")
+      return maxPriorityFeePerGas;
+    const maxPriorityFeePerGasHex = await client.request({
+      method: "eth_maxPriorityFeePerGas"
+    });
+    return hexToBigInt(maxPriorityFeePerGasHex);
+  } catch {
+    const [block, gasPrice] = await Promise.all([
+      block_ ? Promise.resolve(block_) : getAction(client, getBlock, "getBlock")({}),
+      getAction(client, getGasPrice, "getGasPrice")({})
+    ]);
+    if (typeof block.baseFeePerGas !== "bigint")
+      throw new Eip1559FeesNotSupportedError;
+    const maxPriorityFeePerGas = gasPrice - block.baseFeePerGas;
+    if (maxPriorityFeePerGas < 0n)
+      return 0n;
+    return maxPriorityFeePerGas;
+  }
+}
+
+// node_modules/viem/_esm/actions/public/estimateFeesPerGas.js
+async function estimateFeesPerGas(client, args) {
+  return internal_estimateFeesPerGas(client, args);
+}
+async function internal_estimateFeesPerGas(client, args) {
+  const { block: block_, chain = client.chain, request, type = "eip1559" } = args || {};
+  const baseFeeMultiplier = await (async () => {
+    if (typeof chain?.fees?.baseFeeMultiplier === "function")
+      return chain.fees.baseFeeMultiplier({
+        block: block_,
+        client,
+        request
+      });
+    return chain?.fees?.baseFeeMultiplier ?? 1.2;
+  })();
+  if (baseFeeMultiplier < 1)
+    throw new BaseFeeScalarError;
+  const decimals = baseFeeMultiplier.toString().split(".")[1]?.length ?? 0;
+  const denominator = 10 ** decimals;
+  const multiply = (base) => base * BigInt(Math.round(baseFeeMultiplier * denominator)) / BigInt(denominator);
+  const block = block_ ? block_ : await getAction(client, getBlock, "getBlock")({});
+  if (typeof chain?.fees?.estimateFeesPerGas === "function") {
+    const fees = await chain.fees.estimateFeesPerGas({
+      block: block_,
+      client,
+      multiply,
+      request,
+      type
+    });
+    if (fees !== null)
+      return fees;
+  }
+  if (type === "eip1559") {
+    if (typeof block.baseFeePerGas !== "bigint")
+      throw new Eip1559FeesNotSupportedError;
+    const maxPriorityFeePerGas = typeof request?.maxPriorityFeePerGas === "bigint" ? request.maxPriorityFeePerGas : await internal_estimateMaxPriorityFeePerGas(client, {
+      block,
+      chain,
+      request
+    });
+    const baseFeePerGas = multiply(block.baseFeePerGas);
+    const maxFeePerGas = request?.maxFeePerGas ?? baseFeePerGas + maxPriorityFeePerGas;
+    return {
+      maxFeePerGas,
+      maxPriorityFeePerGas
+    };
+  }
+  const gasPrice = request?.gasPrice ?? multiply(await getAction(client, getGasPrice, "getGasPrice")({}));
+  return {
+    gasPrice
+  };
+}
+
+// node_modules/viem/_esm/actions/public/getTransactionCount.js
+init_formatBlockParameter();
+init_fromHex();
+async function getTransactionCount(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical }) {
+  const block = formatBlockParameter({
+    blockHash,
+    blockNumber,
+    blockTag,
+    requireCanonical
+  });
+  const count = await client.request({
+    method: "eth_getTransactionCount",
+    params: [address, block]
+  }, {
+    dedupe: typeof blockNumber === "bigint" || blockHash !== undefined
+  });
+  return hexToNumber(count);
+}
+
+// node_modules/viem/_esm/actions/wallet/prepareTransactionRequest.js
+init_transaction();
+
+// node_modules/viem/_esm/utils/blob/blobsToCommitments.js
+init_toBytes();
+init_toHex();
+function blobsToCommitments(parameters) {
+  const { kzg } = parameters;
+  const to = parameters.to ?? (typeof parameters.blobs[0] === "string" ? "hex" : "bytes");
+  const blobs = typeof parameters.blobs[0] === "string" ? parameters.blobs.map((x) => hexToBytes(x)) : parameters.blobs;
+  const commitments = [];
+  for (const blob of blobs)
+    commitments.push(Uint8Array.from(kzg.blobToKzgCommitment(blob)));
+  return to === "bytes" ? commitments : commitments.map((x) => bytesToHex(x));
+}
+
+// node_modules/viem/_esm/utils/blob/blobsToProofs.js
+init_toBytes();
+init_toHex();
+function blobsToProofs(parameters) {
+  const { kzg } = parameters;
+  const to = parameters.to ?? (typeof parameters.blobs[0] === "string" ? "hex" : "bytes");
+  const blobs = typeof parameters.blobs[0] === "string" ? parameters.blobs.map((x) => hexToBytes(x)) : parameters.blobs;
+  const commitments = typeof parameters.commitments[0] === "string" ? parameters.commitments.map((x) => hexToBytes(x)) : parameters.commitments;
+  const proofs = [];
+  for (let i = 0;i < blobs.length; i++) {
+    const blob = blobs[i];
+    const commitment = commitments[i];
+    proofs.push(Uint8Array.from(kzg.computeBlobKzgProof(blob, commitment)));
+  }
+  return to === "bytes" ? proofs : proofs.map((x) => bytesToHex(x));
+}
+
+// node_modules/viem/_esm/utils/blob/commitmentToVersionedHash.js
+init_toHex();
+
+// node_modules/@noble/hashes/esm/sha256.js
+init_sha2();
+var sha2563 = sha2562;
+
+// node_modules/viem/_esm/utils/hash/sha256.js
+init_toBytes();
+init_toHex();
+function sha2564(value, to_) {
+  const to = to_ || "hex";
+  const bytes = sha2563(isHex(value, { strict: false }) ? toBytes(value) : value);
+  if (to === "bytes")
+    return bytes;
+  return toHex(bytes);
+}
+
+// node_modules/viem/_esm/utils/blob/commitmentToVersionedHash.js
+function commitmentToVersionedHash(parameters) {
+  const { commitment, version: version5 = 1 } = parameters;
+  const to = parameters.to ?? (typeof commitment === "string" ? "hex" : "bytes");
+  const versionedHash = sha2564(commitment, "bytes");
+  versionedHash.set([version5], 0);
+  return to === "bytes" ? versionedHash : bytesToHex(versionedHash);
+}
+
+// node_modules/viem/_esm/utils/blob/commitmentsToVersionedHashes.js
+function commitmentsToVersionedHashes(parameters) {
+  const { commitments, version: version5 } = parameters;
+  const to = parameters.to ?? (typeof commitments[0] === "string" ? "hex" : "bytes");
+  const hashes = [];
+  for (const commitment of commitments) {
+    hashes.push(commitmentToVersionedHash({
+      commitment,
+      to,
+      version: version5
+    }));
+  }
+  return hashes;
+}
+
+// node_modules/viem/_esm/constants/blob.js
+var blobsPerTransaction = 6;
+var bytesPerFieldElement = 32;
+var fieldElementsPerBlob = 4096;
+var bytesPerBlob = bytesPerFieldElement * fieldElementsPerBlob;
+var maxBytesPerTransaction = bytesPerBlob * blobsPerTransaction - 1 - 1 * fieldElementsPerBlob * blobsPerTransaction;
+
+// node_modules/viem/_esm/errors/blob.js
+init_base();
+
+class BlobSizeTooLargeError extends BaseError {
+  constructor({ maxSize, size: size5 }) {
+    super("Blob size is too large.", {
+      metaMessages: [`Max: ${maxSize} bytes`, `Given: ${size5} bytes`],
+      name: "BlobSizeTooLargeError"
+    });
+  }
+}
+
+class EmptyBlobError extends BaseError {
+  constructor() {
+    super("Blob data must not be empty.", { name: "EmptyBlobError" });
+  }
+}
+
+// node_modules/viem/_esm/utils/blob/toBlobs.js
+init_cursor2();
+init_size();
+init_toBytes();
+init_toHex();
+function toBlobs(parameters) {
+  const to = parameters.to ?? (typeof parameters.data === "string" ? "hex" : "bytes");
+  const data = typeof parameters.data === "string" ? hexToBytes(parameters.data) : parameters.data;
+  const size_ = size2(data);
+  if (!size_)
+    throw new EmptyBlobError;
+  if (size_ > maxBytesPerTransaction)
+    throw new BlobSizeTooLargeError({
+      maxSize: maxBytesPerTransaction,
+      size: size_
+    });
+  const blobs = [];
+  let active = true;
+  let position = 0;
+  while (active) {
+    const blob = createCursor(new Uint8Array(bytesPerBlob));
+    let size5 = 0;
+    while (size5 < fieldElementsPerBlob) {
+      const bytes = data.slice(position, position + (bytesPerFieldElement - 1));
+      blob.pushByte(0);
+      blob.pushBytes(bytes);
+      if (bytes.length < 31) {
+        blob.pushByte(128);
+        active = false;
+        break;
+      }
+      size5++;
+      position += 31;
+    }
+    blobs.push(blob);
+  }
+  return to === "bytes" ? blobs.map((x) => x.bytes) : blobs.map((x) => bytesToHex(x.bytes));
+}
+
+// node_modules/viem/_esm/utils/blob/toBlobSidecars.js
+function toBlobSidecars(parameters) {
+  const { data, kzg, to } = parameters;
+  const blobs = parameters.blobs ?? toBlobs({ data, to });
+  const commitments = parameters.commitments ?? blobsToCommitments({ blobs, kzg, to });
+  const proofs = parameters.proofs ?? blobsToProofs({ blobs, commitments, kzg, to });
+  const sidecars = [];
+  for (let i = 0;i < blobs.length; i++)
+    sidecars.push({
+      blob: blobs[i],
+      commitment: commitments[i],
+      proof: proofs[i]
+    });
+  return sidecars;
+}
+
+// node_modules/viem/_esm/actions/wallet/prepareTransactionRequest.js
+init_lru();
+init_assertRequest();
+
+// node_modules/viem/_esm/utils/transaction/getTransactionType.js
+init_transaction();
+function getTransactionType(transaction) {
+  if (transaction.type)
+    return transaction.type;
+  if (typeof transaction.authorizationList !== "undefined")
+    return "eip7702";
+  if (typeof transaction.blobs !== "undefined" || typeof transaction.blobVersionedHashes !== "undefined" || typeof transaction.maxFeePerBlobGas !== "undefined" || typeof transaction.sidecars !== "undefined")
+    return "eip4844";
+  if (typeof transaction.maxFeePerGas !== "undefined" || typeof transaction.maxPriorityFeePerGas !== "undefined") {
+    return "eip1559";
+  }
+  if (typeof transaction.gasPrice !== "undefined") {
+    if (typeof transaction.accessList !== "undefined")
+      return "eip2930";
+    return "legacy";
+  }
+  throw new InvalidSerializableTransactionError({ transaction });
+}
+// node_modules/viem/_esm/actions/public/fillTransaction.js
+init_transaction();
+
+// node_modules/viem/_esm/utils/errors/getTransactionError.js
+init_node();
+init_transaction();
+init_getNodeError();
+function getTransactionError(err, { docsPath: docsPath7, ...args }) {
+  const cause = (() => {
+    const cause2 = getNodeError(err, args);
+    if (cause2 instanceof UnknownNodeError)
+      return err;
+    return cause2;
+  })();
+  return new TransactionExecutionError(cause, {
+    docsPath: docsPath7,
+    ...args
+  });
+}
+// node_modules/viem/_esm/actions/public/fillTransaction.js
+init_transactionRequest();
+init_assertRequest();
+
+// node_modules/viem/_esm/actions/public/getChainId.js
+init_fromHex();
+async function getChainId(client) {
+  const chainIdHex = await client.request({
+    method: "eth_chainId"
+  }, { dedupe: true });
+  return hexToNumber(chainIdHex);
+}
+
+// node_modules/viem/_esm/actions/public/fillTransaction.js
+async function fillTransaction(client, parameters) {
+  const { account = client.account, accessList, authorizationList, chain = client.chain, blobVersionedHashes, blobs, data, gas, gasPrice, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, nonce: nonce_, nonceManager, to, type, value, ...rest } = parameters;
+  const nonce = await (async () => {
+    if (!account)
+      return nonce_;
+    if (!nonceManager)
+      return nonce_;
+    if (typeof nonce_ !== "undefined")
+      return nonce_;
+    const account_ = parseAccount(account);
+    const chainId = chain ? chain.id : await getAction(client, getChainId, "getChainId")({});
+    return await nonceManager.consume({
+      address: account_.address,
+      chainId,
+      client
+    });
+  })();
+  assertRequest(parameters);
+  const chainFormat = chain?.formatters?.transactionRequest?.format;
+  const format2 = chainFormat || formatTransactionRequest;
+  const request = format2({
+    ...extract(rest, { format: chainFormat }),
+    account: account ? parseAccount(account) : undefined,
+    accessList,
+    authorizationList,
+    blobs,
+    blobVersionedHashes,
+    data,
+    gas,
+    gasPrice,
+    maxFeePerBlobGas,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
+    nonce,
+    to,
+    type,
+    value
+  }, "fillTransaction");
+  try {
+    const response = await client.request({
+      method: "eth_fillTransaction",
+      params: [request]
+    });
+    const format3 = chain?.formatters?.transaction?.format || formatTransaction;
+    const transaction = format3(response.tx);
+    delete transaction.blockHash;
+    delete transaction.blockNumber;
+    delete transaction.r;
+    delete transaction.s;
+    delete transaction.transactionIndex;
+    delete transaction.v;
+    delete transaction.yParity;
+    transaction.data = transaction.input;
+    const hasFeePayerSignature = typeof transaction.feePayerSignature !== "undefined" && transaction.feePayerSignature !== null;
+    if (hasFeePayerSignature && typeof nonce !== "undefined" && transaction.nonce !== nonce)
+      throw new FeePayerNonceMismatchError({
+        filledNonce: transaction.nonce,
+        requestedNonce: nonce
+      });
+    if (!hasFeePayerSignature) {
+      if (transaction.gas)
+        transaction.gas = parameters.gas ?? transaction.gas;
+      if (transaction.gasPrice)
+        transaction.gasPrice = parameters.gasPrice ?? transaction.gasPrice;
+      if (transaction.maxFeePerBlobGas)
+        transaction.maxFeePerBlobGas = parameters.maxFeePerBlobGas ?? transaction.maxFeePerBlobGas;
+      if (transaction.maxFeePerGas)
+        transaction.maxFeePerGas = parameters.maxFeePerGas ?? transaction.maxFeePerGas;
+      if (transaction.maxPriorityFeePerGas)
+        transaction.maxPriorityFeePerGas = parameters.maxPriorityFeePerGas ?? transaction.maxPriorityFeePerGas;
+      if (typeof transaction.nonce !== "undefined")
+        transaction.nonce = parameters.nonce ?? transaction.nonce;
+      const feeMultiplier = await (async () => {
+        if (typeof chain?.fees?.baseFeeMultiplier === "function") {
+          const block = await getAction(client, getBlock, "getBlock")({});
+          return chain.fees.baseFeeMultiplier({
+            block,
+            client,
+            request: parameters
+          });
+        }
+        return chain?.fees?.baseFeeMultiplier ?? 1.2;
+      })();
+      if (feeMultiplier < 1)
+        throw new BaseFeeScalarError;
+      const decimals = feeMultiplier.toString().split(".")[1]?.length ?? 0;
+      const denominator = 10 ** decimals;
+      const multiplyFee = (base) => base * BigInt(Math.round(feeMultiplier * denominator)) / BigInt(denominator);
+      if (transaction.maxFeePerGas && !parameters.maxFeePerGas)
+        transaction.maxFeePerGas = multiplyFee(transaction.maxFeePerGas);
+      if (transaction.gasPrice && !parameters.gasPrice)
+        transaction.gasPrice = multiplyFee(transaction.gasPrice);
+    }
+    return {
+      raw: response.raw,
+      transaction: {
+        from: request.from,
+        ...transaction
+      },
+      ...response.capabilities ? { capabilities: response.capabilities } : {}
+    };
+  } catch (err) {
+    throw getTransactionError(err, {
+      ...parameters,
+      chain: client.chain
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/wallet/prepareTransactionRequest.js
+var defaultParameters = [
+  "blobVersionedHashes",
+  "chainId",
+  "fees",
+  "gas",
+  "nonce",
+  "type"
+];
+var eip1559NetworkCache = /* @__PURE__ */ new Map;
+var supportsFillTransaction = /* @__PURE__ */ new LruMap(128);
+async function prepareTransactionRequest(client, args) {
+  let request = args;
+  request.account ??= client.account;
+  request.parameters ??= defaultParameters;
+  const { account: account_, chain = client.chain, nonceManager, parameters } = request;
+  const prepareTransactionRequest2 = (() => {
+    if (typeof chain?.prepareTransactionRequest === "function")
+      return {
+        fn: chain.prepareTransactionRequest,
+        runAt: ["beforeFillTransaction"]
+      };
+    if (Array.isArray(chain?.prepareTransactionRequest))
+      return {
+        fn: chain.prepareTransactionRequest[0],
+        runAt: chain.prepareTransactionRequest[1].runAt
+      };
+    return;
+  })();
+  let chainId;
+  async function getChainId2() {
+    if (chainId)
+      return chainId;
+    if (typeof request.chainId !== "undefined")
+      return request.chainId;
+    if (chain)
+      return chain.id;
+    const chainId_ = await getAction(client, getChainId, "getChainId")({});
+    chainId = chainId_;
+    return chainId;
+  }
+  let account = account_ ? parseAccount(account_) : account_;
+  let nonce = request.nonce;
+  if (prepareTransactionRequest2?.fn && prepareTransactionRequest2.runAt?.includes("beforeFillTransaction")) {
+    request = await prepareTransactionRequest2.fn({ ...request, chain }, {
+      client,
+      phase: "beforeFillTransaction"
+    });
+    nonce ??= request.nonce;
+    const sender = request.account ?? request.from;
+    account = sender ? parseAccount(sender) : undefined;
+  }
+  if (parameters.includes("nonce") && typeof nonce === "undefined" && account && nonceManager) {
+    const chainId2 = await getChainId2();
+    nonce = await nonceManager.consume({
+      address: account.address,
+      chainId: chainId2,
+      client
+    });
+  }
+  const attemptFill = (() => {
+    if ((parameters.includes("blobVersionedHashes") || parameters.includes("sidecars")) && request.kzg && request.blobs)
+      return false;
+    if (parameters.length > 0 && "feePayer" in request && request.feePayer && !(("feePayerSignature" in request) && request.feePayerSignature))
+      return true;
+    if (supportsFillTransaction.get(client.uid) === false)
+      return false;
+    const shouldAttempt = ["fees", "gas"].some((parameter) => parameters.includes(parameter));
+    if (!shouldAttempt)
+      return false;
+    if (parameters.includes("chainId") && typeof request.chainId !== "number")
+      return true;
+    if (parameters.includes("nonce") && typeof nonce !== "number")
+      return true;
+    if (parameters.includes("fees") && typeof request.gasPrice !== "bigint" && (typeof request.maxFeePerGas !== "bigint" || typeof request.maxPriorityFeePerGas !== "bigint"))
+      return true;
+    if (parameters.includes("gas") && typeof request.gas !== "bigint")
+      return true;
+    return false;
+  })();
+  const fillResult = attemptFill ? await getAction(client, fillTransaction, "fillTransaction")({ ...request, nonce }).then((result) => {
+    const { chainId: chainId2, from: from4, gas: gas2, gasPrice, nonce: nonce2, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, type: type2, ...rest } = result.transaction;
+    const feeToken = "feeToken" in rest ? rest.feeToken : undefined;
+    const hasFilledFeePayerSignature = "feePayerSignature" in rest && rest.feePayerSignature !== null && typeof rest.feePayerSignature !== "undefined";
+    const shouldUseFilledFeeToken = typeof feeToken !== "undefined" && feeToken !== null && (!("feeToken" in request) || hasFilledFeePayerSignature);
+    supportsFillTransaction.set(client.uid, true);
+    return {
+      ...request,
+      ...from4 ? { from: from4 } : {},
+      ...type2 && !request.type ? { type: type2 } : {},
+      ...typeof chainId2 !== "undefined" ? { chainId: chainId2 } : {},
+      ...typeof gas2 !== "undefined" ? { gas: gas2 } : {},
+      ...typeof gasPrice !== "undefined" ? { gasPrice } : {},
+      ...typeof nonce2 !== "undefined" ? { nonce: nonce2 } : {},
+      ...typeof maxFeePerBlobGas !== "undefined" && request.type !== "legacy" && request.type !== "eip2930" ? { maxFeePerBlobGas } : {},
+      ...typeof maxFeePerGas !== "undefined" && request.type !== "legacy" && request.type !== "eip2930" ? { maxFeePerGas } : {},
+      ...typeof maxPriorityFeePerGas !== "undefined" && request.type !== "legacy" && request.type !== "eip2930" ? { maxPriorityFeePerGas } : {},
+      ..."nonceKey" in rest && typeof rest.nonceKey !== "undefined" ? { nonceKey: rest.nonceKey } : {},
+      ..."keyAuthorization" in rest && typeof rest.keyAuthorization !== "undefined" && rest.keyAuthorization !== null && !("keyAuthorization" in request) ? { keyAuthorization: rest.keyAuthorization } : {},
+      ..."feePayerSignature" in rest && typeof rest.feePayerSignature !== "undefined" && rest.feePayerSignature !== null ? { feePayerSignature: rest.feePayerSignature } : {},
+      ...shouldUseFilledFeeToken ? { feeToken } : {},
+      ...result.capabilities ? { _capabilities: result.capabilities } : {}
+    };
+  }).catch((e) => {
+    const error62 = e;
+    if (error62.name !== "TransactionExecutionError")
+      return request;
+    const nonceMismatch = error62.walk?.((error63) => error63 instanceof FeePayerNonceMismatchError);
+    if (nonceMismatch)
+      throw e;
+    const executionReverted = error62.walk?.((e2) => {
+      const error63 = e2;
+      return error63.name === "ExecutionRevertedError";
+    });
+    if (executionReverted)
+      throw e;
+    const unsupported = error62.walk?.((e2) => {
+      const error63 = e2;
+      return error63.name === "MethodNotFoundRpcError" || error63.name === "MethodNotSupportedRpcError" || error63.message?.includes("eth_fillTransaction is not available");
+    });
+    if (unsupported)
+      supportsFillTransaction.set(client.uid, false);
+    return request;
+  }) : request;
+  nonce ??= fillResult.nonce;
+  request = {
+    ...fillResult,
+    ...account ? { from: account?.address } : {},
+    ...typeof nonce !== "undefined" ? { nonce } : {}
+  };
+  const { blobs, gas, kzg, type } = request;
+  if (prepareTransactionRequest2?.fn && prepareTransactionRequest2.runAt?.includes("beforeFillParameters")) {
+    request = await prepareTransactionRequest2.fn({ ...request, chain }, {
+      client,
+      phase: "beforeFillParameters"
+    });
+  }
+  let block;
+  async function getBlock2() {
+    if (block)
+      return block;
+    block = await getAction(client, getBlock, "getBlock")({ blockTag: "latest" });
+    return block;
+  }
+  if (parameters.includes("nonce") && typeof nonce === "undefined" && account && !nonceManager)
+    request.nonce = await getAction(client, getTransactionCount, "getTransactionCount")({
+      address: account.address,
+      blockTag: "pending"
+    });
+  if ((parameters.includes("blobVersionedHashes") || parameters.includes("sidecars")) && blobs && kzg) {
+    const commitments = blobsToCommitments({ blobs, kzg });
+    if (parameters.includes("blobVersionedHashes")) {
+      const versionedHashes = commitmentsToVersionedHashes({
+        commitments,
+        to: "hex"
+      });
+      request.blobVersionedHashes = versionedHashes;
+    }
+    if (parameters.includes("sidecars")) {
+      const proofs = blobsToProofs({ blobs, commitments, kzg });
+      const sidecars = toBlobSidecars({
+        blobs,
+        commitments,
+        proofs,
+        to: "hex"
+      });
+      request.sidecars = sidecars;
+    }
+  }
+  if (parameters.includes("chainId"))
+    request.chainId = await getChainId2();
+  if ((parameters.includes("fees") || parameters.includes("type")) && typeof type === "undefined") {
+    try {
+      request.type = getTransactionType(request);
+    } catch {
+      let isEip1559Network = eip1559NetworkCache.get(client.uid);
+      if (typeof isEip1559Network === "undefined") {
+        const block2 = await getBlock2();
+        isEip1559Network = typeof block2?.baseFeePerGas === "bigint";
+        eip1559NetworkCache.set(client.uid, isEip1559Network);
+      }
+      request.type = isEip1559Network ? "eip1559" : "legacy";
+    }
+  }
+  if (parameters.includes("fees")) {
+    if (request.type !== "legacy" && request.type !== "eip2930") {
+      if (typeof request.maxFeePerGas === "undefined" || typeof request.maxPriorityFeePerGas === "undefined") {
+        const block2 = await getBlock2();
+        const { maxFeePerGas, maxPriorityFeePerGas } = await internal_estimateFeesPerGas(client, {
+          block: block2,
+          chain,
+          request
+        });
+        if (typeof request.maxPriorityFeePerGas === "undefined" && request.maxFeePerGas && request.maxFeePerGas < maxPriorityFeePerGas)
+          throw new MaxFeePerGasTooLowError({
+            maxPriorityFeePerGas
+          });
+        request.maxPriorityFeePerGas = maxPriorityFeePerGas;
+        request.maxFeePerGas = maxFeePerGas;
+      }
+    } else {
+      if (typeof request.maxFeePerGas !== "undefined" || typeof request.maxPriorityFeePerGas !== "undefined")
+        throw new Eip1559FeesNotSupportedError;
+      if (typeof request.gasPrice === "undefined") {
+        const block2 = await getBlock2();
+        const { gasPrice: gasPrice_ } = await internal_estimateFeesPerGas(client, {
+          block: block2,
+          chain,
+          request,
+          type: "legacy"
+        });
+        request.gasPrice = gasPrice_;
+      }
+    }
+  }
+  if (parameters.includes("gas") && typeof gas === "undefined")
+    request.gas = await getAction(client, estimateGas, "estimateGas")({
+      ...request,
+      account,
+      prepare: account?.type === "local" ? [] : ["blobVersionedHashes"]
+    });
+  if (prepareTransactionRequest2?.fn && prepareTransactionRequest2.runAt?.includes("afterFillParameters"))
+    request = await prepareTransactionRequest2.fn({ ...request, chain }, {
+      client,
+      phase: "afterFillParameters"
+    });
+  assertRequest(request);
+  delete request.parameters;
+  return request;
+}
+
+// node_modules/viem/_esm/actions/public/estimateGas.js
+async function estimateGas(client, args) {
+  const { account: account_ = client.account, prepare = true } = args;
+  const account = account_ ? parseAccount(account_) : undefined;
+  const parameters = (() => {
+    if (Array.isArray(prepare))
+      return prepare;
+    if (account?.type !== "local")
+      return ["blobVersionedHashes"];
+    return;
+  })();
+  try {
+    const to = await (async () => {
+      if (args.to)
+        return args.to;
+      if (args.authorizationList && args.authorizationList.length > 0)
+        return await recoverAuthorizationAddress({
+          authorization: args.authorizationList[0]
+        }).catch(() => {
+          throw new BaseError("`to` is required. Could not infer from `authorizationList`");
+        });
+      return;
+    })();
+    const { accessList, authorizationList, blobs, blobVersionedHashes, blockNumber, blockTag, data, gas, gasPrice, maxFeePerBlobGas, maxFeePerGas, maxPriorityFeePerGas, nonce, value, stateOverride, ...rest } = prepare ? await prepareTransactionRequest(client, {
+      ...args,
+      parameters,
+      to
+    }) : args;
+    if (gas && args.gas !== gas)
+      return gas;
+    const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
+    const block = blockNumberHex || blockTag;
+    const rpcStateOverride = serializeStateOverride(stateOverride);
+    assertRequest(args);
+    const chainFormat = client.chain?.formatters?.transactionRequest?.format;
+    const format2 = chainFormat || formatTransactionRequest;
+    const request = format2({
+      ...extract(rest, { format: chainFormat }),
+      account,
+      accessList,
+      authorizationList,
+      blobs,
+      blobVersionedHashes,
+      data,
+      gasPrice,
+      maxFeePerBlobGas,
+      maxFeePerGas,
+      maxPriorityFeePerGas,
+      nonce,
+      to,
+      value
+    }, "estimateGas");
+    return BigInt(await client.request({
+      method: "eth_estimateGas",
+      params: rpcStateOverride ? [
+        request,
+        block ?? client.experimental_blockTag ?? "latest",
+        rpcStateOverride
+      ] : block ? [request, block] : [request]
+    }));
+  } catch (err) {
+    throw getEstimateGasError(err, {
+      ...args,
+      account,
+      chain: client.chain
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/public/estimateContractGas.js
+async function estimateContractGas(client, parameters) {
+  const { abi, address, args, functionName, dataSuffix = typeof client.dataSuffix === "string" ? client.dataSuffix : client.dataSuffix?.value, ...request } = parameters;
+  const data = encodeFunctionData({
+    abi,
+    args,
+    functionName
+  });
+  try {
+    const gas = await getAction(client, estimateGas, "estimateGas")({
+      data: `${data}${dataSuffix ? dataSuffix.replace("0x", "") : ""}`,
+      to: address,
+      ...request
+    });
+    return gas;
+  } catch (error62) {
+    const account = request.account ? parseAccount(request.account) : undefined;
+    throw getContractError(error62, {
+      abi,
+      address,
+      args,
+      docsPath: "/docs/contract/estimateContractGas",
+      functionName,
+      sender: account?.address
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/public/getBalance.js
+init_abis();
+init_decodeFunctionResult();
+init_encodeFunctionData();
+init_formatBlockParameter();
+init_call();
+async function getBalance(client, { address, blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest", requireCanonical }) {
+  const block = formatBlockParameter({
+    blockHash,
+    blockNumber,
+    blockTag,
+    requireCanonical
+  });
+  if (client.batch?.multicall && client.chain?.contracts?.multicall3) {
+    const multicall3Address = client.chain.contracts.multicall3.address;
+    const calldata = encodeFunctionData({
+      abi: multicall3Abi,
+      functionName: "getEthBalance",
+      args: [address]
+    });
+    const { data } = await getAction(client, call, "call")({
+      to: multicall3Address,
+      data: calldata,
+      blockHash,
+      blockNumber,
+      blockTag,
+      requireCanonical
+    });
+    return decodeFunctionResult({
+      abi: multicall3Abi,
+      functionName: "getEthBalance",
+      args: [address],
+      data: data || "0x"
+    });
+  }
+  const balance = await client.request({
+    method: "eth_getBalance",
+    params: [address, block]
+  });
+  return BigInt(balance);
+}
+
+// node_modules/viem/_esm/actions/public/getBlobBaseFee.js
+async function getBlobBaseFee(client) {
+  const baseFee = await client.request({
+    method: "eth_blobBaseFee"
+  });
+  return BigInt(baseFee);
+}
+
+// node_modules/viem/_esm/utils/promise/withCache.js
+var promiseCache = /* @__PURE__ */ new Map;
+var responseCache = /* @__PURE__ */ new Map;
+function getCache(cacheKey) {
+  const buildCache = (cacheKey2, cache) => ({
+    clear: () => cache.delete(cacheKey2),
+    get: () => cache.get(cacheKey2),
+    set: (data) => cache.set(cacheKey2, data)
+  });
+  const promise2 = buildCache(cacheKey, promiseCache);
+  const response = buildCache(cacheKey, responseCache);
+  return {
+    clear: () => {
+      promise2.clear();
+      response.clear();
+    },
+    promise: promise2,
+    response
+  };
+}
+async function withCache(fn, { cacheKey, cacheTime = Number.POSITIVE_INFINITY }) {
+  const cache = getCache(cacheKey);
+  const response = cache.response.get();
+  if (response && cacheTime > 0) {
+    const age = Date.now() - response.created.getTime();
+    if (age < cacheTime)
+      return response.data;
+  }
+  let promise2 = cache.promise.get();
+  if (!promise2) {
+    promise2 = fn();
+    cache.promise.set(promise2);
+  }
+  try {
+    const data = await promise2;
+    cache.response.set({ created: new Date, data });
+    return data;
+  } finally {
+    cache.promise.clear();
+  }
+}
+
+// node_modules/viem/_esm/actions/public/getBlockNumber.js
+var cacheKey = (id) => `blockNumber.${id}`;
+async function getBlockNumber(client, { cacheTime = client.cacheTime } = {}) {
+  const blockNumberHex = await withCache(() => client.request({
+    method: "eth_blockNumber"
+  }), { cacheKey: cacheKey(client.uid), cacheTime });
+  return BigInt(blockNumberHex);
+}
+
+// node_modules/viem/_esm/actions/public/getBlockReceipts.js
+init_toHex();
+
+// node_modules/viem/_esm/utils/formatters/transactionReceipt.js
+init_fromHex();
+
+// node_modules/viem/_esm/utils/formatters/log.js
+function formatLog(log2, { args, eventName } = {}) {
+  return {
+    ...log2,
+    blockHash: log2.blockHash ? log2.blockHash : null,
+    blockNumber: log2.blockNumber ? BigInt(log2.blockNumber) : null,
+    blockTimestamp: log2.blockTimestamp ? BigInt(log2.blockTimestamp) : log2.blockTimestamp === null ? null : undefined,
+    logIndex: log2.logIndex ? Number(log2.logIndex) : null,
+    transactionHash: log2.transactionHash ? log2.transactionHash : null,
+    transactionIndex: log2.transactionIndex ? Number(log2.transactionIndex) : null,
+    ...eventName ? { args, eventName } : {}
+  };
+}
+
+// node_modules/viem/_esm/utils/formatters/transactionReceipt.js
+var receiptStatuses = {
+  "0x0": "reverted",
+  "0x1": "success"
+};
+function formatTransactionReceipt(transactionReceipt, _) {
+  const receipt = {
+    ...transactionReceipt,
+    blockNumber: transactionReceipt.blockNumber ? BigInt(transactionReceipt.blockNumber) : null,
+    contractAddress: transactionReceipt.contractAddress ? transactionReceipt.contractAddress : null,
+    cumulativeGasUsed: transactionReceipt.cumulativeGasUsed ? BigInt(transactionReceipt.cumulativeGasUsed) : null,
+    effectiveGasPrice: transactionReceipt.effectiveGasPrice ? BigInt(transactionReceipt.effectiveGasPrice) : null,
+    gasUsed: transactionReceipt.gasUsed ? BigInt(transactionReceipt.gasUsed) : null,
+    logs: transactionReceipt.logs ? transactionReceipt.logs.map((log2) => formatLog(log2)) : null,
+    to: transactionReceipt.to ? transactionReceipt.to : null,
+    transactionIndex: transactionReceipt.transactionIndex ? hexToNumber(transactionReceipt.transactionIndex) : null,
+    status: transactionReceipt.status ? receiptStatuses[transactionReceipt.status] : null,
+    type: transactionReceipt.type ? transactionType[transactionReceipt.type] || transactionReceipt.type : null
+  };
+  if (transactionReceipt.blobGasPrice)
+    receipt.blobGasPrice = BigInt(transactionReceipt.blobGasPrice);
+  if (transactionReceipt.blobGasUsed)
+    receipt.blobGasUsed = BigInt(transactionReceipt.blobGasUsed);
+  return receipt;
+}
+
+// node_modules/viem/_esm/actions/public/getBlockReceipts.js
+async function getBlockReceipts(client, { blockHash, blockNumber, blockTag = client.experimental_blockTag ?? "latest" } = {}) {
+  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
+  const receipts = await client.request({
+    method: "eth_getBlockReceipts",
+    params: [blockHash || blockNumberHex || blockTag]
+  }, { dedupe: Boolean(blockHash || blockNumberHex) });
+  if (!receipts)
+    throw new BlockNotFoundError({ blockHash, blockNumber });
+  const format2 = client.chain?.formatters?.transactionReceipt?.format || formatTransactionReceipt;
+  return receipts.map((receipt) => format2(receipt, "getBlockReceipts"));
+}
+
+// node_modules/viem/_esm/actions/public/getBlockTransactionCount.js
+init_fromHex();
+init_toHex();
+async function getBlockTransactionCount(client, { blockHash, blockNumber, blockTag = "latest" } = {}) {
+  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
+  let count;
+  if (blockHash) {
+    count = await client.request({
+      method: "eth_getBlockTransactionCountByHash",
+      params: [blockHash]
+    }, { dedupe: true });
+  } else {
+    count = await client.request({
+      method: "eth_getBlockTransactionCountByNumber",
+      params: [blockNumberHex || blockTag]
+    }, { dedupe: Boolean(blockNumberHex) });
+  }
+  return hexToNumber(count);
+}
+
+// node_modules/viem/_esm/actions/public/getCode.js
+init_formatBlockParameter();
+async function getCode(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical }) {
+  const block = formatBlockParameter({
+    blockHash,
+    blockNumber,
+    blockTag,
+    requireCanonical
+  });
+  const hex3 = await client.request({
+    method: "eth_getCode",
+    params: [address, block]
+  }, {
+    dedupe: typeof blockNumber === "bigint" || blockHash !== undefined
+  });
+  if (hex3 === "0x")
+    return;
+  return hex3;
+}
+
+// node_modules/viem/_esm/actions/public/getContractEvents.js
+init_getAbiItem();
+
+// node_modules/viem/_esm/utils/abi/parseEventLogs.js
+init_isAddressEqual();
+init_toBytes();
+init_keccak256();
+init_toEventSelector();
+
+// node_modules/viem/_esm/utils/abi/decodeEventLog.js
+init_abi();
+init_cursor();
+init_size();
+init_toEventSelector();
+init_decodeAbiParameters();
+init_formatAbiItem();
+var docsPath7 = "/docs/contract/decodeEventLog";
+function decodeEventLog(parameters) {
+  const { abi, data, strict: strict_, topics } = parameters;
+  const strict = strict_ ?? true;
+  const [signature, ...argTopics] = topics;
+  if (!signature)
+    throw new AbiEventSignatureEmptyTopicsError({ docsPath: docsPath7 });
+  const abiItem = abi.find((x) => x.type === "event" && signature === toEventSelector(formatAbiItem(x)));
+  if (!(abiItem && ("name" in abiItem)) || abiItem.type !== "event")
+    throw new AbiEventSignatureNotFoundError(signature, { docsPath: docsPath7 });
+  const { name, inputs } = abiItem;
+  const isUnnamed = inputs?.some((x) => !(("name" in x) && x.name));
+  const args = isUnnamed ? [] : {};
+  const indexedInputs = inputs.map((x, i) => [x, i]).filter(([x]) => ("indexed" in x) && x.indexed);
+  const missingIndexedInputs = [];
+  for (let i = 0;i < indexedInputs.length; i++) {
+    const [param, argIndex] = indexedInputs[i];
+    const topic = argTopics[i];
+    if (!topic) {
+      if (strict)
+        throw new DecodeLogTopicsMismatch({
+          abiItem,
+          param
+        });
+      missingIndexedInputs.push([param, argIndex]);
+      continue;
+    }
+    args[isUnnamed ? argIndex : param.name || argIndex] = decodeTopic({
+      param,
+      value: topic
+    });
+  }
+  const nonIndexedInputs = inputs.filter((x) => !(("indexed" in x) && x.indexed));
+  const inputsToDecode = strict ? nonIndexedInputs : [...missingIndexedInputs.map(([param]) => param), ...nonIndexedInputs];
+  if (inputsToDecode.length > 0) {
+    if (data && data !== "0x") {
+      try {
+        const decodedData = decodeAbiParameters(inputsToDecode, data);
+        if (decodedData) {
+          let dataIndex = 0;
+          if (!strict) {
+            for (const [param, argIndex] of missingIndexedInputs) {
+              args[isUnnamed ? argIndex : param.name || argIndex] = decodedData[dataIndex++];
+            }
+          }
+          if (isUnnamed) {
+            for (let i = 0;i < inputs.length; i++)
+              if (args[i] === undefined && dataIndex < decodedData.length)
+                args[i] = decodedData[dataIndex++];
+          } else
+            for (let i = 0;i < nonIndexedInputs.length; i++)
+              args[nonIndexedInputs[i].name] = decodedData[dataIndex++];
+        }
+      } catch (err) {
+        if (strict) {
+          if (err instanceof AbiDecodingDataSizeTooSmallError || err instanceof PositionOutOfBoundsError)
+            throw new DecodeLogDataMismatch({
+              abiItem,
+              data,
+              params: inputsToDecode,
+              size: size2(data)
+            });
+          throw err;
+        }
+      }
+    } else if (strict) {
+      throw new DecodeLogDataMismatch({
+        abiItem,
+        data: "0x",
+        params: inputsToDecode,
+        size: 0
+      });
+    }
+  }
+  return {
+    eventName: name,
+    args: Object.values(args).length > 0 ? args : undefined
+  };
+}
+function decodeTopic({ param, value }) {
+  if (param.type === "string" || param.type === "bytes" || param.type === "tuple" || param.type.match(/^(.*)\[(\d+)?\]$/))
+    return value;
+  const decodedArg = decodeAbiParameters([param], value) || [];
+  return decodedArg[0];
+}
+
+// node_modules/viem/_esm/utils/abi/parseEventLogs.js
+function parseEventLogs(parameters) {
+  const { abi, args, logs, strict = true } = parameters;
+  const eventName = (() => {
+    if (!parameters.eventName)
+      return;
+    if (Array.isArray(parameters.eventName))
+      return parameters.eventName;
+    return [parameters.eventName];
+  })();
+  const abiTopics = abi.filter((abiItem) => abiItem.type === "event").map((abiItem) => ({
+    abi: abiItem,
+    selector: toEventSelector(abiItem)
+  }));
+  return logs.map((log2) => {
+    const formattedLog = typeof log2.blockNumber === "string" ? formatLog(log2) : log2;
+    const abiItems = abiTopics.filter((abiTopic) => formattedLog.topics[0] === abiTopic.selector);
+    if (abiItems.length === 0)
+      return null;
+    let event;
+    let abiItem;
+    for (const item of abiItems) {
+      try {
+        event = decodeEventLog({
+          ...formattedLog,
+          abi: [item.abi],
+          strict: true
+        });
+        abiItem = item;
+        break;
+      } catch {}
+    }
+    if (!event && !strict) {
+      abiItem = abiItems[0];
+      try {
+        event = decodeEventLog({
+          data: formattedLog.data,
+          topics: formattedLog.topics,
+          abi: [abiItem.abi],
+          strict: false
+        });
+      } catch {
+        const isUnnamed = abiItem.abi.inputs?.some((x) => !(("name" in x) && x.name));
+        return {
+          ...formattedLog,
+          args: isUnnamed ? [] : {},
+          eventName: abiItem.abi.name
+        };
+      }
+    }
+    if (!event || !abiItem)
+      return null;
+    if (eventName && !eventName.includes(event.eventName))
+      return null;
+    if (!includesArgs({
+      args: event.args,
+      inputs: abiItem.abi.inputs,
+      matchArgs: args
+    }))
+      return null;
+    return { ...event, ...formattedLog };
+  }).filter(Boolean);
+}
+function includesArgs(parameters) {
+  const { args, inputs, matchArgs } = parameters;
+  if (!matchArgs)
+    return true;
+  if (!args)
+    return false;
+  function isEqual(input2, value, arg) {
+    try {
+      if (input2.type === "address")
+        return isAddressEqual(value, arg);
+      if (input2.type === "string" || input2.type === "bytes")
+        return keccak256(toBytes(value)) === arg;
+      return value === arg;
+    } catch {
+      return false;
+    }
+  }
+  if (Array.isArray(args) && Array.isArray(matchArgs)) {
+    return matchArgs.every((value, index2) => {
+      if (value === null || value === undefined)
+        return true;
+      const input2 = inputs[index2];
+      if (!input2)
+        return false;
+      const value_ = Array.isArray(value) ? value : [value];
+      return value_.some((value2) => isEqual(input2, value2, args[index2]));
+    });
+  }
+  if (typeof args === "object" && !Array.isArray(args) && typeof matchArgs === "object" && !Array.isArray(matchArgs))
+    return Object.entries(matchArgs).every(([key, value]) => {
+      if (value === null || value === undefined)
+        return true;
+      const input2 = inputs.find((input3) => input3.name === key);
+      if (!input2)
+        return false;
+      const value_ = Array.isArray(value) ? value : [value];
+      return value_.some((value2) => isEqual(input2, value2, args[key]));
+    });
+  return false;
+}
+
+// node_modules/viem/_esm/actions/public/getLogs.js
+init_toHex();
+async function getLogs(client, { address, blockHash, fromBlock, toBlock, event, events: events_, args, strict: strict_ } = {}) {
+  const strict = strict_ ?? false;
+  const events = events_ ?? (event ? [event] : undefined);
+  let topics = [];
+  if (events) {
+    const encoded = events.flatMap((event2) => encodeEventTopics({
+      abi: [event2],
+      eventName: event2.name,
+      args: events_ ? undefined : args
+    }));
+    topics = [encoded];
+    if (event)
+      topics = topics[0];
+  }
+  let logs;
+  if (blockHash) {
+    logs = await client.request({
+      method: "eth_getLogs",
+      params: [{ address, topics, blockHash }]
+    });
+  } else {
+    logs = await client.request({
+      method: "eth_getLogs",
+      params: [
+        {
+          address,
+          topics,
+          fromBlock: typeof fromBlock === "bigint" ? numberToHex(fromBlock) : fromBlock,
+          toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock
+        }
+      ]
+    });
+  }
+  const formattedLogs = logs.map((log2) => formatLog(log2));
+  if (!events)
+    return formattedLogs;
+  return parseEventLogs({
+    abi: events,
+    args,
+    logs: formattedLogs,
+    strict
+  });
+}
+
+// node_modules/viem/_esm/actions/public/getContractEvents.js
+async function getContractEvents(client, parameters) {
+  const { abi, address, args, blockHash, eventName, fromBlock, toBlock, strict } = parameters;
+  const event = eventName ? getAbiItem({ abi, name: eventName }) : undefined;
+  const events = !event ? abi.filter((x) => x.type === "event") : undefined;
+  return getAction(client, getLogs, "getLogs")({
+    address,
+    args,
+    blockHash,
+    event,
+    events,
+    fromBlock,
+    toBlock,
+    strict
+  });
+}
+
+// node_modules/viem/_esm/actions/public/getDelegation.js
+init_getAddress();
+init_size();
+init_slice();
+async function getDelegation(client, { address, blockNumber, blockTag = "latest" }) {
+  const code = await getCode(client, {
+    address,
+    ...blockNumber !== undefined ? { blockNumber } : { blockTag }
+  });
+  if (!code)
+    return;
+  if (size2(code) !== 23)
+    return;
+  if (!code.startsWith("0xef0100"))
+    return;
+  return getAddress(slice(code, 3, 23));
+}
+
+// node_modules/viem/_esm/errors/eip712.js
+init_base();
+
+class Eip712DomainNotFoundError extends BaseError {
+  constructor({ address }) {
+    super(`No EIP-712 domain found on contract "${address}".`, {
+      metaMessages: [
+        "Ensure that:",
+        `- The contract is deployed at the address "${address}".`,
+        "- `eip712Domain()` function exists on the contract.",
+        "- `eip712Domain()` function matches signature to ERC-5267 specification."
+      ],
+      name: "Eip712DomainNotFoundError"
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/public/getEip712Domain.js
+async function getEip712Domain(client, parameters) {
+  const { address, factory, factoryData } = parameters;
+  try {
+    const [fields, name, version5, chainId, verifyingContract, salt, extensions] = await getAction(client, readContract, "readContract")({
+      abi,
+      address,
+      functionName: "eip712Domain",
+      factory,
+      factoryData
+    });
+    return {
+      domain: {
+        name,
+        version: version5,
+        chainId: Number(chainId),
+        verifyingContract,
+        salt
+      },
+      extensions,
+      fields
+    };
+  } catch (e) {
+    const error62 = e;
+    if (error62.name === "ContractFunctionExecutionError" && error62.cause.name === "ContractFunctionZeroDataError") {
+      throw new Eip712DomainNotFoundError({ address });
+    }
+    throw error62;
+  }
+}
+var abi = [
+  {
+    inputs: [],
+    name: "eip712Domain",
+    outputs: [
+      { name: "fields", type: "bytes1" },
+      { name: "name", type: "string" },
+      { name: "version", type: "string" },
+      { name: "chainId", type: "uint256" },
+      { name: "verifyingContract", type: "address" },
+      { name: "salt", type: "bytes32" },
+      { name: "extensions", type: "uint256[]" }
+    ],
+    stateMutability: "view",
+    type: "function"
+  }
+];
+
+// node_modules/viem/_esm/actions/public/getFeeHistory.js
+init_toHex();
+
+// node_modules/viem/_esm/utils/formatters/feeHistory.js
+function formatFeeHistory(feeHistory) {
+  return {
+    baseFeePerGas: feeHistory.baseFeePerGas.map((value) => BigInt(value)),
+    gasUsedRatio: feeHistory.gasUsedRatio,
+    oldestBlock: BigInt(feeHistory.oldestBlock),
+    reward: feeHistory.reward?.map((reward) => reward.map((value) => BigInt(value)))
+  };
+}
+
+// node_modules/viem/_esm/actions/public/getFeeHistory.js
+async function getFeeHistory(client, { blockCount, blockNumber, blockTag = "latest", rewardPercentiles }) {
+  const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
+  const feeHistory = await client.request({
+    method: "eth_feeHistory",
+    params: [
+      numberToHex(blockCount),
+      blockNumberHex || blockTag,
+      rewardPercentiles
+    ]
+  }, { dedupe: Boolean(blockNumberHex) });
+  return formatFeeHistory(feeHistory);
+}
+
+// node_modules/viem/_esm/actions/public/getFilterChanges.js
+async function getFilterChanges(_client, { filter }) {
+  const strict = "strict" in filter && filter.strict;
+  const logs = await filter.request({
+    method: "eth_getFilterChanges",
+    params: [filter.id]
+  });
+  if (typeof logs[0] === "string")
+    return logs;
+  const formattedLogs = logs.map((log2) => formatLog(log2));
+  if (!("abi" in filter) || !filter.abi)
+    return formattedLogs;
+  return parseEventLogs({
+    abi: filter.abi,
+    logs: formattedLogs,
+    strict
+  });
+}
+
+// node_modules/viem/_esm/actions/public/getFilterLogs.js
+async function getFilterLogs(_client, { filter }) {
+  const strict = filter.strict ?? false;
+  const logs = await filter.request({
+    method: "eth_getFilterLogs",
+    params: [filter.id]
+  });
+  const formattedLogs = logs.map((log2) => formatLog(log2));
+  if (!filter.abi)
+    return formattedLogs;
+  return parseEventLogs({
+    abi: filter.abi,
+    logs: formattedLogs,
+    strict
+  });
+}
+
+// node_modules/viem/_esm/actions/public/getProof.js
+init_formatBlockParameter();
+
+// node_modules/viem/_esm/utils/index.js
+init_encodeFunctionData();
+init_fromHex();
+
+// node_modules/viem/_esm/utils/formatters/proof.js
+function formatStorageProof(storageProof) {
+  return storageProof.map((proof) => ({
+    ...proof,
+    value: BigInt(proof.value)
+  }));
+}
+function formatProof(proof) {
+  return {
+    ...proof,
+    balance: proof.balance ? BigInt(proof.balance) : undefined,
+    nonce: proof.nonce ? hexToNumber(proof.nonce) : undefined,
+    storageProof: proof.storageProof ? formatStorageProof(proof.storageProof) : undefined
+  };
+}
+
+// node_modules/viem/_esm/actions/public/getProof.js
+async function getProof(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical, storageKeys }) {
+  const block = formatBlockParameter({
+    blockHash,
+    blockNumber,
+    blockTag,
+    requireCanonical
+  });
+  const proof = await client.request({
+    method: "eth_getProof",
+    params: [address, storageKeys, block]
+  });
+  return formatProof(proof);
+}
+
+// node_modules/viem/_esm/actions/public/getRawTransaction.js
+init_transaction();
+async function getRawTransaction(client, { hash: hash3 }) {
+  const rawTransaction = await client.request({
+    method: "eth_getRawTransactionByHash",
+    params: [hash3]
+  }, { dedupe: true });
+  if (!rawTransaction)
+    throw new TransactionNotFoundError({ hash: hash3 });
+  return rawTransaction;
+}
+
+// node_modules/viem/_esm/actions/public/getStorageAt.js
+init_formatBlockParameter();
+async function getStorageAt(client, { address, blockHash, blockNumber, blockTag = "latest", requireCanonical, slot }) {
+  const block = formatBlockParameter({
+    blockHash,
+    blockNumber,
+    blockTag,
+    requireCanonical
+  });
+  const data = await client.request({
+    method: "eth_getStorageAt",
+    params: [address, slot, block]
+  });
+  return data;
+}
+
+// node_modules/viem/_esm/actions/public/getTransaction.js
+init_transaction();
+init_toHex();
+async function getTransaction(client, { blockHash, blockNumber, blockTag: blockTag_, hash: hash3, index: index2, sender, nonce }) {
+  const blockTag = blockTag_ || "latest";
+  const blockNumberHex = blockNumber !== undefined ? numberToHex(blockNumber) : undefined;
+  let transaction = null;
+  if (hash3) {
+    transaction = await client.request({
+      method: "eth_getTransactionByHash",
+      params: [hash3]
+    }, { dedupe: true });
+  } else if (blockHash) {
+    transaction = await client.request({
+      method: "eth_getTransactionByBlockHashAndIndex",
+      params: [blockHash, numberToHex(index2)]
+    }, { dedupe: true });
+  } else if ((blockNumberHex || blockTag) && typeof index2 === "number") {
+    transaction = await client.request({
+      method: "eth_getTransactionByBlockNumberAndIndex",
+      params: [blockNumberHex || blockTag, numberToHex(index2)]
+    }, { dedupe: Boolean(blockNumberHex) });
+  } else if (sender && typeof nonce === "number") {
+    transaction = await client.request({
+      method: "eth_getTransactionBySenderAndNonce",
+      params: [sender, numberToHex(nonce)]
+    }, { dedupe: true });
+  }
+  if (!transaction)
+    throw new TransactionNotFoundError({
+      blockHash,
+      blockNumber,
+      blockTag,
+      hash: hash3,
+      index: index2
+    });
+  const format2 = client.chain?.formatters?.transaction?.format || formatTransaction;
+  return format2(transaction, "getTransaction");
+}
+
+// node_modules/viem/_esm/actions/public/getTransactionConfirmations.js
+async function getTransactionConfirmations(client, { hash: hash3, transactionReceipt }) {
+  const [blockNumber, transaction] = await Promise.all([
+    getAction(client, getBlockNumber, "getBlockNumber")({}),
+    hash3 ? getAction(client, getTransaction, "getTransaction")({ hash: hash3 }) : undefined
+  ]);
+  const transactionBlockNumber = transactionReceipt?.blockNumber || transaction?.blockNumber;
+  if (!transactionBlockNumber)
+    return 0n;
+  return blockNumber - transactionBlockNumber + 1n;
+}
+
+// node_modules/viem/_esm/actions/public/getTransactionReceipt.js
+init_transaction();
+async function getTransactionReceipt(client, { hash: hash3 }) {
+  const receipt = await client.request({
+    method: "eth_getTransactionReceipt",
+    params: [hash3]
+  }, { dedupe: true });
+  if (!receipt)
+    throw new TransactionReceiptNotFoundError({ hash: hash3 });
+  const format2 = client.chain?.formatters?.transactionReceipt?.format || formatTransactionReceipt;
+  return format2(receipt, "getTransactionReceipt");
+}
+
+// node_modules/viem/_esm/actions/public/multicall.js
+init_abis();
+init_abi();
+init_base();
+init_contract();
+init_decodeFunctionResult();
+init_encodeFunctionData();
+init_getChainContractAddress();
+init_createBatchScheduler();
+async function multicall(client, parameters) {
+  const { account, authorizationList, allowFailure = true, blockHash, blockNumber, blockOverrides, blockTag, requireCanonical, stateOverride } = parameters;
+  const contracts = parameters.contracts;
+  const batch = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
+  const batchSize = parameters.batchSize ?? batch.batchSize ?? 1024;
+  const deployless = parameters.deployless ?? batch.deployless ?? false;
+  const multicallAddress = (() => {
+    if (parameters.multicallAddress)
+      return parameters.multicallAddress;
+    if (deployless)
+      return null;
+    if (client.chain) {
+      return getChainContractAddress({
+        blockNumber,
+        chain: client.chain,
+        contract: "multicall3"
+      });
+    }
+    throw new Error("client chain not configured. multicallAddress is required.");
+  })();
+  const chunkedCalls = [[]];
+  let currentChunk = 0;
+  let currentChunkSize = 0;
+  for (let i = 0;i < contracts.length; i++) {
+    const { abi: abi2, address, args, functionName } = contracts[i];
+    try {
+      const callData = encodeFunctionData({ abi: abi2, args, functionName });
+      currentChunkSize += (callData.length - 2) / 2;
+      if (batchSize > 0 && currentChunkSize > batchSize && chunkedCalls[currentChunk].length > 0) {
+        currentChunk++;
+        currentChunkSize = (callData.length - 2) / 2;
+        chunkedCalls[currentChunk] = [];
+      }
+      chunkedCalls[currentChunk] = [
+        ...chunkedCalls[currentChunk],
+        {
+          allowFailure: true,
+          callData,
+          target: address
+        }
+      ];
+    } catch (err) {
+      const error62 = getContractError(err, {
+        abi: abi2,
+        address,
+        args,
+        docsPath: "/docs/contract/multicall",
+        functionName,
+        sender: account
+      });
+      if (!allowFailure)
+        throw error62;
+      chunkedCalls[currentChunk] = [
+        ...chunkedCalls[currentChunk],
+        {
+          allowFailure: true,
+          callData: "0x",
+          target: address
+        }
+      ];
+    }
+  }
+  const batching = Boolean(client.batch?.multicall);
+  const batches = batching ? chunkedCalls.flatMap((calls) => calls.map((call2) => [call2])) : chunkedCalls;
+  const aggregate3Results = await Promise.allSettled(batches.map((calls) => {
+    if (batching)
+      return scheduleMulticall2(client, {
+        account,
+        authorizationList,
+        batchSize,
+        blockHash,
+        blockNumber,
+        blockOverrides,
+        blockTag,
+        call: calls[0],
+        multicallAddress,
+        requireCanonical,
+        stateOverride
+      }).then((result) => [result]);
+    return getAction(client, readContract, "readContract")({
+      ...multicallAddress === null ? { code: multicall3Bytecode } : { address: multicallAddress },
+      abi: multicall3Abi,
+      account,
+      args: [calls],
+      authorizationList,
+      blockHash,
+      blockNumber,
+      blockOverrides,
+      blockTag,
+      functionName: "aggregate3",
+      requireCanonical,
+      stateOverride
+    });
+  }));
+  const results = [];
+  for (let i = 0;i < aggregate3Results.length; i++) {
+    const result = aggregate3Results[i];
+    if (result.status === "rejected") {
+      if (!allowFailure)
+        throw result.reason;
+      for (let j = 0;j < batches[i].length; j++) {
+        results.push({
+          status: "failure",
+          error: result.reason,
+          result: undefined
+        });
+      }
+      continue;
+    }
+    const aggregate3Result = result.value;
+    for (let j = 0;j < aggregate3Result.length; j++) {
+      const { returnData, success: success2 } = aggregate3Result[j];
+      const { callData } = batches[i][j];
+      const { abi: abi2, address, functionName, args } = contracts[results.length];
+      try {
+        if (callData === "0x")
+          throw new AbiDecodingZeroDataError;
+        if (!success2)
+          throw new RawContractError({ data: returnData });
+        const result2 = decodeFunctionResult({
+          abi: abi2,
+          args,
+          data: returnData,
+          functionName
+        });
+        results.push(allowFailure ? { result: result2, status: "success" } : result2);
+      } catch (err) {
+        const error62 = getContractError(err, {
+          abi: abi2,
+          address,
+          args,
+          docsPath: "/docs/contract/multicall",
+          functionName
+        });
+        if (!allowFailure)
+          throw error62;
+        results.push({ error: error62, result: undefined, status: "failure" });
+      }
+    }
+  }
+  if (results.length !== contracts.length)
+    throw new BaseError("multicall results mismatch");
+  return results;
+}
+async function scheduleMulticall2(client, parameters) {
+  const { batchSize, call: call2, multicallAddress, ...rest } = parameters;
+  const { wait = 0 } = typeof client.batch?.multicall === "object" ? client.batch.multicall : {};
+  const { schedule } = createBatchScheduler({
+    id: stringify2(["multicall", client.uid, batchSize, multicallAddress, rest]),
+    wait,
+    shouldSplitBatch(calls) {
+      if (batchSize === 0)
+        return false;
+      const size6 = calls.reduce((size7, { callData }) => size7 + (callData.length - 2) / 2, 0);
+      return size6 > batchSize;
+    },
+    fn: (calls) => getAction(client, readContract, "readContract")({
+      ...multicallAddress === null ? { code: multicall3Bytecode } : { address: multicallAddress },
+      ...rest,
+      abi: multicall3Abi,
+      args: [calls],
+      functionName: "aggregate3"
+    })
+  });
+  const [result] = await schedule(call2);
+  return result;
+}
+
+// node_modules/viem/_esm/actions/public/simulateBlocks.js
+init_BlockOverrides();
+init_abi();
+init_contract();
+init_node();
+init_decodeFunctionResult();
+init_encodeFunctionData();
+init_toHex();
+init_getNodeError();
+init_transactionRequest();
+init_stateOverride2();
+init_assertRequest();
+async function simulateBlocks(client, parameters) {
+  const { blockNumber, blockTag = client.experimental_blockTag ?? "latest", blocks, returnFullTransactions, traceTransfers, validation } = parameters;
+  try {
+    const blockStateCalls = [];
+    for (const block2 of blocks) {
+      const blockOverrides = block2.blockOverrides ? toRpc2(block2.blockOverrides) : undefined;
+      const calls = block2.calls.map((call_) => {
+        const call2 = call_;
+        const account = call2.account ? parseAccount(call2.account) : undefined;
+        const data = call2.abi ? encodeFunctionData(call2) : call2.data;
+        const request = {
+          ...call2,
+          account,
+          data: call2.dataSuffix ? concat([data || "0x", call2.dataSuffix]) : data,
+          from: call2.from ?? account?.address
+        };
+        assertRequest(request);
+        return formatTransactionRequest(request);
+      });
+      const stateOverrides = block2.stateOverrides ? serializeStateOverride(block2.stateOverrides) : undefined;
+      blockStateCalls.push({
+        blockOverrides,
+        calls,
+        stateOverrides
+      });
+    }
+    const blockNumberHex = typeof blockNumber === "bigint" ? numberToHex(blockNumber) : undefined;
+    const block = blockNumberHex || blockTag;
+    const result = await client.request({
+      method: "eth_simulateV1",
+      params: [
+        { blockStateCalls, returnFullTransactions, traceTransfers, validation },
+        block
+      ]
+    });
+    return result.map((block2, i) => ({
+      ...formatBlock(block2),
+      calls: block2.calls.map((call2, j) => {
+        const { abi: abi2, args, functionName, to } = blocks[i].calls[j];
+        const data = call2.error?.data ?? call2.returnData;
+        const gasUsed = BigInt(call2.gasUsed);
+        const logs = call2.logs?.map((log2) => formatLog(log2));
+        const status = call2.status === "0x1" ? "success" : "failure";
+        const result2 = abi2 && status === "success" && data !== "0x" ? decodeFunctionResult({
+          abi: abi2,
+          data,
+          functionName
+        }) : null;
+        const error62 = (() => {
+          if (status === "success")
+            return;
+          let error63;
+          if (data === "0x")
+            error63 = new AbiDecodingZeroDataError;
+          else if (data)
+            error63 = new RawContractError({ data });
+          if (!error63)
+            return;
+          return getContractError(error63, {
+            abi: abi2 ?? [],
+            address: to ?? "0x",
+            args,
+            functionName: functionName ?? "<unknown>"
+          });
+        })();
+        return {
+          data,
+          gasUsed,
+          logs,
+          status,
+          ...status === "success" ? {
+            result: result2
+          } : {
+            error: error62
+          }
+        };
+      })
+    }));
+  } catch (e) {
+    const cause = e;
+    const error62 = getNodeError(cause, {});
+    if (error62 instanceof UnknownNodeError)
+      throw cause;
+    throw error62;
+  }
+}
+
+// node_modules/ox/_esm/core/AbiItem.js
+init_exports();
+init_Errors();
+
+// node_modules/ox/_esm/core/Hash.js
+init_sha3();
+init_Bytes();
+init_Hex();
+function keccak2563(value, options = {}) {
+  const { as = typeof value === "string" ? "Hex" : "Bytes" } = options;
+  const bytes = keccak_256(from2(value));
+  if (as === "Bytes")
+    return bytes;
+  return fromBytes(bytes);
+}
+
+// node_modules/ox/_esm/core/AbiItem.js
+init_Hex();
+
+// node_modules/ox/_esm/core/Address.js
+init_Bytes();
+
+// node_modules/ox/_esm/core/internal/lru.js
+class LruMap2 extends Map {
+  constructor(size6) {
+    super();
+    Object.defineProperty(this, "maxSize", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: undefined
+    });
+    this.maxSize = size6;
+  }
+  get(key) {
+    const value = super.get(key);
+    if (super.has(key) && value !== undefined) {
+      this.delete(key);
+      super.set(key, value);
+    }
+    return value;
+  }
+  set(key, value) {
+    super.set(key, value);
+    if (this.maxSize && this.size > this.maxSize) {
+      const firstKey = this.keys().next().value;
+      if (firstKey)
+        this.delete(firstKey);
+    }
+    return this;
+  }
+}
+
+// node_modules/ox/_esm/core/Caches.js
+var caches = {
+  checksum: /* @__PURE__ */ new LruMap2(8192)
+};
+var checksum = caches.checksum;
+
+// node_modules/ox/_esm/core/Address.js
+init_Errors();
+
+// node_modules/ox/_esm/core/PublicKey.js
+init_Bytes();
+init_Errors();
+init_Hex();
+function assert4(publicKey, options = {}) {
+  const { compressed } = options;
+  const { prefix, x, y } = publicKey;
+  if (compressed === false || typeof x === "bigint" && typeof y === "bigint") {
+    if (prefix !== 4)
+      throw new InvalidPrefixError({
+        prefix,
+        cause: new InvalidUncompressedPrefixError
+      });
+    return;
+  }
+  if (compressed === true || typeof x === "bigint" && typeof y === "undefined") {
+    if (prefix !== 3 && prefix !== 2)
+      throw new InvalidPrefixError({
+        prefix,
+        cause: new InvalidCompressedPrefixError
+      });
+    return;
+  }
+  throw new InvalidError({ publicKey });
+}
+function from4(value) {
+  const publicKey = (() => {
+    if (validate3(value))
+      return fromHex3(value);
+    if (validate2(value))
+      return fromBytes3(value);
+    const { prefix, x, y } = value;
+    if (typeof x === "bigint" && typeof y === "bigint")
+      return { prefix: prefix ?? 4, x, y };
+    return { prefix, x };
+  })();
+  assert4(publicKey);
+  return publicKey;
+}
+function fromBytes3(publicKey) {
+  return fromHex3(fromBytes(publicKey));
+}
+function fromHex3(publicKey) {
+  if (publicKey.length !== 132 && publicKey.length !== 130 && publicKey.length !== 68)
+    throw new InvalidSerializedSizeError({ publicKey });
+  if (publicKey.length === 130) {
+    const x2 = BigInt(slice3(publicKey, 0, 32));
+    const y = BigInt(slice3(publicKey, 32, 64));
+    return {
+      prefix: 4,
+      x: x2,
+      y
+    };
+  }
+  if (publicKey.length === 132) {
+    const prefix2 = Number(slice3(publicKey, 0, 1));
+    const x2 = BigInt(slice3(publicKey, 1, 33));
+    const y = BigInt(slice3(publicKey, 33, 65));
+    return {
+      prefix: prefix2,
+      x: x2,
+      y
+    };
+  }
+  const prefix = Number(slice3(publicKey, 0, 1));
+  const x = BigInt(slice3(publicKey, 1, 33));
+  return {
+    prefix,
+    x
+  };
+}
+function toHex3(publicKey, options = {}) {
+  assert4(publicKey);
+  const { prefix, x, y } = publicKey;
+  const { includePrefix = true } = options;
+  const publicKey_ = concat2(includePrefix ? fromNumber(prefix, { size: 1 }) : "0x", fromNumber(x, { size: 32 }), typeof y === "bigint" ? fromNumber(y, { size: 32 }) : "0x");
+  return publicKey_;
+}
+class InvalidError extends BaseError3 {
+  constructor({ publicKey }) {
+    super(`Value \`${stringify3(publicKey)}\` is not a valid public key.`, {
+      metaMessages: [
+        "Public key must contain:",
+        "- an `x` and `prefix` value (compressed)",
+        "- an `x`, `y`, and `prefix` value (uncompressed)"
+      ]
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "PublicKey.InvalidError"
+    });
+  }
+}
+
+class InvalidPrefixError extends BaseError3 {
+  constructor({ prefix, cause }) {
+    super(`Prefix "${prefix}" is invalid.`, {
+      cause
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "PublicKey.InvalidPrefixError"
+    });
+  }
+}
+
+class InvalidCompressedPrefixError extends BaseError3 {
+  constructor() {
+    super("Prefix must be 2 or 3 for compressed public keys.");
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "PublicKey.InvalidCompressedPrefixError"
+    });
+  }
+}
+
+class InvalidUncompressedPrefixError extends BaseError3 {
+  constructor() {
+    super("Prefix must be 4 for uncompressed public keys.");
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "PublicKey.InvalidUncompressedPrefixError"
+    });
+  }
+}
+
+class InvalidSerializedSizeError extends BaseError3 {
+  constructor({ publicKey }) {
+    super(`Value \`${publicKey}\` is an invalid public key size.`, {
+      metaMessages: [
+        "Expected: 33 bytes (compressed + prefix), 64 bytes (uncompressed) or 65 bytes (uncompressed + prefix).",
+        `Received ${size4(from3(publicKey))} bytes.`
+      ]
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "PublicKey.InvalidSerializedSizeError"
+    });
+  }
+}
+
+// node_modules/ox/_esm/core/Address.js
+var addressRegex2 = /^0x[a-fA-F0-9]{40}$/;
+function assert5(value, options = {}) {
+  const { strict = true } = options;
+  if (!addressRegex2.test(value))
+    throw new InvalidAddressError2({
+      address: value,
+      cause: new InvalidInputError
+    });
+  if (strict) {
+    if (value.toLowerCase() === value)
+      return;
+    if (checksum2(value) !== value)
+      throw new InvalidAddressError2({
+        address: value,
+        cause: new InvalidChecksumError
+      });
+  }
+}
+function checksum2(address) {
+  if (checksum.has(address))
+    return checksum.get(address);
+  assert5(address, { strict: false });
+  const hexAddress = address.substring(2).toLowerCase();
+  const hash3 = keccak2563(fromString(hexAddress), { as: "Bytes" });
+  const characters = hexAddress.split("");
+  for (let i = 0;i < 40; i += 2) {
+    if (hash3[i >> 1] >> 4 >= 8 && characters[i]) {
+      characters[i] = characters[i].toUpperCase();
+    }
+    if ((hash3[i >> 1] & 15) >= 8 && characters[i + 1]) {
+      characters[i + 1] = characters[i + 1].toUpperCase();
+    }
+  }
+  const result = `0x${characters.join("")}`;
+  checksum.set(address, result);
+  return result;
+}
+function from5(address, options = {}) {
+  const { checksum: checksumVal = false } = options;
+  assert5(address);
+  if (checksumVal)
+    return checksum2(address);
+  return address;
+}
+function fromPublicKey(publicKey, options = {}) {
+  const address = keccak2563(`0x${toHex3(publicKey).slice(4)}`).substring(26);
+  return from5(`0x${address}`, options);
+}
+function validate4(address, options = {}) {
+  const { strict = true } = options ?? {};
+  try {
+    assert5(address, { strict });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+class InvalidAddressError2 extends BaseError3 {
+  constructor({ address, cause }) {
+    super(`Address "${address}" is invalid.`, {
+      cause
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Address.InvalidAddressError"
+    });
+  }
+}
+
+class InvalidInputError extends BaseError3 {
+  constructor() {
+    super("Address is not a 20 byte (40 hexadecimal character) value.");
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Address.InvalidInputError"
+    });
+  }
+}
+
+class InvalidChecksumError extends BaseError3 {
+  constructor() {
+    super("Address does not match its checksum counterpart.");
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Address.InvalidChecksumError"
+    });
+  }
+}
+
+// node_modules/ox/_esm/core/internal/abiItem.js
+init_Errors();
+function normalizeSignature2(signature) {
+  let active = true;
+  let current = "";
+  let level = 0;
+  let result = "";
+  let valid = false;
+  for (let i = 0;i < signature.length; i++) {
+    const char = signature[i];
+    if (["(", ")", ","].includes(char))
+      active = true;
+    if (char === "(")
+      level++;
+    if (char === ")")
+      level--;
+    if (!active)
+      continue;
+    if (level === 0) {
+      if (char === " " && ["event", "function", "error", ""].includes(result))
+        result = "";
+      else {
+        result += char;
+        if (char === ")") {
+          valid = true;
+          break;
+        }
+      }
+      continue;
+    }
+    if (char === " ") {
+      if (signature[i - 1] !== "," && current !== "," && current !== ",(") {
+        current = "";
+        active = false;
+      }
+      continue;
+    }
+    result += char;
+    current += char;
+  }
+  if (!valid)
+    throw new BaseError3("Unable to normalize signature.");
+  return result;
+}
+function isArgOfType2(arg, abiParameter) {
+  const argType = typeof arg;
+  const abiParameterType = abiParameter.type;
+  switch (abiParameterType) {
+    case "address":
+      return validate4(arg, { strict: false });
+    case "bool":
+      return argType === "boolean";
+    case "function":
+      return argType === "string";
+    case "string":
+      return argType === "string";
+    default: {
+      if (abiParameterType === "tuple" && "components" in abiParameter)
+        return Object.values(abiParameter.components).every((component, index2) => {
+          return isArgOfType2(Object.values(arg)[index2], component);
+        });
+      if (/^u?int(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/.test(abiParameterType))
+        return argType === "number" || argType === "bigint";
+      if (/^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/.test(abiParameterType))
+        return argType === "string" || arg instanceof Uint8Array;
+      if (/[a-z]+[1-9]{0,3}(\[[0-9]{0,}\])+$/.test(abiParameterType)) {
+        return Array.isArray(arg) && arg.every((x) => isArgOfType2(x, {
+          ...abiParameter,
+          type: abiParameterType.replace(/(\[[0-9]{0,}\])$/, "")
+        }));
+      }
+      return false;
+    }
+  }
+}
+function getAmbiguousTypes2(sourceParameters, targetParameters, args) {
+  for (const parameterIndex in sourceParameters) {
+    const sourceParameter = sourceParameters[parameterIndex];
+    const targetParameter = targetParameters[parameterIndex];
+    if (sourceParameter.type === "tuple" && targetParameter.type === "tuple" && "components" in sourceParameter && "components" in targetParameter)
+      return getAmbiguousTypes2(sourceParameter.components, targetParameter.components, args[parameterIndex]);
+    const types = [sourceParameter.type, targetParameter.type];
+    const ambiguous = (() => {
+      if (types.includes("address") && types.includes("bytes20"))
+        return true;
+      if (types.includes("address") && types.includes("string"))
+        return validate4(args[parameterIndex], {
+          strict: false
+        });
+      if (types.includes("address") && types.includes("bytes"))
+        return validate4(args[parameterIndex], {
+          strict: false
+        });
+      return false;
+    })();
+    if (ambiguous)
+      return types;
+  }
+  return;
+}
+
+// node_modules/ox/_esm/core/AbiItem.js
+function from6(abiItem, options = {}) {
+  const { prepare = true } = options;
+  const item = (() => {
+    if (Array.isArray(abiItem))
+      return parseAbiItem(abiItem);
+    if (typeof abiItem === "string")
+      return parseAbiItem(abiItem);
+    return abiItem;
+  })();
+  return {
+    ...item,
+    ...prepare ? { hash: getSignatureHash(item) } : {}
+  };
+}
+function fromAbi(abi2, name, options) {
+  const { args = [], prepare = true } = options ?? {};
+  const isSelector = validate3(name, { strict: false });
+  const abiItems = abi2.filter((abiItem2) => {
+    if (isSelector) {
+      if (abiItem2.type === "function" || abiItem2.type === "error")
+        return getSelector(abiItem2) === slice3(name, 0, 4);
+      if (abiItem2.type === "event")
+        return getSignatureHash(abiItem2) === name;
+      return false;
+    }
+    return "name" in abiItem2 && abiItem2.name === name;
+  });
+  if (abiItems.length === 0)
+    throw new NotFoundError2({ name });
+  if (abiItems.length === 1)
+    return {
+      ...abiItems[0],
+      ...prepare ? { hash: getSignatureHash(abiItems[0]) } : {}
+    };
+  let matchedAbiItem;
+  for (const abiItem2 of abiItems) {
+    if (!("inputs" in abiItem2))
+      continue;
+    if (!args || args.length === 0) {
+      if (!abiItem2.inputs || abiItem2.inputs.length === 0)
+        return {
+          ...abiItem2,
+          ...prepare ? { hash: getSignatureHash(abiItem2) } : {}
+        };
+      continue;
+    }
+    if (!abiItem2.inputs)
+      continue;
+    if (abiItem2.inputs.length === 0)
+      continue;
+    if (abiItem2.inputs.length !== args.length)
+      continue;
+    const matched = args.every((arg, index2) => {
+      const abiParameter = "inputs" in abiItem2 && abiItem2.inputs[index2];
+      if (!abiParameter)
+        return false;
+      return isArgOfType2(arg, abiParameter);
+    });
+    if (matched) {
+      if (matchedAbiItem && "inputs" in matchedAbiItem && matchedAbiItem.inputs) {
+        const ambiguousTypes = getAmbiguousTypes2(abiItem2.inputs, matchedAbiItem.inputs, args);
+        if (ambiguousTypes)
+          throw new AmbiguityError({
+            abiItem: abiItem2,
+            type: ambiguousTypes[0]
+          }, {
+            abiItem: matchedAbiItem,
+            type: ambiguousTypes[1]
+          });
+      }
+      matchedAbiItem = abiItem2;
+    }
+  }
+  const abiItem = (() => {
+    if (matchedAbiItem)
+      return matchedAbiItem;
+    const [abiItem2, ...overloads] = abiItems;
+    return { ...abiItem2, overloads };
+  })();
+  if (!abiItem)
+    throw new NotFoundError2({ name });
+  return {
+    ...abiItem,
+    ...prepare ? { hash: getSignatureHash(abiItem) } : {}
+  };
+}
+function getSelector(...parameters) {
+  const abiItem = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi2, name] = parameters;
+      return fromAbi(abi2, name);
+    }
+    return parameters[0];
+  })();
+  return slice3(getSignatureHash(abiItem), 0, 4);
+}
+function getSignature(...parameters) {
+  const abiItem = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi2, name] = parameters;
+      return fromAbi(abi2, name);
+    }
+    return parameters[0];
+  })();
+  const signature = (() => {
+    if (typeof abiItem === "string")
+      return abiItem;
+    return formatAbiItem2(abiItem);
+  })();
+  return normalizeSignature2(signature);
+}
+function getSignatureHash(...parameters) {
+  const abiItem = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi2, name] = parameters;
+      return fromAbi(abi2, name);
+    }
+    return parameters[0];
+  })();
+  if (typeof abiItem !== "string" && "hash" in abiItem && abiItem.hash)
+    return abiItem.hash;
+  return keccak2563(fromString2(getSignature(abiItem)));
+}
+
+class AmbiguityError extends BaseError3 {
+  constructor(x, y) {
+    super("Found ambiguous types in overloaded ABI Items.", {
+      metaMessages: [
+        `\`${x.type}\` in \`${normalizeSignature2(formatAbiItem2(x.abiItem))}\`, and`,
+        `\`${y.type}\` in \`${normalizeSignature2(formatAbiItem2(y.abiItem))}\``,
+        "",
+        "These types encode differently and cannot be distinguished at runtime.",
+        "Remove one of the ambiguous items in the ABI."
+      ]
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiItem.AmbiguityError"
+    });
+  }
+}
+
+class NotFoundError2 extends BaseError3 {
+  constructor({ name, data, type = "item" }) {
+    const selector = (() => {
+      if (name)
+        return ` with name "${name}"`;
+      if (data)
+        return ` with data "${data}"`;
+      return "";
+    })();
+    super(`ABI ${type}${selector} not found.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiItem.NotFoundError"
+    });
+  }
+}
+
+// node_modules/ox/_esm/core/AbiParameters.js
+init_exports();
+init_Bytes();
+init_Errors();
+init_Hex();
+
+// node_modules/ox/_esm/core/internal/abiParameters.js
+init_Bytes();
+init_Errors();
+init_Hex();
+
+// node_modules/ox/_esm/core/Solidity.js
+var arrayRegex2 = /^(.*)\[([0-9]*)\]$/;
+var bytesRegex4 = /^bytes([1-9]|1[0-9]|2[0-9]|3[0-2])?$/;
+var integerRegex4 = /^(u?int)(8|16|24|32|40|48|56|64|72|80|88|96|104|112|120|128|136|144|152|160|168|176|184|192|200|208|216|224|232|240|248|256)?$/;
+var maxInt82 = 2n ** (8n - 1n) - 1n;
+var maxInt162 = 2n ** (16n - 1n) - 1n;
+var maxInt242 = 2n ** (24n - 1n) - 1n;
+var maxInt322 = 2n ** (32n - 1n) - 1n;
+var maxInt402 = 2n ** (40n - 1n) - 1n;
+var maxInt482 = 2n ** (48n - 1n) - 1n;
+var maxInt562 = 2n ** (56n - 1n) - 1n;
+var maxInt642 = 2n ** (64n - 1n) - 1n;
+var maxInt722 = 2n ** (72n - 1n) - 1n;
+var maxInt802 = 2n ** (80n - 1n) - 1n;
+var maxInt882 = 2n ** (88n - 1n) - 1n;
+var maxInt962 = 2n ** (96n - 1n) - 1n;
+var maxInt1042 = 2n ** (104n - 1n) - 1n;
+var maxInt1122 = 2n ** (112n - 1n) - 1n;
+var maxInt1202 = 2n ** (120n - 1n) - 1n;
+var maxInt1282 = 2n ** (128n - 1n) - 1n;
+var maxInt1362 = 2n ** (136n - 1n) - 1n;
+var maxInt1442 = 2n ** (144n - 1n) - 1n;
+var maxInt1522 = 2n ** (152n - 1n) - 1n;
+var maxInt1602 = 2n ** (160n - 1n) - 1n;
+var maxInt1682 = 2n ** (168n - 1n) - 1n;
+var maxInt1762 = 2n ** (176n - 1n) - 1n;
+var maxInt1842 = 2n ** (184n - 1n) - 1n;
+var maxInt1922 = 2n ** (192n - 1n) - 1n;
+var maxInt2002 = 2n ** (200n - 1n) - 1n;
+var maxInt2082 = 2n ** (208n - 1n) - 1n;
+var maxInt2162 = 2n ** (216n - 1n) - 1n;
+var maxInt2242 = 2n ** (224n - 1n) - 1n;
+var maxInt2322 = 2n ** (232n - 1n) - 1n;
+var maxInt2402 = 2n ** (240n - 1n) - 1n;
+var maxInt2482 = 2n ** (248n - 1n) - 1n;
+var maxInt2562 = 2n ** (256n - 1n) - 1n;
+var minInt82 = -(2n ** (8n - 1n));
+var minInt162 = -(2n ** (16n - 1n));
+var minInt242 = -(2n ** (24n - 1n));
+var minInt322 = -(2n ** (32n - 1n));
+var minInt402 = -(2n ** (40n - 1n));
+var minInt482 = -(2n ** (48n - 1n));
+var minInt562 = -(2n ** (56n - 1n));
+var minInt642 = -(2n ** (64n - 1n));
+var minInt722 = -(2n ** (72n - 1n));
+var minInt802 = -(2n ** (80n - 1n));
+var minInt882 = -(2n ** (88n - 1n));
+var minInt962 = -(2n ** (96n - 1n));
+var minInt1042 = -(2n ** (104n - 1n));
+var minInt1122 = -(2n ** (112n - 1n));
+var minInt1202 = -(2n ** (120n - 1n));
+var minInt1282 = -(2n ** (128n - 1n));
+var minInt1362 = -(2n ** (136n - 1n));
+var minInt1442 = -(2n ** (144n - 1n));
+var minInt1522 = -(2n ** (152n - 1n));
+var minInt1602 = -(2n ** (160n - 1n));
+var minInt1682 = -(2n ** (168n - 1n));
+var minInt1762 = -(2n ** (176n - 1n));
+var minInt1842 = -(2n ** (184n - 1n));
+var minInt1922 = -(2n ** (192n - 1n));
+var minInt2002 = -(2n ** (200n - 1n));
+var minInt2082 = -(2n ** (208n - 1n));
+var minInt2162 = -(2n ** (216n - 1n));
+var minInt2242 = -(2n ** (224n - 1n));
+var minInt2322 = -(2n ** (232n - 1n));
+var minInt2402 = -(2n ** (240n - 1n));
+var minInt2482 = -(2n ** (248n - 1n));
+var minInt2562 = -(2n ** (256n - 1n));
+var maxUint82 = 2n ** 8n - 1n;
+var maxUint162 = 2n ** 16n - 1n;
+var maxUint242 = 2n ** 24n - 1n;
+var maxUint322 = 2n ** 32n - 1n;
+var maxUint402 = 2n ** 40n - 1n;
+var maxUint482 = 2n ** 48n - 1n;
+var maxUint562 = 2n ** 56n - 1n;
+var maxUint642 = 2n ** 64n - 1n;
+var maxUint722 = 2n ** 72n - 1n;
+var maxUint802 = 2n ** 80n - 1n;
+var maxUint882 = 2n ** 88n - 1n;
+var maxUint962 = 2n ** 96n - 1n;
+var maxUint1042 = 2n ** 104n - 1n;
+var maxUint1122 = 2n ** 112n - 1n;
+var maxUint1202 = 2n ** 120n - 1n;
+var maxUint1282 = 2n ** 128n - 1n;
+var maxUint1362 = 2n ** 136n - 1n;
+var maxUint1442 = 2n ** 144n - 1n;
+var maxUint1522 = 2n ** 152n - 1n;
+var maxUint1602 = 2n ** 160n - 1n;
+var maxUint1682 = 2n ** 168n - 1n;
+var maxUint1762 = 2n ** 176n - 1n;
+var maxUint1842 = 2n ** 184n - 1n;
+var maxUint1922 = 2n ** 192n - 1n;
+var maxUint2002 = 2n ** 200n - 1n;
+var maxUint2082 = 2n ** 208n - 1n;
+var maxUint2162 = 2n ** 216n - 1n;
+var maxUint2242 = 2n ** 224n - 1n;
+var maxUint2322 = 2n ** 232n - 1n;
+var maxUint2402 = 2n ** 240n - 1n;
+var maxUint2482 = 2n ** 248n - 1n;
+var maxUint2562 = 2n ** 256n - 1n;
+
+// node_modules/ox/_esm/core/internal/abiParameters.js
+function decodeParameter2(cursor, param, options) {
+  const { checksumAddress: checksumAddress2, staticPosition } = options;
+  const arrayComponents = getArrayComponents2(param.type);
+  if (arrayComponents) {
+    const [length, type] = arrayComponents;
+    return decodeArray2(cursor, { ...param, type }, { checksumAddress: checksumAddress2, length, staticPosition });
+  }
+  if (param.type === "tuple")
+    return decodeTuple2(cursor, param, {
+      checksumAddress: checksumAddress2,
+      staticPosition
+    });
+  if (param.type === "address")
+    return decodeAddress3(cursor, { checksum: checksumAddress2 });
+  if (param.type === "bool")
+    return decodeBool2(cursor);
+  if (param.type.startsWith("bytes"))
+    return decodeBytes2(cursor, param, { staticPosition });
+  if (param.type.startsWith("uint") || param.type.startsWith("int"))
+    return decodeNumber2(cursor, param);
+  if (param.type === "string")
+    return decodeString2(cursor, { staticPosition });
+  throw new InvalidTypeError(param.type);
+}
+var sizeOfLength2 = 32;
+var sizeOfOffset2 = 32;
+function decodeAddress3(cursor, options = {}) {
+  const { checksum: checksum3 = false } = options;
+  const value = cursor.readBytes(32);
+  const wrap = (address) => checksum3 ? checksum2(address) : address;
+  return [wrap(fromBytes(slice2(value, -20))), 32];
+}
+function decodeArray2(cursor, param, options) {
+  const { checksumAddress: checksumAddress2, length, staticPosition } = options;
+  if (length === null) {
+    const offset = toNumber2(cursor.readBytes(sizeOfOffset2));
+    const start = staticPosition + offset;
+    const startOfData = start + sizeOfLength2;
+    cursor.setPosition(start);
+    const length2 = toNumber2(cursor.readBytes(sizeOfLength2));
+    const dynamicChild = hasDynamicChild2(param);
+    let consumed2 = 0;
+    const value2 = [];
+    for (let i = 0;i < length2; ++i) {
+      cursor.setPosition(startOfData + (dynamicChild ? i * 32 : consumed2));
+      const [data, consumed_] = decodeParameter2(cursor, param, {
+        checksumAddress: checksumAddress2,
+        staticPosition: startOfData
+      });
+      consumed2 += consumed_;
+      value2.push(data);
+      if (consumed_ === 0) {
+        cursor.assertReadLimit();
+        cursor._touch();
+      }
+    }
+    cursor.setPosition(staticPosition + 32);
+    return [value2, 32];
+  }
+  if (hasDynamicChild2(param)) {
+    const offset = toNumber2(cursor.readBytes(sizeOfOffset2));
+    const start = staticPosition + offset;
+    const value2 = [];
+    for (let i = 0;i < length; ++i) {
+      cursor.setPosition(start + i * 32);
+      const [data] = decodeParameter2(cursor, param, {
+        checksumAddress: checksumAddress2,
+        staticPosition: start
+      });
+      value2.push(data);
+    }
+    cursor.setPosition(staticPosition + 32);
+    return [value2, 32];
+  }
+  let consumed = 0;
+  const value = [];
+  for (let i = 0;i < length; ++i) {
+    const [data, consumed_] = decodeParameter2(cursor, param, {
+      checksumAddress: checksumAddress2,
+      staticPosition: staticPosition + consumed
+    });
+    consumed += consumed_;
+    value.push(data);
+    if (consumed_ === 0) {
+      cursor.assertReadLimit();
+      cursor._touch();
+    }
+  }
+  return [value, consumed];
+}
+function decodeBool2(cursor) {
+  return [toBoolean(cursor.readBytes(32), { size: 32 }), 32];
+}
+function decodeBytes2(cursor, param, { staticPosition }) {
+  const [_, size6] = param.type.split("bytes");
+  if (!size6) {
+    const offset = toNumber2(cursor.readBytes(32));
+    cursor.setPosition(staticPosition + offset);
+    const length = toNumber2(cursor.readBytes(32));
+    if (length === 0) {
+      cursor.setPosition(staticPosition + 32);
+      return ["0x", 32];
+    }
+    const data = cursor.readBytes(length);
+    cursor.setPosition(staticPosition + 32);
+    return [fromBytes(data), 32];
+  }
+  const value = fromBytes(cursor.readBytes(Number.parseInt(size6, 10), 32));
+  return [value, 32];
+}
+function decodeNumber2(cursor, param) {
+  const signed = param.type.startsWith("int");
+  const size6 = Number.parseInt(param.type.split("int")[1] || "256", 10);
+  const value = cursor.readBytes(32);
+  return [
+    size6 > 48 ? toBigInt2(value, { signed }) : toNumber2(value, { signed }),
+    32
+  ];
+}
+function decodeTuple2(cursor, param, options) {
+  const { checksumAddress: checksumAddress2, staticPosition } = options;
+  const hasUnnamedChild = param.components.length === 0 || param.components.some(({ name }) => !name);
+  const value = hasUnnamedChild ? [] : {};
+  let consumed = 0;
+  if (hasDynamicChild2(param)) {
+    const offset = toNumber2(cursor.readBytes(sizeOfOffset2));
+    const start = staticPosition + offset;
+    for (let i = 0;i < param.components.length; ++i) {
+      const component = param.components[i];
+      cursor.setPosition(start + consumed);
+      const [data, consumed_] = decodeParameter2(cursor, component, {
+        checksumAddress: checksumAddress2,
+        staticPosition: start
+      });
+      consumed += consumed_;
+      value[hasUnnamedChild ? i : component?.name] = data;
+    }
+    cursor.setPosition(staticPosition + 32);
+    return [value, 32];
+  }
+  for (let i = 0;i < param.components.length; ++i) {
+    const component = param.components[i];
+    const [data, consumed_] = decodeParameter2(cursor, component, {
+      checksumAddress: checksumAddress2,
+      staticPosition
+    });
+    value[hasUnnamedChild ? i : component?.name] = data;
+    consumed += consumed_;
+  }
+  return [value, consumed];
+}
+function decodeString2(cursor, { staticPosition }) {
+  const offset = toNumber2(cursor.readBytes(32));
+  const start = staticPosition + offset;
+  cursor.setPosition(start);
+  const length = toNumber2(cursor.readBytes(32));
+  if (length === 0) {
+    cursor.setPosition(staticPosition + 32);
+    return ["", 32];
+  }
+  const data = cursor.readBytes(length, 32);
+  const value = toString(trimLeft(data));
+  cursor.setPosition(staticPosition + 32);
+  return [value, 32];
+}
+function prepareParameters({ checksumAddress: checksumAddress2, parameters, values: values2 }) {
+  const preparedParameters = [];
+  for (let i = 0;i < parameters.length; i++) {
+    preparedParameters.push(prepareParameter({
+      checksumAddress: checksumAddress2,
+      parameter: parameters[i],
+      value: values2[i]
+    }));
+  }
+  return preparedParameters;
+}
+function prepareParameter({ checksumAddress: checksumAddress2 = false, parameter: parameter_, value }) {
+  const parameter = parameter_;
+  const arrayComponents = getArrayComponents2(parameter.type);
+  if (arrayComponents) {
+    const [length, type] = arrayComponents;
+    return encodeArray2(value, {
+      checksumAddress: checksumAddress2,
+      length,
+      parameter: {
+        ...parameter,
+        type
+      }
+    });
+  }
+  if (parameter.type === "tuple") {
+    return encodeTuple2(value, {
+      checksumAddress: checksumAddress2,
+      parameter
+    });
+  }
+  if (parameter.type === "address") {
+    return encodeAddress2(value, {
+      checksum: checksumAddress2
+    });
+  }
+  if (parameter.type === "bool") {
+    return encodeBoolean(value);
+  }
+  if (parameter.type.startsWith("uint") || parameter.type.startsWith("int")) {
+    const signed = parameter.type.startsWith("int");
+    const [, , size6 = "256"] = integerRegex4.exec(parameter.type) ?? [];
+    return encodeNumber2(value, {
+      signed,
+      size: Number(size6)
+    });
+  }
+  if (parameter.type.startsWith("bytes")) {
+    return encodeBytes2(value, { type: parameter.type });
+  }
+  if (parameter.type === "string") {
+    return encodeString2(value);
+  }
+  throw new InvalidTypeError(parameter.type);
+}
+function encode4(preparedParameters) {
+  let staticSize = 0;
+  for (let i = 0;i < preparedParameters.length; i++) {
+    const { dynamic, encoded } = preparedParameters[i];
+    if (dynamic)
+      staticSize += 32;
+    else
+      staticSize += size4(encoded);
+  }
+  const staticParameters = [];
+  const dynamicParameters = [];
+  let dynamicSize = 0;
+  for (let i = 0;i < preparedParameters.length; i++) {
+    const { dynamic, encoded } = preparedParameters[i];
+    if (dynamic) {
+      staticParameters.push(fromNumber(staticSize + dynamicSize, { size: 32 }));
+      dynamicParameters.push(encoded);
+      dynamicSize += size4(encoded);
+    } else {
+      staticParameters.push(encoded);
+    }
+  }
+  return concat2(...staticParameters, ...dynamicParameters);
+}
+function encodeAddress2(value, options) {
+  const { checksum: checksum3 = false } = options;
+  assert5(value, { strict: checksum3 });
+  return {
+    dynamic: false,
+    encoded: padLeft(value.toLowerCase())
+  };
+}
+function encodeArray2(value, options) {
+  const { checksumAddress: checksumAddress2, length, parameter } = options;
+  const dynamic = length === null;
+  if (!Array.isArray(value))
+    throw new InvalidArrayError2(value);
+  if (!dynamic && value.length !== length)
+    throw new ArrayLengthMismatchError({
+      expectedLength: length,
+      givenLength: value.length,
+      type: `${parameter.type}[${length}]`
+    });
+  let dynamicChild = value.length === 0 && hasDynamicChild2(parameter);
+  const preparedParameters = [];
+  for (let i = 0;i < value.length; i++) {
+    const preparedParam = prepareParameter({
+      checksumAddress: checksumAddress2,
+      parameter,
+      value: value[i]
+    });
+    if (preparedParam.dynamic)
+      dynamicChild = true;
+    preparedParameters.push(preparedParam);
+  }
+  if (dynamic || dynamicChild) {
+    const data = encode4(preparedParameters);
+    if (dynamic) {
+      const length2 = fromNumber(preparedParameters.length, { size: 32 });
+      return {
+        dynamic: true,
+        encoded: preparedParameters.length > 0 ? concat2(length2, data) : length2
+      };
+    }
+    if (dynamicChild)
+      return { dynamic: true, encoded: data };
+  }
+  return {
+    dynamic: false,
+    encoded: concat2(...preparedParameters.map(({ encoded }) => encoded))
+  };
+}
+function encodeBytes2(value, { type }) {
+  const [, parametersize] = type.split("bytes");
+  const bytesSize = size4(value);
+  if (!parametersize) {
+    let value_ = value;
+    if (bytesSize % 32 !== 0)
+      value_ = padRight(value_, Math.ceil((value.length - 2) / 2 / 32) * 32);
+    return {
+      dynamic: true,
+      encoded: concat2(padLeft(fromNumber(bytesSize, { size: 32 })), value_)
+    };
+  }
+  if (bytesSize !== Number.parseInt(parametersize, 10))
+    throw new BytesSizeMismatchError2({
+      expectedSize: Number.parseInt(parametersize, 10),
+      value
+    });
+  return { dynamic: false, encoded: padRight(value) };
+}
+function encodeBoolean(value) {
+  if (typeof value !== "boolean")
+    throw new BaseError3(`Invalid boolean value: "${value}" (type: ${typeof value}). Expected: \`true\` or \`false\`.`);
+  return { dynamic: false, encoded: padLeft(fromBoolean(value)) };
+}
+function encodeNumber2(value, { signed, size: size6 }) {
+  if (typeof size6 === "number") {
+    const max = 2n ** (BigInt(size6) - (signed ? 1n : 0n)) - 1n;
+    const min = signed ? -max - 1n : 0n;
+    if (value > max || value < min)
+      throw new IntegerOutOfRangeError2({
+        max: max.toString(),
+        min: min.toString(),
+        signed,
+        size: size6 / 8,
+        value: value.toString()
+      });
+  }
+  return {
+    dynamic: false,
+    encoded: fromNumber(value, {
+      size: 32,
+      signed
+    })
+  };
+}
+function encodeString2(value) {
+  const hexValue = fromString2(value);
+  const partsLength = Math.ceil(size4(hexValue) / 32);
+  const parts = [];
+  for (let i = 0;i < partsLength; i++) {
+    parts.push(padRight(slice3(hexValue, i * 32, (i + 1) * 32)));
+  }
+  return {
+    dynamic: true,
+    encoded: concat2(padRight(fromNumber(size4(hexValue), { size: 32 })), ...parts)
+  };
+}
+function encodeTuple2(value, options) {
+  const { checksumAddress: checksumAddress2, parameter } = options;
+  let dynamic = false;
+  const preparedParameters = [];
+  for (let i = 0;i < parameter.components.length; i++) {
+    const param_ = parameter.components[i];
+    const index2 = Array.isArray(value) ? i : param_.name;
+    const preparedParam = prepareParameter({
+      checksumAddress: checksumAddress2,
+      parameter: param_,
+      value: value[index2]
+    });
+    preparedParameters.push(preparedParam);
+    if (preparedParam.dynamic)
+      dynamic = true;
+  }
+  return {
+    dynamic,
+    encoded: dynamic ? encode4(preparedParameters) : concat2(...preparedParameters.map(({ encoded }) => encoded))
+  };
+}
+function getArrayComponents2(type) {
+  const matches = type.match(/^(.*)\[(\d+)?\]$/);
+  return matches ? [matches[2] ? Number(matches[2]) : null, matches[1]] : undefined;
+}
+function hasDynamicChild2(param) {
+  const { type } = param;
+  if (type === "string")
+    return true;
+  if (type === "bytes")
+    return true;
+  if (type.endsWith("[]"))
+    return true;
+  if (type === "tuple")
+    return param.components?.some(hasDynamicChild2);
+  const arrayComponents = getArrayComponents2(param.type);
+  if (arrayComponents && hasDynamicChild2({
+    ...param,
+    type: arrayComponents[1]
+  }))
+    return true;
+  return false;
+}
+
+// node_modules/ox/_esm/core/internal/cursor.js
+init_Errors();
+var staticCursor2 = {
+  bytes: new Uint8Array,
+  dataView: new DataView(new ArrayBuffer(0)),
+  position: 0,
+  positionReadCount: new Map,
+  recursiveReadCount: 0,
+  recursiveReadLimit: Number.POSITIVE_INFINITY,
+  assertReadLimit() {
+    if (this.recursiveReadCount >= this.recursiveReadLimit)
+      throw new RecursiveReadLimitExceededError2({
+        count: this.recursiveReadCount + 1,
+        limit: this.recursiveReadLimit
+      });
+  },
+  assertPosition(position) {
+    if (position < 0 || position > this.bytes.length - 1)
+      throw new PositionOutOfBoundsError2({
+        length: this.bytes.length,
+        position
+      });
+  },
+  decrementPosition(offset) {
+    if (offset < 0)
+      throw new NegativeOffsetError2({ offset });
+    const position = this.position - offset;
+    this.assertPosition(position);
+    this.position = position;
+  },
+  getReadCount(position) {
+    return this.positionReadCount.get(position || this.position) || 0;
+  },
+  incrementPosition(offset) {
+    if (offset < 0)
+      throw new NegativeOffsetError2({ offset });
+    const position = this.position + offset;
+    this.assertPosition(position);
+    this.position = position;
+  },
+  inspectByte(position_) {
+    const position = position_ ?? this.position;
+    this.assertPosition(position);
+    return this.bytes[position];
+  },
+  inspectBytes(length, position_) {
+    const position = position_ ?? this.position;
+    this.assertPosition(position + length - 1);
+    return this.bytes.subarray(position, position + length);
+  },
+  inspectUint8(position_) {
+    const position = position_ ?? this.position;
+    this.assertPosition(position);
+    return this.bytes[position];
+  },
+  inspectUint16(position_) {
+    const position = position_ ?? this.position;
+    this.assertPosition(position + 1);
+    return this.dataView.getUint16(position);
+  },
+  inspectUint24(position_) {
+    const position = position_ ?? this.position;
+    this.assertPosition(position + 2);
+    return (this.dataView.getUint16(position) << 8) + this.dataView.getUint8(position + 2);
+  },
+  inspectUint32(position_) {
+    const position = position_ ?? this.position;
+    this.assertPosition(position + 3);
+    return this.dataView.getUint32(position);
+  },
+  pushByte(byte) {
+    this.assertPosition(this.position);
+    this.bytes[this.position] = byte;
+    this.position++;
+  },
+  pushBytes(bytes) {
+    this.assertPosition(this.position + bytes.length - 1);
+    this.bytes.set(bytes, this.position);
+    this.position += bytes.length;
+  },
+  pushUint8(value) {
+    this.assertPosition(this.position);
+    this.bytes[this.position] = value;
+    this.position++;
+  },
+  pushUint16(value) {
+    this.assertPosition(this.position + 1);
+    this.dataView.setUint16(this.position, value);
+    this.position += 2;
+  },
+  pushUint24(value) {
+    this.assertPosition(this.position + 2);
+    this.dataView.setUint16(this.position, value >> 8);
+    this.dataView.setUint8(this.position + 2, value & ~4294967040);
+    this.position += 3;
+  },
+  pushUint32(value) {
+    this.assertPosition(this.position + 3);
+    this.dataView.setUint32(this.position, value);
+    this.position += 4;
+  },
+  readByte() {
+    this.assertReadLimit();
+    this._touch();
+    const value = this.inspectByte();
+    this.position++;
+    return value;
+  },
+  readBytes(length, size6) {
+    this.assertReadLimit();
+    this._touch();
+    const value = this.inspectBytes(length);
+    this.position += size6 ?? length;
+    return value;
+  },
+  readUint8() {
+    this.assertReadLimit();
+    this._touch();
+    const value = this.inspectUint8();
+    this.position += 1;
+    return value;
+  },
+  readUint16() {
+    this.assertReadLimit();
+    this._touch();
+    const value = this.inspectUint16();
+    this.position += 2;
+    return value;
+  },
+  readUint24() {
+    this.assertReadLimit();
+    this._touch();
+    const value = this.inspectUint24();
+    this.position += 3;
+    return value;
+  },
+  readUint32() {
+    this.assertReadLimit();
+    this._touch();
+    const value = this.inspectUint32();
+    this.position += 4;
+    return value;
+  },
+  get remaining() {
+    return this.bytes.length - this.position;
+  },
+  setPosition(position) {
+    const oldPosition = this.position;
+    this.assertPosition(position);
+    this.position = position;
+    return () => this.position = oldPosition;
+  },
+  _touch() {
+    if (this.recursiveReadLimit === Number.POSITIVE_INFINITY)
+      return;
+    const count = this.getReadCount();
+    this.positionReadCount.set(this.position, count + 1);
+    if (count > 0)
+      this.recursiveReadCount++;
+  }
+};
+function create(bytes, { recursiveReadLimit = 8192 } = {}) {
+  const cursor = Object.create(staticCursor2);
+  cursor.bytes = bytes;
+  cursor.dataView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  cursor.positionReadCount = new Map;
+  cursor.recursiveReadLimit = recursiveReadLimit;
+  return cursor;
+}
+
+class NegativeOffsetError2 extends BaseError3 {
+  constructor({ offset }) {
+    super(`Offset \`${offset}\` cannot be negative.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Cursor.NegativeOffsetError"
+    });
+  }
+}
+
+class PositionOutOfBoundsError2 extends BaseError3 {
+  constructor({ length, position }) {
+    super(`Position \`${position}\` is out of bounds (\`0 < position < ${length}\`).`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Cursor.PositionOutOfBoundsError"
+    });
+  }
+}
+
+class RecursiveReadLimitExceededError2 extends BaseError3 {
+  constructor({ count, limit: limit2 }) {
+    super(`Recursive read limit of \`${limit2}\` exceeded (recursive read count: \`${count}\`).`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Cursor.RecursiveReadLimitExceededError"
+    });
+  }
+}
+
+// node_modules/ox/_esm/core/AbiParameters.js
+function decode3(parameters, data, options = {}) {
+  const { as = "Array", checksumAddress: checksumAddress2 = false } = options;
+  const bytes = typeof data === "string" ? fromHex(data) : data;
+  const cursor = create(bytes);
+  if (size3(bytes) === 0 && parameters.length > 0)
+    throw new ZeroDataError;
+  if (size3(bytes) && size3(bytes) < 32)
+    throw new DataSizeTooSmallError({
+      data: typeof data === "string" ? data : fromBytes(data),
+      parameters,
+      size: size3(bytes)
+    });
+  let consumed = 0;
+  const values2 = as === "Array" ? [] : {};
+  for (let i = 0;i < parameters.length; ++i) {
+    const param = parameters[i];
+    if (consumed < bytes.length)
+      cursor.setPosition(consumed);
+    const [data2, consumed_] = decodeParameter2(cursor, param, {
+      checksumAddress: checksumAddress2,
+      staticPosition: 0
+    });
+    consumed += consumed_;
+    if (as === "Array")
+      values2.push(data2);
+    else
+      values2[param.name ?? i] = data2;
+  }
+  return values2;
+}
+function encode5(parameters, values2, options) {
+  const { checksumAddress: checksumAddress2 = false } = options ?? {};
+  if (parameters.length !== values2.length)
+    throw new LengthMismatchError({
+      expectedLength: parameters.length,
+      givenLength: values2.length
+    });
+  const preparedParameters = prepareParameters({
+    checksumAddress: checksumAddress2,
+    parameters,
+    values: values2
+  });
+  const data = encode4(preparedParameters);
+  if (data.length === 0)
+    return "0x";
+  return data;
+}
+function encodePacked2(types, values2) {
+  if (types.length !== values2.length)
+    throw new LengthMismatchError({
+      expectedLength: types.length,
+      givenLength: values2.length
+    });
+  const data = [];
+  for (let i = 0;i < types.length; i++) {
+    const type = types[i];
+    const value = values2[i];
+    data.push(encodePacked2.encode(type, value));
+  }
+  return concat2(...data);
+}
+(function(encodePacked3) {
+  function encode6(type, value, isArray2 = false) {
+    if (type === "address") {
+      const address = value;
+      assert5(address);
+      return padLeft(address.toLowerCase(), isArray2 ? 32 : 0);
+    }
+    if (type === "string")
+      return fromString2(value);
+    if (type === "bytes")
+      return value;
+    if (type === "bool")
+      return padLeft(fromBoolean(value), isArray2 ? 32 : 1);
+    const intMatch = type.match(integerRegex4);
+    if (intMatch) {
+      const [_type, baseType, bits = "256"] = intMatch;
+      const size6 = Number.parseInt(bits, 10) / 8;
+      return fromNumber(value, {
+        size: isArray2 ? 32 : size6,
+        signed: baseType === "int"
+      });
+    }
+    const bytesMatch = type.match(bytesRegex4);
+    if (bytesMatch) {
+      const [_type, size6] = bytesMatch;
+      if (Number.parseInt(size6, 10) !== (value.length - 2) / 2)
+        throw new BytesSizeMismatchError2({
+          expectedSize: Number.parseInt(size6, 10),
+          value
+        });
+      return padRight(value, isArray2 ? 32 : 0);
+    }
+    const arrayMatch = type.match(arrayRegex2);
+    if (arrayMatch && Array.isArray(value)) {
+      const [_type, childType] = arrayMatch;
+      const data = [];
+      for (let i = 0;i < value.length; i++) {
+        data.push(encode6(childType, value[i], true));
+      }
+      if (data.length === 0)
+        return "0x";
+      return concat2(...data);
+    }
+    throw new InvalidTypeError(type);
+  }
+  encodePacked3.encode = encode6;
+})(encodePacked2 || (encodePacked2 = {}));
+function from7(parameters) {
+  if (Array.isArray(parameters) && typeof parameters[0] === "string")
+    return parseAbiParameters(parameters);
+  if (typeof parameters === "string")
+    return parseAbiParameters(parameters);
+  return parameters;
+}
+
+class DataSizeTooSmallError extends BaseError3 {
+  constructor({ data, parameters, size: size6 }) {
+    super(`Data size of ${size6} bytes is too small for given parameters.`, {
+      metaMessages: [
+        `Params: (${formatAbiParameters(parameters)})`,
+        `Data:   ${data} (${size6} bytes)`
+      ]
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.DataSizeTooSmallError"
+    });
+  }
+}
+
+class ZeroDataError extends BaseError3 {
+  constructor() {
+    super('Cannot decode zero data ("0x") with ABI parameters.');
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.ZeroDataError"
+    });
+  }
+}
+
+class ArrayLengthMismatchError extends BaseError3 {
+  constructor({ expectedLength, givenLength, type }) {
+    super(`Array length mismatch for type \`${type}\`. Expected: \`${expectedLength}\`. Given: \`${givenLength}\`.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.ArrayLengthMismatchError"
+    });
+  }
+}
+
+class BytesSizeMismatchError2 extends BaseError3 {
+  constructor({ expectedSize, value }) {
+    super(`Size of bytes "${value}" (bytes${size4(value)}) does not match expected size (bytes${expectedSize}).`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.BytesSizeMismatchError"
+    });
+  }
+}
+
+class LengthMismatchError extends BaseError3 {
+  constructor({ expectedLength, givenLength }) {
+    super([
+      "ABI encoding parameters/values length mismatch.",
+      `Expected length (parameters): ${expectedLength}`,
+      `Given length (values): ${givenLength}`
+    ].join(`
+`));
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.LengthMismatchError"
+    });
+  }
+}
+
+class InvalidArrayError2 extends BaseError3 {
+  constructor(value) {
+    super(`Value \`${value}\` is not a valid array.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.InvalidArrayError"
+    });
+  }
+}
+
+class InvalidTypeError extends BaseError3 {
+  constructor(type) {
+    super(`Type \`${type}\` is not a valid ABI Type.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "AbiParameters.InvalidTypeError"
+    });
+  }
+}
+
+// node_modules/ox/_esm/core/AbiConstructor.js
+init_Hex();
+function encode6(...parameters) {
+  const [abiConstructor, options] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi2, options2] = parameters;
+      return [fromAbi2(abi2), options2];
+    }
+    return parameters;
+  })();
+  const { bytecode, args } = options;
+  return concat2(bytecode, abiConstructor.inputs?.length && args?.length ? encode5(abiConstructor.inputs, args) : "0x");
+}
+function from8(abiConstructor) {
+  return from6(abiConstructor);
+}
+function fromAbi2(abi2) {
+  const item = abi2.find((item2) => item2.type === "constructor");
+  if (!item)
+    throw new NotFoundError2({ name: "constructor" });
+  return item;
+}
+
+// node_modules/ox/_esm/core/AbiEvent.js
+function from9(abiEvent, options = {}) {
+  return from6(abiEvent, options);
+}
+function getSelector2(abiItem) {
+  return getSignatureHash(abiItem);
+}
+
+// node_modules/ox/_esm/core/AbiFunction.js
+init_Hex();
+function decodeResult(...parameters) {
+  const [abiFunction, data, options = {}] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi2, name, data2, options2] = parameters;
+      return [fromAbi3(abi2, name), data2, options2];
+    }
+    return parameters;
+  })();
+  const values2 = decode3(abiFunction.outputs, data, options);
+  if (values2 && Object.keys(values2).length === 0)
+    return;
+  if (values2 && Object.keys(values2).length === 1) {
+    if (Array.isArray(values2))
+      return values2[0];
+    return Object.values(values2)[0];
+  }
+  return values2;
+}
+function encodeData(...parameters) {
+  const [abiFunction, args = []] = (() => {
+    if (Array.isArray(parameters[0])) {
+      const [abi2, name, args3] = parameters;
+      return [fromAbi3(abi2, name, { args: args3 }), args3];
+    }
+    const [abiFunction2, args2] = parameters;
+    return [abiFunction2, args2];
+  })();
+  const { overloads } = abiFunction;
+  const item = overloads ? fromAbi3([abiFunction, ...overloads], abiFunction.name, {
+    args
+  }) : abiFunction;
+  const selector = getSelector3(item);
+  const data = args.length > 0 ? encode5(item.inputs, args) : undefined;
+  return data ? concat2(selector, data) : selector;
+}
+function from10(abiFunction, options = {}) {
+  return from6(abiFunction, options);
+}
+function fromAbi3(abi2, name, options) {
+  const item = fromAbi(abi2, name, options);
+  if (item.type !== "function")
+    throw new NotFoundError2({ name, type: "function" });
+  return item;
+}
+function getSelector3(abiItem) {
+  return getSelector(abiItem);
+}
+// node_modules/viem/_esm/constants/address.js
+var ethAddress = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+var zeroAddress = "0x0000000000000000000000000000000000000000";
+
+// node_modules/viem/_esm/actions/public/simulateCalls.js
+init_base();
+init_contract();
+init_node();
+init_pad();
+init_fromHex();
+init_call();
+var getBalanceCode = "0x6080604052348015600e575f80fd5b5061016d8061001c5f395ff3fe608060405234801561000f575f80fd5b5060043610610029575f3560e01c8063f8b2cb4f1461002d575b5f80fd5b610047600480360381019061004291906100db565b61005d565b604051610054919061011e565b60405180910390f35b5f8173ffffffffffffffffffffffffffffffffffffffff16319050919050565b5f80fd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f6100aa82610081565b9050919050565b6100ba816100a0565b81146100c4575f80fd5b50565b5f813590506100d5816100b1565b92915050565b5f602082840312156100f0576100ef61007d565b5b5f6100fd848285016100c7565b91505092915050565b5f819050919050565b61011881610106565b82525050565b5f6020820190506101315f83018461010f565b9291505056fea26469706673582212203b9fe929fe995c7cf9887f0bdba8a36dd78e8b73f149b17d2d9ad7cd09d2dc6264736f6c634300081a0033";
+var staticCallCode = "0x608060405234801561000f575f5ffd5b5060043610610029575f3560e01c8063fd00430c1461002d575b5f5ffd5b6100476004803603810190610042919061012b565b610049565b005b80825f375f5f825f865afa610060573d5f5f3e3d5ffd5b3d5f5f3e3d5ff35b5f5ffd5b5f5ffd5b5f73ffffffffffffffffffffffffffffffffffffffff82169050919050565b5f61009982610070565b9050919050565b6100a98161008f565b81146100b3575f5ffd5b50565b5f813590506100c4816100a0565b92915050565b5f5ffd5b5f5ffd5b5f5ffd5b5f5f83601f8401126100eb576100ea6100ca565b5b8235905067ffffffffffffffff811115610108576101076100ce565b5b602083019150836001820283011115610124576101236100d2565b5b9250929050565b5f5f5f6040848603121561014257610141610068565b5b5f61014f868287016100b6565b935050602084013567ffffffffffffffff8111156101705761016f61006c565b5b61017c868287016100d6565b9250925050925092509256fea2646970667358221220635ed99185cacf3f2acba6921f23687c969cec2bbaf5f9ad599f507e6e105e6964736f6c63430008230033";
+var staticCallAddressBase = 0x00000000000000000000000000000000deadbeefn;
+var transferEventSelector = getSelector2(from9("event Transfer(address indexed from, address indexed to, uint256 value)"));
+var balanceOfFunction = from10("function balanceOf(address) returns (uint256)");
+var decimalsFunction = from10("function decimals() returns (uint256)");
+var tokenUriFunction = from10("function tokenURI(uint256) returns (string)");
+var symbolFunction = from10("function symbol() returns (string)");
+var staticCallFunction = from10("function query(address target, bytes data)");
+async function simulateCalls(client, parameters) {
+  const { blockNumber, blockTag, calls, stateOverrides, traceAssetChanges, traceTransfers, validation } = parameters;
+  const account = parameters.account ? parseAccount(parameters.account) : undefined;
+  if (traceAssetChanges && !account)
+    throw new BaseError("`account` is required when `traceAssetChanges` is true");
+  const getBalanceData = account ? encode6(from8("constructor(bytes, bytes)"), {
+    bytecode: deploylessCallViaBytecodeBytecode,
+    args: [
+      getBalanceCode,
+      encodeData(from10("function getBalance(address)"), [account.address])
+    ]
+  }) : undefined;
+  const blockTag_ = blockTag ?? client.experimental_blockTag ?? "latest";
+  let baseBlockNumber = blockNumber;
+  if (traceAssetChanges && typeof baseBlockNumber !== "bigint" && blockTag_ !== "earliest" && blockTag_ !== "pending") {
+    if (blockTag_ === "latest")
+      baseBlockNumber = await getBlockNumber(client, { cacheTime: 0 });
+    else {
+      const block2 = await getBlock(client, { blockTag: blockTag_ });
+      if (typeof block2.number !== "bigint")
+        throw new BaseError(`Block tag \`${blockTag_}\` did not resolve to a number.`);
+      baseBlockNumber = block2.number;
+    }
+  }
+  const block_ = typeof baseBlockNumber === "bigint" ? { blockNumber: baseBlockNumber } : { blockTag: blockTag_ };
+  const discovery = traceAssetChanges ? await simulateBlocks(client, {
+    ...block_,
+    blocks: [
+      {
+        calls: calls.map((call2) => ({
+          ...call2,
+          from: account.address
+        })),
+        stateOverrides
+      }
+    ],
+    traceTransfers,
+    validation
+  }) : undefined;
+  const assetAddresses = discovery ? [
+    ...new Set([
+      ...tokensFromLogs(discovery[0].calls.flatMap((call2) => call2.logs ?? []), account.address),
+      ...parameters.calls.map((call2) => call2.to?.toLowerCase())
+    ])
+  ].filter((address) => Boolean(address) && address !== ethAddress && address !== zeroAddress) : [];
+  const staticCallAddress = getStaticCallAddress([
+    ...account ? [account.address] : [],
+    ...assetAddresses,
+    ...stateOverrides?.map(({ address }) => address) ?? []
+  ]);
+  const staticCallStateOverrides = [
+    { address: staticCallAddress, code: staticCallCode }
+  ];
+  const [balanceCallsPre, blocks] = await Promise.all([
+    traceAssetChanges ? Promise.all([
+      readBalance(client, {
+        account: account.address,
+        ...block_,
+        data: getBalanceData,
+        stateOverride: stateOverrides
+      }),
+      ...assetAddresses.map((address) => readBalance(client, {
+        account: account.address,
+        address,
+        ...block_,
+        data: encodeData(balanceOfFunction, [
+          account.address
+        ]),
+        staticCallAddress,
+        stateOverride: stateOverrides
+      }))
+    ]) : [],
+    simulateBlocks(client, {
+      ...block_,
+      blocks: [
+        {
+          calls: [...calls, { to: zeroAddress }].map((call2) => ({
+            ...call2,
+            from: account?.address
+          })),
+          stateOverrides
+        },
+        ...traceAssetChanges ? [
+          {
+            calls: [{ data: getBalanceData }]
+          },
+          {
+            calls: assetAddresses.map((address) => ({
+              to: staticCallAddress,
+              data: encodeStaticCall(address, encodeData(balanceOfFunction, [
+                account.address
+              ]))
+            })),
+            stateOverrides: staticCallStateOverrides
+          },
+          {
+            calls: assetAddresses.map((address) => ({
+              to: staticCallAddress,
+              data: encodeStaticCall(address, encodeData(decimalsFunction))
+            })),
+            stateOverrides: staticCallStateOverrides
+          },
+          {
+            calls: assetAddresses.map((address) => ({
+              to: staticCallAddress,
+              data: encodeStaticCall(address, encodeData(tokenUriFunction, [0n]))
+            })),
+            stateOverrides: staticCallStateOverrides
+          },
+          {
+            calls: assetAddresses.map((address) => ({
+              to: staticCallAddress,
+              data: encodeStaticCall(address, encodeData(symbolFunction))
+            })),
+            stateOverrides: staticCallStateOverrides
+          }
+        ] : []
+      ],
+      traceTransfers,
+      validation
+    })
+  ]);
+  const block_results = blocks[0];
+  const [block_ethPost, block_assetsPost, block_decimals, block_tokenURI, block_symbols] = traceAssetChanges ? blocks.slice(1) : [];
+  const { calls: block_calls, ...block } = block_results;
+  const results = block_calls.slice(0, -1);
+  const balancesPre = balanceCallsPre.map((call2) => isBalance(call2) ? hexToBigInt(call2.data) : null);
+  const ethPost = block_ethPost?.calls ?? [];
+  const assetsPost = block_assetsPost?.calls ?? [];
+  const balanceCallsPost = [...ethPost, ...assetsPost];
+  const balancesPost = balanceCallsPost.map((call2) => isBalance(call2) ? hexToBigInt(call2.data) : null);
+  const decimals = (block_decimals?.calls ?? []).map((call2) => decodeAssetResult(call2, decimalsFunction));
+  const symbols = (block_symbols?.calls ?? []).map((call2) => decodeAssetResult(call2, symbolFunction));
+  const tokenURI = (block_tokenURI?.calls ?? []).map((call2) => decodeAssetResult(call2, tokenUriFunction));
+  const changes = [];
+  for (const [i, balancePost] of balancesPost.entries()) {
+    const balancePre_ = balancesPre[i];
+    const preCall = balanceCallsPre[i];
+    const balancePre = typeof balancePre_ === "bigint" ? balancePre_ : i > 0 && preCall?.status === "success" && preCall.data === "0x" ? 0n : null;
+    if (typeof balancePost !== "bigint")
+      continue;
+    if (typeof balancePre !== "bigint")
+      continue;
+    const decimals_ = decimals[i - 1];
+    const symbol_ = symbols[i - 1];
+    const tokenURI_ = tokenURI[i - 1];
+    const token = (() => {
+      if (i === 0)
+        return {
+          address: ethAddress,
+          decimals: 18,
+          symbol: "ETH"
+        };
+      return {
+        address: assetAddresses[i - 1],
+        decimals: tokenURI_ || decimals_ ? Number(decimals_ ?? 1) : undefined,
+        symbol: symbol_ ?? undefined
+      };
+    })();
+    changes.push({
+      token,
+      value: {
+        pre: balancePre,
+        post: balancePost,
+        diff: balancePost - balancePre
+      }
+    });
+  }
+  return {
+    assetChanges: changes,
+    block,
+    results
+  };
+}
+function encodeStaticCall(address, data) {
+  return encodeData(staticCallFunction, [address, data]);
+}
+function tokensFromLogs(logs, account) {
+  const account_ = pad(account.toLowerCase(), { size: 32 });
+  return logs.filter((log2) => {
+    if (log2.topics[0]?.toLowerCase() !== transferEventSelector)
+      return false;
+    if (log2.address.toLowerCase() === ethAddress)
+      return false;
+    return log2.topics[1]?.toLowerCase() === account_ || log2.topics[2]?.toLowerCase() === account_;
+  }).map((log2) => log2.address.toLowerCase());
+}
+function isBalance(call2) {
+  return call2.status === "success" && /^0x[\da-f]{64}$/i.test(call2.data);
+}
+function decodeAssetResult(call2, abiFunction) {
+  if (call2.status === "failure" || call2.data === "0x")
+    return null;
+  try {
+    return decodeResult(abiFunction, call2.data);
+  } catch {
+    return null;
+  }
+}
+async function readBalance(client, parameters) {
+  const { account, address, blockNumber, blockTag, data, staticCallAddress, stateOverride } = parameters;
+  try {
+    const result = await call({ ...client, ccipRead: false }, {
+      account: address ? zeroAddress : account,
+      data: address ? encodeStaticCall(address, data) : data,
+      stateOverride: address && staticCallAddress ? [
+        ...stateOverride ?? [],
+        { address: staticCallAddress, code: staticCallCode }
+      ] : stateOverride,
+      ...address ? { to: staticCallAddress } : {},
+      ...typeof blockNumber === "bigint" ? { blockNumber } : { blockTag }
+    });
+    return { data: result.data ?? "0x", status: "success" };
+  } catch (error62) {
+    if (!(error62 instanceof CallExecutionError) || !(error62.cause instanceof ExecutionRevertedError))
+      throw error62;
+    return { data: "0x", status: "failure" };
+  }
+}
+function getStaticCallAddress(addresses) {
+  const occupied = new Set(addresses.map((address) => address.toLowerCase()));
+  let value = staticCallAddressBase;
+  while (occupied.has(`0x${value.toString(16).padStart(40, "0")}`))
+    value++;
+  return `0x${value.toString(16).padStart(40, "0")}`;
+}
+
+// node_modules/viem/_esm/actions/public/simulateContract.js
+init_decodeFunctionResult();
+init_encodeFunctionData();
+init_call();
+async function simulateContract(client, parameters) {
+  const { abi: abi2, address, args, functionName, dataSuffix = typeof client.dataSuffix === "string" ? client.dataSuffix : client.dataSuffix?.value, ...callRequest } = parameters;
+  const account = callRequest.account ? parseAccount(callRequest.account) : client.account;
+  const calldata = encodeFunctionData({ abi: abi2, args, functionName });
+  try {
+    const { data } = await getAction(client, call, "call")({
+      batch: false,
+      data: `${calldata}${dataSuffix ? dataSuffix.replace("0x", "") : ""}`,
+      to: address,
+      ...callRequest,
+      account
+    });
+    const result = decodeFunctionResult({
+      abi: abi2,
+      args,
+      functionName,
+      data: data || "0x"
+    });
+    const minimizedAbi = abi2.filter((abiItem) => ("name" in abiItem) && abiItem.name === parameters.functionName);
+    return {
+      result,
+      request: {
+        abi: minimizedAbi,
+        address,
+        args,
+        dataSuffix,
+        functionName,
+        ...callRequest,
+        account
+      }
+    };
+  } catch (error62) {
+    throw getContractError(error62, {
+      abi: abi2,
+      address,
+      args,
+      docsPath: "/docs/contract/simulateContract",
+      functionName,
+      sender: account?.address
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/public/uninstallFilter.js
+async function uninstallFilter(_client, { filter }) {
+  return filter.request({
+    method: "eth_uninstallFilter",
+    params: [filter.id]
+  });
+}
+
+// node_modules/ox/_esm/erc6492/SignatureErc6492.js
+var exports_SignatureErc6492 = {};
+__export(exports_SignatureErc6492, {
+  InvalidWrappedSignatureError: () => InvalidWrappedSignatureError,
+  assert: () => assert6,
+  from: () => from11,
+  magicBytes: () => magicBytes,
+  universalSignatureValidatorAbi: () => universalSignatureValidatorAbi,
+  universalSignatureValidatorBytecode: () => universalSignatureValidatorBytecode,
+  unwrap: () => unwrap,
+  validate: () => validate5,
+  wrap: () => wrap
+});
+init_Errors();
+init_Hex();
+var magicBytes = "0x6492649264926492649264926492649264926492649264926492649264926492";
+var universalSignatureValidatorBytecode = "0x608060405234801561001057600080fd5b5060405161069438038061069483398101604081905261002f9161051e565b600061003c848484610048565b9050806000526001601ff35b60007f64926492649264926492649264926492649264926492649264926492649264926100748361040c565b036101e7576000606080848060200190518101906100929190610577565b60405192955090935091506000906001600160a01b038516906100b69085906105dd565b6000604051808303816000865af19150503d80600081146100f3576040519150601f19603f3d011682016040523d82523d6000602084013e6100f8565b606091505b50509050876001600160a01b03163b60000361016057806101605760405162461bcd60e51b815260206004820152601e60248201527f5369676e617475726556616c696461746f723a206465706c6f796d656e74000060448201526064015b60405180910390fd5b604051630b135d3f60e11b808252906001600160a01b038a1690631626ba7e90610190908b9087906004016105f9565b602060405180830381865afa1580156101ad573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906101d19190610633565b6001600160e01b03191614945050505050610405565b6001600160a01b0384163b1561027a57604051630b135d3f60e11b808252906001600160a01b03861690631626ba7e9061022790879087906004016105f9565b602060405180830381865afa158015610244573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906102689190610633565b6001600160e01b031916149050610405565b81516041146102df5760405162461bcd60e51b815260206004820152603a602482015260008051602061067483398151915260448201527f3a20696e76616c6964207369676e6174757265206c656e6774680000000000006064820152608401610157565b6102e7610425565b5060208201516040808401518451859392600091859190811061030c5761030c61065d565b016020015160f81c9050601b811480159061032b57508060ff16601c14155b1561038c5760405162461bcd60e51b815260206004820152603b602482015260008051602061067483398151915260448201527f3a20696e76616c6964207369676e617475726520762076616c756500000000006064820152608401610157565b60408051600081526020810180835289905260ff83169181019190915260608101849052608081018390526001600160a01b0389169060019060a0016020604051602081039080840390855afa1580156103ea573d6000803e3d6000fd5b505050602060405103516001600160a01b0316149450505050505b9392505050565b600060208251101561041d57600080fd5b508051015190565b60405180606001604052806003906020820280368337509192915050565b6001600160a01b038116811461045857600080fd5b50565b634e487b7160e01b600052604160045260246000fd5b60005b8381101561048c578181015183820152602001610474565b50506000910152565b600082601f8301126104a657600080fd5b81516001600160401b038111156104bf576104bf61045b565b604051601f8201601f19908116603f011681016001600160401b03811182821017156104ed576104ed61045b565b60405281815283820160200185101561050557600080fd5b610516826020830160208701610471565b949350505050565b60008060006060848603121561053357600080fd5b835161053e81610443565b6020850151604086015191945092506001600160401b0381111561056157600080fd5b61056d86828701610495565b9150509250925092565b60008060006060848603121561058c57600080fd5b835161059781610443565b60208501519093506001600160401b038111156105b357600080fd5b6105bf86828701610495565b604086015190935090506001600160401b0381111561056157600080fd5b600082516105ef818460208701610471565b9190910192915050565b828152604060208201526000825180604084015261061e816060850160208701610471565b601f01601f1916919091016060019392505050565b60006020828403121561064557600080fd5b81516001600160e01b03198116811461040557600080fd5b634e487b7160e01b600052603260045260246000fdfe5369676e617475726556616c696461746f72237265636f7665725369676e6572";
+var universalSignatureValidatorAbi = [
+  {
+    inputs: [
+      {
+        name: "_signer",
+        type: "address"
+      },
+      {
+        name: "_hash",
+        type: "bytes32"
+      },
+      {
+        name: "_signature",
+        type: "bytes"
+      }
+    ],
+    stateMutability: "nonpayable",
+    type: "constructor"
+  },
+  {
+    inputs: [
+      {
+        name: "_signer",
+        type: "address"
+      },
+      {
+        name: "_hash",
+        type: "bytes32"
+      },
+      {
+        name: "_signature",
+        type: "bytes"
+      }
+    ],
+    outputs: [
+      {
+        type: "bool"
+      }
+    ],
+    stateMutability: "nonpayable",
+    type: "function",
+    name: "isValidSig"
+  }
+];
+function assert6(wrapped) {
+  if (slice3(wrapped, -32) !== magicBytes)
+    throw new InvalidWrappedSignatureError(wrapped);
+}
+function from11(wrapped) {
+  if (typeof wrapped === "string")
+    return unwrap(wrapped);
+  return wrapped;
+}
+function unwrap(wrapped) {
+  assert6(wrapped);
+  const [to, data, signature] = decode3(from7("address, bytes, bytes"), wrapped);
+  return { data, signature, to };
+}
+function wrap(value) {
+  const { data, signature, to } = value;
+  return concat2(encode5(from7("address, bytes, bytes"), [
+    to,
+    data,
+    signature
+  ]), magicBytes);
+}
+function validate5(wrapped) {
+  try {
+    assert6(wrapped);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+class InvalidWrappedSignatureError extends BaseError3 {
+  constructor(wrapped) {
+    super(`Value \`${wrapped}\` is an invalid ERC-6492 wrapped signature.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "SignatureErc6492.InvalidWrappedSignatureError"
+    });
+  }
+}
+// node_modules/ox/_esm/erc8010/SignatureErc8010.js
+var exports_SignatureErc8010 = {};
+__export(exports_SignatureErc8010, {
+  InvalidWrappedSignatureError: () => InvalidWrappedSignatureError2,
+  assert: () => assert8,
+  from: () => from15,
+  magicBytes: () => magicBytes2,
+  suffixParameters: () => suffixParameters,
+  unwrap: () => unwrap2,
+  validate: () => validate6,
+  wrap: () => wrap2
+});
+
+// node_modules/ox/_esm/core/Authorization.js
+init_Hex();
+
+// node_modules/ox/_esm/core/Rlp.js
+init_Bytes();
+init_Errors();
+init_Hex();
+function from12(value, options) {
+  const { as } = options;
+  const encodable = getEncodable2(value);
+  const cursor = create(new Uint8Array(encodable.length));
+  encodable.encode(cursor);
+  if (as === "Hex")
+    return fromBytes(cursor.bytes);
+  return cursor.bytes;
+}
+function fromHex4(hex3, options = {}) {
+  const { as = "Hex" } = options;
+  return from12(hex3, { as });
+}
+function getEncodable2(bytes) {
+  if (Array.isArray(bytes))
+    return getEncodableList2(bytes.map((x) => getEncodable2(x)));
+  return getEncodableBytes2(bytes);
+}
+function getEncodableList2(list) {
+  const bodyLength = list.reduce((acc, x) => acc + x.length, 0);
+  const sizeOfBodyLength = getSizeOfLength2(bodyLength);
+  const length = (() => {
+    if (bodyLength <= 55)
+      return 1 + bodyLength;
+    return 1 + sizeOfBodyLength + bodyLength;
+  })();
+  return {
+    length,
+    encode(cursor) {
+      if (bodyLength <= 55) {
+        cursor.pushByte(192 + bodyLength);
+      } else {
+        cursor.pushByte(192 + 55 + sizeOfBodyLength);
+        if (sizeOfBodyLength === 1)
+          cursor.pushUint8(bodyLength);
+        else if (sizeOfBodyLength === 2)
+          cursor.pushUint16(bodyLength);
+        else if (sizeOfBodyLength === 3)
+          cursor.pushUint24(bodyLength);
+        else
+          cursor.pushUint32(bodyLength);
+      }
+      for (const { encode: encode7 } of list) {
+        encode7(cursor);
+      }
+    }
+  };
+}
+function getEncodableBytes2(bytesOrHex) {
+  const bytes = typeof bytesOrHex === "string" ? fromHex(bytesOrHex) : bytesOrHex;
+  const sizeOfBytesLength = getSizeOfLength2(bytes.length);
+  const length = (() => {
+    if (bytes.length === 1 && bytes[0] < 128)
+      return 1;
+    if (bytes.length <= 55)
+      return 1 + bytes.length;
+    return 1 + sizeOfBytesLength + bytes.length;
+  })();
+  return {
+    length,
+    encode(cursor) {
+      if (bytes.length === 1 && bytes[0] < 128) {
+        cursor.pushBytes(bytes);
+      } else if (bytes.length <= 55) {
+        cursor.pushByte(128 + bytes.length);
+        cursor.pushBytes(bytes);
+      } else {
+        cursor.pushByte(128 + 55 + sizeOfBytesLength);
+        if (sizeOfBytesLength === 1)
+          cursor.pushUint8(bytes.length);
+        else if (sizeOfBytesLength === 2)
+          cursor.pushUint16(bytes.length);
+        else if (sizeOfBytesLength === 3)
+          cursor.pushUint24(bytes.length);
+        else
+          cursor.pushUint32(bytes.length);
+        cursor.pushBytes(bytes);
+      }
+    }
+  };
+}
+function getSizeOfLength2(length) {
+  if (length <= 255)
+    return 1;
+  if (length <= 65535)
+    return 2;
+  if (length <= 16777215)
+    return 3;
+  if (length <= 4294967295)
+    return 4;
+  throw new BaseError3("Length is too large.");
+}
+
+// node_modules/ox/_esm/core/Signature.js
+init_Errors();
+init_Hex();
+function assert7(signature, options = {}) {
+  const { recovered } = options;
+  if (typeof signature.r === "undefined")
+    throw new MissingPropertiesError({ signature });
+  if (typeof signature.s === "undefined")
+    throw new MissingPropertiesError({ signature });
+  if (recovered && typeof signature.yParity === "undefined")
+    throw new MissingPropertiesError({ signature });
+  if (signature.r < 0n || signature.r > maxUint2562)
+    throw new InvalidRError({ value: signature.r });
+  if (signature.s < 0n || signature.s > maxUint2562)
+    throw new InvalidSError({ value: signature.s });
+  if (typeof signature.yParity === "number" && signature.yParity !== 0 && signature.yParity !== 1)
+    throw new InvalidYParityError({ value: signature.yParity });
+}
+function fromBytes4(signature) {
+  return fromHex5(fromBytes(signature));
+}
+function fromHex5(signature) {
+  if (signature.length !== 130 && signature.length !== 132)
+    throw new InvalidSerializedSizeError2({ signature });
+  const r = BigInt(slice3(signature, 0, 32));
+  const s = BigInt(slice3(signature, 32, 64));
+  const yParity = (() => {
+    const yParity2 = Number(`0x${signature.slice(130)}`);
+    if (Number.isNaN(yParity2))
+      return;
+    try {
+      return vToYParity(yParity2);
+    } catch {
+      throw new InvalidYParityError({ value: yParity2 });
+    }
+  })();
+  if (typeof yParity === "undefined")
+    return {
+      r,
+      s
+    };
+  return {
+    r,
+    s,
+    yParity
+  };
+}
+function extract3(value) {
+  if (typeof value.r === "undefined")
+    return;
+  if (typeof value.s === "undefined")
+    return;
+  return from13(value);
+}
+function from13(signature) {
+  const signature_ = (() => {
+    if (typeof signature === "string")
+      return fromHex5(signature);
+    if (signature instanceof Uint8Array)
+      return fromBytes4(signature);
+    if (typeof signature.r === "string")
+      return fromRpc2(signature);
+    if (signature.v)
+      return fromLegacy(signature);
+    return {
+      r: signature.r,
+      s: signature.s,
+      ...typeof signature.yParity !== "undefined" ? { yParity: signature.yParity } : {}
+    };
+  })();
+  assert7(signature_);
+  return signature_;
+}
+function fromLegacy(signature) {
+  return {
+    r: signature.r,
+    s: signature.s,
+    yParity: vToYParity(signature.v)
+  };
+}
+function fromRpc2(signature) {
+  const yParity = (() => {
+    const v = signature.v ? Number(signature.v) : undefined;
+    let yParity2 = signature.yParity ? Number(signature.yParity) : undefined;
+    if (typeof v === "number" && typeof yParity2 !== "number")
+      yParity2 = vToYParity(v);
+    if (typeof yParity2 !== "number")
+      throw new InvalidYParityError({ value: signature.yParity });
+    return yParity2;
+  })();
+  return {
+    r: BigInt(signature.r),
+    s: BigInt(signature.s),
+    yParity
+  };
+}
+function toTuple(signature) {
+  const { r, s, yParity } = signature;
+  return [
+    yParity ? "0x01" : "0x",
+    r === 0n ? "0x" : trimLeft2(fromNumber(r)),
+    s === 0n ? "0x" : trimLeft2(fromNumber(s))
+  ];
+}
+function vToYParity(v) {
+  if (v === 0 || v === 27)
+    return 0;
+  if (v === 1 || v === 28)
+    return 1;
+  if (v >= 35)
+    return v % 2 === 0 ? 1 : 0;
+  throw new InvalidVError({ value: v });
+}
+class InvalidSerializedSizeError2 extends BaseError3 {
+  constructor({ signature }) {
+    super(`Value \`${signature}\` is an invalid signature size.`, {
+      metaMessages: [
+        "Expected: 64 bytes or 65 bytes.",
+        `Received ${size4(from3(signature))} bytes.`
+      ]
+    });
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Signature.InvalidSerializedSizeError"
+    });
+  }
+}
+
+class MissingPropertiesError extends BaseError3 {
+  constructor({ signature }) {
+    super(`Signature \`${stringify3(signature)}\` is missing either an \`r\`, \`s\`, or \`yParity\` property.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Signature.MissingPropertiesError"
+    });
+  }
+}
+
+class InvalidRError extends BaseError3 {
+  constructor({ value }) {
+    super(`Value \`${value}\` is an invalid r value. r must be a positive integer less than 2^256.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Signature.InvalidRError"
+    });
+  }
+}
+
+class InvalidSError extends BaseError3 {
+  constructor({ value }) {
+    super(`Value \`${value}\` is an invalid s value. s must be a positive integer less than 2^256.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Signature.InvalidSError"
+    });
+  }
+}
+
+class InvalidYParityError extends BaseError3 {
+  constructor({ value }) {
+    super(`Value \`${value}\` is an invalid y-parity value. Y-parity must be 0 or 1.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Signature.InvalidYParityError"
+    });
+  }
+}
+
+class InvalidVError extends BaseError3 {
+  constructor({ value }) {
+    super(`Value \`${value}\` is an invalid v value. v must be 27, 28 or >=35.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "Signature.InvalidVError"
+    });
+  }
+}
+
+// node_modules/ox/_esm/core/Authorization.js
+function from14(authorization, options = {}) {
+  if (typeof authorization.chainId === "string")
+    return fromRpc3(authorization);
+  return { ...authorization, ...options.signature };
+}
+function fromRpc3(authorization) {
+  const { address, chainId, nonce } = authorization;
+  const signature = extract3(authorization);
+  return {
+    address,
+    chainId: Number(chainId),
+    nonce: BigInt(nonce),
+    ...signature
+  };
+}
+function getSignPayload(authorization) {
+  return hash3(authorization, { presign: true });
+}
+function hash3(authorization, options = {}) {
+  const { presign } = options;
+  return keccak2563(concat2("0x05", fromHex4(toTuple2(presign ? {
+    address: authorization.address,
+    chainId: authorization.chainId,
+    nonce: authorization.nonce
+  } : authorization))));
+}
+function toTuple2(authorization) {
+  const { address, chainId, nonce } = authorization;
+  const signature = extract3(authorization);
+  return [
+    chainId ? fromNumber(chainId) : "0x",
+    address,
+    nonce ? fromNumber(nonce) : "0x",
+    ...signature ? toTuple(signature) : []
+  ];
+}
+
+// node_modules/ox/_esm/erc8010/SignatureErc8010.js
+init_Errors();
+init_Hex();
+
+// node_modules/ox/_esm/core/Secp256k1.js
+init_secp256k1();
+init_Bytes();
+init_Hex();
+function recoverAddress3(options) {
+  return fromPublicKey(recoverPublicKey3(options));
+}
+function recoverPublicKey3(options) {
+  const { payload, signature } = options;
+  const { r, s, yParity } = signature;
+  const signature_ = new secp256k1.Signature(BigInt(r), BigInt(s)).addRecoveryBit(yParity);
+  const point = signature_.recoverPublicKey(from3(payload).substring(2));
+  return from4(point);
+}
+var fromSeedDomain = fromString("ox.secp256k1.fromSeed.v1");
+
+// node_modules/ox/_esm/erc8010/SignatureErc8010.js
+var magicBytes2 = "0x8010801080108010801080108010801080108010801080108010801080108010";
+var suffixParameters = from7("(uint256 chainId, address delegation, uint256 nonce, uint8 yParity, uint256 r, uint256 s), address to, bytes data");
+function assert8(value) {
+  if (typeof value === "string") {
+    if (slice3(value, -32) !== magicBytes2)
+      throw new InvalidWrappedSignatureError2(value);
+  } else
+    assert7(value.authorization);
+}
+function from15(value) {
+  if (typeof value === "string")
+    return unwrap2(value);
+  return value;
+}
+function unwrap2(wrapped) {
+  assert8(wrapped);
+  const suffixLength = toNumber(slice3(wrapped, -64, -32));
+  const suffix = slice3(wrapped, -suffixLength - 64, -64);
+  const signature = slice3(wrapped, 0, -suffixLength - 64);
+  const [auth, to, data] = decode3(suffixParameters, suffix);
+  const authorization = from14({
+    address: auth.delegation,
+    chainId: Number(auth.chainId),
+    nonce: auth.nonce,
+    yParity: auth.yParity,
+    r: auth.r,
+    s: auth.s
+  });
+  return {
+    authorization,
+    signature,
+    ...data && data !== "0x" ? { data, to } : {}
+  };
+}
+function wrap2(value) {
+  const { data, signature } = value;
+  assert8(value);
+  const self = recoverAddress3({
+    payload: getSignPayload(value.authorization),
+    signature: from13(value.authorization)
+  });
+  const suffix = encode5(suffixParameters, [
+    {
+      ...value.authorization,
+      delegation: value.authorization.address,
+      chainId: BigInt(value.authorization.chainId)
+    },
+    value.to ?? self,
+    data ?? "0x"
+  ]);
+  const suffixLength = fromNumber(size4(suffix), { size: 32 });
+  return concat2(signature, suffix, suffixLength, magicBytes2);
+}
+function validate6(value) {
+  try {
+    assert8(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+class InvalidWrappedSignatureError2 extends BaseError3 {
+  constructor(wrapped) {
+    super(`Value \`${wrapped}\` is an invalid ERC-8010 wrapped signature.`);
+    Object.defineProperty(this, "name", {
+      enumerable: true,
+      configurable: true,
+      writable: true,
+      value: "SignatureErc8010.InvalidWrappedSignatureError"
+    });
+  }
+}
+// node_modules/viem/_esm/actions/public/verifyHash.js
+init_abis();
+init_contract();
+init_encodeDeployData();
+init_encodeFunctionData();
+init_getAddress();
+init_isAddressEqual();
+
+// node_modules/viem/_esm/utils/authorization/verifyAuthorization.js
+init_getAddress();
+init_isAddressEqual();
+async function verifyAuthorization2({ address, authorization, signature }) {
+  return isAddressEqual(getAddress(address), await recoverAuthorizationAddress({
+    authorization,
+    signature
+  }));
+}
+
+// node_modules/viem/_esm/actions/public/verifyHash.js
+init_fromHex();
+init_toHex();
+
+// node_modules/viem/_esm/utils/signature/serializeSignature.js
+init_secp256k1();
+init_fromHex();
+init_toBytes();
+function serializeSignature({ r, s, to = "hex", v, yParity }) {
+  const yParity_ = (() => {
+    if (yParity === 0 || yParity === 1)
+      return yParity;
+    if (v && (v === 27n || v === 28n || v >= 35n))
+      return v % 2n === 0n ? 1 : 0;
+    throw new Error("Invalid `v` or `yParity` value");
+  })();
+  const signature = `0x${new secp256k1.Signature(hexToBigInt(r), hexToBigInt(s)).toCompactHex()}${yParity_ === 0 ? "1b" : "1c"}`;
+  if (to === "hex")
+    return signature;
+  return hexToBytes(signature);
+}
+
+// node_modules/viem/_esm/actions/public/verifyHash.js
+init_call();
+async function verifyHash2(client, parameters) {
+  const { address, chain = client.chain, hash: hash4, erc6492VerifierAddress: verifierAddress = parameters.universalSignatureVerifierAddress ?? chain?.contracts?.erc6492Verifier?.address, multicallAddress = parameters.multicallAddress ?? chain?.contracts?.multicall3?.address, mode = "auto" } = parameters;
+  if (chain?.verifyHash)
+    return await chain.verifyHash(client, parameters);
+  const signature = (() => {
+    const signature2 = parameters.signature;
+    if (isHex(signature2))
+      return signature2;
+    if (typeof signature2 === "object" && "r" in signature2 && "s" in signature2)
+      return serializeSignature(signature2);
+    return bytesToHex(signature2);
+  })();
+  try {
+    if (mode === "eoa") {
+      try {
+        const verified = isAddressEqual(getAddress(address), await recoverAddress({ hash: hash4, signature }));
+        if (verified)
+          return true;
+      } catch {}
+    }
+    if (exports_SignatureErc8010.validate(signature))
+      return await verifyErc8010(client, {
+        ...parameters,
+        multicallAddress,
+        signature
+      });
+    return await verifyErc6492(client, {
+      ...parameters,
+      verifierAddress,
+      signature
+    });
+  } catch (error62) {
+    if (mode !== "eoa") {
+      try {
+        const verified = isAddressEqual(getAddress(address), await recoverAddress({ hash: hash4, signature }));
+        if (verified)
+          return true;
+      } catch {}
+    }
+    if (error62 instanceof VerificationError) {
+      return false;
+    }
+    throw error62;
+  }
+}
+async function verifyErc8010(client, parameters) {
+  const { address, blockHash, blockNumber, blockTag, hash: hash4, multicallAddress, requireCanonical } = parameters;
+  const { authorization: authorization_ox, data: initData, signature, to } = exports_SignatureErc8010.unwrap(parameters.signature);
+  const code = await getCode(client, {
+    address,
+    blockHash,
+    blockNumber,
+    blockTag,
+    requireCanonical
+  });
+  if (code === concatHex(["0xef0100", authorization_ox.address]))
+    return await verifyErc1271(client, {
+      ...parameters,
+      signature
+    });
+  const authorization = {
+    address: authorization_ox.address,
+    chainId: Number(authorization_ox.chainId),
+    nonce: Number(authorization_ox.nonce),
+    r: numberToHex(authorization_ox.r, { size: 32 }),
+    s: numberToHex(authorization_ox.s, { size: 32 }),
+    yParity: authorization_ox.yParity
+  };
+  const valid = await verifyAuthorization2({
+    address,
+    authorization
+  });
+  if (!valid)
+    throw new VerificationError;
+  const results = await getAction(client, readContract, "readContract")({
+    ...multicallAddress ? { address: multicallAddress } : { code: multicall3Bytecode },
+    authorizationList: [authorization],
+    abi: multicall3Abi,
+    blockHash,
+    blockNumber,
+    blockTag: "pending",
+    functionName: "aggregate3",
+    requireCanonical,
+    args: [
+      [
+        ...initData ? [
+          {
+            allowFailure: true,
+            target: to ?? address,
+            callData: initData
+          }
+        ] : [],
+        {
+          allowFailure: true,
+          target: address,
+          callData: encodeFunctionData({
+            abi: erc1271Abi,
+            functionName: "isValidSignature",
+            args: [hash4, signature]
+          })
+        }
+      ]
+    ]
+  });
+  const data = results[results.length - 1]?.returnData;
+  if (data?.startsWith("0x1626ba7e"))
+    return true;
+  throw new VerificationError;
+}
+async function verifyErc6492(client, parameters) {
+  const { address, factory, factoryData, hash: hash4, signature, verifierAddress, ...rest } = parameters;
+  const wrappedSignature = await (async () => {
+    if (!factory && !factoryData)
+      return signature;
+    if (exports_SignatureErc6492.validate(signature))
+      return signature;
+    return exports_SignatureErc6492.wrap({
+      data: factoryData,
+      signature,
+      to: factory
+    });
+  })();
+  const args = verifierAddress ? {
+    to: verifierAddress,
+    data: encodeFunctionData({
+      abi: erc6492SignatureValidatorAbi,
+      functionName: "isValidSig",
+      args: [address, hash4, wrappedSignature]
+    }),
+    ...rest
+  } : {
+    data: encodeDeployData({
+      abi: erc6492SignatureValidatorAbi,
+      args: [address, hash4, wrappedSignature],
+      bytecode: erc6492SignatureValidatorByteCode
+    }),
+    ...rest
+  };
+  const { data } = await getAction(client, call, "call")(args).catch((error62) => {
+    if (error62 instanceof CallExecutionError)
+      throw new VerificationError;
+    throw error62;
+  });
+  if (hexToBool(data ?? "0x0"))
+    return true;
+  throw new VerificationError;
+}
+async function verifyErc1271(client, parameters) {
+  const { address, blockHash, blockNumber, blockTag, hash: hash4, requireCanonical, signature } = parameters;
+  const result = await getAction(client, readContract, "readContract")({
+    address,
+    abi: erc1271Abi,
+    args: [hash4, signature],
+    blockHash,
+    blockNumber,
+    blockTag,
+    functionName: "isValidSignature",
+    requireCanonical
+  }).catch((error62) => {
+    if (error62 instanceof ContractFunctionExecutionError)
+      throw new VerificationError;
+    throw error62;
+  });
+  if (result.startsWith("0x1626ba7e"))
+    return true;
+  throw new VerificationError;
+}
+
+class VerificationError extends Error {
+}
+
+// node_modules/viem/_esm/utils/signature/hashMessage.js
+init_keccak256();
+
+// node_modules/viem/_esm/constants/strings.js
+var presignMessagePrefix = `\x19Ethereum Signed Message:
+`;
+
+// node_modules/viem/_esm/utils/signature/toPrefixedMessage.js
+init_size();
+init_toHex();
+function toPrefixedMessage(message_) {
+  const message = (() => {
+    if (typeof message_ === "string")
+      return stringToHex(message_);
+    if (typeof message_.raw === "string")
+      return message_.raw;
+    return bytesToHex(message_.raw);
+  })();
+  const prefix = stringToHex(`${presignMessagePrefix}${size2(message)}`);
+  return concat([prefix, message]);
+}
+
+// node_modules/viem/_esm/utils/signature/hashMessage.js
+function hashMessage2(message, to_) {
+  return keccak256(toPrefixedMessage(message), to_);
+}
+
+// node_modules/viem/_esm/actions/public/verifyMessage.js
+async function verifyMessage2(client, { address, message, factory, factoryData, signature, ...callRequest }) {
+  const hash4 = hashMessage2(message);
+  return getAction(client, verifyHash2, "verifyHash")({
+    address,
+    factory,
+    factoryData,
+    hash: hash4,
+    signature,
+    ...callRequest
+  });
+}
+
+// node_modules/viem/_esm/utils/signature/hashTypedData.js
+init_encodeAbiParameters();
+init_toHex();
+init_keccak256();
+
+// node_modules/viem/_esm/utils/typedData.js
+init_abi();
+init_address();
+
+// node_modules/viem/_esm/errors/typedData.js
+init_base();
+
+class InvalidDomainError extends BaseError {
+  constructor({ domain: domain2 }) {
+    super(`Invalid domain "${stringify2(domain2)}".`, {
+      metaMessages: ["Must be a valid EIP-712 domain."]
+    });
+  }
+}
+
+class InvalidPrimaryTypeError extends BaseError {
+  constructor({ primaryType, types }) {
+    super(`Invalid primary type \`${primaryType}\` must be one of \`${JSON.stringify(Object.keys(types))}\`.`, {
+      docsPath: "/api/glossary/Errors#typeddatainvalidprimarytypeerror",
+      metaMessages: ["Check that the primary type is a key in `types`."]
+    });
+  }
+}
+
+class InvalidStructTypeError extends BaseError {
+  constructor({ type }) {
+    super(`Struct type "${type}" is invalid.`, {
+      metaMessages: ["Struct type must not be a Solidity type."],
+      name: "InvalidStructTypeError"
+    });
+  }
+}
+
+class InvalidTypedDataTypeError extends BaseError {
+  constructor({ type }) {
+    const canonicalType = type.replace(/^(u?int)/, "$&256");
+    super(`Type "${type}" is not a valid EIP-712 type.`, {
+      metaMessages: [`Use "${canonicalType}" instead.`],
+      name: "InvalidTypedDataTypeError"
+    });
+  }
+}
+
+// node_modules/viem/_esm/utils/typedData.js
+init_isAddress();
+init_size();
+init_toHex();
+init_regex();
+function validateTypedData2(parameters) {
+  const { domain: domain2, message, primaryType, types } = parameters;
+  const validateData = (struct, data) => {
+    for (const param of struct) {
+      const { name, type } = param;
+      const value = data[name];
+      const baseType = type.replace(/(\[[0-9]*\])+$/, "");
+      if (baseType === "int" || baseType === "uint")
+        throw new InvalidTypedDataTypeError({ type });
+      const integerMatch = type.match(integerRegex);
+      if (integerMatch && (typeof value === "number" || typeof value === "bigint")) {
+        const [_type, base, size_] = integerMatch;
+        numberToHex(value, {
+          signed: base === "int",
+          size: Number.parseInt(size_, 10) / 8
+        });
+      }
+      if (type === "address" && typeof value === "string" && !isAddress(value))
+        throw new InvalidAddressError({ address: value });
+      const bytesMatch = type.match(bytesRegex);
+      if (bytesMatch) {
+        const [_type, size_] = bytesMatch;
+        if (size_ && size2(value) !== Number.parseInt(size_, 10))
+          throw new BytesSizeMismatchError({
+            expectedSize: Number.parseInt(size_, 10),
+            givenSize: size2(value)
+          });
+      }
+      const struct2 = types[type];
+      if (struct2) {
+        validateReference(type);
+        validateData(struct2, value);
+      }
+    }
+  };
+  if (types.EIP712Domain && domain2) {
+    if (typeof domain2 !== "object")
+      throw new InvalidDomainError({ domain: domain2 });
+    validateData(types.EIP712Domain, domain2);
+  }
+  if (primaryType !== "EIP712Domain") {
+    if (types[primaryType])
+      validateData(types[primaryType], message);
+    else
+      throw new InvalidPrimaryTypeError({ primaryType, types });
+  }
+}
+function getTypesForEIP712Domain({ domain: domain2 }) {
+  return [
+    typeof domain2?.name === "string" && { name: "name", type: "string" },
+    domain2?.version && { name: "version", type: "string" },
+    (typeof domain2?.chainId === "number" || typeof domain2?.chainId === "bigint") && {
+      name: "chainId",
+      type: "uint256"
+    },
+    domain2?.verifyingContract && {
+      name: "verifyingContract",
+      type: "address"
+    },
+    domain2?.salt && { name: "salt", type: "bytes32" }
+  ].filter(Boolean);
+}
+function validateReference(type) {
+  if (type === "address" || type === "bool" || type === "string" || type.startsWith("bytes") || type.startsWith("uint") || type.startsWith("int"))
+    throw new InvalidStructTypeError({ type });
+}
+
+// node_modules/viem/_esm/utils/signature/hashTypedData.js
+function hashTypedData2(parameters) {
+  const { domain: domain2 = {}, message, primaryType } = parameters;
+  const types = {
+    EIP712Domain: getTypesForEIP712Domain({ domain: domain2 }),
+    ...parameters.types
+  };
+  validateTypedData2({
+    domain: domain2,
+    message,
+    primaryType,
+    types
+  });
+  const parts = ["0x1901"];
+  if (domain2)
+    parts.push(hashDomain({
+      domain: domain2,
+      types
+    }));
+  if (primaryType !== "EIP712Domain")
+    parts.push(hashStruct2({
+      data: message,
+      primaryType,
+      types
+    }));
+  return keccak256(concat(parts));
+}
+function hashDomain({ domain: domain2, types }) {
+  return hashStruct2({
+    data: domain2,
+    primaryType: "EIP712Domain",
+    types
+  });
+}
+function hashStruct2({ data, primaryType, types }) {
+  const encoded = encodeData2({
+    data,
+    primaryType,
+    types
+  });
+  return keccak256(encoded);
+}
+function encodeData2({ data, primaryType, types }) {
+  const encodedTypes = [{ type: "bytes32" }];
+  const encodedValues = [hashType({ primaryType, types })];
+  for (const field of types[primaryType]) {
+    const [type, value] = encodeField({
+      types,
+      name: field.name,
+      type: field.type,
+      value: data[field.name]
+    });
+    encodedTypes.push(type);
+    encodedValues.push(value);
+  }
+  return encodeAbiParameters(encodedTypes, encodedValues);
+}
+function hashType({ primaryType, types }) {
+  const encodedHashType = toHex(encodeType({ primaryType, types }));
+  return keccak256(encodedHashType);
+}
+function encodeType({ primaryType, types }) {
+  let result = "";
+  const unsortedDeps = findTypeDependencies({ primaryType, types });
+  unsortedDeps.delete(primaryType);
+  const deps = [primaryType, ...Array.from(unsortedDeps).sort()];
+  for (const type of deps) {
+    result += `${type}(${types[type].map(({ name, type: t }) => `${t} ${name}`).join(",")})`;
+  }
+  return result;
+}
+function findTypeDependencies({ primaryType: primaryType_, types }, results = new Set) {
+  const match2 = primaryType_.match(/^\w*/u);
+  const primaryType = match2?.[0];
+  if (results.has(primaryType) || types[primaryType] === undefined) {
+    return results;
+  }
+  results.add(primaryType);
+  for (const field of types[primaryType]) {
+    findTypeDependencies({ primaryType: field.type, types }, results);
+  }
+  return results;
+}
+function encodeField({ types, name, type, value }) {
+  if (types[type] !== undefined) {
+    return [
+      { type: "bytes32" },
+      keccak256(encodeData2({ data: value, primaryType: type, types }))
+    ];
+  }
+  if (type === "bytes")
+    return [{ type: "bytes32" }, keccak256(value)];
+  if (type === "string")
+    return [{ type: "bytes32" }, keccak256(toHex(value))];
+  if (type.lastIndexOf("]") === type.length - 1) {
+    const parsedType2 = type.slice(0, type.lastIndexOf("["));
+    const typeValuePairs = value.map((item) => encodeField({
+      name,
+      type: parsedType2,
+      types,
+      value: item
+    }));
+    return [
+      { type: "bytes32" },
+      keccak256(encodeAbiParameters(typeValuePairs.map(([t]) => t), typeValuePairs.map(([, v]) => v)))
+    ];
+  }
+  return [{ type }, value];
+}
+
+// node_modules/viem/_esm/actions/public/verifyTypedData.js
+async function verifyTypedData2(client, parameters) {
+  const { address, factory, factoryData, signature, message, primaryType, types, domain: domain2, ...callRequest } = parameters;
+  const hash4 = hashTypedData2({ message, primaryType, types, domain: domain2 });
+  return getAction(client, verifyHash2, "verifyHash")({
+    address,
+    factory,
+    factoryData,
+    hash: hash4,
+    signature,
+    ...callRequest
+  });
+}
+
+// node_modules/viem/_esm/actions/public/waitForTransactionReceipt.js
+init_transaction();
+
+// node_modules/viem/_esm/utils/observe.js
+var listenersCache = /* @__PURE__ */ new Map;
+var cleanupCache = /* @__PURE__ */ new Map;
+var callbackCount = 0;
+function observe(observerId, callbacks, fn) {
+  const callbackId = ++callbackCount;
+  const getListeners = () => listenersCache.get(observerId) || [];
+  const unsubscribe = () => {
+    const listeners2 = getListeners();
+    const nextListeners = listeners2.filter((cb) => cb.id !== callbackId);
+    if (nextListeners.length === 0) {
+      listenersCache.delete(observerId);
+      cleanupCache.delete(observerId);
+      return;
+    }
+    listenersCache.set(observerId, nextListeners);
+  };
+  const unwatch = () => {
+    const listeners2 = getListeners();
+    if (!listeners2.some((cb) => cb.id === callbackId))
+      return;
+    const cleanup2 = cleanupCache.get(observerId);
+    if (listeners2.length === 1 && cleanup2) {
+      const p = cleanup2();
+      if (p instanceof Promise)
+        p.catch(() => {});
+    }
+    unsubscribe();
+  };
+  const listeners = getListeners();
+  listenersCache.set(observerId, [
+    ...listeners,
+    { id: callbackId, fns: callbacks }
+  ]);
+  if (listeners && listeners.length > 0)
+    return unwatch;
+  const emit = {};
+  for (const key in callbacks) {
+    emit[key] = (...args) => {
+      const listeners2 = getListeners();
+      if (listeners2.length === 0)
+        return;
+      for (const listener of listeners2)
+        listener.fns[key]?.(...args);
+    };
+  }
+  const cleanup = fn(emit);
+  if (typeof cleanup === "function")
+    cleanupCache.set(observerId, cleanup);
+  return unwatch;
+}
+// node_modules/viem/_esm/utils/wait.js
+async function wait(time3, { signal } = {}) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(getAbortError(signal));
+      return;
+    }
+    const cleanup = () => signal?.removeEventListener("abort", onAbort);
+    const timeout = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, time3);
+    const onAbort = () => {
+      clearTimeout(timeout);
+      cleanup();
+      reject(getAbortError(signal));
+    };
+    signal?.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+// node_modules/viem/_esm/utils/promise/withRetry.js
+function withRetry(fn, { delay: delay_ = 100, retryCount = 2, shouldRetry = () => true, signal } = {}) {
+  return new Promise((resolve, reject) => {
+    const attemptRetry = async ({ count = 0 } = {}) => {
+      if (signal?.aborted) {
+        reject(getAbortError(signal));
+        return;
+      }
+      const retry = async ({ error: error62 }) => {
+        const delay = typeof delay_ === "function" ? delay_({ count, error: error62 }) : delay_;
+        if (delay) {
+          try {
+            await wait(delay, { signal });
+          } catch (err) {
+            reject(err);
+            return;
+          }
+        }
+        return attemptRetry({ count: count + 1 });
+      };
+      try {
+        const data = await fn();
+        resolve(data);
+      } catch (err) {
+        if (signal?.aborted) {
+          reject(getAbortError(signal));
+          return;
+        }
+        if (isAbortError2(err)) {
+          reject(err);
+          return;
+        }
+        if (count < retryCount && await shouldRetry({ count, error: err }))
+          return retry({ error: err });
+        reject(err);
+      }
+    };
+    attemptRetry().catch(reject);
+  });
+}
+// node_modules/viem/_esm/actions/public/watchBlockNumber.js
+init_fromHex();
+
+// node_modules/viem/_esm/utils/poll.js
+function poll(fn, { emitOnBegin, initialWaitTime, interval }) {
+  let active = true;
+  const unwatch = () => active = false;
+  const watch = async () => {
+    let data;
+    if (emitOnBegin)
+      data = await fn({ unpoll: unwatch });
+    const initialWait = await initialWaitTime?.(data) ?? interval;
+    await wait(initialWait);
+    const poll2 = async () => {
+      if (!active)
+        return;
+      await fn({ unpoll: unwatch });
+      await wait(interval);
+      poll2();
+    };
+    poll2();
+  };
+  watch();
+  return unwatch;
+}
+// node_modules/viem/_esm/actions/public/watchBlockNumber.js
+function watchBlockNumber(client, { emitOnBegin = false, emitMissed = false, onBlockNumber, onError, poll: poll_, pollingInterval = client.pollingInterval }) {
+  const enablePolling = (() => {
+    if (typeof poll_ !== "undefined")
+      return poll_;
+    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
+      return false;
+    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
+      return false;
+    return true;
+  })();
+  let prevBlockNumber;
+  const pollBlockNumber = () => {
+    const observerId = stringify2([
+      "watchBlockNumber",
+      client.uid,
+      emitOnBegin,
+      emitMissed,
+      pollingInterval
+    ]);
+    return observe(observerId, { onBlockNumber, onError }, (emit) => poll(async () => {
+      try {
+        const blockNumber = await getAction(client, getBlockNumber, "getBlockNumber")({ cacheTime: 0 });
+        if (prevBlockNumber !== undefined) {
+          if (blockNumber === prevBlockNumber)
+            return;
+          if (blockNumber - prevBlockNumber > 1 && emitMissed) {
+            for (let i = prevBlockNumber + 1n;i < blockNumber; i++) {
+              emit.onBlockNumber(i, prevBlockNumber);
+              prevBlockNumber = i;
+            }
+          }
+        }
+        if (prevBlockNumber === undefined || blockNumber > prevBlockNumber) {
+          emit.onBlockNumber(blockNumber, prevBlockNumber);
+          prevBlockNumber = blockNumber;
+        }
+      } catch (err) {
+        emit.onError?.(err);
+      }
+    }, {
+      emitOnBegin,
+      interval: pollingInterval
+    }));
+  };
+  const subscribeBlockNumber = () => {
+    const observerId = stringify2([
+      "watchBlockNumber",
+      client.uid,
+      emitOnBegin,
+      emitMissed
+    ]);
+    return observe(observerId, { onBlockNumber, onError }, (emit) => {
+      let active = true;
+      let unsubscribe = () => active = false;
+      (async () => {
+        try {
+          const transport = (() => {
+            if (client.transport.type === "fallback") {
+              const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
+              if (!transport2)
+                return client.transport;
+              return transport2.value;
+            }
+            return client.transport;
+          })();
+          const { unsubscribe: unsubscribe_ } = await transport.subscribe({
+            params: ["newHeads"],
+            onData(data) {
+              if (!active)
+                return;
+              const blockNumber = hexToBigInt(data.result?.number);
+              emit.onBlockNumber(blockNumber, prevBlockNumber);
+              prevBlockNumber = blockNumber;
+            },
+            onError(error62) {
+              emit.onError?.(error62);
+            }
+          });
+          unsubscribe = unsubscribe_;
+          if (!active)
+            unsubscribe();
+        } catch (err) {
+          onError?.(err);
+        }
+      })();
+      return () => unsubscribe();
+    });
+  };
+  return enablePolling ? pollBlockNumber() : subscribeBlockNumber();
+}
+
+// node_modules/viem/_esm/actions/public/waitForTransactionReceipt.js
+async function waitForTransactionReceipt(client, parameters) {
+  const {
+    checkReplacement = client.chain?.supportsTransactionReplacementDetection ?? true,
+    confirmations = 1,
+    hash: hash4,
+    onReplaced,
+    retryCount = 6,
+    retryDelay = ({ count }) => ~~(1 << count) * 200,
+    timeout = 180000
+  } = parameters;
+  const observerId = stringify2(["waitForTransactionReceipt", client.uid, hash4]);
+  const pollingInterval = (() => {
+    if (parameters.pollingInterval)
+      return parameters.pollingInterval;
+    if (client.chain?.experimental_preconfirmationTime)
+      return client.chain.experimental_preconfirmationTime;
+    return client.pollingInterval;
+  })();
+  let transaction;
+  let replacedTransaction;
+  let receipt;
+  let retrying = false;
+  let _unobserve;
+  let _unwatch;
+  const { promise: promise2, resolve, reject } = withResolvers();
+  const timer = timeout ? setTimeout(() => {
+    _unwatch?.();
+    _unobserve?.();
+    reject(new WaitForTransactionReceiptTimeoutError({ hash: hash4 }));
+  }, timeout) : undefined;
+  _unobserve = observe(observerId, { onReplaced, resolve, reject }, async (emit) => {
+    receipt = await getAction(client, getTransactionReceipt, "getTransactionReceipt")({ hash: hash4 }).catch(() => {
+      return;
+    });
+    if (receipt && confirmations <= 1) {
+      clearTimeout(timer);
+      emit.resolve(receipt);
+      _unobserve?.();
+      return;
+    }
+    _unwatch = getAction(client, watchBlockNumber, "watchBlockNumber")({
+      emitMissed: true,
+      emitOnBegin: true,
+      poll: true,
+      pollingInterval,
+      async onBlockNumber(blockNumber_) {
+        const done = (fn) => {
+          clearTimeout(timer);
+          _unwatch?.();
+          fn();
+          _unobserve?.();
+        };
+        let blockNumber = blockNumber_;
+        if (retrying)
+          return;
+        try {
+          if (receipt) {
+            if (confirmations > 1 && (!receipt.blockNumber || blockNumber - receipt.blockNumber + 1n < confirmations))
+              return;
+            done(() => emit.resolve(receipt));
+            return;
+          }
+          if (checkReplacement && !transaction) {
+            retrying = true;
+            await withRetry(async () => {
+              transaction = await getAction(client, getTransaction, "getTransaction")({ hash: hash4 });
+              if (transaction.blockNumber)
+                blockNumber = transaction.blockNumber;
+            }, {
+              delay: retryDelay,
+              retryCount
+            });
+            retrying = false;
+          }
+          receipt = await getAction(client, getTransactionReceipt, "getTransactionReceipt")({ hash: hash4 });
+          if (confirmations > 1 && (!receipt.blockNumber || blockNumber - receipt.blockNumber + 1n < confirmations))
+            return;
+          done(() => emit.resolve(receipt));
+        } catch (err) {
+          if (err instanceof TransactionNotFoundError || err instanceof TransactionReceiptNotFoundError) {
+            if (!transaction) {
+              retrying = false;
+              return;
+            }
+            try {
+              replacedTransaction = transaction;
+              retrying = true;
+              const block = await withRetry(() => getAction(client, getBlock, "getBlock")({
+                blockNumber,
+                includeTransactions: true
+              }), {
+                delay: retryDelay,
+                retryCount,
+                shouldRetry: ({ error: error62 }) => error62 instanceof BlockNotFoundError
+              });
+              retrying = false;
+              const replacementTransaction = block.transactions.find(({ from: from16, nonce }) => from16 === replacedTransaction.from && nonce === replacedTransaction.nonce);
+              if (!replacementTransaction)
+                return;
+              receipt = await getAction(client, getTransactionReceipt, "getTransactionReceipt")({
+                hash: replacementTransaction.hash
+              });
+              if (confirmations > 1 && (!receipt.blockNumber || blockNumber - receipt.blockNumber + 1n < confirmations))
+                return;
+              let reason = "replaced";
+              if (replacementTransaction.to === replacedTransaction.to && replacementTransaction.value === replacedTransaction.value && replacementTransaction.input === replacedTransaction.input) {
+                reason = "repriced";
+              } else if (replacementTransaction.from === replacementTransaction.to && replacementTransaction.value === 0n) {
+                reason = "cancelled";
+              }
+              done(() => {
+                emit.onReplaced?.({
+                  reason,
+                  replacedTransaction,
+                  transaction: replacementTransaction,
+                  transactionReceipt: receipt
+                });
+                emit.resolve(receipt);
+              });
+            } catch (err_) {
+              done(() => emit.reject(err_));
+            }
+          } else {
+            done(() => emit.reject(err));
+          }
+        }
+      }
+    });
+  });
+  return promise2;
+}
+
+// node_modules/viem/_esm/actions/public/watchBlockHeaders.js
+var blockFields = [
+  "size",
+  "totalDifficulty",
+  "transactions",
+  "uncles",
+  "withdrawals"
+];
+function watchBlockHeaders(client, { onBlockHeader, onError }) {
+  let prevBlockHeader;
+  const observerId = stringify2(["watchBlockHeaders", client.uid]);
+  return observe(observerId, { onBlockHeader, onError }, (emit) => {
+    let active = true;
+    let subscribed = false;
+    let unsubscribe = () => active = false;
+    (async () => {
+      try {
+        const transport = (() => {
+          if (client.transport.type === "fallback") {
+            const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
+            if (!transport2)
+              return client.transport;
+            return transport2.value;
+          }
+          return client.transport;
+        })();
+        const { unsubscribe: unsubscribe_ } = await transport.subscribe({
+          params: ["newHeads"],
+          onData(data) {
+            if (!active)
+              return;
+            const blockHeader = (client.chain?.formatters?.block?.format || formatBlock)(data.result, "watchBlockHeaders");
+            for (const field of blockFields)
+              delete blockHeader[field];
+            emit.onBlockHeader(blockHeader, prevBlockHeader);
+            prevBlockHeader = blockHeader;
+          },
+          onError(error62) {
+            if (subscribed)
+              emit.onError?.(error62);
+          }
+        });
+        subscribed = true;
+        unsubscribe = unsubscribe_;
+        if (!active)
+          unsubscribe();
+      } catch (err) {
+        emit.onError?.(err);
+      }
+    })();
+    return () => unsubscribe();
+  });
+}
+// node_modules/viem/_esm/actions/public/watchBlocks.js
+function watchBlocks(client, { blockTag = client.experimental_blockTag ?? "latest", emitMissed = false, emitOnBegin = false, onBlock, onError, includeTransactions: includeTransactions_, poll: poll_, pollingInterval = client.pollingInterval }) {
+  const enablePolling = (() => {
+    if (typeof poll_ !== "undefined")
+      return poll_;
+    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
+      return false;
+    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
+      return false;
+    return true;
+  })();
+  const includeTransactions = includeTransactions_ ?? false;
+  let prevBlock;
+  const pollBlocks = () => {
+    const observerId = stringify2([
+      "watchBlocks",
+      client.uid,
+      blockTag,
+      emitMissed,
+      emitOnBegin,
+      includeTransactions,
+      pollingInterval
+    ]);
+    return observe(observerId, { onBlock, onError }, (emit) => poll(async () => {
+      try {
+        const block = await getAction(client, getBlock, "getBlock")({
+          blockTag,
+          includeTransactions
+        });
+        if (block.number !== null && prevBlock?.number != null) {
+          if (block.number === prevBlock.number)
+            return;
+          if (block.number - prevBlock.number > 1 && emitMissed) {
+            for (let i = prevBlock?.number + 1n;i < block.number; i++) {
+              const block2 = await getAction(client, getBlock, "getBlock")({
+                blockNumber: i,
+                includeTransactions
+              });
+              emit.onBlock(block2, prevBlock);
+              prevBlock = block2;
+            }
+          }
+        }
+        if (prevBlock?.number == null || blockTag === "pending" && block?.number == null || block.number !== null && block.number > prevBlock.number) {
+          emit.onBlock(block, prevBlock);
+          prevBlock = block;
+        }
+      } catch (err) {
+        emit.onError?.(err);
+      }
+    }, {
+      emitOnBegin,
+      interval: pollingInterval
+    }));
+  };
+  const subscribeBlocks = () => {
+    let active = true;
+    let emitFetched = true;
+    let unsubscribe = () => active = false;
+    (async () => {
+      try {
+        if (emitOnBegin) {
+          getAction(client, getBlock, "getBlock")({
+            blockTag,
+            includeTransactions
+          }).then((block) => {
+            if (!active)
+              return;
+            if (!emitFetched)
+              return;
+            onBlock(block, undefined);
+            emitFetched = false;
+          }).catch(onError);
+        }
+        const transport = (() => {
+          if (client.transport.type === "fallback") {
+            const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
+            if (!transport2)
+              return client.transport;
+            return transport2.value;
+          }
+          return client.transport;
+        })();
+        const { unsubscribe: unsubscribe_ } = await transport.subscribe({
+          params: ["newHeads"],
+          async onData(data) {
+            if (!active)
+              return;
+            const block = await getAction(client, getBlock, "getBlock")({
+              blockNumber: data.result?.number,
+              includeTransactions
+            }).catch(() => {});
+            if (!active)
+              return;
+            onBlock(block, prevBlock);
+            emitFetched = false;
+            prevBlock = block;
+          },
+          onError(error62) {
+            onError?.(error62);
+          }
+        });
+        unsubscribe = unsubscribe_;
+        if (!active)
+          unsubscribe();
+      } catch (err) {
+        onError?.(err);
+      }
+    })();
+    return () => unsubscribe();
+  };
+  return enablePolling ? pollBlocks() : subscribeBlocks();
+}
+
+// node_modules/viem/_esm/actions/public/watchContractEvent.js
+init_abi();
+init_rpc();
+function watchContractEvent(client, parameters) {
+  const { abi: abi2, address, args, batch = true, eventName, fromBlock, onError, onLogs, poll: poll_, pollingInterval = client.pollingInterval, strict: strict_ } = parameters;
+  const enablePolling = (() => {
+    if (typeof poll_ !== "undefined")
+      return poll_;
+    if (typeof fromBlock === "bigint")
+      return true;
+    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
+      return false;
+    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
+      return false;
+    return true;
+  })();
+  const pollContractEvent = () => {
+    const strict = strict_ ?? false;
+    const observerId = stringify2([
+      "watchContractEvent",
+      address,
+      args,
+      batch,
+      client.uid,
+      eventName,
+      pollingInterval,
+      strict,
+      fromBlock
+    ]);
+    return observe(observerId, { onLogs, onError }, (emit) => {
+      let previousBlockNumber;
+      if (fromBlock !== undefined)
+        previousBlockNumber = fromBlock - 1n;
+      let filter;
+      let initialized = false;
+      const unwatch = poll(async () => {
+        if (!initialized) {
+          try {
+            filter = await getAction(client, createContractEventFilter, "createContractEventFilter")({
+              abi: abi2,
+              address,
+              args,
+              eventName,
+              strict,
+              fromBlock
+            });
+          } catch {}
+          initialized = true;
+          return;
+        }
+        try {
+          let logs;
+          if (filter) {
+            logs = await getAction(client, getFilterChanges, "getFilterChanges")({ filter });
+          } else {
+            const blockNumber = await getAction(client, getBlockNumber, "getBlockNumber")({});
+            if (previousBlockNumber && previousBlockNumber < blockNumber) {
+              logs = await getAction(client, getContractEvents, "getContractEvents")({
+                abi: abi2,
+                address,
+                args,
+                eventName,
+                fromBlock: previousBlockNumber + 1n,
+                toBlock: blockNumber,
+                strict
+              });
+            } else {
+              logs = [];
+            }
+            previousBlockNumber = blockNumber;
+          }
+          if (logs.length === 0)
+            return;
+          if (batch)
+            emit.onLogs(logs);
+          else
+            for (const log2 of logs)
+              emit.onLogs([log2]);
+        } catch (err) {
+          if (filter && err instanceof InvalidInputRpcError)
+            initialized = false;
+          emit.onError?.(err);
+        }
+      }, {
+        emitOnBegin: true,
+        interval: pollingInterval
+      });
+      return async () => {
+        if (filter)
+          await getAction(client, uninstallFilter, "uninstallFilter")({ filter });
+        unwatch();
+      };
+    });
+  };
+  const subscribeContractEvent = () => {
+    const strict = strict_ ?? false;
+    const observerId = stringify2([
+      "watchContractEvent",
+      address,
+      args,
+      batch,
+      client.uid,
+      eventName,
+      pollingInterval,
+      strict
+    ]);
+    let active = true;
+    let unsubscribe = () => active = false;
+    return observe(observerId, { onLogs, onError }, (emit) => {
+      (async () => {
+        try {
+          const transport = (() => {
+            if (client.transport.type === "fallback") {
+              const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
+              if (!transport2)
+                return client.transport;
+              return transport2.value;
+            }
+            return client.transport;
+          })();
+          const topics = eventName ? encodeEventTopics({
+            abi: abi2,
+            eventName,
+            args
+          }) : [];
+          const { unsubscribe: unsubscribe_ } = await transport.subscribe({
+            params: ["logs", { address, topics }],
+            onData(data) {
+              if (!active)
+                return;
+              const log2 = data.result;
+              try {
+                const { eventName: eventName2, args: args2 } = decodeEventLog({
+                  abi: abi2,
+                  data: log2.data,
+                  topics: log2.topics,
+                  strict: strict_
+                });
+                const formatted = formatLog(log2, {
+                  args: args2,
+                  eventName: eventName2
+                });
+                emit.onLogs([formatted]);
+              } catch (err) {
+                let eventName2;
+                let isUnnamed;
+                if (err instanceof DecodeLogDataMismatch || err instanceof DecodeLogTopicsMismatch) {
+                  if (strict_)
+                    return;
+                  eventName2 = err.abiItem.name;
+                  isUnnamed = err.abiItem.inputs?.some((x) => !(("name" in x) && x.name));
+                }
+                const formatted = formatLog(log2, {
+                  args: isUnnamed ? [] : {},
+                  eventName: eventName2
+                });
+                emit.onLogs([formatted]);
+              }
+            },
+            onError(error62) {
+              emit.onError?.(error62);
+            }
+          });
+          unsubscribe = unsubscribe_;
+          if (!active)
+            unsubscribe();
+        } catch (err) {
+          onError?.(err);
+        }
+      })();
+      return () => unsubscribe();
+    });
+  };
+  return enablePolling ? pollContractEvent() : subscribeContractEvent();
+}
+
+// node_modules/viem/_esm/actions/public/watchEvent.js
+init_abi();
+init_rpc();
+function watchEvent(client, { address, args, batch = true, event, events, fromBlock, onError, onLogs, poll: poll_, pollingInterval = client.pollingInterval, strict: strict_ }) {
+  const enablePolling = (() => {
+    if (typeof poll_ !== "undefined")
+      return poll_;
+    if (typeof fromBlock === "bigint")
+      return true;
+    if (client.transport.type === "webSocket" || client.transport.type === "ipc")
+      return false;
+    if (client.transport.type === "fallback" && (client.transport.transports[0].config.type === "webSocket" || client.transport.transports[0].config.type === "ipc"))
+      return false;
+    return true;
+  })();
+  const strict = strict_ ?? false;
+  const pollEvent = () => {
+    const observerId = stringify2([
+      "watchEvent",
+      address,
+      args,
+      batch,
+      client.uid,
+      event,
+      pollingInterval,
+      fromBlock
+    ]);
+    return observe(observerId, { onLogs, onError }, (emit) => {
+      let previousBlockNumber;
+      if (fromBlock !== undefined)
+        previousBlockNumber = fromBlock - 1n;
+      let filter;
+      let initialized = false;
+      const unwatch = poll(async () => {
+        if (!initialized) {
+          try {
+            filter = await getAction(client, createEventFilter, "createEventFilter")({
+              address,
+              args,
+              event,
+              events,
+              strict,
+              fromBlock
+            });
+          } catch {}
+          initialized = true;
+          return;
+        }
+        try {
+          let logs;
+          if (filter) {
+            logs = await getAction(client, getFilterChanges, "getFilterChanges")({ filter });
+          } else {
+            const blockNumber = await getAction(client, getBlockNumber, "getBlockNumber")({});
+            if (previousBlockNumber && previousBlockNumber !== blockNumber) {
+              logs = await getAction(client, getLogs, "getLogs")({
+                address,
+                args,
+                event,
+                events,
+                fromBlock: previousBlockNumber + 1n,
+                toBlock: blockNumber
+              });
+            } else {
+              logs = [];
+            }
+            previousBlockNumber = blockNumber;
+          }
+          if (logs.length === 0)
+            return;
+          if (batch)
+            emit.onLogs(logs);
+          else
+            for (const log2 of logs)
+              emit.onLogs([log2]);
+        } catch (err) {
+          if (filter && err instanceof InvalidInputRpcError)
+            initialized = false;
+          emit.onError?.(err);
+        }
+      }, {
+        emitOnBegin: true,
+        interval: pollingInterval
+      });
+      return async () => {
+        if (filter)
+          await getAction(client, uninstallFilter, "uninstallFilter")({ filter });
+        unwatch();
+      };
+    });
+  };
+  const subscribeEvent = () => {
+    let active = true;
+    let unsubscribe = () => active = false;
+    (async () => {
+      try {
+        const transport = (() => {
+          if (client.transport.type === "fallback") {
+            const transport2 = client.transport.transports.find((transport3) => transport3.config.type === "webSocket" || transport3.config.type === "ipc");
+            if (!transport2)
+              return client.transport;
+            return transport2.value;
+          }
+          return client.transport;
+        })();
+        const events_ = events ?? (event ? [event] : undefined);
+        let topics = [];
+        if (events_) {
+          const encoded = events_.flatMap((event2) => encodeEventTopics({
+            abi: [event2],
+            eventName: event2.name,
+            args
+          }));
+          topics = [encoded];
+          if (event)
+            topics = topics[0];
+        }
+        const { unsubscribe: unsubscribe_ } = await transport.subscribe({
+          params: ["logs", { address, topics }],
+          onData(data) {
+            if (!active)
+              return;
+            const log2 = data.result;
+            try {
+              const { eventName, args: args2 } = decodeEventLog({
+                abi: events_ ?? [],
+                data: log2.data,
+                topics: log2.topics,
+                strict
+              });
+              const formatted = formatLog(log2, { args: args2, eventName });
+              onLogs([formatted]);
+            } catch (err) {
+              let eventName;
+              let isUnnamed;
+              if (err instanceof DecodeLogDataMismatch || err instanceof DecodeLogTopicsMismatch) {
+                if (strict_)
+                  return;
+                eventName = err.abiItem.name;
+                isUnnamed = err.abiItem.inputs?.some((x) => !(("name" in x) && x.name));
+              }
+              const formatted = formatLog(log2, {
+                args: isUnnamed ? [] : {},
+                eventName
+              });
+              onLogs([formatted]);
+            }
+          },
+          onError(error62) {
+            onError?.(error62);
+          }
+        });
+        unsubscribe = unsubscribe_;
+        if (!active)
+          unsubscribe();
+      } catch (err) {
+        onError?.(err);
+      }
+    })();
+    return () => unsubscribe();
+  };
+  return enablePolling ? pollEvent() : subscribeEvent();
+}
+// node_modules/viem/_esm/actions/public/watchPendingTransactions.js
+function watchPendingTransactions(client, { batch = true, onError, onTransactions, poll: poll_, pollingInterval = client.pollingInterval }) {
+  const enablePolling = typeof poll_ !== "undefined" ? poll_ : client.transport.type !== "webSocket" && client.transport.type !== "ipc";
+  const pollPendingTransactions = () => {
+    const observerId = stringify2([
+      "watchPendingTransactions",
+      client.uid,
+      batch,
+      pollingInterval
+    ]);
+    return observe(observerId, { onTransactions, onError }, (emit) => {
+      let filter;
+      const unwatch = poll(async () => {
+        try {
+          if (!filter) {
+            try {
+              filter = await getAction(client, createPendingTransactionFilter, "createPendingTransactionFilter")({});
+              return;
+            } catch (err) {
+              unwatch();
+              throw err;
+            }
+          }
+          const hashes = await getAction(client, getFilterChanges, "getFilterChanges")({ filter });
+          if (hashes.length === 0)
+            return;
+          if (batch)
+            emit.onTransactions(hashes);
+          else
+            for (const hash4 of hashes)
+              emit.onTransactions([hash4]);
+        } catch (err) {
+          emit.onError?.(err);
+        }
+      }, {
+        emitOnBegin: true,
+        interval: pollingInterval
+      });
+      return async () => {
+        if (filter)
+          await getAction(client, uninstallFilter, "uninstallFilter")({ filter });
+        unwatch();
+      };
+    });
+  };
+  const subscribePendingTransactions = () => {
+    let active = true;
+    let unsubscribe = () => active = false;
+    (async () => {
+      try {
+        const { unsubscribe: unsubscribe_ } = await client.transport.subscribe({
+          params: ["newPendingTransactions"],
+          onData(data) {
+            if (!active)
+              return;
+            const transaction = data.result;
+            onTransactions([transaction]);
+          },
+          onError(error62) {
+            onError?.(error62);
+          }
+        });
+        unsubscribe = unsubscribe_;
+        if (!active)
+          unsubscribe();
+      } catch (err) {
+        onError?.(err);
+      }
+    })();
+    return () => unsubscribe();
+  };
+  return enablePolling ? pollPendingTransactions() : subscribePendingTransactions();
+}
+
+// node_modules/viem/_esm/utils/siwe/parseSiweMessage.js
+var siweDateTimeRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/;
+function isValidSiweDateTime(value) {
+  if (!siweDateTimeRegex.test(value))
+    return false;
+  return !Number.isNaN(new Date(value).getTime());
+}
+function parseSiweDateTime(value) {
+  if (!isValidSiweDateTime(value))
+    return new Date(Number.NaN);
+  return new Date(value);
+}
+function parseSiweMessage(message) {
+  const { scheme, statement, ...prefix } = message.match(prefixRegex)?.groups ?? {};
+  const { chainId, expirationTime, issuedAt, notBefore, requestId, ...suffix } = message.match(suffixRegex)?.groups ?? {};
+  const resources = message.split("Resources:")[1]?.split(`
+- `).slice(1);
+  return {
+    ...prefix,
+    ...suffix,
+    ...chainId ? { chainId: Number(chainId) } : {},
+    ...expirationTime ? { expirationTime: parseSiweDateTime(expirationTime) } : {},
+    ...issuedAt ? { issuedAt: parseSiweDateTime(issuedAt) } : {},
+    ...notBefore ? { notBefore: parseSiweDateTime(notBefore) } : {},
+    ...requestId ? { requestId } : {},
+    ...resources ? { resources } : {},
+    ...scheme ? { scheme } : {},
+    ...statement ? { statement } : {}
+  };
+}
+var prefixRegex = /^(?:(?<scheme>[a-zA-Z][a-zA-Z0-9+-.]*):\/\/)?(?<domain>[a-zA-Z0-9+-.]*(?::[0-9]{1,5})?) (?:wants you to sign in with your Ethereum account:\n)(?<address>0x[a-fA-F0-9]{40})\n\n(?:(?<statement>.*)\n\n)?/;
+var suffixRegex = /(?:URI: (?<uri>.+))\n(?:Version: (?<version>.+))\n(?:Chain ID: (?<chainId>\d+))\n(?:Nonce: (?<nonce>[a-zA-Z0-9]+))\n(?:Issued At: (?<issuedAt>.+))(?:\nExpiration Time: (?<expirationTime>.+))?(?:\nNot Before: (?<notBefore>.+))?(?:\nRequest ID: (?<requestId>.+))?/;
+
+// node_modules/viem/_esm/utils/siwe/validateSiweMessage.js
+init_isAddress();
+init_isAddressEqual();
+function validateSiweMessage(parameters) {
+  const { address, domain: domain2, message, nonce, scheme, time: time3 = new Date } = parameters;
+  if (domain2 && message.domain !== domain2)
+    return false;
+  if (nonce && message.nonce !== nonce)
+    return false;
+  if (scheme && message.scheme !== scheme)
+    return false;
+  if (Number.isNaN(time3.getTime()))
+    return false;
+  if (message.expirationTime) {
+    if (Number.isNaN(message.expirationTime.getTime()))
+      return false;
+    if (time3 >= message.expirationTime)
+      return false;
+  }
+  if (message.notBefore) {
+    if (Number.isNaN(message.notBefore.getTime()))
+      return false;
+    if (time3 < message.notBefore)
+      return false;
+  }
+  try {
+    if (!message.address)
+      return false;
+    if (!isAddress(message.address, { strict: false }))
+      return false;
+    if (address && !isAddressEqual(message.address, address))
+      return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+// node_modules/viem/_esm/actions/siwe/verifySiweMessage.js
+async function verifySiweMessage(client, parameters) {
+  const { address, domain: domain2, message, nonce, scheme, signature, time: time3 = new Date, ...callRequest } = parameters;
+  const parsed2 = parseSiweMessage(message);
+  if (!parsed2.address)
+    return false;
+  const isValid = validateSiweMessage({
+    address,
+    domain: domain2,
+    message: parsed2,
+    nonce,
+    scheme,
+    time: time3
+  });
+  if (!isValid)
+    return false;
+  const hash4 = hashMessage2(message);
+  return verifyHash2(client, {
+    address: parsed2.address,
+    hash: hash4,
+    signature,
+    ...callRequest
+  });
+}
+// node_modules/viem/_esm/actions/token/getAllowance.js
+init_abis();
+
+// node_modules/viem/_esm/actions/token/internal.js
+init_abis();
+init_isAddress();
+init_isAddressEqual();
+
+// node_modules/viem/_esm/utils/unit/formatUnits.js
+init_Value();
+function formatUnits2(value, decimals) {
+  return format(value, decimals);
+}
+
+// node_modules/viem/_esm/utils/unit/parseUnits.js
+init_Value();
+function parseUnits2(value, decimals) {
+  return from(value, decimals);
+}
+
+// node_modules/viem/_esm/actions/token/internal.js
+function toAmount(amount, decimals) {
+  return { amount, decimals, formatted: formatUnits2(amount, decimals) };
+}
+function resolveToken(client, parameters) {
+  const { decimals, token } = parameters;
+  const declared = findDeclaredToken(client, token);
+  if (declared)
+    return {
+      address: declared.address,
+      decimals: decimals ?? declared.decimals
+    };
+  if (isAddress(token, { strict: false }))
+    return {
+      address: token,
+      decimals: decimals ?? inferDecimals(client, token)
+    };
+  throw new Error(`Token "${token}" is not a declared ERC-20 token on the client's \`tokens\` array (with an address for the client's chain), and is not a valid address.`);
+}
+function findDeclaredToken(client, token) {
+  const tokens = client.tokens;
+  const chainId = client.chain?.id;
+  if (!tokens || chainId === undefined)
+    return;
+  const bySymbol = findTokenBySymbol(tokens, token);
+  if (bySymbol)
+    return resolveTokenForChain(bySymbol, chainId);
+  if (isAddress(token, { strict: false }))
+    for (const token_ of tokens) {
+      const resolved = resolveTokenForChain(token_, chainId);
+      if (resolved && isAddressEqual(resolved.address, token))
+        return resolved;
+    }
+  return;
+}
+function resolveTokenForChain(token, chainId) {
+  const address = token.addresses[chainId];
+  if (!address)
+    return;
+  return {
+    address,
+    currency: token.currency,
+    decimals: token.decimals,
+    name: token.name,
+    popular: token.popular,
+    symbol: token.symbol
+  };
+}
+function findTokenBySymbol(tokens, symbol2) {
+  const lowerSymbol = symbol2.toLowerCase();
+  for (const token of tokens) {
+    if (token.symbol?.toLowerCase() === lowerSymbol)
+      return token;
+  }
+  return;
+}
+function inferDecimals(client, address) {
+  const tokens = client.tokens;
+  const chainId = client.chain?.id;
+  if (tokens && chainId !== undefined)
+    for (const token of tokens) {
+      const resolved = resolveTokenForChain(token, chainId);
+      if (resolved && isAddressEqual(resolved.address, address))
+        return resolved.decimals;
+    }
+  return;
+}
+async function resolveTokenWithDecimals(client, parameters) {
+  const { address, decimals } = resolveToken(client, parameters);
+  if (decimals !== undefined)
+    return { address, decimals };
+  return {
+    address,
+    decimals: await readContract(client, {
+      abi: erc20Abi,
+      address,
+      functionName: "decimals"
+    })
+  };
+}
+function defineCall(call2) {
+  return {
+    ...call2,
+    data: encodeFunctionData(call2),
+    to: call2.address
+  };
+}
+
+// node_modules/viem/_esm/actions/token/getAllowance.js
+async function getAllowance(client, parameters) {
+  const { account, decimals, spender, token, ...rest } = parameters;
+  const [amount, { decimals: resolved }] = await Promise.all([
+    readContract(client, {
+      ...rest,
+      ...getAllowance.call(client, { account, spender, token })
+    }),
+    resolveTokenWithDecimals(client, {
+      decimals,
+      token
+    })
+  ]);
+  return toAmount(amount, resolved);
+}
+(function(getAllowance2) {
+  function call2(client, args) {
+    return defineCall({
+      address: resolveToken(client, args).address,
+      abi: erc20Abi,
+      functionName: "allowance",
+      args: [args.account, args.spender]
+    });
+  }
+  getAllowance2.call = call2;
+})(getAllowance || (getAllowance = {}));
+// node_modules/viem/_esm/actions/token/getBalance.js
+init_abis();
+
+// node_modules/viem/_esm/errors/account.js
+init_base();
+
+class AccountNotFoundError extends BaseError {
+  constructor({ docsPath: docsPath8 } = {}) {
+    super([
+      "Could not find an Account to execute with this Action.",
+      "Please provide an Account with the `account` argument on the Action, or by supplying an `account` to the Client."
+    ].join(`
+`), {
+      docsPath: docsPath8,
+      docsSlug: "account",
+      name: "AccountNotFoundError"
+    });
+  }
+}
+
+// node_modules/viem/_esm/actions/token/getBalance.js
+async function getBalance2(client, parameters) {
+  const { account: account_ = client.account, decimals, token, ...rest } = parameters;
+  if (!account_)
+    throw new AccountNotFoundError;
+  const account = parseAccount(account_).address;
+  const [amount, { decimals: resolved }] = await Promise.all([
+    readContract(client, {
+      ...rest,
+      ...getBalance2.call(client, { account, token })
+    }),
+    resolveTokenWithDecimals(client, {
+      decimals,
+      token
+    })
+  ]);
+  return toAmount(amount, resolved);
+}
+(function(getBalance3) {
+  function call2(client, args) {
+    const account_ = args.account ?? client.account;
+    if (!account_)
+      throw new AccountNotFoundError;
+    const account = parseAccount(account_).address;
+    return defineCall({
+      address: resolveToken(client, args).address,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [account]
+    });
+  }
+  getBalance3.call = call2;
+})(getBalance2 || (getBalance2 = {}));
+// node_modules/viem/_esm/actions/token/getMetadata.js
+init_abis();
+async function getMetadata(client, parameters) {
+  const { token, ...rest } = parameters;
+  const { address } = resolveToken(client, { token });
+  const declared = findDeclaredToken(client, token);
+  const [decimals_, name, symbol2] = await Promise.all([
+    declared?.decimals ?? readContract(client, {
+      ...rest,
+      abi: erc20Abi,
+      address,
+      functionName: "decimals"
+    }),
+    declared?.name ?? readContract(client, {
+      ...rest,
+      abi: erc20Abi,
+      address,
+      functionName: "name"
+    }),
+    declared?.symbol ?? readContract(client, {
+      ...rest,
+      abi: erc20Abi,
+      address,
+      functionName: "symbol"
+    })
+  ]);
+  return {
+    decimals: decimals_,
+    name,
+    symbol: symbol2
+  };
+}
+// node_modules/viem/_esm/actions/token/getTotalSupply.js
+init_abis();
+async function getTotalSupply(client, parameters) {
+  const { decimals, token, ...rest } = parameters;
+  const [amount, { decimals: resolved }] = await Promise.all([
+    readContract(client, {
+      ...rest,
+      ...getTotalSupply.call(client, { token })
+    }),
+    resolveTokenWithDecimals(client, {
+      decimals,
+      token
+    })
+  ]);
+  return toAmount(amount, resolved);
+}
+(function(getTotalSupply2) {
+  function call2(client, args) {
+    return defineCall({
+      address: resolveToken(client, args).address,
+      abi: erc20Abi,
+      args: [],
+      functionName: "totalSupply"
+    });
+  }
+  getTotalSupply2.call = call2;
+})(getTotalSupply || (getTotalSupply = {}));
+// node_modules/viem/_esm/actions/wallet/sendRawTransaction.js
+async function sendRawTransaction(client, { serializedTransaction }) {
+  return client.request({
+    method: "eth_sendRawTransaction",
+    params: [serializedTransaction]
+  }, { retryCount: 0 });
+}
+
+// node_modules/viem/_esm/actions/wallet/sendRawTransactionSync.js
+init_transaction();
+async function sendRawTransactionSync(client, { serializedTransaction, throwOnReceiptRevert, timeout }) {
+  const receipt = await client.request({
+    method: "eth_sendRawTransactionSync",
+    params: timeout ? [serializedTransaction, timeout] : [serializedTransaction]
+  }, { retryCount: 0 });
+  const format2 = client.chain?.formatters?.transactionReceipt?.format || formatTransactionReceipt;
+  const formatted = format2(receipt);
+  if (formatted.status === "reverted" && throwOnReceiptRevert)
+    throw new TransactionReceiptRevertedError({ receipt: formatted });
+  return formatted;
+}
+
+// node_modules/viem/_esm/clients/decorators/public.js
+function publicActions(client) {
+  return {
+    call: (args) => call(client, args),
+    createAccessList: (args) => createAccessList(client, args),
+    createBlockFilter: () => createBlockFilter(client),
+    createContractEventFilter: (args) => createContractEventFilter(client, args),
+    createEventFilter: (args) => createEventFilter(client, args),
+    createPendingTransactionFilter: () => createPendingTransactionFilter(client),
+    estimateContractGas: (args) => estimateContractGas(client, args),
+    estimateGas: (args) => estimateGas(client, args),
+    getBalance: (args) => getBalance(client, args),
+    getBlobBaseFee: () => getBlobBaseFee(client),
+    getBlock: (args) => getBlock(client, args),
+    getBlockNumber: (args) => getBlockNumber(client, args),
+    getBlockReceipts: (args) => getBlockReceipts(client, args),
+    getBlockTransactionCount: (args) => getBlockTransactionCount(client, args),
+    getBytecode: (args) => getCode(client, args),
+    getChainId: () => getChainId(client),
+    getCode: (args) => getCode(client, args),
+    getContractEvents: (args) => getContractEvents(client, args),
+    getDelegation: (args) => getDelegation(client, args),
+    getEip712Domain: (args) => getEip712Domain(client, args),
+    getEnsAddress: (args) => getEnsAddress(client, args),
+    getEnsAvatar: (args) => getEnsAvatar(client, args),
+    getEnsName: (args) => getEnsName(client, args),
+    getEnsResolver: (args) => getEnsResolver(client, args),
+    getEnsText: (args) => getEnsText(client, args),
+    getFeeHistory: (args) => getFeeHistory(client, args),
+    estimateFeesPerGas: (args) => estimateFeesPerGas(client, args),
+    getFilterChanges: (args) => getFilterChanges(client, args),
+    getFilterLogs: (args) => getFilterLogs(client, args),
+    getGasPrice: () => getGasPrice(client),
+    getLogs: (args) => getLogs(client, args),
+    getProof: (args) => getProof(client, args),
+    estimateMaxPriorityFeePerGas: (args) => estimateMaxPriorityFeePerGas(client, args),
+    fillTransaction: (args) => fillTransaction(client, args),
+    getRawTransaction: (args) => getRawTransaction(client, args),
+    getStorageAt: (args) => getStorageAt(client, args),
+    getTransaction: (args) => getTransaction(client, args),
+    getTransactionConfirmations: (args) => getTransactionConfirmations(client, args),
+    getTransactionCount: (args) => getTransactionCount(client, args),
+    getTransactionReceipt: (args) => getTransactionReceipt(client, args),
+    multicall: (args) => multicall(client, args),
+    prepareTransactionRequest: (args) => prepareTransactionRequest(client, args),
+    readContract: (args) => readContract(client, args),
+    sendRawTransaction: (args) => sendRawTransaction(client, args),
+    sendRawTransactionSync: (args) => sendRawTransactionSync(client, args),
+    simulate: (args) => simulateBlocks(client, args),
+    simulateBlocks: (args) => simulateBlocks(client, args),
+    simulateCalls: (args) => simulateCalls(client, args),
+    simulateContract: (args) => simulateContract(client, args),
+    verifyHash: (args) => verifyHash2(client, args),
+    verifyMessage: (args) => verifyMessage2(client, args),
+    verifySiweMessage: (args) => verifySiweMessage(client, args),
+    verifyTypedData: (args) => verifyTypedData2(client, args),
+    uninstallFilter: (args) => uninstallFilter(client, args),
+    waitForTransactionReceipt: (args) => waitForTransactionReceipt(client, args),
+    watchBlockHeaders: (args) => watchBlockHeaders(client, args),
+    watchBlocks: (args) => watchBlocks(client, args),
+    watchBlockNumber: (args) => watchBlockNumber(client, args),
+    watchContractEvent: (args) => watchContractEvent(client, args),
+    watchEvent: (args) => watchEvent(client, args),
+    watchPendingTransactions: (args) => watchPendingTransactions(client, args),
+    token: bindPublicToken(client)
+  };
+}
+function bindPublicToken(client) {
+  return {
+    getAllowance: bindActionDecorators(client, getAllowance),
+    getBalance: bindActionDecorators(client, getBalance2),
+    getMetadata: bindActionDecorators(client, getMetadata),
+    getTotalSupply: bindActionDecorators(client, getTotalSupply)
+  };
+}
+
+// node_modules/viem/_esm/clients/createPublicClient.js
+function createPublicClient(parameters) {
+  const { key = "public", name = "Public Client" } = parameters;
+  const client = createClient({
+    ...parameters,
+    key,
+    name,
+    type: "publicClient"
+  });
+  return client.extend(publicActions);
+}
+// node_modules/viem/_esm/clients/transports/http.js
+init_request();
+
+// node_modules/viem/_esm/errors/transport.js
+init_base();
+
+class UrlRequiredError extends BaseError {
+  constructor() {
+    super("No URL was provided to the Transport. Please provide a valid RPC URL to the Transport.", {
+      docsPath: "/docs/clients/intro",
+      name: "UrlRequiredError"
+    });
+  }
+}
+
+// node_modules/viem/_esm/clients/transports/http.js
+init_createBatchScheduler();
+
+// node_modules/viem/_esm/utils/rpc/http.js
+init_request();
+
+// node_modules/viem/_esm/utils/promise/withTimeout.js
+function withTimeout(fn, { errorInstance = new Error("timed out"), timeout, signal }) {
+  return new Promise((resolve, reject) => {
+    (async () => {
+      let timeoutId;
+      const controller = new AbortController;
+      try {
+        if (timeout > 0) {
+          timeoutId = setTimeout(() => {
+            if (signal) {
+              controller.abort();
+            } else {
+              reject(errorInstance);
+            }
+          }, timeout);
+        }
+        resolve(await fn({ signal: controller?.signal || null }));
+      } catch (err) {
+        if (controller?.signal.aborted && isAbortError2(err)) {
+          reject(errorInstance);
+          return;
+        }
+        reject(err);
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    })();
+  });
+}
+// node_modules/viem/_esm/utils/rpc/id.js
+function createIdStore() {
+  return {
+    current: 0,
+    take() {
+      return this.current++;
+    },
+    reset() {
+      this.current = 0;
+    }
+  };
+}
+var idCache = /* @__PURE__ */ createIdStore();
+
+// node_modules/viem/_esm/utils/rpc/http.js
+var defaultMaxResponseBodySize = 10485760;
+function getHttpRpcClient2(url_, options = {}) {
+  const { url: url2, headers: headers_url } = parseUrl(url_);
+  return {
+    async request(params) {
+      const { body, fetchFn = options.fetchFn ?? fetch, maxResponseBodySize = options.maxResponseBodySize ?? defaultMaxResponseBodySize, onRequest = options.onRequest, onResponse = options.onResponse, timeout = options.timeout ?? 1e4 } = params;
+      const fetchOptions = {
+        ...options.fetchOptions ?? {},
+        ...params.fetchOptions ?? {}
+      };
+      const { headers, method, signal: signal_ } = fetchOptions;
+      try {
+        const response = await withTimeout(async ({ signal }) => {
+          const init = {
+            ...fetchOptions,
+            body: Array.isArray(body) ? stringify2(body.map((body2) => ({
+              jsonrpc: "2.0",
+              id: body2.id ?? idCache.take(),
+              ...body2
+            }))) : stringify2({
+              jsonrpc: "2.0",
+              id: body.id ?? idCache.take(),
+              ...body
+            }),
+            headers: {
+              ...headers_url,
+              "Content-Type": "application/json",
+              ...headers
+            },
+            method: method || "POST",
+            signal: signal_ || (timeout > 0 ? signal : null)
+          };
+          const request = new Request(url2, init);
+          const args = await onRequest?.(request, init) ?? { ...init, url: url2 };
+          const response2 = await fetchFn(args.url ?? url2, args);
+          return response2;
+        }, {
+          errorInstance: new TimeoutError({ body, url: url2 }),
+          timeout,
+          signal: true
+        });
+        if (onResponse)
+          await onResponse(response);
+        let data;
+        const responseBody = await readResponseBody(response, {
+          maxResponseBodySize
+        });
+        if (response.headers.get("Content-Type")?.startsWith("application/json"))
+          data = JSON.parse(responseBody);
+        else {
+          data = responseBody;
+          try {
+            data = JSON.parse(data || "{}");
+          } catch (err) {
+            if (response.ok)
+              throw err;
+            data = { error: data };
+          }
+        }
+        if (!response.ok) {
+          if (typeof data.error?.code === "number" && typeof data.error?.message === "string")
+            return data;
+          throw new HttpRequestError({
+            body,
+            details: stringify2(data.error) || response.statusText,
+            headers: response.headers,
+            status: response.status,
+            url: url2
+          });
+        }
+        return data;
+      } catch (err) {
+        if (signal_?.aborted)
+          throw getAbortError(signal_);
+        if (isAbortError2(err))
+          throw err;
+        if (err instanceof HttpRequestError)
+          throw err;
+        if (err instanceof ResponseBodyTooLargeError)
+          throw err;
+        if (err instanceof TimeoutError)
+          throw err;
+        throw new HttpRequestError({
+          body,
+          cause: err,
+          url: url2
+        });
+      }
+    }
+  };
+}
+async function readResponseBody(response, { maxResponseBodySize }) {
+  if (maxResponseBodySize === false)
+    return response.text();
+  const contentLength = response.headers.get("Content-Length");
+  if (contentLength) {
+    const size7 = Number(contentLength);
+    if (size7 > maxResponseBodySize)
+      throw new ResponseBodyTooLargeError({
+        maxSize: maxResponseBodySize,
+        size: size7
+      });
+  }
+  if (!response.body) {
+    const body2 = await response.text();
+    const size7 = new TextEncoder().encode(body2).length;
+    if (size7 > maxResponseBodySize)
+      throw new ResponseBodyTooLargeError({
+        maxSize: maxResponseBodySize,
+        size: size7
+      });
+    return body2;
+  }
+  const reader = response.body.getReader();
+  const decoder2 = new TextDecoder;
+  let body = "";
+  let size6 = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done)
+        break;
+      size6 += value.byteLength;
+      if (size6 > maxResponseBodySize) {
+        await reader.cancel();
+        throw new ResponseBodyTooLargeError({
+          maxSize: maxResponseBodySize,
+          size: size6
+        });
+      }
+      body += decoder2.decode(value, { stream: true });
+    }
+    body += decoder2.decode();
+    return body;
+  } finally {
+    reader.releaseLock();
+  }
+}
+function parseUrl(url_) {
+  try {
+    const url2 = new URL(url_);
+    const result = (() => {
+      if (url2.username) {
+        const credentials = `${decodeURIComponent(url2.username)}:${decodeURIComponent(url2.password)}`;
+        url2.username = "";
+        url2.password = "";
+        return {
+          url: url2.toString(),
+          headers: { Authorization: `Basic ${btoa(credentials)}` }
+        };
+      }
+      return;
+    })();
+    return { url: url2.toString(), ...result };
+  } catch {
+    return { url: url_ };
+  }
+}
+
+// node_modules/viem/_esm/utils/buildRequest.js
+init_base();
+init_request();
+init_rpc();
+
+// node_modules/viem/_esm/utils/promise/withDedupe.js
+init_lru();
+var promiseCache2 = /* @__PURE__ */ new LruMap(8192);
+function withDedupe(fn, { enabled = true, id }) {
+  if (!enabled || !id)
+    return fn();
+  if (promiseCache2.get(id))
+    return promiseCache2.get(id);
+  const promise2 = fn().finally(() => promiseCache2.delete(id));
+  promiseCache2.set(id, promise2);
+  return promise2;
+}
+
+// node_modules/viem/_esm/utils/buildRequest.js
+function buildRequest2(request, options = {}) {
+  return async (args, overrideOptions = {}) => {
+    const { dedupe = false, methods, retryDelay = 150, retryCount = 3, signal, uid: uid2 } = {
+      ...options,
+      ...overrideOptions
+    };
+    const { method } = args;
+    if (methods?.exclude?.includes(method))
+      throw new MethodNotSupportedRpcError(new Error("method not supported"), {
+        method
+      });
+    if (methods?.include && !methods.include.includes(method))
+      throw new MethodNotSupportedRpcError(new Error("method not supported"), {
+        method
+      });
+    if (signal?.aborted)
+      throw getAbortError(signal);
+    const requestId = dedupe ? hashString(`${uid2}.${stringify2(args)}`) : undefined;
+    return withDedupe(() => withRetry(async () => {
+      try {
+        return await request(args, signal ? { signal } : undefined);
+      } catch (err_) {
+        if (signal?.aborted)
+          throw getAbortError(signal);
+        if (isAbortError2(err_))
+          throw err_;
+        const err = err_;
+        switch (err.code) {
+          case ParseRpcError.code:
+            throw new ParseRpcError(err);
+          case InvalidRequestRpcError.code:
+            throw new InvalidRequestRpcError(err);
+          case MethodNotFoundRpcError.code:
+            throw new MethodNotFoundRpcError(err, { method: args.method });
+          case InvalidParamsRpcError.code:
+            throw new InvalidParamsRpcError(err);
+          case InternalRpcError.code:
+            throw new InternalRpcError(err);
+          case InvalidInputRpcError.code:
+            throw new InvalidInputRpcError(err);
+          case ResourceNotFoundRpcError.code:
+            throw new ResourceNotFoundRpcError(err);
+          case ResourceUnavailableRpcError.code:
+            throw new ResourceUnavailableRpcError(err);
+          case TransactionRejectedRpcError.code:
+            throw new TransactionRejectedRpcError(err);
+          case MethodNotSupportedRpcError.code:
+            throw new MethodNotSupportedRpcError(err, {
+              method: args.method
+            });
+          case LimitExceededRpcError.code:
+            throw new LimitExceededRpcError(err);
+          case JsonRpcVersionUnsupportedError.code:
+            throw new JsonRpcVersionUnsupportedError(err);
+          case UserRejectedRequestError.code:
+            throw new UserRejectedRequestError(err);
+          case UnauthorizedProviderError.code:
+            throw new UnauthorizedProviderError(err);
+          case UnsupportedProviderMethodError.code:
+            throw new UnsupportedProviderMethodError(err);
+          case ProviderDisconnectedError.code:
+            throw new ProviderDisconnectedError(err);
+          case ChainDisconnectedError.code:
+            throw new ChainDisconnectedError(err);
+          case SwitchChainError.code:
+            throw new SwitchChainError(err);
+          case UnsupportedNonOptionalCapabilityError.code:
+            throw new UnsupportedNonOptionalCapabilityError(err);
+          case UnsupportedChainIdError.code:
+            throw new UnsupportedChainIdError(err);
+          case DuplicateIdError.code:
+            throw new DuplicateIdError(err);
+          case UnknownBundleIdError.code:
+            throw new UnknownBundleIdError(err);
+          case BundleTooLargeError.code:
+            throw new BundleTooLargeError(err);
+          case AtomicReadyWalletRejectedUpgradeError.code:
+            throw new AtomicReadyWalletRejectedUpgradeError(err);
+          case AtomicityNotSupportedError.code:
+            throw new AtomicityNotSupportedError(err);
+          case 5000:
+            throw new UserRejectedRequestError(err);
+          case WalletConnectSessionSettlementError.code:
+            throw new WalletConnectSessionSettlementError(err);
+          default:
+            if (err_ instanceof BaseError)
+              throw err_;
+            throw new UnknownRpcError(err);
+        }
+      }
+    }, {
+      delay: ({ count, error: error62 }) => {
+        if (error62 && error62 instanceof HttpRequestError) {
+          const retryAfter = error62?.headers?.get("Retry-After");
+          if (retryAfter?.match(/\d/))
+            return Number.parseInt(retryAfter, 10) * 1000;
+        }
+        return ~~(1 << count) * retryDelay;
+      },
+      retryCount,
+      signal,
+      shouldRetry: ({ error: error62 }) => shouldRetry(error62)
+    }), { enabled: dedupe, id: requestId });
+  };
+}
+function shouldRetry(error62) {
+  if (isAbortError2(error62))
+    return false;
+  if ("code" in error62 && typeof error62.code === "number") {
+    if (error62.code === -1)
+      return true;
+    if (error62.code === LimitExceededRpcError.code)
+      return true;
+    if (error62.code === InternalRpcError.code)
+      return true;
+    if (error62.code === 429)
+      return true;
+    return false;
+  }
+  if (error62 instanceof HttpRequestError && error62.status) {
+    if (error62.status === 403)
+      return true;
+    if (error62.status === 408)
+      return true;
+    if (error62.status === 413)
+      return true;
+    if (error62.status === 429)
+      return true;
+    if (error62.status === 500)
+      return true;
+    if (error62.status === 502)
+      return true;
+    if (error62.status === 503)
+      return true;
+    if (error62.status === 504)
+      return true;
+    return false;
+  }
+  return true;
+}
+function hashString(str, seed = 0) {
+  let h1 = 3735928559 ^ seed;
+  let h2 = 1103547991 ^ seed;
+  for (let i = 0;i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ h1 >>> 16, 2246822507);
+  h1 ^= Math.imul(h2 ^ h2 >>> 16, 3266489909);
+  h2 = Math.imul(h2 ^ h2 >>> 16, 2246822507);
+  h2 ^= Math.imul(h1 ^ h1 >>> 16, 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+// node_modules/viem/_esm/clients/transports/createTransport.js
+function createTransport({ key, methods, name, request, retryCount = 3, retryDelay = 150, timeout, type }, value) {
+  const uid2 = uid();
+  return {
+    config: {
+      key,
+      methods,
+      name,
+      request,
+      retryCount,
+      retryDelay,
+      timeout,
+      type
+    },
+    request: buildRequest2(request, { methods, retryCount, retryDelay, uid: uid2 }),
+    value
+  };
+}
+
+// node_modules/viem/_esm/clients/transports/http.js
+var signalId = 0;
+var signalIds = new WeakMap;
+function getSignalId(signal) {
+  if (!signal)
+    return "default";
+  const id = signalIds.get(signal);
+  if (id !== undefined)
+    return id;
+  const nextId = signalId++;
+  signalIds.set(signal, nextId);
+  return nextId;
+}
+function http(url2, config2 = {}) {
+  const { batch, fetchFn, fetchOptions, key = "http", maxResponseBodySize, methods, name = "HTTP JSON-RPC", onFetchRequest, onFetchResponse, retryDelay, raw: raw2 } = config2;
+  return ({ chain, retryCount: retryCount_, timeout: timeout_ }) => {
+    const { batchSize = 1000, wait: wait2 = 0 } = typeof batch === "object" ? batch : {};
+    const retryCount = config2.retryCount ?? retryCount_;
+    const timeout = timeout_ ?? config2.timeout ?? 1e4;
+    const url_ = url2 || chain?.rpcUrls.default.http[0];
+    if (!url_)
+      throw new UrlRequiredError;
+    const rpcClient = getHttpRpcClient2(url_, {
+      fetchFn,
+      fetchOptions,
+      maxResponseBodySize,
+      onRequest: onFetchRequest,
+      onResponse: onFetchResponse,
+      timeout
+    });
+    return createTransport({
+      key,
+      methods,
+      name,
+      async request({ method, params }, options) {
+        const body = { method, params };
+        const fetchOptions2 = options?.signal ? { signal: options.signal } : undefined;
+        const { schedule } = createBatchScheduler({
+          id: `${url_}.${getSignalId(options?.signal)}`,
+          wait: wait2,
+          shouldSplitBatch(requests) {
+            return requests.length > batchSize;
+          },
+          fn: (body2) => rpcClient.request({
+            body: body2,
+            fetchOptions: fetchOptions2
+          }),
+          sort: (a, b) => a.id - b.id
+        });
+        const fn = async (body2) => batch ? schedule(body2) : [
+          await rpcClient.request({
+            body: body2,
+            fetchOptions: fetchOptions2
+          })
+        ];
+        const [{ error: error62, result }] = await fn(body);
+        if (raw2)
+          return { error: error62, result };
+        if (error62)
+          throw new RpcRequestError({
+            body,
+            error: error62,
+            url: url_
+          });
+        return result;
+      },
+      retryCount,
+      retryDelay,
+      timeout,
+      type: "http"
+    }, {
+      fetchOptions,
+      url: url_
+    });
+  };
+}
+
+// node_modules/viem/_esm/index.js
+init_decodeAbiParameters();
+init_decodeFunctionData();
+init_getAddress();
+init_isAddress();
+
+// node_modules/viem/_esm/utils/unit/parseEther.js
+init_Value();
+function parseEther2(ether, unit = "wei") {
+  return fromEther(ether, unit);
+}
+// node_modules/viem/_esm/utils/chain/defineChain.js
+function defineChain3(chain) {
+  const chainInstance = {
+    formatters: undefined,
+    fees: undefined,
+    serializers: undefined,
+    ...chain
+  };
+  function extend2(base) {
+    return (fnOrExtended) => {
+      const properties = typeof fnOrExtended === "function" ? fnOrExtended(base) : fnOrExtended;
+      const combined = { ...base, ...properties };
+      return Object.assign(combined, { extend: extend2(combined) });
+    };
+  }
+  return Object.assign(chainInstance, {
+    extend: extend2(chainInstance)
+  });
+}
+
+// node_modules/viem/_esm/chains/definitions/bscTestnet.js
+var bscTestnet = /* @__PURE__ */ defineChain3({
+  id: 97,
+  name: "BNB Smart Chain Testnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "BNB",
+    symbol: "tBNB"
+  },
+  rpcUrls: {
+    default: { http: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"] }
+  },
+  blockExplorers: {
+    default: {
+      name: "BscScan",
+      url: "https://testnet.bscscan.com",
+      apiUrl: "https://api-testnet.bscscan.com/api"
+    }
+  },
+  contracts: {
+    multicall3: {
+      address: "0xca11bde05977b3631167028862be2a173976ca11",
+      blockCreated: 17422483
+    }
+  },
+  testnet: true
+});
+// src/lib/viem.ts
+var publicClient = createPublicClient({
+  chain: bscTestnet,
+  transport: http(env.BNB_RPC_URL)
+});
+
+// src/routes/health.ts
+var healthRoute = new Hono2;
+healthRoute.get("/", async (c) => {
+  let blockNumber = null;
+  try {
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("RPC query timeout")), 2500));
+    const bn = await Promise.race([publicClient.getBlockNumber(), timeoutPromise]);
+    blockNumber = bn.toString();
+  } catch (error62) {
+    console.warn("[HEALTH] RPC blockNumber probe timed out or failed:", error62 instanceof Error ? error62.message : String(error62));
+  }
+  return c.json({
+    ok: true,
+    service: "txsentry-api",
+    blockchain: {
+      chain: "BNB Smart Chain Testnet",
+      connected: blockNumber !== null,
+      ...blockNumber ? { blockNumber } : {}
+    }
+  });
 });
 
 // src/types/intent.ts
@@ -51736,14 +51749,21 @@ function parseIntentHeuristically(input2) {
   };
 }
 async function parseUserIntent(userInput) {
-  if (env.AI_PROVIDER === "heuristics" || !env.AI_API_KEY) {
-    console.log("[Intent] Using heuristic intent parsing (heuristics mode or missing API key)...");
+  console.log("[AI] Intent parsing started");
+  if (env.AI_PROVIDER === "heuristics") {
+    console.log(`[AI] Intent parsing fallback
+reason=HEURISTICS_PROVIDER`);
     return parseIntentHeuristically(userInput);
   }
-  console.log("[AI] Starting intent parsing...");
-  console.log("[AI] Input:", userInput);
+  if (!env.AI_API_KEY || env.AI_API_KEY === "YOUR_AI_API_KEY") {
+    console.log(`[AI] Intent parsing fallback
+reason=MISSING_API_KEY`);
+    return parseIntentHeuristically(userInput);
+  }
   try {
-    console.log("[AI] Sending request...");
+    console.log(`[AI] provider=${env.AI_PROVIDER}`);
+    console.log(`[AI] model=${env.AI_MODEL}`);
+    console.log("[AI] request started");
     const response = await ai.chat.completions.create({
       model: env.AI_MODEL,
       temperature: 0,
@@ -51816,22 +51836,22 @@ Rules:
         }
       ]
     });
-    console.log("[AI] Response received.");
     const raw2 = response.choices[0]?.message?.content;
     if (!raw2) {
       throw new Error("AI returned empty output.");
     }
-    console.log("[AI] Raw output:", raw2);
     const json2 = parseAIJson(raw2);
     const parsed2 = userIntentSchema.safeParse(json2);
     if (!parsed2.success) {
-      console.error("AI schema error:", parsed2.error.flatten());
-      throw new Error("AI returned an invalid intent schema.");
+      const issueSummary = parsed2.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+      throw new Error(`AI returned an invalid intent schema: ${issueSummary}`);
     }
-    console.log("[AI] Parsed intent:", parsed2.data);
+    console.log("[AI] Intent parsing succeeded");
     return parsed2.data;
   } catch (error62) {
-    console.warn("[AI] AI intent request failed, falling back to heuristic parsing:", error62 instanceof Error ? error62.message : String(error62));
+    const safeReason = error62 instanceof Error ? error62.message : "AI intent request failed";
+    console.log(`[AI] Intent parsing fallback
+reason=${safeReason}`);
     return parseIntentHeuristically(userInput);
   }
 }
@@ -53835,12 +53855,33 @@ var securityEvidenceItemSchema = exports_external.object({
   label: exports_external.string(),
   value: exports_external.string(),
   explanation: exports_external.string(),
-  source: exports_external.enum(["ON-CHAIN", "SIMULATION", "TRANSACTION", "POLICY", "INTENT", "BNB_MCP"])
+  source: exports_external.preprocess((val) => {
+    const str = String(val || "").toUpperCase().replace(/[-\s]/g, "_");
+    if (str.includes("CHAIN"))
+      return "ON-CHAIN";
+    if (str.includes("SIM"))
+      return "SIMULATION";
+    if (str.includes("TX") || str.includes("TRANS"))
+      return "TRANSACTION";
+    if (str.includes("POLIC") || str.includes("RULE"))
+      return "POLICY";
+    if (str.includes("INTENT"))
+      return "INTENT";
+    if (str.includes("MCP") || str.includes("BNB"))
+      return "BNB_MCP";
+    return "POLICY";
+  }, exports_external.enum(["ON-CHAIN", "SIMULATION", "TRANSACTION", "POLICY", "INTENT", "BNB_MCP"]))
 });
 var securityExplanationSchema = exports_external.object({
   title: exports_external.string(),
   summary: exports_external.string(),
-  details: exports_external.array(exports_external.string()),
+  details: exports_external.preprocess((val) => {
+    if (typeof val === "string")
+      return [val];
+    if (Array.isArray(val))
+      return val.map(String);
+    return [];
+  }, exports_external.array(exports_external.string())),
   recommendedAction: exports_external.enum(["CANCEL", "REVIEW", "PROCEED"]),
   headline: exports_external.string().optional(),
   whyStopped: exports_external.object({
@@ -53866,9 +53907,21 @@ var securityExplanationSchema = exports_external.object({
   comparison: exports_external.object({
     status: exports_external.enum(["MATCH", "MISMATCH", "UNKNOWN"]),
     summary: exports_external.string(),
-    details: exports_external.array(exports_external.string()).optional()
+    details: exports_external.preprocess((val) => {
+      if (typeof val === "string")
+        return [val];
+      if (Array.isArray(val))
+        return val.map(String);
+      return;
+    }, exports_external.array(exports_external.string()).optional())
   }).optional(),
-  evidence: exports_external.array(securityEvidenceItemSchema).optional()
+  evidence: exports_external.array(securityEvidenceItemSchema).optional(),
+  meta: exports_external.object({
+    generator: exports_external.enum(["AI", "DETERMINISTIC"]),
+    provider: exports_external.string().optional(),
+    model: exports_external.string().optional(),
+    fallbackReason: exports_external.string().optional()
+  }).optional()
 });
 
 // src/services/explanation-engine.ts
@@ -54092,15 +54145,46 @@ function buildDeterministicExplanation(input2) {
     userIntent,
     actualTransaction,
     comparison,
-    evidence
+    evidence,
+    meta: {
+      generator: "DETERMINISTIC",
+      provider: env.AI_PROVIDER,
+      model: env.AI_MODEL
+    }
   };
 }
 async function generateSecurityExplanation(input2) {
-  const fallback2 = () => buildDeterministicExplanation(input2);
-  if (env.AI_PROVIDER === "heuristics" || !env.AI_API_KEY) {
-    return fallback2();
+  console.log("[AI] Explanation generation started");
+  const buildFallback = (reason) => {
+    const deterministic = buildDeterministicExplanation(input2);
+    return {
+      ...deterministic,
+      meta: {
+        generator: "DETERMINISTIC",
+        provider: env.AI_PROVIDER,
+        model: env.AI_MODEL,
+        fallbackReason: reason
+      }
+    };
+  };
+  if (env.AI_PROVIDER === "heuristics") {
+    console.log(`[AI] Explanation generation failed
+provider=${env.AI_PROVIDER}
+model=${env.AI_MODEL}
+reason=HEURISTICS_PROVIDER`);
+    return buildFallback("HEURISTICS_PROVIDER");
+  }
+  if (!env.AI_API_KEY || env.AI_API_KEY === "YOUR_AI_API_KEY") {
+    console.log(`[AI] Explanation generation failed
+provider=${env.AI_PROVIDER}
+model=${env.AI_MODEL}
+reason=MISSING_API_KEY`);
+    return buildFallback("MISSING_API_KEY");
   }
   try {
+    console.log(`[AI] provider=${env.AI_PROVIDER}`);
+    console.log(`[AI] model=${env.AI_MODEL}`);
+    console.log("[AI] request started");
     const response = await ai.chat.completions.create({
       model: env.AI_MODEL,
       temperature: 0,
@@ -54181,6 +54265,9 @@ Return JSON conforming to this schema:
   ]
 }
 
+IMPORTANT: "details" must always be a JSON array of strings, e.g. ["reason 1"].
+"source" in evidence MUST be one of: "ON-CHAIN" | "SIMULATION" | "TRANSACTION" | "POLICY" | "INTENT" | "BNB_MCP".
+
 The recommended action MUST match the deterministic decision:
 BLOCK -> CANCEL
 REVIEW -> REVIEW
@@ -54200,13 +54287,25 @@ ALLOW -> PROCEED
     const json2 = parseAIJson(raw2);
     const parsed2 = securityExplanationSchema.safeParse(json2);
     if (!parsed2.success) {
-      console.error("[AI] Explanation schema validation failed:", parsed2.error.flatten());
-      return fallback2();
+      const issueSummary = parsed2.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+      throw new Error(`Explanation schema validation failed: ${issueSummary}`);
     }
-    return parsed2.data;
+    console.log("[AI] Explanation generation succeeded");
+    return {
+      ...parsed2.data,
+      meta: {
+        generator: "AI",
+        provider: env.AI_PROVIDER,
+        model: env.AI_MODEL
+      }
+    };
   } catch (error62) {
-    console.warn("[AI] Explanation generation failed, falling back to deterministic builder:", error62 instanceof Error ? error62.message : String(error62));
-    return fallback2();
+    const safeReason = error62 instanceof Error ? error62.message : "AI explanation request failed";
+    console.log(`[AI] Explanation generation failed
+provider=${env.AI_PROVIDER}
+model=${env.AI_MODEL}
+reason=${safeReason}`);
+    return buildFallback(safeReason);
   }
 }
 
@@ -72810,6 +72909,12 @@ securityRoute.post("/", async (c) => {
         scamAnalyses,
         transactionThreats: transactionThreatFindings
       });
+      explanation.meta = {
+        generator: "DETERMINISTIC",
+        provider: env.AI_PROVIDER,
+        model: env.AI_MODEL,
+        fallbackReason: error62 instanceof Error ? error62.message : "Unhandled route exception"
+      };
     }
     return c.json({
       ok: true,
@@ -72878,6 +72983,7 @@ securityRoute.post("/", async (c) => {
 });
 
 // src/index.ts
+logAiStatus();
 var app = new Hono2;
 var defaultLocalOrigins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
 var configuredOrigins = env.FRONTEND_ORIGIN ? env.FRONTEND_ORIGIN.split(",").map((origin) => origin.trim()).filter(Boolean) : [];

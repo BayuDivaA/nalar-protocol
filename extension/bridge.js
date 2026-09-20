@@ -131,6 +131,10 @@
               security: response?.security ?? null,
 
               error: response?.error ?? null,
+
+              errorCode: response?.errorCode ?? null,
+
+              receivedChainId: response?.receivedChainId ?? null,
             },
             "*",
           );

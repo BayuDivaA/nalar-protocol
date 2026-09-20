@@ -8,6 +8,24 @@ const baseUrls: Record<string, string> = {
   openai: "https://api.openai.com/v1",
 };
 
+export function isAiConfigured(): boolean {
+  return Boolean(env.AI_PROVIDER !== "heuristics" && env.AI_API_KEY && env.AI_API_KEY.trim().length > 0 && env.AI_API_KEY !== "YOUR_AI_API_KEY");
+}
+
+export function logAiStatus(): void {
+  const hasKey = Boolean(env.AI_API_KEY && env.AI_API_KEY.trim().length > 0 && env.AI_API_KEY !== "YOUR_AI_API_KEY");
+
+  console.log(`[AI] provider=${env.AI_PROVIDER}`);
+  console.log(`[AI] model=${env.AI_MODEL}`);
+  console.log(`[AI] apiKeyConfigured=${hasKey}`);
+
+  if (env.AI_PROVIDER === "heuristics") {
+    console.log("[AI] DISABLED\nreason=HEURISTICS_PROVIDER");
+  } else if (!hasKey) {
+    console.log("[AI] DISABLED\nreason=MISSING_API_KEY");
+  }
+}
+
 let _aiClient: OpenAI | null = null;
 
 export function getAiClient(): OpenAI {
@@ -17,7 +35,7 @@ export function getAiClient(): OpenAI {
     _aiClient = new OpenAI({
       apiKey: env.AI_API_KEY || "heuristics-mode",
       baseURL,
-      timeout: 15_000,
+      timeout: 8_000,
       maxRetries: 0,
     });
   }

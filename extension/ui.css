@@ -522,6 +522,76 @@
   margin-bottom: 10px !important;
 }
 
+/* Network overlay */
+.nalar-network-overlay {
+  background: rgba(4, 4, 4, 0.78) !important;
+  backdrop-filter: blur(10px) saturate(0.85) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(0.85) !important;
+}
+
+.nalar-network-modal {
+  width: min(480px, 100%) !important;
+  border: 1px solid var(--nalar-ui-line-strong) !important;
+  border-radius: 14px !important;
+  background: linear-gradient(180deg, rgba(224, 183, 109, 0.04), transparent 28%), var(--nalar-ui-bg) !important;
+}
+
+.nalar-network-modal::before {
+  background: linear-gradient(90deg, transparent, rgba(224, 183, 109, 0.5), transparent) !important;
+}
+
+.nalar-network-header {
+  padding: 26px 26px 20px !important;
+  border-bottom: 1px solid var(--nalar-ui-line) !important;
+}
+
+.nalar-network-header h2 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+  color: var(--nalar-ui-text) !important;
+}
+
+.nalar-network-body {
+  padding: 20px 26px !important;
+}
+
+.nalar-network-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+}
+
+.nalar-network-box {
+  padding: 14px 15px !important;
+  border-radius: 8px !important;
+  background: var(--nalar-ui-surface) !important;
+}
+
+.nalar-network-box[data-type="current"] {
+  border: 1px solid rgba(224, 183, 109, 0.35) !important;
+}
+
+.nalar-network-box[data-type="required"] {
+  border: 1px solid rgba(157, 187, 159, 0.35) !important;
+}
+
+.nalar-network-status {
+  min-height: 16px !important;
+  margin-top: 8px !important;
+  font-size: 11px !important;
+  color: var(--nalar-ui-warning) !important;
+  line-height: 1.5 !important;
+}
+
+.nalar-network-footer {
+  display: grid !important;
+  grid-template-columns: 110px 1fr !important;
+  gap: 10px !important;
+  padding: 0 26px 24px !important;
+}
+
 /* Small screens */
 @media (max-width: 640px) {
   .nalar-overlay {
@@ -535,6 +605,12 @@
   }
   .nalar-decision-body {
     max-height: calc(100vh - 300px) !important;
+  }
+  .nalar-network-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .nalar-network-footer {
+    grid-template-columns: 1fr !important;
   }
 }
 

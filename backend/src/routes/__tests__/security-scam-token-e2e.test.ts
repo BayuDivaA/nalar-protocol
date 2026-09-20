@@ -62,6 +62,11 @@ mock.module("../../services/explanation-engine", () => ({
     actualTransaction: { summary: "Swap", action: "SWAP" },
     comparison: { status: "MATCH", summary: "Matches" },
     evidence: [],
+    meta: {
+      generator: "DETERMINISTIC",
+      provider: "gemini",
+      model: "gemini-3.5-flash-lite",
+    },
   }),
   generateSecurityExplanation: async () => ({
     title: "Transaction blocked",
@@ -74,6 +79,11 @@ mock.module("../../services/explanation-engine", () => ({
     actualTransaction: { summary: "Swap", action: "SWAP" },
     comparison: { status: "MATCH", summary: "Matches" },
     evidence: [],
+    meta: {
+      generator: "DETERMINISTIC",
+      provider: "gemini",
+      model: "gemini-3.5-flash-lite",
+    },
   }),
 }));
 

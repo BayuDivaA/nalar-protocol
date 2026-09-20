@@ -43,6 +43,11 @@ mock.module("../../services/explanation-engine", () => ({
     summary: "Test",
     details: [],
     recommendedAction: "REVIEW",
+    meta: {
+      generator: "DETERMINISTIC",
+      provider: "gemini",
+      model: "gemini-3.5-flash-lite",
+    },
   }),
 }));
 

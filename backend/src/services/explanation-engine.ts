@@ -335,17 +335,45 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
     actualTransaction,
     comparison,
     evidence,
+    meta: {
+      generator: "DETERMINISTIC",
+      provider: env.AI_PROVIDER,
+      model: env.AI_MODEL,
+    },
   };
 }
 
 export async function generateSecurityExplanation(input: GenerateExplanationInput): Promise<SecurityExplanation> {
-  const fallback = (): SecurityExplanation => buildDeterministicExplanation(input);
+  console.log("[AI] Explanation generation started");
 
-  if (env.AI_PROVIDER === "heuristics" || !env.AI_API_KEY) {
-    return fallback();
+  const buildFallback = (reason: string): SecurityExplanation => {
+    const deterministic = buildDeterministicExplanation(input);
+    return {
+      ...deterministic,
+      meta: {
+        generator: "DETERMINISTIC",
+        provider: env.AI_PROVIDER,
+        model: env.AI_MODEL,
+        fallbackReason: reason,
+      },
+    };
+  };
+
+  if (env.AI_PROVIDER === "heuristics") {
+    console.log(`[AI] Explanation generation failed\nprovider=${env.AI_PROVIDER}\nmodel=${env.AI_MODEL}\nreason=HEURISTICS_PROVIDER`);
+    return buildFallback("HEURISTICS_PROVIDER");
+  }
+
+  if (!env.AI_API_KEY || env.AI_API_KEY === "YOUR_AI_API_KEY") {
+    console.log(`[AI] Explanation generation failed\nprovider=${env.AI_PROVIDER}\nmodel=${env.AI_MODEL}\nreason=MISSING_API_KEY`);
+    return buildFallback("MISSING_API_KEY");
   }
 
   try {
+    console.log(`[AI] provider=${env.AI_PROVIDER}`);
+    console.log(`[AI] model=${env.AI_MODEL}`);
+    console.log("[AI] request started");
+
     const response = await ai.chat.completions.create({
       model: env.AI_MODEL,
       temperature: 0,
@@ -426,6 +454,9 @@ Return JSON conforming to this schema:
   ]
 }
 
+IMPORTANT: "details" must always be a JSON array of strings, e.g. ["reason 1"].
+"source" in evidence MUST be one of: "ON-CHAIN" | "SIMULATION" | "TRANSACTION" | "POLICY" | "INTENT" | "BNB_MCP".
+
 The recommended action MUST match the deterministic decision:
 BLOCK -> CANCEL
 REVIEW -> REVIEW
@@ -447,13 +478,23 @@ ALLOW -> PROCEED
     const json = parseAIJson(raw);
     const parsed = securityExplanationSchema.safeParse(json);
     if (!parsed.success) {
-      console.error("[AI] Explanation schema validation failed:", parsed.error.flatten());
-      return fallback();
+      const issueSummary = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+      throw new Error(`Explanation schema validation failed: ${issueSummary}`);
     }
 
-    return parsed.data;
+    console.log("[AI] Explanation generation succeeded");
+
+    return {
+      ...parsed.data,
+      meta: {
+        generator: "AI",
+        provider: env.AI_PROVIDER,
+        model: env.AI_MODEL,
+      },
+    };
   } catch (error) {
-    console.warn("[AI] Explanation generation failed, falling back to deterministic builder:", error instanceof Error ? error.message : String(error));
-    return fallback();
+    const safeReason = error instanceof Error ? error.message : "AI explanation request failed";
+    console.log(`[AI] Explanation generation failed\nprovider=${env.AI_PROVIDER}\nmodel=${env.AI_MODEL}\nreason=${safeReason}`);
+    return buildFallback(safeReason);
   }
 }

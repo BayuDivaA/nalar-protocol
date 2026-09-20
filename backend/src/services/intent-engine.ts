@@ -163,17 +163,22 @@ export function parseIntentHeuristically(input: string): UserIntent {
 }
 
 export async function parseUserIntent(userInput: string): Promise<UserIntent> {
-  if (env.AI_PROVIDER === "heuristics" || !env.AI_API_KEY) {
-    console.log("[Intent] Using heuristic intent parsing (heuristics mode or missing API key)...");
+  console.log("[AI] Intent parsing started");
+
+  if (env.AI_PROVIDER === "heuristics") {
+    console.log("[AI] Intent parsing fallback\nreason=HEURISTICS_PROVIDER");
     return parseIntentHeuristically(userInput);
   }
 
-  console.log("[AI] Starting intent parsing...");
-
-  console.log("[AI] Input:", userInput);
+  if (!env.AI_API_KEY || env.AI_API_KEY === "YOUR_AI_API_KEY") {
+    console.log("[AI] Intent parsing fallback\nreason=MISSING_API_KEY");
+    return parseIntentHeuristically(userInput);
+  }
 
   try {
-    console.log("[AI] Sending request...");
+    console.log(`[AI] provider=${env.AI_PROVIDER}`);
+    console.log(`[AI] model=${env.AI_MODEL}`);
+    console.log("[AI] request started");
 
     const response = await ai.chat.completions.create({
       model: env.AI_MODEL,
@@ -251,31 +256,27 @@ Rules:
       ],
     });
 
-    console.log("[AI] Response received.");
-
     const raw = response.choices[0]?.message?.content;
 
     if (!raw) {
       throw new Error("AI returned empty output.");
     }
 
-    console.log("[AI] Raw output:", raw);
-
     const json = parseAIJson(raw);
 
     const parsed = userIntentSchema.safeParse(json);
 
     if (!parsed.success) {
-      console.error("AI schema error:", parsed.error.flatten());
-
-      throw new Error("AI returned an invalid intent schema.");
+      const issueSummary = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join(", ");
+      throw new Error(`AI returned an invalid intent schema: ${issueSummary}`);
     }
 
-    console.log("[AI] Parsed intent:", parsed.data);
+    console.log("[AI] Intent parsing succeeded");
 
     return parsed.data;
   } catch (error) {
-    console.warn("[AI] AI intent request failed, falling back to heuristic parsing:", error instanceof Error ? error.message : String(error));
+    const safeReason = error instanceof Error ? error.message : "AI intent request failed";
+    console.log(`[AI] Intent parsing fallback\nreason=${safeReason}`);
     return parseIntentHeuristically(userInput);
   }
 }

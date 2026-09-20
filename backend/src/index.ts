@@ -2,9 +2,12 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import { env } from "./config/env";
+import { logAiStatus } from "./lib/ai-config";
 import { healthRoute } from "./routes/health";
 import { transactionRoute } from "./routes/transactions";
 import { securityRoute } from "./routes/security";
+
+logAiStatus();
 
 const app = new Hono();
 

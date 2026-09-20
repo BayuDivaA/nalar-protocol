@@ -131,6 +131,11 @@ mock.module("../../services/explanation-engine", () => ({
     actualTransaction: { summary: "Test", action: "TEST" },
     comparison: { status: "MATCH", summary: "Test" },
     evidence: [],
+    meta: {
+      generator: "DETERMINISTIC",
+      provider: "gemini",
+      model: "gemini-3.5-flash-lite",
+    },
   }),
   generateSecurityExplanation: async (input: { intent: string; decision: string; riskLevel: string; riskScore: number; intentMatch: boolean; actualAction: string; actualFunction: string | null; reasons: string[] }) => {
     return {
@@ -147,6 +152,11 @@ mock.module("../../services/explanation-engine", () => ({
       actualTransaction: { summary: "Test", action: "TEST" },
       comparison: { status: "MATCH", summary: "Test" },
       evidence: [],
+      meta: {
+        generator: "DETERMINISTIC",
+        provider: "gemini",
+        model: "gemini-3.5-flash-lite",
+      },
     };
   },
 }));
@@ -204,6 +214,11 @@ describe("POST /api/transactions/security-check", () => {
         actualTransaction: { summary: "Test", action: "TEST" },
         comparison: { status: "MATCH", summary: "Test" },
         evidence: [],
+        meta: {
+          generator: "DETERMINISTIC",
+          provider: "gemini",
+          model: "gemini-3.5-flash-lite",
+        },
       }),
       generateSecurityExplanation: async (input: { intent: string; decision: string; riskLevel: string; riskScore: number; intentMatch: boolean; actualAction: string; actualFunction: string | null; reasons: string[] }) => ({
         title: input.decision === "BLOCK" ? "Test Transaction Blocked" : input.decision === "REVIEW" ? "Test Transaction Review" : "Test Transaction Allowed",
@@ -216,6 +231,11 @@ describe("POST /api/transactions/security-check", () => {
         actualTransaction: { summary: "Test", action: "TEST" },
         comparison: { status: "MATCH", summary: "Test" },
         evidence: [],
+        meta: {
+          generator: "DETERMINISTIC",
+          provider: "gemini",
+          model: "gemini-3.5-flash-lite",
+        },
       }),
     }));
 

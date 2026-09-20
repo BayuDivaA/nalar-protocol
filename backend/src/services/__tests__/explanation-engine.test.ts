@@ -146,5 +146,51 @@ describe("Deterministic Explanation Engine (Antislop & Human-Readable)", () => {
     expect(explanation.recommendedAction).toBe("PROCEED");
     expect(explanation.whyStopped?.title).toBe("Transaction verified");
     expect(explanation.userIntent?.status).toBe("MATCH");
+    expect(explanation.meta?.generator).toBe("DETERMINISTIC");
   });
+
+  test("generateSecurityExplanation — falls back gracefully to DETERMINISTIC generator on invalid API key or error", async () => {
+    const { generateSecurityExplanation } = await import("../explanation-engine");
+
+    const sampleInput = {
+      intent: "beli DHON terus dengan bayar pake 0.002 tBNB",
+      decision: "REVIEW" as const,
+      riskLevel: "MEDIUM",
+      riskScore: 50,
+      intentMatch: false,
+      actualAction: "SWAP",
+      actualFunction: "swapExactETHForTokens",
+      actualValueNative: "0.002 BNB",
+      reasons: ["INTENT_MISMATCH"],
+      effects: {},
+      comparison: {
+        matches: false,
+        overall: "MISMATCH" as const,
+        summary: "You asked to receive DHON, but this transaction is configured to receive BUSD instead.",
+        mismatches: ["Receive token: Expected DHON, Actual BUSD"],
+      },
+      policy: { allowed: true, requiresReview: true, reasons: ["INTENT_MISMATCH"] },
+      normalizedIntent: {
+        action: "SWAP",
+        quantity: 0.002,
+        tokenIn: "tBNB",
+        tokenOut: "DHON",
+        description: "beli DHON terus dengan bayar pake 0.002 tBNB",
+      },
+      transactionSummary: {
+        title: "Swap 0.002 tBNB for BUSD",
+        summary: "Swap 0.002 tBNB for BUSD through PancakeSwap.",
+      },
+    };
+
+    const explanation = await generateSecurityExplanation(sampleInput);
+
+    // Decision must NOT be changed by AI or fallback
+    expect(explanation.recommendedAction).toBe("REVIEW");
+    expect(explanation.whyStopped).toBeDefined();
+    expect(explanation.whatThisMeans).toBeDefined();
+    expect(explanation.userIntent?.status).toBe("MISMATCH");
+    expect(explanation.comparison?.status).toBe("MISMATCH");
+    expect(["AI", "DETERMINISTIC"]).toContain(explanation.meta?.generator ?? "");
+  }, 20000);
 });

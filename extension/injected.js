@@ -1594,15 +1594,35 @@
 
     headerRow.appendChild(headerLabel);
 
-    const match = typeof explanation.comparison?.match === "boolean" ? explanation.comparison.match : typeof security?.intentMatch === "boolean" ? security.intentMatch : true;
+    const comp = security?.comparison || {};
+    const isMismatch = comp.overall === "MISMATCH" || explanation.comparison?.status === "MISMATCH" || security?.intentMatch === false;
+    const isUncertain = comp.overall === "UNCERTAIN" || explanation.comparison?.status === "UNKNOWN";
+    const isMatch = !isMismatch && !isUncertain && (explanation.comparison?.status === "MATCH" || security?.intentMatch === true || comp.overall === "MATCH");
+
+    let badgeText = "✓ MATCH";
+    let badgeColor = UI.safe;
+    let badgeBg = "rgba(157,187,159,.12)";
+    let badgeBorder = "rgba(157,187,159,.25)";
+
+    if (isMismatch) {
+      badgeText = "✕ INTENT MISMATCH";
+      badgeColor = UI.danger;
+      badgeBg = "rgba(239,128,111,.12)";
+      badgeBorder = "rgba(239,128,111,.25)";
+    } else if (isUncertain) {
+      badgeText = "? UNVERIFIED";
+      badgeColor = UI.warning;
+      badgeBg = "rgba(224,183,109,.12)";
+      badgeBorder = "rgba(224,183,109,.25)";
+    }
 
     const matchBadge = document.createElement("div");
 
     matchBadge.className = "nalar-badge";
 
-    matchBadge.setAttribute("data-match", String(match));
+    matchBadge.setAttribute("data-match", String(isMatch));
 
-    matchBadge.textContent = match ? "✓ MATCH" : "✕ MISMATCH";
+    matchBadge.textContent = badgeText;
 
     Object.assign(matchBadge.style, {
       padding: "3px 8px",
@@ -1610,9 +1630,9 @@
       fontSize: "9px",
       fontWeight: "750",
       letterSpacing: ".08em",
-      color: match ? UI.safe : UI.danger,
-      background: match ? "rgba(157,187,159,.12)" : "rgba(239,128,111,.12)",
-      border: `1px solid ${match ? "rgba(157,187,159,.25)" : "rgba(239,128,111,.25)"}`,
+      color: badgeColor,
+      background: badgeBg,
+      border: `1px solid ${badgeBorder}`,
     });
 
     headerRow.appendChild(matchBadge);
@@ -1629,9 +1649,27 @@
       gap: "10px",
     });
 
-    const userIntentText = explanation.userIntent || security?.intent?.description || "Not specified";
+    let userIntentText = "Not specified";
+    if (typeof explanation.userIntent === "string") {
+      userIntentText = explanation.userIntent;
+    } else if (explanation.userIntent && typeof explanation.userIntent.summary === "string") {
+      userIntentText = explanation.userIntent.summary;
+    } else if (security?.intent?.description) {
+      userIntentText = security.intent.description;
+    }
 
-    const actualTxText = explanation.actualTransaction || security?.transactionSummary?.title || humanizeAction(security?.actual?.action) || "Contract call";
+    let actualTxText = "Contract call";
+    if (typeof explanation.actualTransaction === "string") {
+      actualTxText = explanation.actualTransaction;
+    } else if (explanation.actualTransaction && typeof explanation.actualTransaction.summary === "string") {
+      actualTxText = explanation.actualTransaction.summary;
+    } else if (security?.transactionSummary?.title) {
+      actualTxText = security.transactionSummary.title;
+    } else if (security?.transactionSummary?.summary) {
+      actualTxText = security.transactionSummary.summary;
+    } else if (security?.actual?.action) {
+      actualTxText = humanizeAction(security.actual.action);
+    }
 
     const intentBox = document.createElement("div");
 
@@ -1683,7 +1721,7 @@
 
     Object.assign(actualBox.style, {
       padding: "11px 12px",
-      border: `1px solid ${match ? UI.border : "rgba(239,128,111,.35)"}`,
+      border: `1px solid ${isMatch ? UI.border : "rgba(239,128,111,.35)"}`,
       borderRadius: "8px",
       background: UI.raised,
     });
@@ -1698,7 +1736,7 @@
       fontSize: "9px",
       fontWeight: "700",
       letterSpacing: ".12em",
-      color: match ? UI.muted : UI.danger,
+      color: isMatch ? UI.muted : UI.danger,
     });
 
     const actualVal = document.createElement("div");
@@ -1711,7 +1749,7 @@
       marginTop: "6px",
       fontSize: "12px",
       lineHeight: "1.55",
-      color: match ? UI.text : UI.danger,
+      color: isMatch ? UI.text : UI.danger,
       wordBreak: "break-word",
     });
 
@@ -1723,11 +1761,56 @@
 
     card.appendChild(grid);
 
-    const diffs = Array.isArray(explanation.comparison?.differences) ? explanation.comparison.differences : [];
+    // Collect structured field comparison data
+    const mismatchesList = [];
+    const matchesList = [];
 
-    const comparisonSummary = explanation.comparison?.summary;
+    if (comp.outputToken) {
+      if (comp.outputToken.status === "MISMATCH") {
+        mismatchesList.push(`Receive token: Expected ${comp.outputToken.expected || "token"}, Actual ${comp.outputToken.actual || "token"}`);
+      } else if (comp.outputToken.status === "MATCH") {
+        matchesList.push(`Receive token matches: ${comp.outputToken.actual}`);
+      }
+    }
 
-    if (!match || diffs.length || comparisonSummary) {
+    if (comp.inputToken) {
+      if (comp.inputToken.status === "MISMATCH") {
+        mismatchesList.push(`Send token: Expected ${comp.inputToken.expected || "token"}, Actual ${comp.inputToken.actual || "token"}`);
+      } else if (comp.inputToken.status === "MATCH") {
+        matchesList.push(`Send token matches: ${comp.inputToken.actual}`);
+      }
+    }
+
+    if (comp.amount) {
+      if (comp.amount.status === "MISMATCH") {
+        mismatchesList.push(`Amount: Expected ${comp.amount.expected}, Actual ${comp.amount.actual}`);
+      } else if (comp.amount.status === "MATCH") {
+        matchesList.push(`Amount matches: ${comp.amount.actual}`);
+      }
+    }
+
+    if (comp.action) {
+      if (comp.action.status === "MISMATCH") {
+        mismatchesList.push(`Action: Expected ${humanizeAction(comp.action.expected)}, Actual ${humanizeAction(comp.action.actual)}`);
+      } else if (comp.action.status === "MATCH") {
+        matchesList.push(`Action matches: ${humanizeAction(comp.action.actual)}`);
+      }
+    }
+
+    if (comp.recipient) {
+      if (comp.recipient.status === "MISMATCH") {
+        mismatchesList.push(`Recipient: Expected ${formatAddress(comp.recipient.expected)}, Actual ${formatAddress(comp.recipient.actual)}`);
+      } else if (comp.recipient.status === "MATCH") {
+        matchesList.push(`Recipient matches: ${formatAddress(comp.recipient.actual)}`);
+      }
+    }
+
+    // Include any string mismatches from comp.mismatches or explanation
+    const otherMismatches = Array.isArray(comp.mismatches) ? comp.mismatches : Array.isArray(explanation.comparison?.details) ? explanation.comparison.details : [];
+
+    const comparisonSummary = comp.summary || explanation.comparison?.summary;
+
+    if (isMismatch || mismatchesList.length || matchesList.length || otherMismatches.length || comparisonSummary) {
       const diffContainer = document.createElement("div");
 
       diffContainer.className = "nalar-comparison-diff";
@@ -1746,26 +1829,68 @@
         Object.assign(summaryEl.style, {
           fontSize: "12px",
           lineHeight: "1.55",
-          color: match ? UI.soft : UI.danger,
+          color: isMatch ? UI.soft : UI.danger,
+          marginBottom: mismatchesList.length || matchesList.length ? "10px" : "0",
         });
 
         diffContainer.appendChild(summaryEl);
       }
 
-      diffs.forEach((diff) => {
-        const diffRow = document.createElement("div");
-
-        diffRow.textContent = `· ${diff}`;
-
-        Object.assign(diffRow.style, {
-          marginTop: "4px",
-          fontSize: "11px",
-          lineHeight: "1.5",
-          color: UI.muted,
+      if (mismatchesList.length > 0) {
+        const mismatchLabel = createLabel("WHAT DOESN'T MATCH");
+        Object.assign(mismatchLabel.style, {
+          color: UI.danger,
+          marginBottom: "6px",
+          marginTop: "6px",
         });
+        diffContainer.appendChild(mismatchLabel);
 
-        diffContainer.appendChild(diffRow);
-      });
+        mismatchesList.forEach((diff) => {
+          const diffRow = document.createElement("div");
+          diffRow.textContent = `✕ ${diff}`;
+          Object.assign(diffRow.style, {
+            marginTop: "3px",
+            fontSize: "11px",
+            lineHeight: "1.5",
+            color: UI.danger,
+          });
+          diffContainer.appendChild(diffRow);
+        });
+      } else if (otherMismatches.length > 0 && isMismatch) {
+        otherMismatches.forEach((diff) => {
+          const diffRow = document.createElement("div");
+          diffRow.textContent = `· ${diff}`;
+          Object.assign(diffRow.style, {
+            marginTop: "4px",
+            fontSize: "11px",
+            lineHeight: "1.5",
+            color: UI.muted,
+          });
+          diffContainer.appendChild(diffRow);
+        });
+      }
+
+      if (matchesList.length > 0) {
+        const matchLabel = createLabel(isMismatch ? "WHAT MATCHES" : "VERIFIED PARAMETERS");
+        Object.assign(matchLabel.style, {
+          color: UI.safe,
+          marginBottom: "6px",
+          marginTop: mismatchesList.length > 0 ? "10px" : "6px",
+        });
+        diffContainer.appendChild(matchLabel);
+
+        matchesList.forEach((item) => {
+          const matchRow = document.createElement("div");
+          matchRow.textContent = `✓ ${item}`;
+          Object.assign(matchRow.style, {
+            marginTop: "3px",
+            fontSize: "11px",
+            lineHeight: "1.5",
+            color: UI.soft,
+          });
+          diffContainer.appendChild(matchRow);
+        });
+      }
 
       card.appendChild(diffContainer);
     }
@@ -1776,14 +1901,17 @@
   function createWhatThisMeansSection(explanation, security, decision) {
     const isBlock = decision === "BLOCK";
     const isReview = decision === "REVIEW";
+    const isMismatch = security?.intentMatch === false || security?.comparison?.overall === "MISMATCH";
 
     const text =
       explanation.whatThisMeans ||
       (isBlock
         ? "Signing this transaction could result in irreversible loss of assets or unverified smart contract execution."
-        : isReview
-          ? "Proceeding will grant permissions or initiate actions that should be carefully verified."
-          : "This transaction will execute with standard network confirmation and fees.");
+        : isMismatch
+          ? "This transaction does not match your intended action. Please verify token symbols and amounts carefully before proceeding."
+          : isReview
+            ? "This transaction requires manual verification due to policy or contract risk parameters. Double-check all details before signing."
+            : "This transaction will execute with standard network confirmation and fees.");
 
     const card = document.createElement("div");
 

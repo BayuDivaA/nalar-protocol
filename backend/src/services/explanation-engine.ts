@@ -2,6 +2,7 @@ import { ai } from "../lib/ai-config";
 import { env } from "../config/env";
 import { securityExplanationSchema, type SecurityExplanation, type SecurityEvidenceItem } from "../types/explanation";
 import { parseAIJson } from "../lib/parse-ai-json";
+import type { IntentComparison } from "./intent-comparator";
 
 export interface GenerateExplanationInput {
   intent: string;
@@ -14,10 +15,7 @@ export interface GenerateExplanationInput {
   reasons: string[];
   actualValueNative: string;
   effects: unknown;
-  comparison: {
-    matches: boolean;
-    mismatches: string[];
-  };
+  comparison: IntentComparison;
   policy: {
     allowed: boolean;
     requiresReview: boolean;
@@ -37,6 +35,18 @@ export interface GenerateExplanationInput {
     target?: string | null;
     description?: string;
     details?: string[];
+    summary?: string;
+    protocol?: string | null;
+    input?: {
+      amount?: string | null;
+      symbol?: string | null;
+      address?: string | null;
+    } | null;
+    output?: {
+      amount?: string | null;
+      symbol?: string | null;
+      address?: string | null;
+    } | null;
   };
   simulation?: {
     success: boolean;
@@ -75,6 +85,7 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
   // 1. Analyze threat signals
   let sellTaxPercent: number | null = null;
   let hasOwnerControl = false;
+  const findingCodes = new Set<string>();
 
   if (Array.isArray(input.scamAnalyses)) {
     for (const report of input.scamAnalyses) {
@@ -88,30 +99,52 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
         }
       }
       const findings = report.findings ?? [];
-      if (findings.some((f) => f.code?.includes("OWNER_CONTROLLED"))) {
-        hasOwnerControl = true;
+      for (const f of findings) {
+        if (f.code) {
+          findingCodes.add(f.code);
+        }
+        if (f.code?.includes("OWNER_CONTROLLED")) {
+          hasOwnerControl = true;
+        }
       }
     }
   }
 
-  const isUnlimitedApproval = input.transactionThreats?.some((t) => t.code === "UNLIMITED_ALLOWANCE");
-  const isUnexpectedSpender = input.transactionThreats?.some((t) => t.code === "UNEXPECTED_SPENDER");
+  if (Array.isArray(input.transactionThreats)) {
+    for (const t of input.transactionThreats) {
+      if (t.code) {
+        findingCodes.add(t.code);
+      }
+    }
+  }
+
+  const isUnlimitedApproval = findingCodes.has("UNLIMITED_ALLOWANCE");
+  const isUnexpectedSpender = findingCodes.has("UNEXPECTED_SPENDER");
   const isSimFailed = input.simulation && !input.simulation.success;
-  const isMismatch = !input.intentMatch || (input.comparison && !input.comparison.matches);
+  const isMismatch = !input.intentMatch || input.comparison.overall === "MISMATCH" || input.comparison.matches === false;
+  const isUncertain = input.comparison.overall === "UNCERTAIN";
 
-  // 2. Derive headline and whyStopped
-  let headline = isBlock ? "Transaction Blocked" : isReview ? "Review Required" : "Safe to Continue";
+  const compOverall: "MATCH" | "MISMATCH" | "UNKNOWN" =
+    input.comparison.overall === "MATCH" || (input.intentMatch && input.comparison.matches !== false && input.comparison.overall !== "UNCERTAIN" && input.comparison.overall !== "MISMATCH")
+      ? "MATCH"
+      : input.comparison.overall === "MISMATCH" || !input.intentMatch || input.comparison.matches === false
+        ? "MISMATCH"
+        : "UNKNOWN";
+
+  // 2. Derive headline, whyStopped, userImpact, and whatThisMeans
+  let headline = isBlock ? "Transaction Blocked" : isReview ? "Review Recommended" : "Transaction Verified";
   let whyTitle = isBlock ? "Why Nalar stopped this transaction" : isReview ? "Why Nalar recommends review" : "Transaction verified";
-  let primaryReason = input.reasons.length > 0 ? input.reasons[0]! : "Security check completed.";
+  let primaryReason = input.reasons.length > 0 ? input.reasons[0]! : "Security evaluation completed.";
   let userImpact = "Nalar evaluated the transaction against deterministic safety rules.";
-  let whatThisMeans = "Nalar verified that the transaction parameters adhere to standard security rules.";
+  let whatThisMeans = "Nalar verified that the on-chain parameters adhere to your intent and security policy.";
 
+  // A. Critical Block Cases
   if (isBlock) {
     if (sellTaxPercent !== null && sellTaxPercent >= 20) {
       headline = `Unusually high sell tax detected (${sellTaxPercent.toFixed(0)}%)`;
-      primaryReason = `Nalar detected a ${sellTaxPercent.toFixed(0)}% sell tax configured in this token's contract.`;
-      userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sell, you could receive significantly less than expected.";
-      whatThisMeans = "Even though the transaction may look like a normal token swap, the token contract contains a configuration that could significantly reduce the amount you receive when selling.";
+      primaryReason = `The token contract reports a configured ${sellTaxPercent.toFixed(0)}% sell tax.`;
+      userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sale, you could receive substantially less than expected.";
+      whatThisMeans = "Even though buying this token may succeed, the contract contains rules that could prevent you from selling or take most of your funds on sale.";
     } else if (isUnlimitedApproval || isUnexpectedSpender) {
       headline = "Unrestricted token spending permission";
       primaryReason = "This transaction grants permission to spend your tokens without a fixed limit.";
@@ -124,21 +157,71 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
       whatThisMeans = "The smart contract rejected the transaction during on-chain simulation. The transaction cannot succeed in its current state.";
     } else if (isMismatch) {
       headline = "Intent mismatch detected";
-      primaryReason = input.comparison.mismatches[0] ?? "The transaction differs from your requested action.";
-      userImpact = "The wallet request is configured to execute an action that does not match what you asked to do.";
-      whatThisMeans = "Nalar compared your plain-language intent with the transaction payload and found that the actual on-chain target or parameters differ from your request.";
+      primaryReason = input.comparison.summary || (input.comparison.mismatches[0] ?? "The transaction differs from your requested action.");
+      if (input.comparison.outputToken?.status === "MISMATCH") {
+        userImpact = `You will receive ${input.comparison.outputToken.actual} instead of your expected ${input.comparison.outputToken.expected}.`;
+        whatThisMeans = `You asked to receive ${input.comparison.outputToken.expected}, but this transaction is configured to receive ${input.comparison.outputToken.actual}. If you proceed, you will not receive ${input.comparison.outputToken.expected}.`;
+      } else if (input.comparison.inputToken?.status === "MISMATCH") {
+        userImpact = `You will spend ${input.comparison.inputToken.actual} instead of your intended ${input.comparison.inputToken.expected}.`;
+        whatThisMeans = `You asked to spend ${input.comparison.inputToken.expected}, but this transaction is configured to spend ${input.comparison.inputToken.actual}.`;
+      } else {
+        userImpact = "The wallet request is configured to execute an action that does not match what you asked to do.";
+        whatThisMeans = "Nalar compared your plain-language intent with the transaction payload and found that the actual parameters differ from your request.";
+      }
     } else if (input.policy.reasons.length > 0) {
       headline = "Policy restriction triggered";
       primaryReason = input.policy.reasons[0]!;
       userImpact = "The requested interaction violates your security firewall policy rules.";
       whatThisMeans = "This action is explicitly restricted by safety policies to prevent unauthorized contract operations.";
     }
-  } else if (isReview) {
-    headline = "Transaction parameters require review";
-    primaryReason = input.reasons[0] ?? "This transaction exceeds normal review thresholds.";
-    userImpact = "Please verify the recipient, spending amounts, and contract details before signing.";
-    whatThisMeans = "The transaction carries values or permissions that warrant double-checking, but does not present an immediate critical threat.";
-  } else {
+  }
+  // B. Review Cases
+  else if (isReview) {
+    if (isMismatch) {
+      headline = "Intent mismatch detected";
+      primaryReason = input.comparison.summary || (input.comparison.mismatches[0] ?? "The transaction differs from your requested action.");
+      if (input.comparison.outputToken?.status === "MISMATCH") {
+        userImpact = `You will receive ${input.comparison.outputToken.actual} instead of your expected ${input.comparison.outputToken.expected}.`;
+        whatThisMeans = `You asked to receive ${input.comparison.outputToken.expected}, but this transaction will swap for ${input.comparison.outputToken.actual} instead.`;
+      } else if (input.comparison.inputToken?.status === "MISMATCH") {
+        userImpact = `You will spend ${input.comparison.inputToken.actual} instead of your intended ${input.comparison.inputToken.expected}.`;
+        whatThisMeans = `You asked to spend ${input.comparison.inputToken.expected}, but this transaction will spend ${input.comparison.inputToken.actual} instead.`;
+      } else if (input.comparison.amount?.status === "MISMATCH") {
+        userImpact = `The transaction amount (${input.comparison.amount.actual}) differs from your intended amount (${input.comparison.amount.expected}).`;
+        whatThisMeans = `You asked to transact ${input.comparison.amount.expected}, but the contract is configured for ${input.comparison.amount.actual}.`;
+      } else {
+        userImpact = "The transaction parameters do not fully align with what you asked to do.";
+        whatThisMeans = "Nalar found differences between your requested intent and what the blockchain transaction actually does.";
+      }
+    } else if (isUncertain) {
+      headline = "Intent could not be verified";
+      primaryReason = "Could not clearly verify your intent from the provided description.";
+      userImpact = "Please verify the contract address, token symbols, and amounts in your wallet before confirming.";
+      whatThisMeans = "Nalar was unable to extract specific token and amount targets from your intent description to confirm a match.";
+    } else if (findingCodes.has("UNVERIFIED_CONTRACT")) {
+      headline = "Unverified smart contract";
+      primaryReason = "The destination contract source code is not verified on the block explorer.";
+      userImpact = "The contract logic cannot be independently inspected for backdoors or unexpected transfer fees.";
+      whatThisMeans = "You are interacting with a contract whose source code is unverified. This increases the risk of unexpected behaviors.";
+    } else if (findingCodes.has("SELL_SIMULATION_UNAVAILABLE")) {
+      headline = "Sell simulation unavailable";
+      primaryReason = "Sell simulation could not be completed on-chain.";
+      userImpact = "It could not be independently confirmed that tokens purchased can be sold back freely.";
+      whatThisMeans = "While purchasing tokens may work, the ability to sell them later has not been proven by on-chain simulation.";
+    } else if (findingCodes.has("CONTRACT_TARGET_IS_EOA")) {
+      headline = "Target is a personal wallet";
+      primaryReason = "The destination address is an externally owned account (EOA), not a verified smart contract.";
+      userImpact = "Funds sent will go directly to an individual's private wallet with no automated contract safeguards.";
+      whatThisMeans = "You are sending assets directly to another person's wallet rather than interacting with a decentralized application.";
+    } else {
+      headline = "Transaction requires verification";
+      primaryReason = input.reasons[0] ?? "This transaction exceeds normal review thresholds.";
+      userImpact = "Please verify the recipient, spending amounts, and contract details before signing.";
+      whatThisMeans = "The transaction carries values or permissions that warrant double-checking, but does not present an immediate critical threat.";
+    }
+  }
+  // C. Allow Cases
+  else {
     headline = "Transaction cleared for signing";
     primaryReason = "The transaction matches what you asked to do and passed all automated checks.";
     userImpact = "No high-risk patterns or policy violations were detected on BNB Chain.";
@@ -156,29 +239,36 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
     action: intentAction,
     input: intentInputToken,
     expectedOutput: intentOutputToken,
-    status: (input.intentMatch ? "MATCH" : "MISMATCH") as "MATCH" | "MISMATCH" | "UNKNOWN",
+    status: compOverall,
   };
 
   // 4. Actual transaction breakdown
-  const txSummary = input.transactionSummary?.description ?? input.actualAction;
+  const txSummary = input.transactionSummary?.summary ?? input.transactionSummary?.description ?? input.actualAction;
+  const actualInputDisplay = input.transactionSummary?.input?.amount ? `${input.transactionSummary.input.amount} ${input.transactionSummary.input.symbol ?? ""}`.trim() : input.actualValueNative;
+  const actualOutputDisplay = input.transactionSummary?.output?.amount ? `${input.transactionSummary.output.amount} ${input.transactionSummary.output.symbol ?? ""}`.trim() : (input.transactionSummary?.output?.symbol ?? undefined);
+
   const actualTransaction = {
     summary: txSummary,
-    action: input.actualAction,
-    input: input.actualValueNative,
-    output: intentOutputToken,
+    action: input.transactionSummary?.action ?? input.actualAction,
+    input: actualInputDisplay,
+    output: actualOutputDisplay,
     target: input.transactionSummary?.target ?? undefined,
   };
 
   // 5. Comparison
-  let compSummary = "The transaction matches what you asked to do.";
-  if (!input.intentMatch) {
-    compSummary = input.comparison.mismatches[0] ?? "The transaction differs from your requested action.";
-  } else if (isBlock) {
-    compSummary = "The transaction matches your request, but Nalar blocked it because the target token was found to have a critical security risk.";
+  let compSummary = input.comparison.summary;
+  if (!compSummary || compOverall === "MATCH") {
+    if (compOverall === "MATCH" && isBlock) {
+      compSummary = "The transaction matches your request, but Nalar blocked it because the target token was found to have a critical security risk.";
+    } else if (compOverall === "MATCH") {
+      compSummary = "The transaction matches what you asked to do.";
+    } else {
+      compSummary = input.comparison.mismatches?.[0] ?? "The transaction differs from your requested action.";
+    }
   }
 
   const comparison = {
-    status: (input.intentMatch ? "MATCH" : "MISMATCH") as "MATCH" | "MISMATCH" | "UNKNOWN",
+    status: compOverall,
     summary: compSummary,
     details: input.comparison.mismatches,
   };
@@ -215,8 +305,8 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
 
   evidence.push({
     label: "Intent check",
-    value: input.intentMatch ? "Matched" : "Mismatch",
-    explanation: input.intentMatch ? "The transaction corresponds to your requested action." : "The transaction does not correspond to what you asked to do.",
+    value: input.comparison.overall === "MATCH" ? "Matched" : input.comparison.overall === "MISMATCH" ? "Mismatch" : "Uncertain",
+    explanation: input.comparison.summary,
     source: "INTENT",
   });
 

@@ -29,6 +29,12 @@ export const userIntentSchema = z.object({
 
   targetAddress: z.string().nullable(),
 
+  recipient: z.string().nullable().optional(),
+
+  inputAsset: z.string().nullable().optional(),
+
+  outputAsset: z.string().nullable().optional(),
+
   description: z.string(),
 });
 

@@ -35,7 +35,27 @@ export interface TokenMetadata {
   decimals: number | null;
 }
 
+const tokenMetadataCache = new Map<string, TokenMetadata>();
+
+const ROUTER_NATIVE_ETH_FLAG = "0x0000000000000000000000000000000000000002".toLowerCase();
+const NATIVE_TOKEN_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".toLowerCase();
+
 export async function resolveTokenMetadata(address: Address): Promise<TokenMetadata> {
+  const normalized = address.toLowerCase();
+
+  if (normalized === ROUTER_NATIVE_ETH_FLAG || normalized === NATIVE_TOKEN_ADDRESS) {
+    return {
+      address,
+      symbol: "tBNB",
+      decimals: 18,
+    };
+  }
+
+  const cached = tokenMetadataCache.get(normalized);
+  if (cached) {
+    return cached;
+  }
+
   let symbol: string | null = null;
   let decimals: number | null = null;
 
@@ -59,9 +79,15 @@ export async function resolveTokenMetadata(address: Address): Promise<TokenMetad
     console.warn(`[TOKEN] Failed to read decimals for ${address}`, error);
   }
 
-  return {
+  const result: TokenMetadata = {
     address,
     symbol,
     decimals,
   };
+
+  if (symbol !== null || decimals !== null) {
+    tokenMetadataCache.set(normalized, result);
+  }
+
+  return result;
 }

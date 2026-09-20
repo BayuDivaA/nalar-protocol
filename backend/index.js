@@ -51582,6 +51582,9 @@ var userIntentSchema = exports_external.object({
   nativeCurrency: exports_external.enum(["BNB"]).nullable(),
   allowApproval: exports_external.boolean(),
   targetAddress: exports_external.string().nullable(),
+  recipient: exports_external.string().nullable().optional(),
+  inputAsset: exports_external.string().nullable().optional(),
+  outputAsset: exports_external.string().nullable().optional(),
   description: exports_external.string()
 });
 
@@ -51599,17 +51602,22 @@ function parseAIJson(raw2) {
 function parseIntentHeuristically(input2) {
   const text = input2.trim();
   const lower = text.toLowerCase();
-  const swapMatch = text.match(/swap\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?\s+(?:to|for)\s+([a-zA-Z0-9]+)/i);
-  if (swapMatch) {
-    const qty = swapMatch[1] ? parseFloat(swapMatch[1]) : null;
-    const tokenIn = swapMatch[2] ? swapMatch[2].toUpperCase() : null;
-    const tokenOut = swapMatch[3] ? swapMatch[3].toUpperCase() : null;
-    const isNativeIn = tokenIn === "BNB" || tokenIn === "TBNB";
+  const buyMatch = text.match(/(?:buy|beli)\s+([a-zA-Z0-9]+).*?(?:with|using|pake|pakai|bayar\s+pake|dengan\s+bayar\s+pake|dengan)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)/i);
+  if (buyMatch) {
+    const rawTokenOut = buyMatch[1] ?? "";
+    const rawQty = buyMatch[2] ? parseFloat(buyMatch[2]) : null;
+    const rawTokenIn = buyMatch[3] ?? "";
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+    const tokenIn = rawTokenIn.toUpperCase() === "BNB" || rawTokenIn.toUpperCase() === "TBNB" ? "tBNB" : rawTokenIn.toUpperCase();
+    const tokenOut = rawTokenOut.toUpperCase() === "BNB" || rawTokenOut.toUpperCase() === "TBNB" ? "tBNB" : rawTokenOut.toUpperCase();
+    const isNativeIn = tokenIn.toUpperCase() === "BNB" || tokenIn.toUpperCase() === "TBNB";
     return {
       action: "SWAP",
-      quantity: Number.isNaN(qty) ? null : qty,
+      quantity: qty,
       tokenIn,
       tokenOut,
+      inputAsset: tokenIn,
+      outputAsset: tokenOut,
       maxValueNative: isNativeIn && qty ? String(qty) : null,
       nativeCurrency: isNativeIn ? "BNB" : null,
       allowApproval: false,
@@ -51617,7 +51625,53 @@ function parseIntentHeuristically(input2) {
       description: text
     };
   }
-  if (lower.includes("swap")) {
+  const swapMatch = text.match(/(?:swap|trade|tukar|jual)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?\s+(?:to|for|into|ke|menjadi|jadi|untuk)\s+([a-zA-Z0-9]+)/i);
+  if (swapMatch) {
+    const rawQty = swapMatch[1] ? parseFloat(swapMatch[1]) : null;
+    const rawTokenIn = swapMatch[2] ?? "";
+    const rawTokenOut = swapMatch[3] ?? "";
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+    const tokenIn = rawTokenIn.toUpperCase() === "BNB" || rawTokenIn.toUpperCase() === "TBNB" ? "tBNB" : rawTokenIn ? rawTokenIn.toUpperCase() : null;
+    const tokenOut = rawTokenOut.toUpperCase() === "BNB" || rawTokenOut.toUpperCase() === "TBNB" ? "tBNB" : rawTokenOut ? rawTokenOut.toUpperCase() : null;
+    const isNativeIn = tokenIn?.toUpperCase() === "BNB" || tokenIn?.toUpperCase() === "TBNB";
+    return {
+      action: "SWAP",
+      quantity: qty,
+      tokenIn,
+      tokenOut,
+      inputAsset: tokenIn,
+      outputAsset: tokenOut,
+      maxValueNative: isNativeIn && qty ? String(qty) : null,
+      nativeCurrency: isNativeIn ? "BNB" : null,
+      allowApproval: false,
+      targetAddress: null,
+      description: text
+    };
+  }
+  const transferMatch = text.match(/(?:transfer|send|kirim)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?\s+(?:to|ke|unto)\s+([a-zA-Z0-9_.-]+)/i);
+  if (transferMatch) {
+    const rawQty = transferMatch[1] ? parseFloat(transferMatch[1]) : null;
+    const rawToken = transferMatch[2] ?? "";
+    const recipient = transferMatch[3] ?? null;
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+    const tokenIn = rawToken.toUpperCase() === "BNB" || rawToken.toUpperCase() === "TBNB" ? "tBNB" : rawToken ? rawToken.toUpperCase() : null;
+    const isNativeIn = tokenIn?.toUpperCase() === "BNB" || tokenIn?.toUpperCase() === "TBNB";
+    return {
+      action: "TRANSFER",
+      quantity: qty,
+      tokenIn,
+      tokenOut: null,
+      recipient,
+      inputAsset: tokenIn,
+      outputAsset: null,
+      maxValueNative: isNativeIn && qty ? String(qty) : null,
+      nativeCurrency: isNativeIn ? "BNB" : null,
+      allowApproval: false,
+      targetAddress: recipient && /^0x[a-fA-F0-9]{40}$/.test(recipient) ? recipient : null,
+      description: text
+    };
+  }
+  if (lower.includes("swap") || lower.includes("tukar") || lower.includes("beli") || lower.includes("buy")) {
     return {
       action: "SWAP",
       quantity: null,
@@ -51643,7 +51697,7 @@ function parseIntentHeuristically(input2) {
       description: text
     };
   }
-  if (lower.includes("approve")) {
+  if (lower.includes("approve") || lower.includes("izinkan") || lower.includes("setujui")) {
     return {
       action: "APPROVE",
       quantity: null,
@@ -51656,7 +51710,7 @@ function parseIntentHeuristically(input2) {
       description: text
     };
   }
-  if (lower.includes("transfer") || lower.includes("send")) {
+  if (lower.includes("transfer") || lower.includes("send") || lower.includes("kirim")) {
     return {
       action: "TRANSFER",
       quantity: null,
@@ -51699,8 +51753,7 @@ async function parseUserIntent(userInput) {
           content: `
 You are a Web3 transaction intent parser.
 
-Your ONLY job is to understand what
-the human intends to do.
+Your ONLY job is to understand what the human intends to do from natural language input (English, Indonesian, slang, abbreviations, etc.).
 
 You are NOT a security decision maker.
 
@@ -51725,6 +51778,8 @@ Required structure:
 
   "tokenOut": string | null,
 
+  "recipient": string | null,
+
   "maxValueNative": string | null,
 
   "nativeCurrency": "BNB" | null,
@@ -51738,20 +51793,21 @@ Required structure:
 
 Rules:
 1. Identify the high-level user action.
-2. If the user mentions spending BNB, set nativeCurrency = "BNB".
-3. If the user mentions an amount of BNB, set maxValueNative to that number as a string.
-4. If the user is approving a token, set allowApproval = true.
-5. If the user is transferring, minting, or swapping without mentioning approval, set allowApproval = false.
-6. For NFT minting, action = MINT.
-7. For token transfer, action = TRANSFER.
-8. For token swaps:
+2. Support multilingual phrasing, especially Indonesian (e.g. "beli DHON terus dengan bayar pake 0.002 tBNB" -> action: "SWAP", tokenIn: "tBNB", tokenOut: "DHON", quantity: 0.002).
+3. If the user mentions spending BNB or tBNB, set nativeCurrency = "BNB", tokenIn = "tBNB".
+4. If the user mentions an amount of BNB, set maxValueNative to that number as a string.
+5. If the user is approving a token, set allowApproval = true.
+6. If the user is transferring, minting, or swapping without mentioning approval, set allowApproval = false.
+7. For token swaps:
    - action = SWAP.
-   - tokenIn = token being spent/sold.
-   - tokenOut = token being received.
+   - tokenIn = token being spent/sold/paid.
+   - tokenOut = token being received/bought.
    - quantity = amount of tokenIn when explicitly stated.
-9. For non-SWAP actions:
-   - tokenIn should normally be null.
-   - tokenOut should normally be null.
+8. For token transfers:
+   - action = TRANSFER.
+   - tokenIn = token being sent.
+   - quantity = amount sent.
+   - recipient = address or name of recipient.
 `
         },
         {
@@ -53015,8 +53071,14 @@ function normalizeIntent(intent) {
     }
     maxValueWei = parseEther2(intent.maxValueNative);
   }
+  const tokenIn = intent.tokenIn ?? intent.inputAsset ?? null;
+  const tokenOut = intent.tokenOut ?? intent.outputAsset ?? null;
   return {
     ...intent,
+    tokenIn,
+    tokenOut,
+    inputAsset: intent.inputAsset ?? tokenIn,
+    outputAsset: intent.outputAsset ?? tokenOut,
     maxValueWei
   };
 }
@@ -53029,7 +53091,193 @@ function formatTokenAmount(amount, decimals) {
   return formatUnits2(amount, decimals);
 }
 
+// src/services/transaction-translator.ts
+var WBNB_TESTNET = "0xae13d989dac2f0debff460ac112a837c89baa7cd".toLowerCase();
+var ROUTER_ETH_FLAG = "0x0000000000000000000000000000000000000002".toLowerCase();
+function formatDisplaySymbol(symbol2, address) {
+  if (!symbol2 && !address) {
+    return "tokens";
+  }
+  const symUpper = symbol2?.trim().toUpperCase();
+  const addrLower = address?.toLowerCase();
+  if (symUpper === "WBNB" || symUpper === "BNB" || symUpper === "TBNB" || addrLower === WBNB_TESTNET || addrLower === ROUTER_ETH_FLAG || addrLower === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
+    return "tBNB";
+  }
+  if (symbol2 && symbol2.trim()) {
+    return symbol2.trim();
+  }
+  if (address && isAddress3(address)) {
+    return shortenAddress(getAddress(address));
+  }
+  return "tokens";
+}
+function isAddress3(value) {
+  return typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value);
+}
+function shortenAddress(address) {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+function getAddressArg(value) {
+  if (!isAddress3(value)) {
+    return null;
+  }
+  return getAddress(value);
+}
+function translateTransaction(input2) {
+  const { to, value, action, functionName, args, effects } = input2;
+  const valueNative = value > 0n ? formatUnits2(value, 18) : null;
+  if (action === "MINT") {
+    const title = "Mint NFT";
+    const desc = valueNative ? `Mint an NFT by sending ${valueNative} tBNB to the contract.` : "Mint an NFT through this contract.";
+    return {
+      title,
+      action: "MINT",
+      valueNative,
+      target: to,
+      description: desc,
+      summary: desc,
+      input: valueNative ? { amount: valueNative, symbol: "tBNB" } : null,
+      details: ["The transaction calls the contract's mint function.", ...valueNative ? [`Amount sent: ${valueNative} tBNB.`] : []]
+    };
+  }
+  if (action === "TOKEN_TRANSFER") {
+    const recipient = getAddressArg(args?.[0]);
+    const amount = typeof args?.[1] === "bigint" ? args[1] : null;
+    return {
+      title: "Send tokens",
+      action: "TOKEN_TRANSFER",
+      valueNative,
+      target: to,
+      recipient,
+      description: recipient ? `Send tokens to ${shortenAddress(recipient)}.` : "Send tokens to another address.",
+      summary: recipient ? `Send tokens to ${shortenAddress(recipient)}.` : "Send tokens to another address.",
+      input: amount !== null ? { amount: amount.toString(), address: to } : null,
+      details: [...recipient ? [`Recipient: ${recipient}`] : [], ...amount !== null ? [`Token amount: ${amount.toString()} base units.`] : [], "The transaction moves tokens from your wallet to another address."]
+    };
+  }
+  if (action === "NFT_TRANSFER") {
+    return {
+      title: "Transfer NFT",
+      action: "NFT_TRANSFER",
+      valueNative,
+      target: to,
+      description: "The transaction transfers an NFT to another address.",
+      summary: "Transfer an NFT to another address.",
+      details: ["The transaction attempts to move an NFT.", "The exact NFT recipient should be checked before signing."]
+    };
+  }
+  if (action === "NFT_APPROVAL") {
+    const approval = effects.approvals.find((effect) => effect.type === "ERC721_OPERATOR");
+    if (approval) {
+      const desc = `Give ${shortenAddress(approval.operator)} permission to manage your NFTs.`;
+      return {
+        title: "Give NFT management permission",
+        action: "NFT_APPROVAL",
+        valueNative,
+        target: to,
+        recipient: approval.operator,
+        description: desc,
+        summary: desc,
+        details: [`Operator: ${approval.operator}`, approval.approved ? "This permission is being enabled." : "This permission is being removed.", "An approval gives another address permission over NFTs from this collection."]
+      };
+    }
+    return {
+      title: "NFT approval",
+      action: "NFT_APPROVAL",
+      valueNative,
+      target: to,
+      description: "The transaction changes permission to manage NFTs.",
+      summary: "The transaction changes permission to manage NFTs.",
+      details: ["Another address may receive permission to manage NFTs."]
+    };
+  }
+  if (action === "TOKEN_APPROVAL") {
+    const approval = effects.approvals.find((effect) => effect.type === "ERC20_ALLOWANCE");
+    if (approval) {
+      const amount = approval.unlimited ? "unlimited" : approval.amount.toString();
+      const desc = `Give ${shortenAddress(approval.spender)} permission to spend your tokens.`;
+      return {
+        title: "Give token spending permission",
+        action: "TOKEN_APPROVAL",
+        valueNative,
+        target: to,
+        recipient: approval.spender,
+        description: desc,
+        summary: desc,
+        details: [`Spender: ${approval.spender}`, `Allowance: ${amount}`, approval.unlimited ? "The permission is not limited to a specific token amount." : "The permission is limited to a specific token amount."]
+      };
+    }
+    return {
+      title: "Token approval",
+      action: "TOKEN_APPROVAL",
+      valueNative,
+      target: to,
+      description: "The transaction gives another address permission to spend your tokens.",
+      summary: "The transaction gives another address permission to spend your tokens.",
+      details: []
+    };
+  }
+  if (action === "SWAP" || effects.swaps.length > 0) {
+    const swap = effects.swaps[0];
+    if (swap) {
+      const tokenInDisplay = formatDisplaySymbol(swap.tokenInSymbol, swap.tokenIn);
+      const tokenOutDisplay = formatDisplaySymbol(swap.tokenOutSymbol, swap.tokenOut);
+      const protocol = swap.protocol ?? "PancakeSwap";
+      let amountInFormatted = null;
+      if (swap.tokenInDecimals !== null && swap.tokenInDecimals !== undefined && swap.amountIn > 0n) {
+        amountInFormatted = formatTokenAmount(swap.amountIn, swap.tokenInDecimals);
+      } else if (value > 0n) {
+        amountInFormatted = formatUnits2(value, 18);
+      }
+      let amountOutMinFormatted = null;
+      if (swap.tokenOutDecimals !== null && swap.tokenOutDecimals !== undefined && swap.amountOutMin > 0n) {
+        amountOutMinFormatted = formatTokenAmount(swap.amountOutMin, swap.tokenOutDecimals);
+      }
+      const title = amountInFormatted ? `Swap ${amountInFormatted} ${tokenInDisplay} for ${tokenOutDisplay}` : `Swap ${tokenInDisplay} for ${tokenOutDisplay}`;
+      const summary = amountInFormatted ? `Swap ${amountInFormatted} ${tokenInDisplay} for ${tokenOutDisplay} through ${protocol}.` : `Swap ${tokenInDisplay} for ${tokenOutDisplay} through ${protocol}.`;
+      return {
+        title,
+        action: "SWAP",
+        valueNative,
+        target: to,
+        protocol,
+        recipient: swap.recipient,
+        input: {
+          amount: amountInFormatted,
+          symbol: tokenInDisplay,
+          address: swap.tokenIn
+        },
+        output: {
+          amount: amountOutMinFormatted,
+          symbol: tokenOutDisplay,
+          address: swap.tokenOut
+        },
+        description: summary,
+        summary,
+        details: [
+          `Input: ${amountInFormatted ? `${amountInFormatted} ` : ""}${tokenInDisplay}`,
+          `Output: ${amountOutMinFormatted ? `min ${amountOutMinFormatted} ` : ""}${tokenOutDisplay}`,
+          `Protocol: ${protocol}`,
+          `Recipient: ${shortenAddress(swap.recipient)}`
+        ]
+      };
+    }
+  }
+  const fallbackSummary = `Interact with contract ${shortenAddress(to)} using ${functionName ?? "an unknown function"}.`;
+  return {
+    title: "Contract transaction",
+    action: functionName ?? action,
+    valueNative,
+    target: to,
+    description: fallbackSummary,
+    summary: fallbackSummary,
+    details: [`Action type: ${action}`]
+  };
+}
+
 // src/services/intent-comparator.ts
+var WBNB_TESTNET2 = "0xae13d989dac2f0debff460ac112a837c89baa7cd".toLowerCase();
+var ROUTER_ETH_FLAG2 = "0x0000000000000000000000000000000000000002".toLowerCase();
 function normalizeTokenReference(token) {
   if (!token) {
     return null;
@@ -53055,7 +53303,8 @@ function tokenMatches(requested, actualAddress, actualSymbol) {
   if (!normalizedRequested) {
     return true;
   }
-  if (isNativeBnbReference(requested) && isNativeBnbReference(actualSymbol)) {
+  const addrLower = actualAddress.toLowerCase();
+  if (isNativeBnbReference(requested) && (isNativeBnbReference(actualSymbol) || addrLower === WBNB_TESTNET2 || addrLower === ROUTER_ETH_FLAG2)) {
     return true;
   }
   const normalizedAddress = normalizeTokenReference(actualAddress);
@@ -53081,38 +53330,160 @@ function quantityToRawAmount(quantity, decimals) {
 }
 function compareIntent(intent, actualAction, effects, value) {
   const mismatches = [];
-  if (intent.maxValueWei !== null && value > intent.maxValueWei) {
-    mismatches.push(["Transaction value exceeds the user's limit.", `Expected <= ${intent.maxValueWei.toString()} wei.`, `Received ${value.toString()} wei.`].join(" "));
+  let actionComparison;
+  let inputTokenComparison = { status: "UNSPECIFIED" };
+  let outputTokenComparison = { status: "UNSPECIFIED" };
+  let amountComparison = { status: "UNSPECIFIED" };
+  let recipientComparison = { status: "UNSPECIFIED" };
+  if (intent.action === "UNKNOWN") {
+    actionComparison = {
+      status: "UNSPECIFIED",
+      expected: "UNKNOWN",
+      actual: actualAction,
+      reason: "Intent action could not be determined from the provided description."
+    };
+    mismatches.push("Intent action could not be verified from the description.");
+  } else if (intent.action === actualAction || intent.action === "TRANSFER" && actualAction === "PAYMENT") {
+    actionComparison = {
+      status: "MATCH",
+      expected: intent.action,
+      actual: actualAction
+    };
+  } else {
+    actionComparison = {
+      status: "MISMATCH",
+      expected: intent.action,
+      actual: actualAction,
+      reason: `Expected ${intent.action.toLowerCase()}, actual is ${actualAction.toLowerCase()}`
+    };
+    mismatches.push(`User intended to ${intent.action.toLowerCase()}, but transaction actually performs ${actualAction.toLowerCase()}.`);
   }
-  const actualMatchesIntent = intent.action === "UNKNOWN" || intent.action === actualAction || intent.action === "TRANSFER" && actualAction === "PAYMENT";
-  if (!actualMatchesIntent) {
-    mismatches.push([`User intended to ${intent.action.toLowerCase()}.`, `Transaction actually performs ${actualAction.toLowerCase()}.`].join(" "));
-  }
+  const swap = effects.swaps[0];
   if (intent.action === "SWAP") {
-    const swap = effects.swaps[0];
     if (!swap) {
+      actionComparison = {
+        status: "MISMATCH",
+        expected: "SWAP",
+        actual: actualAction,
+        reason: "User intended to swap tokens, but no swap effect was detected."
+      };
       mismatches.push("User intended to swap tokens, but no swap effect was detected.");
     } else {
-      if (intent.tokenIn !== null && !tokenMatches(intent.tokenIn, swap.tokenIn, swap.tokenInSymbol)) {
-        mismatches.push([`Input token mismatch.`, `User intended to sell ${intent.tokenIn}.`, `Transaction actually sells ${swap.tokenInSymbol ?? swap.tokenIn}.`].join(" "));
+      const actualTokenInSymbol = formatDisplaySymbol(swap.tokenInSymbol, swap.tokenIn);
+      const actualTokenOutSymbol = formatDisplaySymbol(swap.tokenOutSymbol, swap.tokenOut);
+      if (intent.tokenIn !== null) {
+        const inMatch = tokenMatches(intent.tokenIn, swap.tokenIn, swap.tokenInSymbol);
+        if (inMatch) {
+          inputTokenComparison = {
+            status: "MATCH",
+            expected: intent.tokenIn,
+            actual: actualTokenInSymbol
+          };
+        } else {
+          inputTokenComparison = {
+            status: "MISMATCH",
+            expected: intent.tokenIn,
+            actual: actualTokenInSymbol,
+            reason: `Expected ${intent.tokenIn}, actual is ${actualTokenInSymbol}`
+          };
+          mismatches.push(`Input token mismatch: User intended to sell ${intent.tokenIn}, but transaction actually sells ${actualTokenInSymbol}.`);
+        }
+      } else {
+        inputTokenComparison = {
+          status: "UNSPECIFIED",
+          actual: actualTokenInSymbol
+        };
       }
-      if (intent.tokenOut !== null && !tokenMatches(intent.tokenOut, swap.tokenOut, swap.tokenOutSymbol)) {
-        mismatches.push([`Output token mismatch.`, `User intended to receive ${intent.tokenOut}.`, `Transaction actually receives ${swap.tokenOutSymbol ?? swap.tokenOut}.`].join(" "));
+      if (intent.tokenOut !== null) {
+        const outMatch = tokenMatches(intent.tokenOut, swap.tokenOut, swap.tokenOutSymbol);
+        if (outMatch) {
+          outputTokenComparison = {
+            status: "MATCH",
+            expected: intent.tokenOut,
+            actual: actualTokenOutSymbol
+          };
+        } else {
+          outputTokenComparison = {
+            status: "MISMATCH",
+            expected: intent.tokenOut,
+            actual: actualTokenOutSymbol,
+            reason: `Expected ${intent.tokenOut}, actual is ${actualTokenOutSymbol}`
+          };
+          mismatches.push(`Output token mismatch: User intended to receive ${intent.tokenOut}, but transaction actually receives ${actualTokenOutSymbol}.`);
+        }
+      } else {
+        outputTokenComparison = {
+          status: "UNSPECIFIED",
+          actual: actualTokenOutSymbol
+        };
       }
       if (intent.quantity !== null) {
         if (swap.tokenInDecimals === null || swap.tokenInDecimals === undefined) {
+          amountComparison = {
+            status: "UNSPECIFIED",
+            expected: intent.quantity,
+            reason: "Input amount could not be verified because token decimals are unavailable."
+          };
           mismatches.push("Input amount could not be verified because token decimals are unavailable.");
         } else {
           const requestedAmount = quantityToRawAmount(intent.quantity, swap.tokenInDecimals);
+          const actualAmountFormatted = formatTokenAmount(swap.amountIn, swap.tokenInDecimals);
           if (requestedAmount === null) {
+            amountComparison = {
+              status: "MISMATCH",
+              expected: intent.quantity,
+              actual: actualAmountFormatted,
+              reason: "The requested swap amount could not be represented safely."
+            };
             mismatches.push("The requested swap amount could not be represented safely.");
           } else if (requestedAmount !== swap.amountIn) {
-            const actualAmount = formatTokenAmount(swap.amountIn, swap.tokenInDecimals);
-            mismatches.push(["Input amount mismatch.", `User intended to swap ${intent.quantity} ${swap.tokenInSymbol ?? intent.tokenIn ?? "tokens"}.`, `Transaction actually swaps ${actualAmount} ${swap.tokenInSymbol ?? "tokens"}.`].join(" "));
+            amountComparison = {
+              status: "MISMATCH",
+              expected: intent.quantity,
+              actual: actualAmountFormatted,
+              reason: `Expected ${intent.quantity}, actual is ${actualAmountFormatted}`
+            };
+            mismatches.push(`Input amount mismatch: User intended to swap ${intent.quantity} ${actualTokenInSymbol}, but transaction actually swaps ${actualAmountFormatted} ${actualTokenInSymbol}.`);
+          } else {
+            amountComparison = {
+              status: "MATCH",
+              expected: intent.quantity,
+              actual: actualAmountFormatted
+            };
           }
         }
       }
+      if (intent.targetAddress) {
+        if (swap.recipient.toLowerCase() === intent.targetAddress.toLowerCase()) {
+          recipientComparison = {
+            status: "MATCH",
+            expected: intent.targetAddress,
+            actual: swap.recipient
+          };
+        } else {
+          recipientComparison = {
+            status: "MISMATCH",
+            expected: intent.targetAddress,
+            actual: swap.recipient,
+            reason: `Expected recipient ${intent.targetAddress}, actual is ${swap.recipient}`
+          };
+          mismatches.push(`Recipient mismatch: Expected recipient ${intent.targetAddress}, transaction sends to ${swap.recipient}.`);
+        }
+      }
     }
+  }
+  if (intent.maxValueWei !== null && value > intent.maxValueWei) {
+    const expectedValue = intent.maxValueNative ?? `${intent.maxValueWei.toString()} wei`;
+    const actualValue = `${formatUnits2(value, 18)} tBNB`;
+    if (amountComparison.status !== "MISMATCH") {
+      amountComparison = {
+        status: "MISMATCH",
+        expected: expectedValue,
+        actual: actualValue,
+        reason: "Transaction value exceeds user limit."
+      };
+    }
+    mismatches.push(`Transaction value exceeds limit: Expected <= ${expectedValue}, received ${actualValue}.`);
   }
   const hasApproval = effects.approvals.length > 0;
   if (hasApproval && !intent.allowApproval) {
@@ -53121,9 +53492,35 @@ function compareIntent(intent, actualAction, effects, value) {
   if (intent.action === "MINT" && hasApproval) {
     mismatches.push("User intended to mint an NFT, but the transaction includes an approval effect.");
   }
+  const isMismatch = mismatches.length > 0;
+  const overall = intent.action === "UNKNOWN" ? "UNCERTAIN" : isMismatch ? "MISMATCH" : "MATCH";
+  const matches = !isMismatch && intent.action !== "UNKNOWN";
+  let summary = "";
+  if (outputTokenComparison.status === "MISMATCH") {
+    summary = `You asked to receive ${outputTokenComparison.expected}, but this transaction is configured to receive ${outputTokenComparison.actual} instead.`;
+  } else if (inputTokenComparison.status === "MISMATCH") {
+    summary = `You asked to spend ${inputTokenComparison.expected}, but this transaction is configured to spend ${inputTokenComparison.actual} instead.`;
+  } else if (amountComparison.status === "MISMATCH") {
+    summary = `You intended to spend ${amountComparison.expected}, but the transaction sends ${amountComparison.actual}.`;
+  } else if (actionComparison.status === "MISMATCH") {
+    summary = `You intended to ${intent.action.toLowerCase()}, but the transaction performs ${actualAction.toLowerCase()}.`;
+  } else if (intent.action === "UNKNOWN") {
+    summary = "Could not clearly verify your intent from the description.";
+  } else if (isMismatch) {
+    summary = mismatches[0] ?? "Transaction details do not match your intent.";
+  } else {
+    summary = "Transaction matches your intended action.";
+  }
   return {
-    matches: mismatches.length === 0,
-    mismatches
+    matches,
+    mismatches,
+    overall,
+    action: actionComparison,
+    inputToken: inputTokenComparison,
+    outputToken: outputTokenComparison,
+    amount: amountComparison,
+    recipient: recipientComparison,
+    summary
   };
 }
 
@@ -53480,6 +53877,7 @@ function buildDeterministicExplanation(input2) {
   const isReview = input2.decision === "REVIEW";
   let sellTaxPercent = null;
   let hasOwnerControl = false;
+  const findingCodes = new Set;
   if (Array.isArray(input2.scamAnalyses)) {
     for (const report of input2.scamAnalyses) {
       const state2 = report.contractPrivileges?.state ?? [];
@@ -53492,26 +53890,40 @@ function buildDeterministicExplanation(input2) {
         }
       }
       const findings = report.findings ?? [];
-      if (findings.some((f) => f.code?.includes("OWNER_CONTROLLED"))) {
-        hasOwnerControl = true;
+      for (const f of findings) {
+        if (f.code) {
+          findingCodes.add(f.code);
+        }
+        if (f.code?.includes("OWNER_CONTROLLED")) {
+          hasOwnerControl = true;
+        }
       }
     }
   }
-  const isUnlimitedApproval = input2.transactionThreats?.some((t) => t.code === "UNLIMITED_ALLOWANCE");
-  const isUnexpectedSpender = input2.transactionThreats?.some((t) => t.code === "UNEXPECTED_SPENDER");
+  if (Array.isArray(input2.transactionThreats)) {
+    for (const t of input2.transactionThreats) {
+      if (t.code) {
+        findingCodes.add(t.code);
+      }
+    }
+  }
+  const isUnlimitedApproval = findingCodes.has("UNLIMITED_ALLOWANCE");
+  const isUnexpectedSpender = findingCodes.has("UNEXPECTED_SPENDER");
   const isSimFailed = input2.simulation && !input2.simulation.success;
-  const isMismatch = !input2.intentMatch || input2.comparison && !input2.comparison.matches;
-  let headline = isBlock ? "Transaction Blocked" : isReview ? "Review Required" : "Safe to Continue";
+  const isMismatch = !input2.intentMatch || input2.comparison.overall === "MISMATCH" || input2.comparison.matches === false;
+  const isUncertain = input2.comparison.overall === "UNCERTAIN";
+  const compOverall = input2.comparison.overall === "MATCH" || input2.intentMatch && input2.comparison.matches !== false && input2.comparison.overall !== "UNCERTAIN" && input2.comparison.overall !== "MISMATCH" ? "MATCH" : input2.comparison.overall === "MISMATCH" || !input2.intentMatch || input2.comparison.matches === false ? "MISMATCH" : "UNKNOWN";
+  let headline = isBlock ? "Transaction Blocked" : isReview ? "Review Recommended" : "Transaction Verified";
   let whyTitle = isBlock ? "Why Nalar stopped this transaction" : isReview ? "Why Nalar recommends review" : "Transaction verified";
-  let primaryReason = input2.reasons.length > 0 ? input2.reasons[0] : "Security check completed.";
+  let primaryReason = input2.reasons.length > 0 ? input2.reasons[0] : "Security evaluation completed.";
   let userImpact = "Nalar evaluated the transaction against deterministic safety rules.";
-  let whatThisMeans = "Nalar verified that the transaction parameters adhere to standard security rules.";
+  let whatThisMeans = "Nalar verified that the on-chain parameters adhere to your intent and security policy.";
   if (isBlock) {
     if (sellTaxPercent !== null && sellTaxPercent >= 20) {
       headline = `Unusually high sell tax detected (${sellTaxPercent.toFixed(0)}%)`;
-      primaryReason = `Nalar detected a ${sellTaxPercent.toFixed(0)}% sell tax configured in this token's contract.`;
-      userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sell, you could receive significantly less than expected.";
-      whatThisMeans = "Even though the transaction may look like a normal token swap, the token contract contains a configuration that could significantly reduce the amount you receive when selling.";
+      primaryReason = `The token contract reports a configured ${sellTaxPercent.toFixed(0)}% sell tax.`;
+      userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sale, you could receive substantially less than expected.";
+      whatThisMeans = "Even though buying this token may succeed, the contract contains rules that could prevent you from selling or take most of your funds on sale.";
     } else if (isUnlimitedApproval || isUnexpectedSpender) {
       headline = "Unrestricted token spending permission";
       primaryReason = "This transaction grants permission to spend your tokens without a fixed limit.";
@@ -53524,9 +53936,17 @@ function buildDeterministicExplanation(input2) {
       whatThisMeans = "The smart contract rejected the transaction during on-chain simulation. The transaction cannot succeed in its current state.";
     } else if (isMismatch) {
       headline = "Intent mismatch detected";
-      primaryReason = input2.comparison.mismatches[0] ?? "The transaction differs from your requested action.";
-      userImpact = "The wallet request is configured to execute an action that does not match what you asked to do.";
-      whatThisMeans = "Nalar compared your plain-language intent with the transaction payload and found that the actual on-chain target or parameters differ from your request.";
+      primaryReason = input2.comparison.summary || (input2.comparison.mismatches[0] ?? "The transaction differs from your requested action.");
+      if (input2.comparison.outputToken?.status === "MISMATCH") {
+        userImpact = `You will receive ${input2.comparison.outputToken.actual} instead of your expected ${input2.comparison.outputToken.expected}.`;
+        whatThisMeans = `You asked to receive ${input2.comparison.outputToken.expected}, but this transaction is configured to receive ${input2.comparison.outputToken.actual}. If you proceed, you will not receive ${input2.comparison.outputToken.expected}.`;
+      } else if (input2.comparison.inputToken?.status === "MISMATCH") {
+        userImpact = `You will spend ${input2.comparison.inputToken.actual} instead of your intended ${input2.comparison.inputToken.expected}.`;
+        whatThisMeans = `You asked to spend ${input2.comparison.inputToken.expected}, but this transaction is configured to spend ${input2.comparison.inputToken.actual}.`;
+      } else {
+        userImpact = "The wallet request is configured to execute an action that does not match what you asked to do.";
+        whatThisMeans = "Nalar compared your plain-language intent with the transaction payload and found that the actual parameters differ from your request.";
+      }
     } else if (input2.policy.reasons.length > 0) {
       headline = "Policy restriction triggered";
       primaryReason = input2.policy.reasons[0];
@@ -53534,10 +53954,48 @@ function buildDeterministicExplanation(input2) {
       whatThisMeans = "This action is explicitly restricted by safety policies to prevent unauthorized contract operations.";
     }
   } else if (isReview) {
-    headline = "Transaction parameters require review";
-    primaryReason = input2.reasons[0] ?? "This transaction exceeds normal review thresholds.";
-    userImpact = "Please verify the recipient, spending amounts, and contract details before signing.";
-    whatThisMeans = "The transaction carries values or permissions that warrant double-checking, but does not present an immediate critical threat.";
+    if (isMismatch) {
+      headline = "Intent mismatch detected";
+      primaryReason = input2.comparison.summary || (input2.comparison.mismatches[0] ?? "The transaction differs from your requested action.");
+      if (input2.comparison.outputToken?.status === "MISMATCH") {
+        userImpact = `You will receive ${input2.comparison.outputToken.actual} instead of your expected ${input2.comparison.outputToken.expected}.`;
+        whatThisMeans = `You asked to receive ${input2.comparison.outputToken.expected}, but this transaction will swap for ${input2.comparison.outputToken.actual} instead.`;
+      } else if (input2.comparison.inputToken?.status === "MISMATCH") {
+        userImpact = `You will spend ${input2.comparison.inputToken.actual} instead of your intended ${input2.comparison.inputToken.expected}.`;
+        whatThisMeans = `You asked to spend ${input2.comparison.inputToken.expected}, but this transaction will spend ${input2.comparison.inputToken.actual} instead.`;
+      } else if (input2.comparison.amount?.status === "MISMATCH") {
+        userImpact = `The transaction amount (${input2.comparison.amount.actual}) differs from your intended amount (${input2.comparison.amount.expected}).`;
+        whatThisMeans = `You asked to transact ${input2.comparison.amount.expected}, but the contract is configured for ${input2.comparison.amount.actual}.`;
+      } else {
+        userImpact = "The transaction parameters do not fully align with what you asked to do.";
+        whatThisMeans = "Nalar found differences between your requested intent and what the blockchain transaction actually does.";
+      }
+    } else if (isUncertain) {
+      headline = "Intent could not be verified";
+      primaryReason = "Could not clearly verify your intent from the provided description.";
+      userImpact = "Please verify the contract address, token symbols, and amounts in your wallet before confirming.";
+      whatThisMeans = "Nalar was unable to extract specific token and amount targets from your intent description to confirm a match.";
+    } else if (findingCodes.has("UNVERIFIED_CONTRACT")) {
+      headline = "Unverified smart contract";
+      primaryReason = "The destination contract source code is not verified on the block explorer.";
+      userImpact = "The contract logic cannot be independently inspected for backdoors or unexpected transfer fees.";
+      whatThisMeans = "You are interacting with a contract whose source code is unverified. This increases the risk of unexpected behaviors.";
+    } else if (findingCodes.has("SELL_SIMULATION_UNAVAILABLE")) {
+      headline = "Sell simulation unavailable";
+      primaryReason = "Sell simulation could not be completed on-chain.";
+      userImpact = "It could not be independently confirmed that tokens purchased can be sold back freely.";
+      whatThisMeans = "While purchasing tokens may work, the ability to sell them later has not been proven by on-chain simulation.";
+    } else if (findingCodes.has("CONTRACT_TARGET_IS_EOA")) {
+      headline = "Target is a personal wallet";
+      primaryReason = "The destination address is an externally owned account (EOA), not a verified smart contract.";
+      userImpact = "Funds sent will go directly to an individual's private wallet with no automated contract safeguards.";
+      whatThisMeans = "You are sending assets directly to another person's wallet rather than interacting with a decentralized application.";
+    } else {
+      headline = "Transaction requires verification";
+      primaryReason = input2.reasons[0] ?? "This transaction exceeds normal review thresholds.";
+      userImpact = "Please verify the recipient, spending amounts, and contract details before signing.";
+      whatThisMeans = "The transaction carries values or permissions that warrant double-checking, but does not present an immediate critical threat.";
+    }
   } else {
     headline = "Transaction cleared for signing";
     primaryReason = "The transaction matches what you asked to do and passed all automated checks.";
@@ -53553,24 +54011,30 @@ function buildDeterministicExplanation(input2) {
     action: intentAction,
     input: intentInputToken,
     expectedOutput: intentOutputToken,
-    status: input2.intentMatch ? "MATCH" : "MISMATCH"
+    status: compOverall
   };
-  const txSummary = input2.transactionSummary?.description ?? input2.actualAction;
+  const txSummary = input2.transactionSummary?.summary ?? input2.transactionSummary?.description ?? input2.actualAction;
+  const actualInputDisplay = input2.transactionSummary?.input?.amount ? `${input2.transactionSummary.input.amount} ${input2.transactionSummary.input.symbol ?? ""}`.trim() : input2.actualValueNative;
+  const actualOutputDisplay = input2.transactionSummary?.output?.amount ? `${input2.transactionSummary.output.amount} ${input2.transactionSummary.output.symbol ?? ""}`.trim() : input2.transactionSummary?.output?.symbol ?? undefined;
   const actualTransaction = {
     summary: txSummary,
-    action: input2.actualAction,
-    input: input2.actualValueNative,
-    output: intentOutputToken,
+    action: input2.transactionSummary?.action ?? input2.actualAction,
+    input: actualInputDisplay,
+    output: actualOutputDisplay,
     target: input2.transactionSummary?.target ?? undefined
   };
-  let compSummary = "The transaction matches what you asked to do.";
-  if (!input2.intentMatch) {
-    compSummary = input2.comparison.mismatches[0] ?? "The transaction differs from your requested action.";
-  } else if (isBlock) {
-    compSummary = "The transaction matches your request, but Nalar blocked it because the target token was found to have a critical security risk.";
+  let compSummary = input2.comparison.summary;
+  if (!compSummary || compOverall === "MATCH") {
+    if (compOverall === "MATCH" && isBlock) {
+      compSummary = "The transaction matches your request, but Nalar blocked it because the target token was found to have a critical security risk.";
+    } else if (compOverall === "MATCH") {
+      compSummary = "The transaction matches what you asked to do.";
+    } else {
+      compSummary = input2.comparison.mismatches?.[0] ?? "The transaction differs from your requested action.";
+    }
   }
   const comparison = {
-    status: input2.intentMatch ? "MATCH" : "MISMATCH",
+    status: compOverall,
     summary: compSummary,
     details: input2.comparison.mismatches
   };
@@ -53601,8 +54065,8 @@ function buildDeterministicExplanation(input2) {
   }
   evidence.push({
     label: "Intent check",
-    value: input2.intentMatch ? "Matched" : "Mismatch",
-    explanation: input2.intentMatch ? "The transaction corresponds to your requested action." : "The transaction does not correspond to what you asked to do.",
+    value: input2.comparison.overall === "MATCH" ? "Matched" : input2.comparison.overall === "MISMATCH" ? "Mismatch" : "Uncertain",
+    explanation: input2.comparison.summary,
     source: "INTENT"
   });
   if (input2.policy.reasons.length > 0) {
@@ -53829,122 +54293,6 @@ async function analyzeTransactionIntelligence(input2) {
   };
 }
 
-// src/services/transaction-translator.ts
-function isAddress3(value) {
-  return typeof value === "string" && /^0x[a-fA-F0-9]{40}$/.test(value);
-}
-function shortenAddress(address) {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-function getAddressArg(value) {
-  if (!isAddress3(value)) {
-    return null;
-  }
-  return getAddress(value);
-}
-function translateTransaction(input2) {
-  const { to, value, action, functionName, args, effects } = input2;
-  const valueNative = value > 0n ? formatUnits2(value, 18) : null;
-  if (action === "MINT") {
-    return {
-      title: "Mint NFT",
-      action: "MINT",
-      valueNative,
-      target: to,
-      description: valueNative ? `Mint an NFT by sending ${valueNative} BNB to the contract.` : "Mint an NFT through this contract.",
-      details: ["The transaction calls the contract's mint function.", ...valueNative ? [`Amount sent: ${valueNative} BNB.`] : []]
-    };
-  }
-  if (action === "TOKEN_TRANSFER") {
-    const recipient = getAddressArg(args?.[0]);
-    const amount = typeof args?.[1] === "bigint" ? args[1] : null;
-    return {
-      title: "Send tokens",
-      action: "TOKEN_TRANSFER",
-      valueNative,
-      target: to,
-      description: recipient ? `Send tokens to ${shortenAddress(recipient)}.` : "Send tokens to another address.",
-      details: [...recipient ? [`Recipient: ${recipient}`] : [], ...amount !== null ? [`Token amount: ${amount.toString()} base units.`] : [], "The transaction moves tokens from your wallet to another address."]
-    };
-  }
-  if (action === "NFT_TRANSFER") {
-    return {
-      title: "Transfer NFT",
-      action: "NFT_TRANSFER",
-      valueNative,
-      target: to,
-      description: "The transaction transfers an NFT to another address.",
-      details: ["The transaction attempts to move an NFT.", "The exact NFT recipient should be checked before signing."]
-    };
-  }
-  if (action === "NFT_APPROVAL") {
-    const approval = effects.approvals.find((effect) => effect.type === "ERC721_OPERATOR");
-    if (approval) {
-      return {
-        title: "Give NFT management permission",
-        action: "NFT_APPROVAL",
-        valueNative,
-        target: to,
-        description: `Give ${shortenAddress(approval.operator)} permission to manage your NFTs.`,
-        details: [`Operator: ${approval.operator}`, approval.approved ? "This permission is being enabled." : "This permission is being removed.", "An approval gives another address permission over NFTs from this collection."]
-      };
-    }
-    return {
-      title: "NFT approval",
-      action: "NFT_APPROVAL",
-      valueNative,
-      target: to,
-      description: "The transaction changes permission to manage NFTs.",
-      details: ["Another address may receive permission to manage NFTs."]
-    };
-  }
-  if (action === "TOKEN_APPROVAL") {
-    const approval = effects.approvals.find((effect) => effect.type === "ERC20_ALLOWANCE");
-    if (approval) {
-      const amount = approval.unlimited ? "unlimited" : approval.amount.toString();
-      return {
-        title: "Give token spending permission",
-        action: "TOKEN_APPROVAL",
-        valueNative,
-        target: to,
-        description: `Give ${shortenAddress(approval.spender)} permission to spend your tokens.`,
-        details: [`Spender: ${approval.spender}`, `Allowance: ${amount}`, approval.unlimited ? "The permission is not limited to a specific token amount." : "The permission is limited to a specific token amount."]
-      };
-    }
-    return {
-      title: "Token approval",
-      action: "TOKEN_APPROVAL",
-      valueNative,
-      target: to,
-      description: "The transaction gives another address permission to spend your tokens.",
-      details: []
-    };
-  }
-  if (action === "SWAP" || effects.swaps.length > 0) {
-    const swap = effects.swaps[0];
-    if (swap) {
-      const tokenIn = swap.tokenInSymbol ?? shortenAddress(swap.tokenIn);
-      const tokenOut = swap.tokenOutSymbol ?? shortenAddress(swap.tokenOut);
-      return {
-        title: "Swap tokens",
-        action: "SWAP",
-        valueNative,
-        target: to,
-        description: `Swap ${tokenIn} for ${tokenOut}.`,
-        details: [`Input: ${tokenIn}`, `Output: ${tokenOut}`, `Protocol: ${swap.protocol}`, `Recipient: ${shortenAddress(swap.recipient)}`]
-      };
-    }
-  }
-  return {
-    title: "Contract transaction",
-    action: functionName ?? action,
-    valueNative,
-    target: to,
-    description: `Interact with a smart contract using ${functionName ?? "an unknown function"}.`,
-    details: [`Action type: ${action}`]
-  };
-}
-
 // src/services/token-resolver.ts
 var erc20MetadataAbi = [
   {
@@ -53972,7 +54320,22 @@ var erc20MetadataAbi = [
     ]
   }
 ];
+var tokenMetadataCache = new Map;
+var ROUTER_NATIVE_ETH_FLAG = "0x0000000000000000000000000000000000000002".toLowerCase();
+var NATIVE_TOKEN_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".toLowerCase();
 async function resolveTokenMetadata(address) {
+  const normalized = address.toLowerCase();
+  if (normalized === ROUTER_NATIVE_ETH_FLAG || normalized === NATIVE_TOKEN_ADDRESS) {
+    return {
+      address,
+      symbol: "tBNB",
+      decimals: 18
+    };
+  }
+  const cached2 = tokenMetadataCache.get(normalized);
+  if (cached2) {
+    return cached2;
+  }
   let symbol2 = null;
   let decimals = null;
   try {
@@ -53993,11 +54356,15 @@ async function resolveTokenMetadata(address) {
   } catch (error62) {
     console.warn(`[TOKEN] Failed to read decimals for ${address}`, error62);
   }
-  return {
+  const result = {
     address,
     symbol: symbol2,
     decimals
   };
+  if (symbol2 !== null || decimals !== null) {
+    tokenMetadataCache.set(normalized, result);
+  }
+  return result;
 }
 
 // src/services/enrich-swap.ts
@@ -72205,7 +72572,14 @@ securityRoute.post("/", async (c) => {
         effects: {},
         comparison: {
           matches: false,
-          mismatches: ["Transaction simulation failed."]
+          mismatches: ["Transaction simulation failed."],
+          overall: "MISMATCH",
+          action: { status: "UNSPECIFIED" },
+          inputToken: { status: "UNSPECIFIED" },
+          outputToken: { status: "UNSPECIFIED" },
+          amount: { status: "UNSPECIFIED" },
+          recipient: { status: "UNSPECIFIED" },
+          summary: "Transaction simulation failed."
         },
         policy: {
           allowed: false,

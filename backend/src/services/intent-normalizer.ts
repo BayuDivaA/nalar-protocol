@@ -17,8 +17,15 @@ export function normalizeIntent(intent: UserIntent): NormalizedIntent {
     maxValueWei = parseEther(intent.maxValueNative);
   }
 
+  const tokenIn = intent.tokenIn ?? intent.inputAsset ?? null;
+  const tokenOut = intent.tokenOut ?? intent.outputAsset ?? null;
+
   return {
     ...intent,
+    tokenIn,
+    tokenOut,
+    inputAsset: intent.inputAsset ?? tokenIn,
+    outputAsset: intent.outputAsset ?? tokenOut,
     maxValueWei,
   };
 }

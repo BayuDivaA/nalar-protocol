@@ -203,6 +203,13 @@ securityRoute.post("/", async (c) => {
         comparison: {
           matches: false,
           mismatches: ["Transaction simulation failed."],
+          overall: "MISMATCH",
+          action: { status: "UNSPECIFIED" },
+          inputToken: { status: "UNSPECIFIED" },
+          outputToken: { status: "UNSPECIFIED" },
+          amount: { status: "UNSPECIFIED" },
+          recipient: { status: "UNSPECIFIED" },
+          summary: "Transaction simulation failed.",
         },
         policy: {
           allowed: false,

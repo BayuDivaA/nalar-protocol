@@ -173,4 +173,53 @@ describe("Intent Comparator — SWAP", () => {
 
     expect(result.mismatches.some((message) => message.toLowerCase().includes("input amount"))).toBe(true);
   });
+
+  test("intended DHON but actual swap receives BUSD should be MISMATCH with structured field results", () => {
+    const BUSD = "0x4444444444444444444444444444444444444444" as Address;
+    const result = compareIntent(
+      createIntent({
+        tokenIn: "tBNB",
+        tokenOut: "DHON",
+        quantity: 0.002,
+        description: "beli DHON terus dengan bayar pake 0.002 tBNB",
+      }),
+      "SWAP",
+      createSwapEffects({
+        tokenIn: BNB,
+        tokenInSymbol: "WBNB",
+        tokenInDecimals: 18,
+        amountIn: 2_000_000_000_000_000n,
+        tokenOut: BUSD,
+        tokenOutSymbol: "BUSD",
+        tokenOutDecimals: 18,
+      }),
+      0n,
+    );
+
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("MISMATCH");
+    expect(result.action.status).toBe("MATCH");
+    expect(result.inputToken.status).toBe("MATCH");
+    expect(result.amount.status).toBe("MATCH");
+    expect(result.outputToken.status).toBe("MISMATCH");
+    expect(result.outputToken.expected).toBe("DHON");
+    expect(result.outputToken.actual).toBe("BUSD");
+    expect(result.summary).toContain("DHON");
+    expect(result.summary).toContain("BUSD");
+  });
+
+  test("unknown intent should produce UNCERTAIN and matches=false", () => {
+    const result = compareIntent(
+      createIntent({
+        action: "UNKNOWN",
+        description: "something completely random and unparseable",
+      }),
+      "SWAP",
+      createSwapEffects(),
+      0n,
+    );
+
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("UNCERTAIN");
+  });
 });

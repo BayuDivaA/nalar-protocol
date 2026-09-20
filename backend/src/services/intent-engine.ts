@@ -9,17 +9,26 @@ export function parseIntentHeuristically(input: string): UserIntent {
   const text = input.trim();
   const lower = text.toLowerCase();
 
-  const swapMatch = text.match(/swap\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?\s+(?:to|for)\s+([a-zA-Z0-9]+)/i);
-  if (swapMatch) {
-    const qty = swapMatch[1] ? parseFloat(swapMatch[1]) : null;
-    const tokenIn = swapMatch[2] ? swapMatch[2].toUpperCase() : null;
-    const tokenOut = swapMatch[3] ? swapMatch[3].toUpperCase() : null;
-    const isNativeIn = tokenIn === "BNB" || tokenIn === "TBNB";
+  // Pattern 1: Buy tokenOut with/using/pake amount tokenIn
+  // e.g. "beli DHON terus dengan bayar pake 0.002 tBNB", "buy DHON with 0.002 tBNB", "beli DHON pake 0.002 tBNB"
+  const buyMatch = text.match(/(?:buy|beli)\s+([a-zA-Z0-9]+).*?(?:with|using|pake|pakai|bayar\s+pake|dengan\s+bayar\s+pake|dengan)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)/i);
+  if (buyMatch) {
+    const rawTokenOut = buyMatch[1] ?? "";
+    const rawQty = buyMatch[2] ? parseFloat(buyMatch[2]) : null;
+    const rawTokenIn = buyMatch[3] ?? "";
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+
+    const tokenIn = rawTokenIn.toUpperCase() === "BNB" || rawTokenIn.toUpperCase() === "TBNB" ? "tBNB" : rawTokenIn.toUpperCase();
+    const tokenOut = rawTokenOut.toUpperCase() === "BNB" || rawTokenOut.toUpperCase() === "TBNB" ? "tBNB" : rawTokenOut.toUpperCase();
+    const isNativeIn = tokenIn.toUpperCase() === "BNB" || tokenIn.toUpperCase() === "TBNB";
+
     return {
       action: "SWAP",
-      quantity: Number.isNaN(qty) ? null : qty,
+      quantity: qty,
       tokenIn,
       tokenOut,
+      inputAsset: tokenIn,
+      outputAsset: tokenOut,
       maxValueNative: isNativeIn && qty ? String(qty) : null,
       nativeCurrency: isNativeIn ? "BNB" : null,
       allowApproval: false,
@@ -28,7 +37,63 @@ export function parseIntentHeuristically(input: string): UserIntent {
     };
   }
 
-  if (lower.includes("swap")) {
+  // Pattern 2: Swap/Trade/Tukar/Jual amount tokenIn to/for/ke tokenOut
+  // e.g. "swap 0.002 tBNB to DHON", "tukar 0.002 tBNB ke DHON", "jual 0.002 tBNB untuk DHON"
+  const swapMatch = text.match(/(?:swap|trade|tukar|jual)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?\s+(?:to|for|into|ke|menjadi|jadi|untuk)\s+([a-zA-Z0-9]+)/i);
+  if (swapMatch) {
+    const rawQty = swapMatch[1] ? parseFloat(swapMatch[1]) : null;
+    const rawTokenIn = swapMatch[2] ?? "";
+    const rawTokenOut = swapMatch[3] ?? "";
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+
+    const tokenIn = rawTokenIn.toUpperCase() === "BNB" || rawTokenIn.toUpperCase() === "TBNB" ? "tBNB" : rawTokenIn ? rawTokenIn.toUpperCase() : null;
+    const tokenOut = rawTokenOut.toUpperCase() === "BNB" || rawTokenOut.toUpperCase() === "TBNB" ? "tBNB" : rawTokenOut ? rawTokenOut.toUpperCase() : null;
+    const isNativeIn = tokenIn?.toUpperCase() === "BNB" || tokenIn?.toUpperCase() === "TBNB";
+
+    return {
+      action: "SWAP",
+      quantity: qty,
+      tokenIn,
+      tokenOut,
+      inputAsset: tokenIn,
+      outputAsset: tokenOut,
+      maxValueNative: isNativeIn && qty ? String(qty) : null,
+      nativeCurrency: isNativeIn ? "BNB" : null,
+      allowApproval: false,
+      targetAddress: null,
+      description: text,
+    };
+  }
+
+  // Pattern 3: Transfer/Send/Kirim amount tokenIn to/ke recipient
+  // e.g. "transfer 10 USDT to Alice", "send 5 BNB to 0x123..."
+  const transferMatch = text.match(/(?:transfer|send|kirim)\s+([0-9.]+)?\s*([a-zA-Z0-9]+)?\s+(?:to|ke|unto)\s+([a-zA-Z0-9_.-]+)/i);
+  if (transferMatch) {
+    const rawQty = transferMatch[1] ? parseFloat(transferMatch[1]) : null;
+    const rawToken = transferMatch[2] ?? "";
+    const recipient = transferMatch[3] ?? null;
+    const qty = rawQty !== null && !Number.isNaN(rawQty) ? rawQty : null;
+
+    const tokenIn = rawToken.toUpperCase() === "BNB" || rawToken.toUpperCase() === "TBNB" ? "tBNB" : rawToken ? rawToken.toUpperCase() : null;
+    const isNativeIn = tokenIn?.toUpperCase() === "BNB" || tokenIn?.toUpperCase() === "TBNB";
+
+    return {
+      action: "TRANSFER",
+      quantity: qty,
+      tokenIn,
+      tokenOut: null,
+      recipient,
+      inputAsset: tokenIn,
+      outputAsset: null,
+      maxValueNative: isNativeIn && qty ? String(qty) : null,
+      nativeCurrency: isNativeIn ? "BNB" : null,
+      allowApproval: false,
+      targetAddress: recipient && /^0x[a-fA-F0-9]{40}$/.test(recipient) ? recipient : null,
+      description: text,
+    };
+  }
+
+  if (lower.includes("swap") || lower.includes("tukar") || lower.includes("beli") || lower.includes("buy")) {
     return {
       action: "SWAP",
       quantity: null,
@@ -56,7 +121,7 @@ export function parseIntentHeuristically(input: string): UserIntent {
     };
   }
 
-  if (lower.includes("approve")) {
+  if (lower.includes("approve") || lower.includes("izinkan") || lower.includes("setujui")) {
     return {
       action: "APPROVE",
       quantity: null,
@@ -70,7 +135,7 @@ export function parseIntentHeuristically(input: string): UserIntent {
     };
   }
 
-  if (lower.includes("transfer") || lower.includes("send")) {
+  if (lower.includes("transfer") || lower.includes("send") || lower.includes("kirim")) {
     return {
       action: "TRANSFER",
       quantity: null,
@@ -122,8 +187,7 @@ export async function parseUserIntent(userInput: string): Promise<UserIntent> {
           content: `
 You are a Web3 transaction intent parser.
 
-Your ONLY job is to understand what
-the human intends to do.
+Your ONLY job is to understand what the human intends to do from natural language input (English, Indonesian, slang, abbreviations, etc.).
 
 You are NOT a security decision maker.
 
@@ -148,6 +212,8 @@ Required structure:
 
   "tokenOut": string | null,
 
+  "recipient": string | null,
+
   "maxValueNative": string | null,
 
   "nativeCurrency": "BNB" | null,
@@ -161,23 +227,23 @@ Required structure:
 
 Rules:
 1. Identify the high-level user action.
-2. If the user mentions spending BNB, set nativeCurrency = "BNB".
-3. If the user mentions an amount of BNB, set maxValueNative to that number as a string.
-4. If the user is approving a token, set allowApproval = true.
-5. If the user is transferring, minting, or swapping without mentioning approval, set allowApproval = false.
-6. For NFT minting, action = MINT.
-7. For token transfer, action = TRANSFER.
-8. For token swaps:
+2. Support multilingual phrasing, especially Indonesian (e.g. "beli DHON terus dengan bayar pake 0.002 tBNB" -> action: "SWAP", tokenIn: "tBNB", tokenOut: "DHON", quantity: 0.002).
+3. If the user mentions spending BNB or tBNB, set nativeCurrency = "BNB", tokenIn = "tBNB".
+4. If the user mentions an amount of BNB, set maxValueNative to that number as a string.
+5. If the user is approving a token, set allowApproval = true.
+6. If the user is transferring, minting, or swapping without mentioning approval, set allowApproval = false.
+7. For token swaps:
    - action = SWAP.
-   - tokenIn = token being spent/sold.
-   - tokenOut = token being received.
+   - tokenIn = token being spent/sold/paid.
+   - tokenOut = token being received/bought.
    - quantity = amount of tokenIn when explicitly stated.
-9. For non-SWAP actions:
-   - tokenIn should normally be null.
-   - tokenOut should normally be null.
+8. For token transfers:
+   - action = TRANSFER.
+   - tokenIn = token being sent.
+   - quantity = amount sent.
+   - recipient = address or name of recipient.
 `,
         },
-
         {
           role: "user",
           content: userInput,

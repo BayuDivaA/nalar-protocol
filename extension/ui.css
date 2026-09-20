@@ -3,8 +3,8 @@
   --nalar-ui-bg: #0a0a09;
   --nalar-ui-surface: #10100f;
   --nalar-ui-surface-2: #151513;
-  --nalar-ui-line: rgba(255,255,255,.075);
-  --nalar-ui-line-strong: rgba(255,255,255,.14);
+  --nalar-ui-line: rgba(255, 255, 255, 0.075);
+  --nalar-ui-line-strong: rgba(255, 255, 255, 0.14);
   --nalar-ui-text: #f2f1eb;
   --nalar-ui-soft: #b7b5ad;
   --nalar-ui-muted: #73736d;
@@ -15,22 +15,20 @@
 
 /* Overlay and modal */
 .nalar-overlay {
-  background: rgba(4,4,4,.78) !important;
-  backdrop-filter: blur(10px) saturate(.85) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(.85) !important;
+  background: rgba(4, 4, 4, 0.78) !important;
+  backdrop-filter: blur(10px) saturate(0.85) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(0.85) !important;
 }
 
 .nalar-modal {
   position: relative !important;
   overflow: hidden !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.022), transparent 24%),
-    var(--nalar-ui-bg) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), transparent 24%), var(--nalar-ui-bg) !important;
   border: 1px solid var(--nalar-ui-line-strong) !important;
   border-radius: 14px !important;
   box-shadow:
-    0 40px 120px rgba(0,0,0,.52),
-    0 1px 0 rgba(255,255,255,.035) inset !important;
+    0 40px 120px rgba(0, 0, 0, 0.52),
+    0 1px 0 rgba(255, 255, 255, 0.035) inset !important;
 }
 
 .nalar-modal::before {
@@ -38,19 +36,19 @@
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
   pointer-events: none;
 }
 
 /* Decision overlay variants */
 .nalar-decision-overlay[data-decision="block"] .nalar-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(239,128,111,.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(239, 128, 111, 0.5), transparent);
 }
 .nalar-decision-overlay[data-decision="review"] .nalar-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(224,183,109,.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(224, 183, 109, 0.5), transparent);
 }
 .nalar-decision-overlay[data-decision="allow"] .nalar-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(157,187,159,.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(157, 187, 159, 0.5), transparent);
 }
 
 /* Decision header */
@@ -63,15 +61,13 @@
   height: 44px !important;
   border-radius: 10px !important;
   border-color: var(--nalar-ui-line-strong) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)),
-    var(--nalar-ui-surface) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,.18) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)), var(--nalar-ui-surface) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
 }
 .nalar-decision-header h2 {
   font-size: 22px !important;
   line-height: 1.06 !important;
-  letter-spacing: -.03em !important;
+  letter-spacing: -0.03em !important;
 }
 
 /* Body and scrollbar */
@@ -80,12 +76,16 @@
   max-height: min(58vh, 620px) !important;
   overflow-y: auto !important;
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(255,255,255,.16) transparent !important;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent !important;
 }
-.nalar-decision-body::-webkit-scrollbar { width: 6px; }
-.nalar-decision-body::-webkit-scrollbar-track { background: transparent; }
+.nalar-decision-body::-webkit-scrollbar {
+  width: 6px;
+}
+.nalar-decision-body::-webkit-scrollbar-track {
+  background: transparent;
+}
 .nalar-decision-body::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,.12);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 99px;
 }
 
@@ -99,7 +99,7 @@
   color: var(--nalar-ui-muted) !important;
   font-size: 9px !important;
   font-weight: 700 !important;
-  letter-spacing: .16em !important;
+  letter-spacing: 0.16em !important;
 }
 .nalar-text-block {
   color: var(--nalar-ui-text) !important;
@@ -112,16 +112,14 @@
   margin: 4px -12px 0 !important;
   padding: 18px 12px 20px !important;
   border-bottom: 1px solid var(--nalar-ui-line-strong) !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.018), transparent),
-    rgba(255,255,255,.012) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent), rgba(255, 255, 255, 0.012) !important;
 }
 .nalar-decision-summary {
   max-width: 42ch !important;
   color: var(--nalar-ui-text) !important;
   font-size: 16px !important;
   line-height: 1.58 !important;
-  letter-spacing: -.01em !important;
+  letter-spacing: -0.01em !important;
 }
 .nalar-decision-detail {
   color: var(--nalar-ui-soft) !important;
@@ -136,8 +134,12 @@
   color: var(--nalar-ui-muted) !important;
   border-top: 1px solid var(--nalar-ui-line) !important;
 }
-.nalar-intent-match[data-match="true"] strong { color: var(--nalar-ui-safe) !important; }
-.nalar-intent-match[data-match="false"] strong { color: var(--nalar-ui-danger) !important; }
+.nalar-intent-match[data-match="true"] strong {
+  color: var(--nalar-ui-safe) !important;
+}
+.nalar-intent-match[data-match="false"] strong {
+  color: var(--nalar-ui-danger) !important;
+}
 
 /* Evidence hierarchy */
 .nalar-evidence-card {
@@ -145,9 +147,7 @@
   padding: 16px !important;
   border: 1px solid var(--nalar-ui-line) !important;
   border-radius: 10px !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.018), transparent),
-    var(--nalar-ui-surface) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent), var(--nalar-ui-surface) !important;
 }
 .nalar-finding[data-severity="critical"],
 .nalar-finding[data-severity="high"] {
@@ -219,7 +219,7 @@
   color: var(--nalar-ui-text) !important;
   font-size: 12px !important;
   font-weight: 600 !important;
-  letter-spacing: -.005em !important;
+  letter-spacing: -0.005em !important;
   transition:
     transform 150ms ease,
     border-color 150ms ease,
@@ -227,9 +227,9 @@
     box-shadow 150ms ease !important;
 }
 .nalar-button:hover {
-  border-color: rgba(255,255,255,.24) !important;
+  border-color: rgba(255, 255, 255, 0.24) !important;
   background: var(--nalar-ui-surface-2) !important;
-  box-shadow: 0 6px 16px rgba(0,0,0,.16) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16) !important;
 }
 .nalar-button:active {
   transform: translateY(1px) !important;
@@ -248,7 +248,7 @@
   border-color: #ffffff !important;
 }
 .nalar-button:disabled {
-  opacity: .4 !important;
+  opacity: 0.4 !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
@@ -256,9 +256,7 @@
 /* Analysis steps */
 .nalar-analysis-modal {
   border-radius: 14px !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.02), transparent 30%),
-    var(--nalar-ui-bg) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%), var(--nalar-ui-bg) !important;
 }
 .nalar-analysis-step {
   position: relative !important;
@@ -275,7 +273,10 @@
   color: var(--nalar-ui-soft) !important;
 }
 .nalar-analysis-indicator {
-  transition: color 180ms ease, transform 180ms ease, opacity 180ms ease !important;
+  transition:
+    color 180ms ease,
+    transform 180ms ease,
+    opacity 180ms ease !important;
 }
 .nalar-analysis-step[data-state="active"] .nalar-analysis-indicator {
   color: var(--nalar-ui-text) !important;
@@ -293,10 +294,10 @@
   color: var(--nalar-ui-text) !important;
 }
 .nalar-intent-textarea:focus {
-  border-color: rgba(255,255,255,.26) !important;
+  border-color: rgba(255, 255, 255, 0.26) !important;
   box-shadow:
-    0 0 0 3px rgba(255,255,255,.045),
-    0 10px 30px rgba(0,0,0,.14) !important;
+    0 0 0 3px rgba(255, 255, 255, 0.045),
+    0 10px 30px rgba(0, 0, 0, 0.14) !important;
 }
 
 /* Security summary */
@@ -324,30 +325,24 @@
   padding: 16px 18px !important;
   border: 1px solid var(--nalar-ui-line-strong) !important;
   border-radius: 10px !important;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.015), transparent),
-    var(--nalar-ui-surface) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent), var(--nalar-ui-surface) !important;
 }
 
 .nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card {
-  border-color: rgba(239,128,111,.32) !important;
-  background:
-    linear-gradient(180deg, rgba(239,128,111,.06), transparent 60%),
-    var(--nalar-ui-surface) !important;
+  border-color: rgba(239, 128, 111, 0.32) !important;
+  background: linear-gradient(180deg, rgba(239, 128, 111, 0.06), transparent 60%), var(--nalar-ui-surface) !important;
 }
 
 .nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card {
-  border-color: rgba(224,183,109,.32) !important;
-  background:
-    linear-gradient(180deg, rgba(224,183,109,.06), transparent 60%),
-    var(--nalar-ui-surface) !important;
+  border-color: rgba(224, 183, 109, 0.32) !important;
+  background: linear-gradient(180deg, rgba(224, 183, 109, 0.06), transparent 60%), var(--nalar-ui-surface) !important;
 }
 
 .nalar-why-stopped-headline {
   font-size: 15px !important;
   font-weight: 650 !important;
   line-height: 1.4 !important;
-  letter-spacing: -.01em !important;
+  letter-spacing: -0.01em !important;
   color: var(--nalar-ui-text) !important;
 }
 
@@ -369,7 +364,7 @@
 .nalar-impact-label {
   font-size: 9px !important;
   font-weight: 700 !important;
-  letter-spacing: .12em !important;
+  letter-spacing: 0.12em !important;
   color: var(--nalar-ui-muted) !important;
 }
 
@@ -418,7 +413,7 @@
 .nalar-comparison-label {
   font-size: 9px !important;
   font-weight: 700 !important;
-  letter-spacing: .12em !important;
+  letter-spacing: 0.12em !important;
   color: var(--nalar-ui-muted) !important;
 }
 
@@ -445,19 +440,19 @@
   border-radius: 4px !important;
   font-size: 9px !important;
   font-weight: 750 !important;
-  letter-spacing: .08em !important;
+  letter-spacing: 0.08em !important;
 }
 
 .nalar-badge[data-match="true"] {
-  background: rgba(157,187,159,.12) !important;
+  background: rgba(157, 187, 159, 0.12) !important;
   color: var(--nalar-ui-safe) !important;
-  border: 1px solid rgba(157,187,159,.25) !important;
+  border: 1px solid rgba(157, 187, 159, 0.25) !important;
 }
 
 .nalar-badge[data-match="false"] {
-  background: rgba(239,128,111,.12) !important;
+  background: rgba(239, 128, 111, 0.12) !important;
   color: var(--nalar-ui-danger) !important;
-  border: 1px solid rgba(239,128,111,.25) !important;
+  border: 1px solid rgba(239, 128, 111, 0.25) !important;
 }
 
 .nalar-badge-source {
@@ -466,7 +461,7 @@
   border-radius: 3px !important;
   font-size: 8px !important;
   font-weight: 700 !important;
-  letter-spacing: .08em !important;
+  letter-spacing: 0.08em !important;
   border: 1px solid var(--nalar-ui-line-strong) !important;
   background: var(--nalar-ui-surface-2) !important;
   color: var(--nalar-ui-soft) !important;
@@ -475,20 +470,20 @@
 .nalar-badge-source[data-source="ON-CHAIN"],
 .nalar-badge-source[data-source="BNB MCP"] {
   color: var(--nalar-ui-safe) !important;
-  border-color: rgba(157,187,159,.25) !important;
-  background: rgba(157,187,159,.08) !important;
+  border-color: rgba(157, 187, 159, 0.25) !important;
+  background: rgba(157, 187, 159, 0.08) !important;
 }
 
 .nalar-badge-source[data-source="SIMULATION"] {
   color: var(--nalar-ui-warning) !important;
-  border-color: rgba(224,183,109,.25) !important;
-  background: rgba(224,183,109,.08) !important;
+  border-color: rgba(224, 183, 109, 0.25) !important;
+  background: rgba(224, 183, 109, 0.08) !important;
 }
 
 .nalar-badge-source[data-source="POLICY"] {
   color: var(--nalar-ui-danger) !important;
-  border-color: rgba(239,128,111,.25) !important;
-  background: rgba(239,128,111,.08) !important;
+  border-color: rgba(239, 128, 111, 0.25) !important;
+  background: rgba(239, 128, 111, 0.08) !important;
 }
 
 /* What This Means Card */

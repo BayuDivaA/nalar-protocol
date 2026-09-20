@@ -1452,11 +1452,7 @@
 
     card.appendChild(sectionLabel);
 
-    const headlineText =
-      explanation.headline ||
-      explanation.whyStopped?.title ||
-      explanation.title ||
-      (isBlock ? "Potentially Malicious Transaction Blocked" : isReview ? "Transaction Requires Verification" : "Transaction Cleared");
+    const headlineText = explanation.headline || explanation.whyStopped?.title || explanation.title || (isBlock ? "Potentially Malicious Transaction Blocked" : isReview ? "Transaction Requires Verification" : "Transaction Cleared");
 
     const headline = document.createElement("div");
 
@@ -1475,10 +1471,7 @@
 
     card.appendChild(headline);
 
-    const primaryReasonText =
-      explanation.whyStopped?.primaryReason ||
-      explanation.summary ||
-      getFallbackSummary(security, decision);
+    const primaryReasonText = explanation.whyStopped?.primaryReason || explanation.summary || getFallbackSummary(security, decision);
 
     const primaryReason = document.createElement("div");
 
@@ -1543,10 +1536,9 @@
       card.appendChild(impactBox);
     }
 
-    const details = dedupe([
-      ...(Array.isArray(explanation.details) ? explanation.details : []),
-      ...(isBlock && Array.isArray(security?.reasons) ? security.reasons : []),
-    ]).filter((item) => item !== primaryReasonText && item !== headlineText);
+    const details = dedupe([...(Array.isArray(explanation.details) ? explanation.details : []), ...(isBlock && Array.isArray(security?.reasons) ? security.reasons : [])]).filter(
+      (item) => item !== primaryReasonText && item !== headlineText,
+    );
 
     if (details.length) {
       const list = document.createElement("div");
@@ -1602,11 +1594,7 @@
 
     headerRow.appendChild(headerLabel);
 
-    const match = typeof explanation.comparison?.match === "boolean"
-      ? explanation.comparison.match
-      : typeof security?.intentMatch === "boolean"
-        ? security.intentMatch
-        : true;
+    const match = typeof explanation.comparison?.match === "boolean" ? explanation.comparison.match : typeof security?.intentMatch === "boolean" ? security.intentMatch : true;
 
     const matchBadge = document.createElement("div");
 
@@ -1828,9 +1816,7 @@
   }
 
   function createEvidenceSection(explanation, security) {
-    const evidenceItems = Array.isArray(explanation.evidence) && explanation.evidence.length > 0
-      ? explanation.evidence
-      : null;
+    const evidenceItems = Array.isArray(explanation.evidence) && explanation.evidence.length > 0 ? explanation.evidence : null;
 
     if (evidenceItems) {
       const card = document.createElement("div");
@@ -1935,11 +1921,7 @@
       return card;
     }
 
-    const reports = Array.isArray(security?.scamAnalyses)
-      ? security.scamAnalyses
-      : Array.isArray(security?.transactionScamContext?.analyses)
-        ? security.transactionScamContext.analyses
-        : [];
+    const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
 
     if (!reports.length) {
       return null;
@@ -2169,7 +2151,7 @@
 
     const rows = [
       ["Network", "BNB Smart Chain Testnet (97)"],
-      ["Target contract", tx.target ? formatAddress(tx.target) : (security?.transaction?.to ? formatAddress(security.transaction.to) : "N/A")],
+      ["Target contract", tx.target ? formatAddress(tx.target) : security?.transaction?.to ? formatAddress(security.transaction.to) : "N/A"],
       ["Action", humanizeAction(actual.action)],
       ["Function name", actual.functionName ?? "N/A"],
       ["Simulation status", sim.success === true ? "Success" : sim.success === false ? "Reverted / Failed" : "Not simulated"],

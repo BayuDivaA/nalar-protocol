@@ -8,12 +8,7 @@ import { securityRoute } from "./routes/security";
 
 const app = new Hono();
 
-const defaultLocalOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:3001",
-];
+const defaultLocalOrigins = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"];
 
 const configuredOrigins = env.FRONTEND_ORIGIN
   ? env.FRONTEND_ORIGIN.split(",")

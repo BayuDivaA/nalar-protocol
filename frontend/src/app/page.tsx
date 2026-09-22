@@ -87,7 +87,21 @@ export default function LandingPage() {
                   Open the demo <span aria-hidden="true">↗</span>
                 </Link>
                 <Link href="/install" className="landing-button landing-button-secondary">
-                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" width="64" height="64" viewBox="0 0 16 16" style="color: rgb(74, 85, 101); opacity: 1; transform: rotate(0deg);"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M1.75 8.75h5.5v5.5m5-12.5v4m-2-2h4m-12.5-1v11.5h11.5v-5.5h-6v-6z"></path></g></svg>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    xmlns:xlink="http://www.w3.org/1999/xlink"
+                    aria-hidden="true"
+                    role="img"
+                    width="64"
+                    height="64"
+                    viewBox="0 0 24 24"
+                    style="color: rgb(74, 85, 101); opacity: 1; transform: rotate(0deg);"
+                  >
+                    <g fill="currentColor" fill-rule="evenodd" clip-rule="evenodd">
+                      <path d="M13 3h8v8h-8zm2 2h4v4h-4z"></path>
+                      <path d="M17 21v-8h-6V7H3v14zM9 9H5v4h4zM5 19v-4h4v4zm6 0v-4h4v4z"></path>
+                    </g>
+                  </svg>
                   Install extension
                 </Link>
               </div>

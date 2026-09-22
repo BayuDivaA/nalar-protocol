@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import ThemeToggle from "@/src/components/ThemeToggle";
 
@@ -34,11 +35,14 @@ export default function SiteHeader() {
     <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
       <div className="site-header-inner">
         <Link href="/" className="site-brand" onClick={close}>
-          <span className="site-brand-mark" aria-hidden="true">
-            <img src="/brand/n-dark.svg" alt="Nalar Protocol" width={18} height={18} className="brand-logo-dark" />
-            <img src="/brand/n-light.svg" alt="Nalar Protocol" width={18} height={18} className="brand-logo-light" />
+          <span>
+            <Image src="/brand/n-dark.svg" alt="Nalar Protocol" width={50} height={50} className="brand-logo-dark" />
+            <Image src="/brand/n-light.svg" alt="Nalar Protocol" width={50} height={50} className="brand-logo-light" />
           </span>
-          <span>Nalar Protocol</span>
+          <span>
+            <Image src="/brand/nalar-dark.svg" alt="Nalar Protocol" width={180} height={50} className="brand-logo-dark" />
+            <Image src="/brand/nalar-light.svg" alt="Nalar Protocol" width={180} height={50} className="brand-logo-light" />
+          </span>
         </Link>
 
         <nav className="site-nav" aria-label="Main navigation">

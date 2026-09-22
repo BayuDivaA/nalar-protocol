@@ -5,6 +5,7 @@ const siteName = document.getElementById("siteName");
 const toggle = document.getElementById("toggle");
 const systemStatus = document.getElementById("systemStatus");
 const statusDot = document.getElementById("statusDot");
+const themeToggle = document.getElementById("themeToggle");
 
 let currentOrigin = null;
 
@@ -19,7 +20,34 @@ async function getCurrentOrigin() {
   }
 }
 
+async function initTheme() {
+  const result = await chrome.storage.local.get(["nalarTheme"]);
+  let theme = result.nalarTheme;
+  if (!theme) {
+    theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  applyTheme(theme);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  if (themeToggle) {
+    themeToggle.textContent = theme === "light" ? "◑" : "◐";
+    themeToggle.setAttribute("title", `Switch to ${theme === "light" ? "dark" : "light"} mode`);
+  }
+}
+
+if (themeToggle) {
+  themeToggle.addEventListener("click", async () => {
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    const next = current === "light" ? "dark" : "light";
+    applyTheme(next);
+    await chrome.storage.local.set({ nalarTheme: next });
+  });
+}
+
 async function loadSettings() {
+  await initTheme();
   currentOrigin = await getCurrentOrigin();
   const result = await chrome.storage.local.get(["intents", "protectionEnabled"]);
   const intents = result.intents ?? {};
@@ -45,7 +73,7 @@ function renderProtection(enabled) {
   toggle.classList.toggle("paused", !enabled);
   toggle.setAttribute("aria-pressed", String(enabled));
   systemStatus.textContent = enabled ? "Protection active" : "Protection paused";
-  statusDot.style.background = enabled ? "var(--safe)" : "var(--muted)";
+  statusDot.classList.toggle("paused", !enabled);
 }
 
 toggle.addEventListener("click", async () => {
@@ -55,7 +83,9 @@ toggle.addEventListener("click", async () => {
   await chrome.storage.local.set({ protectionEnabled: next });
   renderProtection(next);
   message.textContent = next ? "Protection active." : "Protection paused.";
-  setTimeout(() => { message.textContent = ""; }, 1600);
+  setTimeout(() => {
+    message.textContent = "";
+  }, 1600);
 });
 
 saveButton.addEventListener("click", async () => {
@@ -74,7 +104,9 @@ saveButton.addEventListener("click", async () => {
   intents[currentOrigin] = intent;
   await chrome.storage.local.set({ intents });
   message.textContent = "Intent saved for this site.";
-  setTimeout(() => { message.textContent = ""; }, 1600);
+  setTimeout(() => {
+    message.textContent = "";
+  }, 1600);
 });
 
 loadSettings().catch((error) => {

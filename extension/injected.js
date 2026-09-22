@@ -45,37 +45,37 @@
   };
 
   const UI = {
-    bg: "#0a0a09",
-    surface: "#10100f",
-    raised: "#151513",
-    bg: "#080b0f",
-    surface: "#0e141a",
-    raised: "#121a21",
-    border: "#202c35",
-    borderStrong: "#3b4a55",
-    text: "#edf4f6",
-    soft: "#a9b8c0",
-    muted: "#74838e",
-    dim: "#465560",
-    danger: "#f27870",
-    warning: "#d3ab67",
-    safe: "#7bcba5",
-    accent: "#8adcf9",
-    accentStrong: "#c1f1ff",
+    bg: "#0B132B",
+    bgDeep: "#050811",
+    surface: "#101A2E",
+    raised: "#14213A",
+    border: "#1E293B",
+    borderStrong: "#334155",
+    text: "#FFFFFF",
+    soft: "#CBD5E1",
+    muted: "#94A3B8",
+    dim: "#64748B",
+    danger: "#F87171",
+    warning: "#FBBF24",
+    safe: "#4ADE80",
+    accent: "#0066FF",
+    accentHover: "#2563EB",
+    dangerBg: "rgba(248, 113, 113, 0.08)",
+    warningBg: "rgba(251, 191, 36, 0.08)",
+    safeBg: "rgba(74, 222, 128, 0.08)",
+    accentBg: "#0D1B34",
   };
 
-    border: "rgba(255,255,255,.075)",
   const MOTION = {
     instant: 100,
     fast: 150,
     normal: 220,
-    slow: 350,
+    enter: 300,
+    slow: 400,
     easeOut: "cubic-bezier(.16, 1, .3, 1)",
     easeStandard: "cubic-bezier(.2, 0, 0, 1)",
-    easeSoft: "ease",
   };
 
-    borderStrong: "rgba(255,255,255,.14)",
   function createNalarMarkSvg(size = 12) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 560 560");
@@ -86,11 +86,11 @@
     svg.style.display = "inline-block";
     svg.style.verticalAlign = "middle";
     svg.style.flexShrink = "0";
-    svg.innerHTML = '<rect fill="#fff" x="75.39" y="208.7" width="95.75" height="201.58"/><path fill="#fff" d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"/><path fill="#06f" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z"/>';
+    svg.innerHTML =
+      '<rect fill="#fff" x="75.39" y="208.7" width="95.75" height="201.58"/><path fill="#fff" d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"/><path fill="#06f" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z"/>';
     return svg;
   }
 
-    text: "#f2f1eb",
   function createBrandEyebrow(text) {
     const wrap = document.createElement("div");
     wrap.className = "nalar-brand-eyebrow";
@@ -101,33 +101,9 @@
     return wrap;
   }
 
-    soft: "#b7b5ad",
-
-    muted: "#73736d",
-
-    dim: "#4a4a45",
-
-    danger: "#ef806f",
-
-    warning: "#e0b76d",
-
-    safe: "#9dbb9f",
-
-    accent: "#f2f1eb",
-  };
+  const ANALYSIS_STEPS = ["Understanding your request", "Decoding transaction", "Simulating execution", "Checking contract", "Reviewing on-chain evidence", "Evaluating security", "Preparing recommendation"];
 
   const wrappedProviders = new WeakSet();
-
-  const ANALYSIS_STEPS = ["Reading your intent", "Decoding the wallet request", "Simulating execution", "Inspecting contract rules", "Checking on-chain state", "Applying security policy"];
-  const ANALYSIS_STEPS = [
-    "Understanding your request",
-    "Decoding transaction",
-    "Simulating execution",
-    "Checking contract",
-    "Reviewing on-chain evidence",
-    "Evaluating security",
-    "Preparing recommendation",
-  ];
 
   /*
   |--------------------------------------------------------------------------
@@ -299,14 +275,41 @@
         to { opacity: 1; }
       }
 
+      @keyframes nalarFadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+
       @keyframes nalarModalIn {
         from {
           opacity: 0;
-          transform: translateY(8px) scale(.985);
+          transform: translateY(12px) scale(.985);
         }
         to {
           opacity: 1;
           transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes nalarModalOut {
+        from {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(6px) scale(.99);
+        }
+      }
+
+      @keyframes nalarFadeRise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
       }
 
@@ -321,130 +324,102 @@
         }
       }
 
-      @keyframes nalarProgressFill {
-        from { transform: scaleX(0); }
-        to { transform: scaleX(1); }
+      @keyframes nalarPulseBlock {
+        0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.45); }
+        70% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
       }
 
-      @keyframes nalarPulse {
-        0%, 100% { opacity: .4; }
-        50% { opacity: 1; }
+      @keyframes nalarPulseReview {
+        0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); }
+        70% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
       }
 
-      @keyframes nalarSweep {
-        from { top: -4%; }
-        to { top: 104%; }
-      }
-
-      @keyframes nalarRiskReveal {
-        from {
-          stroke-dashoffset: var(--nalar-ring-circumference, 220);
-        }
-        to {
-          stroke-dashoffset: var(--nalar-ring-target, 220);
-        }
-      }
-
-      @keyframes nalarNodeReveal {
-        from {
-          opacity: 0;
-          transform: translateY(4px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      @keyframes nalarPulseAllow {
+        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45); }
+        70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
       }
 
       .nalar-overlay {
-        animation: nalarFadeIn 160ms ease-out;
+        animation: nalarFadeIn 240ms cubic-bezier(.16, 1, .3, 1);
+      }
+
+      .nalar-overlay.nalar-closing {
+        animation: nalarFadeOut 180ms ease-in forwards !important;
       }
 
       .nalar-modal {
         isolation: isolate;
-        animation: nalarModalIn 280ms cubic-bezier(.16,1,.3,1);
+        animation: nalarModalIn 300ms cubic-bezier(.16, 1, .3, 1);
+      }
+
+      .nalar-overlay.nalar-closing .nalar-modal {
+        animation: nalarModalOut 180ms ease-in forwards !important;
       }
 
       .nalar-modal::before {
         position: absolute;
-        inset: 0 18px auto;
+        inset: 0 0 auto 0;
         height: 1px;
         content: "";
-        background: rgba(255,255,255,.18);
-        opacity: .65;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
         pointer-events: none;
       }
 
+      .nalar-decision-overlay[data-decision="block"] .nalar-modal::before {
+        background: linear-gradient(90deg, transparent, ${UI.danger}, transparent) !important;
+      }
+      .nalar-decision-overlay[data-decision="review"] .nalar-modal::before {
+        background: linear-gradient(90deg, transparent, ${UI.warning}, transparent) !important;
+      }
+      .nalar-decision-overlay[data-decision="allow"] .nalar-modal::before {
+        background: linear-gradient(90deg, transparent, ${UI.safe}, transparent) !important;
+      }
+
+      .nalar-stagger-1 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 0ms both !important; }
+      .nalar-stagger-2 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 70ms both !important; }
+      .nalar-stagger-3 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 130ms both !important; }
+      .nalar-stagger-4 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 190ms both !important; }
+      .nalar-stagger-5 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 250ms both !important; }
+      .nalar-stagger-6 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 310ms both !important; }
+
       .nalar-button {
         transition:
-          background 150ms ease,
+          background-color 150ms ease,
           border-color 150ms ease,
-          transform 100ms ease,
+          transform 120ms ease,
           box-shadow 150ms ease;
       }
 
       .nalar-button:hover {
-        border-color: rgba(255,255,255,.24) !important;
+        border-color: ${UI.accent} !important;
       }
 
       .nalar-button:active {
-        transform: translateY(1px);
+        transform: scale(0.98);
       }
 
       .nalar-button:focus-visible {
-        outline: 2px solid ${UI.safe};
+        outline: 2px solid ${UI.accent};
         outline-offset: 2px;
-      }
-
-      .nalar-analysis-active {
-        animation: nalarPulse 1.2s ease-in-out infinite;
-      }
-
-      .nalar-risk-fill {
-        transition: transform 600ms cubic-bezier(.16,1,.3,1);
-      }
-
-      .nalar-analysis-modal::after {
-        position: absolute;
-        top: -4%;
-        right: 0;
-        left: 0;
-        height: 1px;
-        content: "";
-        background: rgba(255,255,255,.2);
-        box-shadow: 0 0 12px rgba(255,255,255,.1);
-        pointer-events: none;
-        animation: nalarSweep 3s linear infinite;
-      }
-
-      .nalar-step-progress {
-        transform-origin: left center;
-        transition: transform 400ms cubic-bezier(.16,1,.3,1);
-      }
-
-      .nalar-timeline-node {
-        animation: nalarNodeReveal 300ms ease-out both;
       }
 
       @media (prefers-reduced-motion: reduce) {
         .nalar-overlay,
         .nalar-modal,
-        .nalar-analysis-active,
-        .nalar-timeline-node {
+        .nalar-stagger-1,
+        .nalar-stagger-2,
+        .nalar-stagger-3,
+        .nalar-stagger-4,
+        .nalar-stagger-5,
+        .nalar-stagger-6 {
           animation: none !important;
         }
 
         .nalar-button {
           transition: none !important;
-        }
-
-        .nalar-risk-fill,
-        .nalar-step-progress {
-          transition: none !important;
-        }
-
-        .nalar-analysis-modal::after {
-          animation: none !important;
         }
 
         .nalar-modal::before {
@@ -1097,12 +1072,9 @@
 
       const header = document.createElement("div");
 
-      header.style.padding = "28px 28px 22px";
-
       header.style.padding = "24px 26px 20px";
       header.style.borderBottom = `1px solid ${UI.border}`;
 
-      const eyebrow = createLabel("NALAR PROTOCOL");
       const eyebrow = createBrandEyebrow("NALAR PROTOCOL");
 
       const title = document.createElement("h2");
@@ -1333,8 +1305,6 @@
       borderBottom: `1px solid ${UI.border}`,
     });
 
-    const eyebrow = createLabel("SUPPORTED NETWORK CHECK");
-    eyebrow.style.color = UI.warning;
     const eyebrow = createBrandEyebrow("NALAR PROTOCOL · NETWORK CHECK");
     header.appendChild(eyebrow);
 
@@ -1527,8 +1497,6 @@
       setStatus: (msg) => {
         statusEl.textContent = msg;
       },
-      remove: () => {
-        overlay.remove();
       remove: (cb) => {
         dismissNalarElement(IDS.network, cb);
       },
@@ -1547,36 +1515,23 @@
     installStyles();
 
     const overlay = document.createElement("div");
-
     overlay.id = IDS.analysis;
-
     overlay.className = "nalar-overlay";
-
     applyOverlayStyle(overlay);
 
     const modal = createModal();
-
     modal.classList.add("nalar-analysis-modal");
-
     Object.assign(modal.style, {
-      width: "min(480px, 100%)",
-      padding: "28px",
       width: "min(460px, 100%)",
       padding: "26px",
     });
 
-    const eyebrow = createLabel("NALAR PROTOCOL");
     const eyebrow = createBrandEyebrow("NALAR PROTOCOL · SECURITY");
 
     const title = document.createElement("h2");
-
     title.textContent = "Analyzing transaction";
-
     Object.assign(title.style, {
       margin: "10px 0 0",
-      fontSize: "22px",
-      lineHeight: "1.08",
-      letterSpacing: "-.03em",
       fontSize: "20px",
       lineHeight: "1.1",
       letterSpacing: "-.025em",
@@ -1585,13 +1540,8 @@
     });
 
     const subtitle = document.createElement("p");
-
     subtitle.textContent = "Checking the request before your wallet is asked to sign.";
-
     Object.assign(subtitle.style, {
-      margin: "10px 0 0",
-      fontSize: "13px",
-      lineHeight: "1.6",
       margin: "8px 0 0",
       fontSize: "12.5px",
       lineHeight: "1.55",
@@ -1599,9 +1549,7 @@
     });
 
     const counter = document.createElement("div");
-
     Object.assign(counter.style, {
-      marginTop: "20px",
       marginTop: "18px",
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
       fontSize: "10px",
@@ -1609,122 +1557,65 @@
       color: UI.muted,
       fontWeight: "700",
     });
-
     counter.textContent = `01 / ${String(ANALYSIS_STEPS.length).padStart(2, "0")}`;
 
     const list = document.createElement("div");
-
     list.style.marginTop = "8px";
 
     const rows = ANALYSIS_STEPS.map((label, index) => {
       const row = document.createElement("div");
-
       row.className = "nalar-analysis-step";
       row.setAttribute("data-state", index === 0 ? "active" : "pending");
-
       Object.assign(row.style, {
         display: "grid",
-        gridTemplateColumns: "22px 1fr",
+        gridTemplateColumns: "22px 18px 1fr",
         alignItems: "center",
-        gap: "10px",
-        padding: "10px 0",
-        borderBottom: `1px solid ${UI.border}`,
-        opacity: index === 0 ? "1" : "0",
-        animation: `nalarStepIn 200ms ease-out ${index * 80}ms both`,
+        gap: "8px",
+        padding: "9px 0",
+        borderBottom: index === ANALYSIS_STEPS.length - 1 ? "none" : `1px solid ${UI.border}`,
+        opacity: index === 0 ? "1" : "0.6",
       });
+
       const num = document.createElement("span");
       num.className = "nalar-step-num";
       num.textContent = String(index + 1).padStart(2, "0");
-
-      if (index === ANALYSIS_STEPS.length - 1) {
-        row.style.borderBottom = "none";
-      }
+      num.style.color = index === 0 ? UI.accent : UI.dim;
 
       const indicator = document.createElement("div");
-
       indicator.className = "nalar-analysis-indicator";
-
       Object.assign(indicator.style, {
-        width: "22px",
-        height: "22px",
+        width: "18px",
+        height: "18px",
         display: "grid",
         placeItems: "center",
-        fontSize: "10px",
+        fontSize: "11px",
         fontWeight: "600",
+        color: index === 0 ? UI.accent : UI.dim,
       });
-
-      if (index === 0) {
-        indicator.textContent = "●";
-        indicator.style.color = UI.text;
-        indicator.classList.add("nalar-analysis-active");
-        indicator.style.color = UI.accent;
-      } else {
-        indicator.textContent = "○";
-        indicator.style.color = UI.dim;
-      }
-
-      const textWrap = document.createElement("div");
+      indicator.textContent = index === 0 ? "●" : "○";
 
       const text = document.createElement("div");
-
       text.className = "nalar-step-text";
       text.textContent = label;
-
-      text.style.fontSize = "12px";
-
+      text.style.fontSize = "12.5px";
       text.style.color = index === 0 ? UI.text : UI.dim;
-
-      const progress = document.createElement("div");
-
-      Object.assign(progress.style, {
-        height: "2px",
-        marginTop: "6px",
-        background: UI.raised,
-        overflow: "hidden",
-        borderRadius: "1px",
-      });
-
-      const progressFill = document.createElement("div");
-
-      progressFill.className = "nalar-step-progress";
-
-      Object.assign(progressFill.style, {
-        width: "100%",
-        height: "100%",
-        background: UI.safe,
-        transform: "scaleX(0)",
-      });
-
-      progress.appendChild(progressFill);
-
-      textWrap.appendChild(text);
-
-      textWrap.appendChild(progress);
 
       row.appendChild(num);
       row.appendChild(indicator);
       row.appendChild(text);
 
-      row.appendChild(textWrap);
-
       list.appendChild(row);
 
-      return { indicator, text, row, progressFill };
       return { num, indicator, text, row };
     });
 
     modal.appendChild(eyebrow);
-
     modal.appendChild(title);
-
     modal.appendChild(subtitle);
-
     modal.appendChild(counter);
-
     modal.appendChild(list);
 
     overlay.appendChild(modal);
-
     document.documentElement.appendChild(overlay);
 
     let current = 0;
@@ -1739,28 +1630,24 @@
         if (index < current) {
           item.indicator.textContent = "✓";
           item.indicator.style.color = UI.safe;
-          item.indicator.classList.remove("nalar-analysis-active");
           item.text.style.color = UI.soft;
-          item.progressFill.style.transform = "scaleX(1)";
           item.num.style.color = UI.muted;
           item.row.setAttribute("data-state", "done");
+          item.row.style.opacity = "0.75";
         } else if (index === current) {
           item.indicator.textContent = "●";
-          item.indicator.classList.add("nalar-analysis-active");
-          item.indicator.style.color = UI.text;
           item.indicator.style.color = UI.accent;
           item.text.style.color = UI.text;
-          item.progressFill.style.transform = "scaleX(0.6)";
           item.num.style.color = UI.accent;
           item.row.setAttribute("data-state", "active");
+          item.row.style.opacity = "1";
         } else {
           item.indicator.textContent = "○";
-          item.indicator.classList.remove("nalar-analysis-active");
           item.indicator.style.color = UI.dim;
           item.text.style.color = UI.dim;
-          item.progressFill.style.transform = "scaleX(0)";
           item.num.style.color = UI.dim;
           item.row.setAttribute("data-state", "pending");
+          item.row.style.opacity = "0.45";
         }
       });
 
@@ -1772,14 +1659,11 @@
       if (current >= rows.length) {
         current = rows.length - 1;
       }
-    }, 520);
     }, 450);
 
     return {
-      remove() {
       remove(callback) {
         clearInterval(timer);
-        removeNalarElement(IDS.analysis);
         dismissNalarElement(IDS.analysis, callback);
       },
     };
@@ -1879,10 +1763,6 @@
 
       if (event.key === "Escape") {
         document.removeEventListener("keydown", onKeydown);
-        overlay.remove();
-        if (onCancel) {
-          onCancel();
-        }
         dismissNalarElement(IDS.decision, () => {
           if (onCancel) {
             onCancel();
@@ -1895,13 +1775,11 @@
   function createDecisionHeader(decision, status, riskLevel, riskScore) {
     const header = document.createElement("header");
 
-    header.className = "nalar-decision-header";
     header.className = "nalar-decision-header nalar-stagger-1";
 
     Object.assign(header.style, {
       display: "grid",
-      gridTemplateColumns: "40px 1fr auto",
-      gridTemplateColumns: "42px 1fr auto",
+      gridTemplateColumns: "44px 1fr auto",
       gap: "14px",
       alignItems: "center",
       padding: "22px 24px 20px",
@@ -1909,51 +1787,40 @@
     });
 
     const mark = document.createElement("div");
-
     mark.className = "nalar-decision-mark";
     mark.setAttribute("data-decision", decision.toLowerCase());
-
     mark.textContent = decision === "BLOCK" ? "✕" : decision === "REVIEW" ? "?" : "✓";
 
     Object.assign(mark.style, {
-      width: "40px",
-      height: "40px",
-      width: "42px",
-      height: "42px",
+      width: "44px",
+      height: "44px",
       display: "grid",
       placeItems: "center",
       border: `1px solid ${UI.borderStrong}`,
       borderRadius: "8px",
       background: UI.surface,
       color: decision === "BLOCK" ? UI.danger : decision === "REVIEW" ? UI.warning : UI.safe,
-      fontSize: "18px",
+      fontSize: "19px",
       fontWeight: "700",
     });
 
     const headingWrap = document.createElement("div");
 
-    const eyebrow = createLabel("NALAR PROTOCOL · SECURITY");
     const eyebrow = createBrandEyebrow("NALAR PROTOCOL · SECURITY");
 
     const heading = document.createElement("h2");
-
     heading.textContent = status.title;
-
     Object.assign(heading.style, {
       margin: "4px 0 0",
-      fontSize: "20px",
       fontSize: "19px",
-      lineHeight: "1.1",
-      letterSpacing: "-.02em",
+      lineHeight: "1.15",
       letterSpacing: "-.025em",
       color: UI.text,
       fontWeight: "700",
     });
 
     const subtitle = document.createElement("p");
-
     subtitle.textContent = status.subtitle;
-
     Object.assign(subtitle.style, {
       margin: "4px 0 0",
       fontSize: "12px",
@@ -1979,32 +1846,14 @@
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
       letterSpacing: ".02em",
       color: pillColor,
-      background: decision === "BLOCK" ? "rgba(239,128,111,.1)" : decision === "REVIEW" ? "rgba(224,183,109,.1)" : "rgba(157,187,159,.1)",
-      border: `1px solid ${decision === "BLOCK" ? "rgba(239,128,111,.25)" : decision === "REVIEW" ? "rgba(224,183,109,.25)" : "rgba(157,187,159,.25)"}`,
+      background: decision === "BLOCK" ? UI.dangerBg : decision === "REVIEW" ? UI.warningBg : UI.safeBg,
+      border: `1px solid ${pillColor}44`,
       whiteSpace: "nowrap",
     });
-
-    const riskIndicator = document.createElement("div");
-    riskIndicator.className = "nalar-risk-indicator";
-    riskIndicator.setAttribute("data-level", riskLevel.toLowerCase());
-
-    const scoreEl = document.createElement("span");
-    scoreEl.className = "nalar-risk-score";
-    scoreEl.textContent = String(riskScore);
-    scoreEl.style.color = pillColor;
-
-    const levelEl = document.createElement("span");
-    levelEl.className = "nalar-risk-level";
-    levelEl.textContent = riskLevel;
-    levelEl.style.color = pillColor;
-
-    riskIndicator.appendChild(scoreEl);
-    riskIndicator.appendChild(levelEl);
 
     header.appendChild(mark);
     header.appendChild(headingWrap);
     header.appendChild(riskPill);
-    header.appendChild(riskIndicator);
 
     return header;
   }
@@ -2088,22 +1937,18 @@
     const isReview = decision === "REVIEW";
 
     const card = document.createElement("section");
-
-    card.className = "nalar-why-stopped-card";
     card.className = "nalar-why-stopped-card nalar-stagger-2";
 
     Object.assign(card.style, {
-      marginTop: "16px",
-      padding: "16px 18px",
-      borderRadius: "10px",
-      border: `1px solid ${isBlock ? "rgba(239,128,111,.28)" : isReview ? "rgba(224,183,109,.28)" : UI.border}`,
-      background: isBlock ? "rgba(239,128,111,.04)" : isReview ? "rgba(224,183,109,.04)" : UI.surface,
+      marginTop: "14px",
+      padding: "14px 18px",
       borderRadius: "8px",
-      border: `1px solid ${isBlock ? "rgba(242,120,112,.3)" : isReview ? "rgba(211,171,103,.3)" : UI.border}`,
-      background: isBlock ? "linear-gradient(180deg, rgba(242,120,112,.05), transparent 70%), " + UI.surface : isReview ? "linear-gradient(180deg, rgba(211,171,103,.05), transparent 70%), " + UI.surface : UI.surface,
+      border: `1px solid ${isBlock ? "rgba(248, 113, 113, 0.28)" : isReview ? "rgba(251, 191, 36, 0.28)" : UI.border}`,
+      background: isBlock ? UI.dangerBg : isReview ? UI.warningBg : UI.surface,
+      borderLeft: `3px solid ${isBlock ? UI.danger : isReview ? UI.warning : UI.safe}`,
     });
 
-    const labelText = isBlock ? "WHY IT WAS STOPPED" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT";
+    const labelText = isBlock ? "WHY THIS WAS STOPPED" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT";
     const sectionLabel = createLabel(labelText);
     sectionLabel.style.color = isBlock ? UI.danger : isReview ? UI.warning : UI.muted;
 
@@ -2112,30 +1957,31 @@
     const primaryReasonText = getPrimaryRootCause(explanation, security, decision);
 
     const reasonEl = document.createElement("div");
-
     reasonEl.className = "nalar-why-stopped-primary";
-
     reasonEl.textContent = primaryReasonText;
 
     Object.assign(reasonEl.style, {
       marginTop: "8px",
-      fontSize: "14px",
       fontSize: "13.5px",
       fontWeight: "500",
-      lineHeight: "1.6",
+      lineHeight: "1.55",
       color: UI.text,
     });
 
     card.appendChild(reasonEl);
 
-    const impactText = typeof explanation?.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim()
-      ? explanation.whyStopped.userImpact.trim()
-      : null;
+    const impactText = typeof explanation?.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim() ? explanation.whyStopped.userImpact.trim() : null;
 
     if (impactText && impactText !== primaryReasonText) {
       const impactEl = document.createElement("div");
       impactEl.className = "nalar-why-stopped-impact";
       impactEl.textContent = impactText;
+      Object.assign(impactEl.style, {
+        marginTop: "6px",
+        fontSize: "12px",
+        lineHeight: "1.5",
+        color: UI.soft,
+      });
       card.appendChild(impactEl);
     }
 
@@ -2144,15 +1990,12 @@
 
   function createIntentVsActualComparison(explanation, security, decision) {
     const card = document.createElement("section");
-
-    card.className = "nalar-comparison-card";
     card.className = "nalar-comparison-card nalar-stagger-3";
 
     Object.assign(card.style, {
       marginTop: "12px",
       padding: "16px 18px",
       border: `1px solid ${UI.border}`,
-      borderRadius: "10px",
       borderRadius: "8px",
       background: UI.surface,
     });
@@ -2177,25 +2020,19 @@
 
     let badgeText = "✓ MATCHES";
     let badgeColor = UI.safe;
-    let badgeBg = "rgba(157,187,159,.12)";
-    let badgeBorder = "rgba(157,187,159,.25)";
-    let badgeBg = "rgba(123,203,165,.12)";
-    let badgeBorder = "rgba(123,203,165,.28)";
+    let badgeBg = UI.safeBg;
+    let badgeBorder = "rgba(74, 222, 128, 0.28)";
 
     if (isMismatch) {
       badgeText = "✕ DOESN'T MATCH";
       badgeColor = UI.danger;
-      badgeBg = "rgba(239,128,111,.12)";
-      badgeBorder = "rgba(239,128,111,.25)";
-      badgeBg = "rgba(242,120,112,.12)";
-      badgeBorder = "rgba(242,120,112,.28)";
+      badgeBg = UI.dangerBg;
+      badgeBorder = "rgba(248, 113, 113, 0.28)";
     } else if (isUncertain) {
       badgeText = "? UNVERIFIED";
       badgeColor = UI.warning;
-      badgeBg = "rgba(224,183,109,.12)";
-      badgeBorder = "rgba(224,183,109,.25)";
-      badgeBg = "rgba(211,171,103,.12)";
-      badgeBorder = "rgba(211,171,103,.28)";
+      badgeBg = UI.warningBg;
+      badgeBorder = "rgba(251, 191, 36, 0.28)";
     }
 
     const matchBadge = document.createElement("div");
@@ -2251,13 +2088,10 @@
     }
 
     const intentBox = document.createElement("div");
-    intentBox.className = "nalar-comparison-box";
     intentBox.className = "nalar-comparison-box nalar-comp-expected";
     Object.assign(intentBox.style, {
-      padding: "11px 12px",
       padding: "12px 14px",
       border: `1px solid ${UI.border}`,
-      borderRadius: "8px",
       borderRadius: "6px",
       background: UI.raised,
     });
@@ -2276,12 +2110,9 @@
     intentVal.className = "nalar-comparison-value";
     intentVal.textContent = userIntentText;
     Object.assign(intentVal.style, {
-      marginTop: "5px",
-      fontSize: "12px",
       marginTop: "6px",
       fontSize: "12.5px",
       fontWeight: "600",
-      lineHeight: "1.5",
       lineHeight: "1.45",
       color: UI.text,
       wordBreak: "break-word",
@@ -2292,18 +2123,13 @@
     grid.appendChild(intentBox);
 
     const actualBox = document.createElement("div");
-    actualBox.className = "nalar-comparison-box";
     actualBox.className = "nalar-comparison-box nalar-comp-actual";
     actualBox.setAttribute("data-mismatch", String(isMismatch));
     Object.assign(actualBox.style, {
-      padding: "11px 12px",
-      border: `1px solid ${isMatch ? UI.border : "rgba(239,128,111,.3)"}`,
-      borderRadius: "8px",
-      background: isMatch ? UI.raised : "rgba(239,128,111,.03)",
       padding: "12px 14px",
-      border: `1px solid ${isMismatch ? "rgba(242,120,112,.32)" : UI.border}`,
+      border: `1px solid ${isMismatch ? "rgba(248, 113, 113, 0.32)" : UI.border}`,
       borderRadius: "6px",
-      background: isMismatch ? "rgba(242,120,112,.04)" : UI.raised,
+      background: isMismatch ? UI.dangerBg : UI.raised,
     });
 
     const actualLabel = document.createElement("div");
@@ -2313,23 +2139,16 @@
       fontSize: "9px",
       fontWeight: "700",
       letterSpacing: ".12em",
-      color: isMatch ? UI.muted : UI.danger,
+      color: isMismatch ? UI.danger : UI.muted,
     });
-    if (isMismatch) {
-      actualLabel.style.color = UI.danger;
-    }
 
     const actualVal = document.createElement("div");
     actualVal.className = "nalar-comparison-value";
     actualVal.textContent = actualTxText;
     Object.assign(actualVal.style, {
-      marginTop: "5px",
-      fontSize: "12px",
       marginTop: "6px",
       fontSize: "12.5px",
       fontWeight: "600",
-      lineHeight: "1.5",
-      color: isMatch ? UI.text : UI.danger,
       lineHeight: "1.45",
       color: isMismatch ? UI.danger : UI.text,
       wordBreak: "break-word",
@@ -2379,13 +2198,14 @@
 
       if (mismatchesList.length > 0) {
         const diffContainer = document.createElement("div");
-        diffContainer.className = "nalar-comparison-diff";
-        Object.assign(diffContainer.style, {
-          marginTop: "12px",
-          paddingTop: "10px",
-          borderTop: `1px solid ${UI.border}`,
-        });
         diffContainer.className = "nalar-field-mismatch";
+        Object.assign(diffContainer.style, {
+          marginTop: "10px",
+          padding: "8px 12px",
+          borderRadius: "6px",
+          border: "1px solid rgba(248, 113, 113, 0.28)",
+          background: UI.dangerBg,
+        });
 
         mismatchesList.forEach((diff) => {
           const diffRow = document.createElement("div");
@@ -2427,40 +2247,39 @@
       text = "This transaction matches your requested parameters and will execute with standard network confirmation.";
     }
 
-    const card = document.createElement("section");
     const callout = document.createElement("section");
     callout.className = "nalar-means-callout nalar-stagger-4";
-
-    card.className = "nalar-means-card";
-    const label = document.createElement("div");
-    label.className = "nalar-means-label";
-    label.textContent = "WHAT THIS MEANS";
-    callout.appendChild(label);
-
-    Object.assign(card.style, {
+    Object.assign(callout.style, {
       marginTop: "12px",
-      padding: "14px 18px",
+      padding: "12px 16px",
       border: `1px solid ${UI.border}`,
-      borderRadius: "10px",
+      borderLeft: `3px solid ${UI.accent}`,
+      borderRadius: "8px",
       background: UI.surface,
     });
 
-    const label = createLabel("WHAT THIS MEANS FOR YOU");
-    label.style.marginBottom = "6px";
-    card.appendChild(label);
+    const label = document.createElement("div");
+    label.className = "nalar-means-label";
+    label.textContent = "WHAT THIS MEANS";
+    Object.assign(label.style, {
+      fontSize: "9px",
+      fontWeight: "700",
+      letterSpacing: ".12em",
+      color: UI.muted,
+      marginBottom: "5px",
+    });
+    callout.appendChild(label);
 
     const body = document.createElement("div");
     body.className = "nalar-means-text";
     body.textContent = text;
     Object.assign(body.style, {
       fontSize: "12px",
-      lineHeight: "1.6",
+      lineHeight: "1.55",
       color: UI.soft,
     });
-    card.appendChild(body);
     callout.appendChild(body);
 
-    return card;
     return callout;
   }
 
@@ -2475,7 +2294,6 @@
     const count = evidenceItems ? evidenceItems.length : reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0);
 
     const wrapper = document.createElement("details");
-    wrapper.className = "nalar-evidence-details";
     wrapper.className = "nalar-evidence-details nalar-stagger-5";
 
     Object.assign(wrapper.style, {
@@ -2665,7 +2483,6 @@
   function createTechnicalSection(explanation, security) {
     const wrapper = document.createElement("details");
 
-    wrapper.className = "nalar-tech-details";
     wrapper.className = "nalar-tech-details nalar-stagger-6";
 
     Object.assign(wrapper.style, {
@@ -2781,11 +2598,6 @@
     const cancel = createButton(isBlock ? "Close" : "Cancel", isBlock);
 
     cancel.onclick = () => {
-      overlay.remove();
-
-      if (onCancel) {
-        onCancel();
-      }
       dismissNalarElement(IDS.decision, () => {
         if (onCancel) {
           onCancel();
@@ -2799,11 +2611,6 @@
       const continueButton = createButton(decision === "REVIEW" ? "Review & Continue" : "Continue", true);
 
       continueButton.onclick = () => {
-        overlay.remove();
-
-        if (onContinue) {
-          onContinue();
-        }
         dismissNalarElement(IDS.decision, () => {
           if (onContinue) {
             onContinue();
@@ -2836,10 +2643,10 @@
       alignItems: "center",
       justifyContent: "center",
       padding: "16px",
-      background: "rgba(4,4,4,.78)",
-      backdropFilter: "blur(10px) saturate(.85)",
-      WebkitBackdropFilter: "blur(10px) saturate(.85)",
-      fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      background: "rgba(5, 8, 17, 0.82)",
+      backdropFilter: "blur(12px) saturate(0.9)",
+      WebkitBackdropFilter: "blur(12px) saturate(0.9)",
+      fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       boxSizing: "border-box",
     });
   }
@@ -2854,10 +2661,10 @@
       width: "min(520px, 100%)",
       overflow: "hidden",
       border: `1px solid ${UI.borderStrong}`,
-      borderRadius: "14px",
+      borderRadius: "12px",
       background: UI.bg,
       color: UI.text,
-      boxShadow: "0 40px 120px rgba(0,0,0,.52), 0 1px 0 rgba(255,255,255,.035) inset",
+      boxShadow: "0 32px 80px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.06) inset",
     });
 
     return modal;
@@ -2928,14 +2735,16 @@
 
     Object.assign(button.style, {
       minHeight: "44px",
-      padding: "0 14px",
-      border: `1px solid ${primary ? UI.text : UI.borderStrong}`,
+      padding: "0 18px",
+      border: `1px solid ${primary ? UI.accent : UI.borderStrong}`,
       borderRadius: "8px",
-      background: primary ? UI.text : UI.surface,
-      color: primary ? UI.bg : UI.text,
-      fontSize: "12px",
+      background: primary ? UI.accent : UI.surface,
+      color: primary ? "#FFFFFF" : UI.text,
+      fontSize: "12.5px",
       fontWeight: "600",
+      letterSpacing: "-0.01em",
       cursor: "pointer",
+      boxShadow: primary ? "0 2px 10px rgba(0, 102, 255, 0.28)" : "none",
     });
 
     return button;

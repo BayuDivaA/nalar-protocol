@@ -26,6 +26,17 @@ export const protocolContracts: ProtocolContract[] = [
 
     abi: pancakeswapUniversalRouterAbi,
   },
+  {
+    name: "PancakeSwap Universal Router",
+
+    protocol: "PancakeSwap",
+
+    chainId: 56,
+
+    address: "0x13f4EA83D0bd40E75C8222255bc855a974568Dd4",
+
+    abi: pancakeswapUniversalRouterAbi,
+  },
 ];
 
 export function findProtocolContract(input: {

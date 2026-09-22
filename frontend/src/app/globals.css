@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
-/* Tailwind CSS v4 directive; ignored by standard CSS linters. */
+/* Tailwind CSS v4 directive; unsupported by generic CSS linters. */
 /* stylelint-disable-next-line at-rule-no-unknown */
 @theme inline {
-  --color-background: var(--bg);light
+  --color-background: var(--bg);
   --color-foreground: var(--text-primary);
   --color-surface: var(--surface);
   --color-raised: var(--raised);
@@ -127,11 +127,10 @@ button {
 }
 
 .site-brand {
-  gap: 10px;
   color: var(--text-primary);
-  font-size: 13px;
+  /* font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.02em; */
 }
 
 .site-brand-mark {
@@ -1579,8 +1578,8 @@ button {
 .product-mark {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: 5px;
@@ -1588,7 +1587,7 @@ button {
   flex-shrink: 0;
   overflow: hidden;
 }
-.product-mark img {
+.product-mark image {
   width: 14px;
   height: 14px;
   display: block;

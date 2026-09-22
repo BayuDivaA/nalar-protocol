@@ -97,9 +97,7 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
   if (action === "MINT") {
     if (input.targetIsContract === false) {
       const title = valueNative ? `Send ${valueNative} tBNB` : "Personal transfer";
-      const desc = valueNative
-        ? `Send ${valueNative} tBNB to an address (the destination is not a smart contract).`
-        : "Call an address that is not a smart contract.";
+      const desc = valueNative ? `Send ${valueNative} tBNB to an address (the destination is not a smart contract).` : "Call an address that is not a smart contract.";
       return {
         title,
         action: "PAYMENT",
@@ -108,22 +106,14 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
         description: desc,
         summary: desc,
         input: valueNative ? { amount: valueNative, symbol: "tBNB" } : null,
-        details: [
-          "The destination address is an externally owned account (EOA), not a smart contract.",
-          "No smart contract minting logic was detected at this address.",
-          ...(valueNative ? [`Amount sent: ${valueNative} tBNB.`] : []),
-        ],
+        details: ["The destination address is an externally owned account (EOA), not a smart contract.", "No smart contract minting logic was detected at this address.", ...(valueNative ? [`Amount sent: ${valueNative} tBNB.`] : [])],
       };
     }
 
     const mintEffect = effects.mints?.[0];
-    const qty = mintEffect?.quantity ?? 1;
-    const qtyLabel = qty > 1 ? `${qty} NFTs` : "1 NFT";
-
-    const title = `Mint ${qtyLabel}`;
-    const desc = valueNative
-      ? `Mint an NFT by sending ${valueNative} tBNB to the contract.`
-      : "Mint an NFT through this contract.";
+    const qty = mintEffect?.quantity;
+    const title = qty && qty > 1 ? `Mint ${qty} NFTs` : "Mint NFT";
+    const desc = valueNative ? `Mint an NFT by sending ${valueNative} tBNB to the contract.` : "Mint an NFT through this contract.";
     return {
       title,
       action: "MINT",
@@ -132,11 +122,7 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
       description: desc,
       summary: desc,
       input: valueNative ? { amount: valueNative, symbol: "tBNB" } : null,
-      details: [
-        "The transaction calls the contract's mint function.",
-        ...(valueNative ? [`Amount sent: ${valueNative} tBNB.`] : []),
-        ...(qty ? [`Mint quantity: ${qty}.`] : []),
-      ],
+      details: ["The transaction calls the contract's mint function.", ...(valueNative ? [`Amount sent: ${valueNative} tBNB.`] : []), ...(qty ? [`Mint quantity: ${qty}.`] : [])],
     };
   }
 

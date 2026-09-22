@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import SiteHeader, { githubUrl } from "@/src/components/SiteHeader";
+import Image from "next/image";
 
 const downloadUrl = "https://github.com/BayuDivaA/nalar-extension/archive/refs/heads/main.zip";
 
@@ -39,7 +40,7 @@ export default function InstallPage() {
       <main className="install-page">
         <section className="install-hero page-frame">
           <p className="eyebrow hero-kicker">
-            <span className="kicker-mark" aria-hidden="true" />
+            {/* <span className="kicker-mark" aria-hidden="true" /> */}
             Local extension install
           </p>
           <h1>Put Nalar between the dApp and your wallet.</h1>
@@ -127,8 +128,8 @@ export default function InstallPage() {
           <div>
             <Link href="/" className="footer-brand">
               <span className="footer-brand-mark" aria-hidden="true">
-                <img src="/brand/n-dark.svg" alt="Nalar Protocol" width={14} height={14} className="brand-logo-dark" />
-                <img src="/brand/n-light.svg" alt="Nalar Protocol" width={14} height={14} className="brand-logo-light" />
+                <Image src="/brand/n-dark.svg" alt="Nalar Protocol" width={14} height={14} className="brand-logo-dark" />
+                <Image src="/brand/n-light.svg" alt="Nalar Protocol" width={14} height={14} className="brand-logo-light" />
               </span>
               <span>NALAR PROTOCOL</span>
             </Link>

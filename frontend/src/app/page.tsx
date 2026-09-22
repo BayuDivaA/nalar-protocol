@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 import SiteHeader from "@/src/components/SiteHeader";
 import ArchitectureDiagram from "@/src/components/ArchitectureDiagram";
@@ -78,9 +79,7 @@ export default function LandingPage() {
         <section className="landing-hero">
           <div className="page-frame landing-hero-grid">
             <div className="landing-hero-copy">
-              <p className="hero-overline">
-                <span className="overline-rule" /> Web3 transaction security firewall
-              </p>
+              <p className="hero-overline">&gt; Web3 transaction security firewall</p>
               <h1>Know what you&apos;re signing.</h1>
               <p className="landing-hero-description">Nalar reads your intent, simulates the transaction, inspects on-chain evidence, and stops dangerous requests before your wallet signs.</p>
               <div className="landing-actions">
@@ -88,6 +87,7 @@ export default function LandingPage() {
                   Open the demo <span aria-hidden="true">↗</span>
                 </Link>
                 <Link href="/install" className="landing-button landing-button-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" width="64" height="64" viewBox="0 0 16 16" style="color: rgb(74, 85, 101); opacity: 1; transform: rotate(0deg);"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M1.75 8.75h5.5v5.5m5-12.5v4m-2-2h4m-12.5-1v11.5h11.5v-5.5h-6v-6z"></path></g></svg>
                   Install extension
                 </Link>
               </div>
@@ -361,7 +361,12 @@ export default function LandingPage() {
       <footer className="site-footer landing-footer">
         <div className="page-frame site-footer-inner">
           <div>
-            <Link href="/" className="footer-brand"></Link>
+            <Link href="/" className="footer-brand">
+              <Image src="/brand/n-dark.svg" alt="Nalar Protocol" width={50} height={50} className="brand-logo-dark" />
+              <Image src="/brand/nalar-dark.svg" alt="Nalar Protocol" width={120} height={50} className="brand-logo-dark" />
+              <Image src="/brand/n-light.svg" alt="Nalar Protocol" width={50} height={50} className="brand-logo-light" />
+              <Image src="/brand/nalar-light.svg" alt="Nalar Protocol" width={120} height={50} className="brand-logo-light" />
+            </Link>
             <p>Know what you&apos;re signing.</p>
           </div>
           <div className="footer-links">

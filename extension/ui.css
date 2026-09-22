@@ -1,57 +1,115 @@
-/* Palette */
 /* ==========================================================================
    NALAR PROTOCOL EXTENSION UI & MOTION SYSTEM
-   Matches Nalar Protocol Website Tokens & Interaction Design
+   Cosmic Electric Blue Design System (#0066FF)
    ========================================================================== */
 
-/* Website-aligned Design Tokens */
 :root {
-  --nalar-ui-bg: #0a0a09;
-  --nalar-ui-surface: #10100f;
-  --nalar-ui-surface-2: #151513;
-  --nalar-ui-line: rgba(255, 255, 255, 0.075);
-  --nalar-ui-line-strong: rgba(255, 255, 255, 0.14);
-  --nalar-ui-text: #f2f1eb;
-  --nalar-ui-soft: #b7b5ad;
-  --nalar-ui-muted: #73736d;
-  --nalar-ui-danger: #ef806f;
-  --nalar-ui-warning: #e0b76d;
-  --nalar-ui-safe: #9dbb9f;
-  --nalar-ui-bg: #080b0f;
-  --nalar-ui-surface: #0e141a;
-  --nalar-ui-surface-2: #121a21;
-  --nalar-ui-line: #202c35;
-  --nalar-ui-line-strong: #3b4a55;
-  --nalar-ui-text: #edf4f6;
-  --nalar-ui-soft: #a9b8c0;
-  --nalar-ui-muted: #74838e;
-  --nalar-ui-dim: #465560;
-  --nalar-ui-danger: #f27870;
-  --nalar-ui-warning: #d3ab67;
-  --nalar-ui-safe: #7bcba5;
-  --nalar-ui-accent: #8adcf9;
-  --nalar-ui-accent-strong: #c1f1ff;
+  /* Surface & Background (Dark Mode Default) */
+  --nalar-ui-bg: #0b132b;
+  --nalar-ui-bg-deep: #050811;
+  --nalar-ui-surface: #101a2e;
+  --nalar-ui-surface-2: #14213a;
+  --nalar-ui-raised: #14213a;
+  --nalar-ui-border: #1e293b;
+  --nalar-ui-border-strong: #334155;
 
+  /* Typography Colors */
+  --nalar-ui-text: #ffffff;
+  --nalar-ui-soft: #cbd5e1;
+  --nalar-ui-muted: #94a3b8;
+  --nalar-ui-dim: #64748b;
+
+  /* Primary Brand Accent: Cosmic Electric Blue */
+  --nalar-ui-accent: #0066ff;
+  --nalar-ui-accent-hover: #2563eb;
+  --nalar-ui-accent-soft: #0d1b34;
+  --nalar-ui-accent-border: #1d4ed8;
+
+  /* Semantic Status Colors (Dark Mode) */
+  --nalar-ui-danger: #f87171;
+  --nalar-ui-danger-bg: rgba(248, 113, 113, 0.08);
+  --nalar-ui-danger-border: rgba(248, 113, 113, 0.28);
+  --nalar-ui-warning: #fbbf24;
+  --nalar-ui-warning-bg: rgba(251, 191, 36, 0.08);
+  --nalar-ui-warning-border: rgba(251, 191, 36, 0.28);
+  --nalar-ui-safe: #4ade80;
+  --nalar-ui-safe-bg: rgba(74, 222, 128, 0.08);
+  --nalar-ui-safe-border: rgba(74, 222, 128, 0.28);
+
+  /* Radius Scale */
+  --nalar-radius-sm: 4px;
+  --nalar-radius-md: 8px;
+  --nalar-radius-lg: 12px;
+
+  /* Typography */
   --nalar-font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --nalar-font-mono: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
 
-  --nalar-ease-out: cubic-bezier(.16, 1, .3, 1);
-  --nalar-ease-standard: cubic-bezier(.2, 0, 0, 1);
+  /* Motion Timing & Curves */
+  --nalar-motion-instant: 100ms;
+  --nalar-motion-fast: 150ms;
+  --nalar-motion-normal: 220ms;
+  --nalar-motion-enter: 300ms;
+  --nalar-motion-slow: 400ms;
+  --nalar-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --nalar-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Overlay and modal */
+[data-theme="light"],
+.theme-light {
+  /* Surface & Background (Light Mode) */
+  --nalar-ui-bg: #ffffff;
+  --nalar-ui-bg-deep: #f8fafc;
+  --nalar-ui-surface: #f8fafc;
+  --nalar-ui-surface-2: #f1f5f9;
+  --nalar-ui-raised: #f1f5f9;
+  --nalar-ui-border: #e2e8f0;
+  --nalar-ui-border-strong: #cbd5e1;
+
+  /* Typography Colors */
+  --nalar-ui-text: #0b132b;
+  --nalar-ui-soft: #334155;
+  --nalar-ui-muted: #64748b;
+  --nalar-ui-dim: #94a3b8;
+
+  /* Primary Brand Accent remains Cosmic Electric Blue */
+  --nalar-ui-accent: #0066ff;
+  --nalar-ui-accent-hover: #0052cc;
+  --nalar-ui-accent-soft: #eff6ff;
+  --nalar-ui-accent-border: #bfdbfe;
+
+  /* Semantic Status Colors (Light Mode) */
+  --nalar-ui-danger: #b91c1c;
+  --nalar-ui-danger-bg: rgba(185, 28, 28, 0.06);
+  --nalar-ui-danger-border: rgba(185, 28, 28, 0.24);
+  --nalar-ui-warning: #b45309;
+  --nalar-ui-warning-bg: rgba(180, 83, 9, 0.06);
+  --nalar-ui-warning-border: rgba(180, 83, 9, 0.24);
+  --nalar-ui-safe: #15803d;
+  --nalar-ui-safe-bg: rgba(21, 128, 61, 0.06);
+  --nalar-ui-safe-border: rgba(21, 128, 61, 0.24);
+}
+
 /* ==========================================================================
    Keyframes & Animations
    ========================================================================== */
 
 @keyframes nalar-backdrop-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes nalar-backdrop-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 @keyframes nalar-modal-in {
@@ -111,49 +169,76 @@
 
 @keyframes nalar-badge-pop {
   0% {
-    opacity: 0;
     transform: scale(0.92);
+    opacity: 0;
   }
   100% {
-    opacity: 1;
     transform: scale(1);
+    opacity: 1;
   }
 }
 
-/* Controlled Decision Mark Pulses (Executed Once) */
+/* Single pulse decision markers (NO infinite loop) */
 @keyframes nalar-pulse-block {
   0% {
-    box-shadow: 0 0 0 0 rgba(242, 120, 112, 0.45);
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(242, 120, 112, 0);
+    box-shadow: 0 0 0 6px rgba(248, 113, 113, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(242, 120, 112, 0);
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
   }
 }
 
 @keyframes nalar-pulse-review {
   0% {
-    box-shadow: 0 0 0 0 rgba(211, 171, 103, 0.45);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(211, 171, 103, 0);
+    box-shadow: 0 0 0 6px rgba(251, 191, 36, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(211, 171, 103, 0);
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0);
   }
 }
 
 @keyframes nalar-pulse-allow {
   0% {
-    box-shadow: 0 0 0 0 rgba(123, 203, 165, 0.45);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(123, 203, 165, 0);
+    box-shadow: 0 0 0 6px rgba(74, 222, 128, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(123, 203, 165, 0);
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+/* Single mismatch highlight pulse */
+@keyframes nalar-mismatch-pulse {
+  0% {
+    background-color: var(--nalar-ui-danger-bg);
+    border-color: var(--nalar-ui-danger);
+  }
+  50% {
+    background-color: rgba(248, 113, 113, 0.16);
+  }
+  100% {
+    background-color: var(--nalar-ui-danger-bg);
+    border-color: var(--nalar-ui-danger-border);
+  }
+}
+
+/* Progress Step Entrance */
+@keyframes nalar-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -162,485 +247,241 @@
    ========================================================================== */
 
 .nalar-overlay {
-  background: rgba(4, 4, 4, 0.78) !important;
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 2147483647 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 16px !important;
-  background: rgba(4, 7, 10, 0.78) !important;
-  backdrop-filter: blur(10px) saturate(0.85) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(0.85) !important;
-  animation: nalar-backdrop-in 240ms var(--nalar-ease-out) both !important;
+  background: rgba(5, 8, 17, 0.82) !important;
+  backdrop-filter: blur(12px) saturate(0.9) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(0.9) !important;
+  animation: nalar-backdrop-in 240ms var(--nalar-ease-out) forwards !important;
 }
 
 .nalar-overlay.nalar-closing {
-  animation: nalar-backdrop-out 180ms ease forwards !important;
-  pointer-events: none !important;
+  animation: nalar-backdrop-out 180ms var(--nalar-ease-standard) forwards !important;
 }
 
 .nalar-modal {
   position: relative !important;
   overflow: hidden !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.022), transparent 24%), var(--nalar-ui-bg) !important;
-  font-family: var(--nalar-font-sans) !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 24%), var(--nalar-ui-bg) !important;
-  border: 1px solid var(--nalar-ui-line-strong) !important;
-  border-radius: 14px !important;
-  border-radius: 12px !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.024), transparent 28%), var(--nalar-ui-bg) !important;
+  border: 1px solid var(--nalar-ui-border-strong) !important;
+  border-radius: var(--nalar-radius-lg) !important;
   box-shadow:
-    0 40px 120px rgba(0, 0, 0, 0.52),
-    0 1px 0 rgba(255, 255, 255, 0.035) inset !important;
     0 32px 80px rgba(0, 0, 0, 0.55),
-    0 1px 0 rgba(255, 255, 255, 0.04) inset !important;
-  animation: nalar-modal-in 280ms var(--nalar-ease-out) both !important;
+    0 1px 0 rgba(255, 255, 255, 0.06) inset !important;
+  animation: nalar-modal-in 300ms var(--nalar-ease-out) forwards !important;
 }
 
-.nalar-closing .nalar-modal {
-  animation: nalar-modal-out 180ms ease forwards !important;
+.nalar-overlay.nalar-closing .nalar-modal {
+  animation: nalar-modal-out 180ms var(--nalar-ease-standard) forwards !important;
 }
 
 .nalar-modal::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
-  background: linear-gradient(90deg, transparent, rgba(138, 220, 249, 0.28), transparent);
-  pointer-events: none;
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 0 auto 0 !important;
+  height: 1px !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent) !important;
+  pointer-events: none !important;
 }
 
-/* Decision overlay variants */
-/* Decision Overlay Top Accent Lines */
+/* Decision top gradient bar */
 .nalar-decision-overlay[data-decision="block"] .nalar-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(239, 128, 111, 0.5), transparent);
-  background: linear-gradient(90deg, transparent, rgba(242, 120, 112, 0.6), transparent) !important;
+  background: linear-gradient(90deg, transparent, var(--nalar-ui-danger), transparent) !important;
 }
 .nalar-decision-overlay[data-decision="review"] .nalar-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(224, 183, 109, 0.5), transparent);
-  background: linear-gradient(90deg, transparent, rgba(211, 171, 103, 0.6), transparent) !important;
+  background: linear-gradient(90deg, transparent, var(--nalar-ui-warning), transparent) !important;
 }
 .nalar-decision-overlay[data-decision="allow"] .nalar-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(157, 187, 159, 0.5), transparent);
-  background: linear-gradient(90deg, transparent, rgba(123, 203, 165, 0.6), transparent) !important;
+  background: linear-gradient(90deg, transparent, var(--nalar-ui-safe), transparent) !important;
 }
 
-/* Decision header */
 /* ==========================================================================
-   Staggered Section Entrances
+   Stagger Animations for Decision Content
    ========================================================================== */
 
-.nalar-stagger-1 { animation: nalar-fade-rise 240ms var(--nalar-ease-out) 0ms both !important; }
-.nalar-stagger-2 { animation: nalar-fade-rise 240ms var(--nalar-ease-out) 80ms both !important; }
-.nalar-stagger-3 { animation: nalar-fade-rise 240ms var(--nalar-ease-out) 140ms both !important; }
-.nalar-stagger-4 { animation: nalar-fade-rise 240ms var(--nalar-ease-out) 200ms both !important; }
-.nalar-stagger-5 { animation: nalar-fade-rise 240ms var(--nalar-ease-out) 280ms both !important; }
-.nalar-stagger-6 { animation: nalar-fade-rise 240ms var(--nalar-ease-out) 340ms both !important; }
+.nalar-stagger-1 {
+  animation: nalar-fade-rise 240ms var(--nalar-ease-out) 0ms both !important;
+}
+.nalar-stagger-2 {
+  animation: nalar-fade-rise 240ms var(--nalar-ease-out) 70ms both !important;
+}
+.nalar-stagger-3 {
+  animation: nalar-fade-rise 240ms var(--nalar-ease-out) 130ms both !important;
+}
+.nalar-stagger-4 {
+  animation: nalar-fade-rise 240ms var(--nalar-ease-out) 190ms both !important;
+}
+.nalar-stagger-5 {
+  animation: nalar-fade-rise 240ms var(--nalar-ease-out) 250ms both !important;
+}
+.nalar-stagger-6 {
+  animation: nalar-fade-rise 240ms var(--nalar-ease-out) 310ms both !important;
+}
 
 /* ==========================================================================
    Decision Header
    ========================================================================== */
 
 .nalar-decision-header {
-  padding: 24px 26px 22px !important;
-  padding: 22px 24px 20px !important;
-  border-bottom: 1px solid var(--nalar-ui-line) !important;
+  display: grid !important;
+  grid-template-columns: 44px 1fr auto !important;
+  gap: 14px !important;
+  align-items: center !important;
+  padding: 22px 26px 18px !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
 }
-.nalar-decision-mark {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 10px !important;
-  border-color: var(--nalar-ui-line-strong) !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)), var(--nalar-ui-surface) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
-}
-.nalar-decision-header h2 {
-  font-size: 20px !important;
-  line-height: 1.1 !important;
-  letter-spacing: -0.02em !important;
-}
-.nalar-risk-pill {
 
 .nalar-brand-eyebrow {
   display: inline-flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  padding: 5px 10px !important;
-  border-radius: 6px !important;
-  font-size: 11px !important;
-  gap: 7px !important;
+  gap: 6px !important;
   font-family: var(--nalar-font-mono) !important;
   font-size: 9px !important;
   font-weight: 700 !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-  letter-spacing: 0.02em !important;
-  line-height: 1 !important;
-  letter-spacing: 0.14em !important;
+  letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
-  color: var(--nalar-ui-muted) !important;
+  color: var(--nalar-ui-accent) !important;
+  margin-bottom: 3px !important;
 }
 
-/* Body and scrollbar */
-.nalar-decision-body {
-  padding: 0 26px !important;
-  max-height: min(58vh, 620px) !important;
-  overflow-y: auto !important;
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent !important;
 .nalar-brand-mark-svg {
-  display: inline-block;
-  vertical-align: middle;
-  flex-shrink: 0;
+  display: inline-block !important;
+  vertical-align: middle !important;
 }
-.nalar-decision-body::-webkit-scrollbar {
-  width: 6px;
 
 .nalar-decision-mark {
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 8px !important;
-  border-color: var(--nalar-ui-line-strong) !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: var(--nalar-radius-md) !important;
+  border: 1px solid var(--nalar-ui-border-strong) !important;
   background: var(--nalar-ui-surface) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
-}
-.nalar-decision-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-.nalar-decision-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 99px;
-}
-
-/* Sections */
-.nalar-section {
-  padding: 18px 0 !important;
-  border-bottom: 1px solid var(--nalar-ui-line) !important;
-.nalar-decision-overlay[data-decision="block"] .nalar-decision-mark {
-  border-color: rgba(242, 120, 112, 0.45) !important;
-  animation: nalar-pulse-block 1.2s ease-out 1 !important;
-}
-.nalar-section-label {
-  margin-bottom: 9px !important;
-  color: var(--nalar-ui-muted) !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.16em !important;
-.nalar-decision-overlay[data-decision="review"] .nalar-decision-mark {
-  border-color: rgba(211, 171, 103, 0.45) !important;
-  animation: nalar-pulse-review 1.2s ease-out 1 !important;
-}
-.nalar-text-block {
-  color: var(--nalar-ui-text) !important;
-  font-size: 14px !important;
-  line-height: 1.72 !important;
-.nalar-decision-overlay[data-decision="allow"] .nalar-decision-mark {
-  border-color: rgba(123, 203, 165, 0.45) !important;
-  animation: nalar-pulse-allow 1.2s ease-out 1 !important;
-}
-
-/* Explanation section styling */
-.nalar-section:has(.nalar-decision-summary) {
-  margin: 4px -12px 0 !important;
-  padding: 18px 12px 20px !important;
-  border-bottom: 1px solid var(--nalar-ui-line-strong) !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent), rgba(255, 255, 255, 0.012) !important;
-}
-.nalar-decision-summary {
-  max-width: 42ch !important;
-.nalar-decision-header h2 {
-  margin: 4px 0 0 !important;
+  display: grid !important;
+  place-items: center !important;
   font-size: 20px !important;
   font-weight: 700 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+}
+
+.nalar-decision-overlay[data-decision="block"] .nalar-decision-mark {
+  color: var(--nalar-ui-danger) !important;
+  border-color: var(--nalar-ui-danger-border) !important;
+  animation: nalar-pulse-block 350ms var(--nalar-ease-out) 150ms 1 !important;
+}
+
+.nalar-decision-overlay[data-decision="review"] .nalar-decision-mark {
+  color: var(--nalar-ui-warning) !important;
+  border-color: var(--nalar-ui-warning-border) !important;
+  animation: nalar-pulse-review 350ms var(--nalar-ease-out) 150ms 1 !important;
+}
+
+.nalar-decision-overlay[data-decision="allow"] .nalar-decision-mark {
+  color: var(--nalar-ui-safe) !important;
+  border-color: var(--nalar-ui-safe-border) !important;
+  animation: nalar-pulse-allow 350ms var(--nalar-ease-out) 150ms 1 !important;
+}
+
+.nalar-decision-header h2 {
+  font-size: 20px !important;
   line-height: 1.1 !important;
   letter-spacing: -0.025em !important;
+  margin: 0 !important;
   color: var(--nalar-ui-text) !important;
-  font-size: 16px !important;
-  line-height: 1.58 !important;
-  letter-spacing: -0.01em !important;
-}
-.nalar-decision-detail {
-  color: var(--nalar-ui-soft) !important;
-  font-size: 12px !important;
-  line-height: 1.6 !important;
 }
 
-/* Intent match */
-.nalar-intent-match {
-  margin-top: 14px !important;
-  padding-top: 12px !important;
-  color: var(--nalar-ui-muted) !important;
-  border-top: 1px solid var(--nalar-ui-line) !important;
-}
-.nalar-intent-match[data-match="true"] strong {
-  color: var(--nalar-ui-safe) !important;
-}
-.nalar-intent-match[data-match="false"] strong {
-  color: var(--nalar-ui-danger) !important;
-}
-
-/* Evidence hierarchy */
-.nalar-evidence-card {
-  margin-top: 10px !important;
-  padding: 16px !important;
-/* Risk Indicator */
 .nalar-risk-indicator {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-end !important;
-  justify-content: center !important;
-  padding: 6px 10px !important;
-  border-radius: 6px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 10px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent), var(--nalar-ui-surface) !important;
-  background: var(--nalar-ui-surface) !important;
-  min-width: 72px !important;
-}
-.nalar-finding[data-severity="critical"],
-.nalar-finding[data-severity="high"] {
-  color: var(--nalar-ui-danger) !important;
-}
-.nalar-finding[data-severity="medium"] {
-  color: var(--nalar-ui-warning) !important;
-}
-.nalar-finding[data-severity="info"],
-.nalar-finding[data-severity="low"] {
-  color: var(--nalar-ui-muted) !important;
+  gap: 2px !important;
 }
 
-/* Evidence timeline */
-.nalar-timeline {
-  position: relative;
-  padding-left: 20px;
+.nalar-risk-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 8px !important;
+  border-radius: var(--nalar-radius-sm) !important;
+  border: 1px solid var(--nalar-ui-border) !important;
+  background: var(--nalar-ui-surface) !important;
+}
+
 .nalar-risk-score {
   font-family: var(--nalar-font-mono) !important;
-  font-size: 18px !important;
-  font-weight: 750 !important;
-  line-height: 1 !important;
-}
-.nalar-timeline::before {
-  content: "";
-  position: absolute;
-  left: 5px;
-  top: 4px;
-  bottom: 4px;
-  width: 1px;
-  background: var(--nalar-ui-line-strong);
-}
-.nalar-timeline-node {
-  position: relative;
-  padding: 6px 0;
-  font-size: 11px;
-}
-.nalar-timeline-node::before {
-  content: "";
-  position: absolute;
-  left: -18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--nalar-ui-muted);
-}
-.nalar-timeline-node[data-type="threat"]::before {
-  background: var(--nalar-ui-danger);
-}
-.nalar-timeline-node[data-type="decision"]::before {
-  background: var(--nalar-ui-danger);
-  width: 7px;
-  height: 7px;
-  left: -19px;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--nalar-ui-text) !important;
 }
 
-/* Risk ring */
-.nalar-risk-ring {
-  min-width: 110px;
-  padding: 12px 13px;
-  border-radius: 10px;
-  background: var(--nalar-ui-surface) !important;
-  border: 1px solid var(--nalar-ui-line) !important;
 .nalar-risk-level {
-  margin-top: 3px !important;
-  font-family: var(--nalar-font-mono) !important;
-  font-size: 8px !important;
+  font-size: 9px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.12em !important;
+  letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
 }
 
-/* Buttons */
-.nalar-button {
-  min-height: 44px !important;
-  border-radius: 8px !important;
-  border-color: var(--nalar-ui-line-strong) !important;
-  background: var(--nalar-ui-surface) !important;
-  color: var(--nalar-ui-text) !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.005em !important;
-  transition:
-    transform 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease,
-    box-shadow 150ms ease !important;
-}
-.nalar-button:hover {
-  border-color: rgba(255, 255, 255, 0.24) !important;
-  background: var(--nalar-ui-surface-2) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.16) !important;
-}
-.nalar-button:active {
-  transform: translateY(1px) !important;
-}
-.nalar-button:focus-visible {
-  outline: 2px solid var(--nalar-ui-safe) !important;
-  outline-offset: 2px !important;
-}
-.nalar-button.nalar-button-primary {
-  background: var(--nalar-ui-text) !important;
-  border-color: var(--nalar-ui-text) !important;
-  color: var(--nalar-ui-bg) !important;
-}
-.nalar-button.nalar-button-primary:hover {
-  background: #ffffff !important;
-  border-color: #ffffff !important;
-}
-.nalar-button:disabled {
-  opacity: 0.4 !important;
-  cursor: not-allowed !important;
-  pointer-events: none !important;
-}
 /* ==========================================================================
-   Scroll Body
+   Scroll Body & Container
    ========================================================================== */
 
-/* Analysis steps */
-.nalar-analysis-modal {
-  border-radius: 14px !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 30%), var(--nalar-ui-bg) !important;
 .nalar-decision-body {
-  padding: 0 24px 20px !important;
-  max-height: min(60vh, 600px) !important;
+  padding: 0 26px 16px !important;
+  max-height: min(60vh, 640px) !important;
   overflow-y: auto !important;
   scrollbar-width: thin !important;
-  scrollbar-color: rgba(255, 255, 255, 0.14) transparent !important;
-}
-.nalar-analysis-step {
-  position: relative !important;
-  padding: 10px 0 !important;
-  border-bottom: 1px solid var(--nalar-ui-line) !important;
-}
-.nalar-analysis-step:last-child {
-  border-bottom: 0 !important;
-}
-.nalar-analysis-step[data-state="active"] {
-  color: var(--nalar-ui-text) !important;
-}
-.nalar-analysis-step[data-state="done"] {
-  color: var(--nalar-ui-soft) !important;
-}
-.nalar-analysis-indicator {
-  transition:
-    color 180ms ease,
-    transform 180ms ease,
-    opacity 180ms ease !important;
-}
-.nalar-analysis-step[data-state="active"] .nalar-analysis-indicator {
-  color: var(--nalar-ui-text) !important;
-  transform: scale(1.08);
+  scrollbar-color: var(--nalar-ui-border-strong) transparent !important;
 }
 
-/* Intent screen */
-.nalar-intent-modal {
-  border-radius: 14px !important;
 .nalar-decision-body::-webkit-scrollbar {
   width: 5px;
 }
-.nalar-intent-textarea {
-  background: var(--nalar-ui-surface) !important;
-  border-color: var(--nalar-ui-line) !important;
-  border-radius: 8px !important;
-  color: var(--nalar-ui-text) !important;
 .nalar-decision-body::-webkit-scrollbar-track {
   background: transparent;
 }
-.nalar-intent-textarea:focus {
-  border-color: rgba(255, 255, 255, 0.26) !important;
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.045),
-    0 10px 30px rgba(0, 0, 0, 0.14) !important;
 .nalar-decision-body::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--nalar-ui-border-strong);
   border-radius: 99px;
 }
 
-/* Security summary */
-.nalar-security-summary {
-  padding: 14px;
-  border: 1px solid var(--nalar-ui-line);
-  border-radius: 8px;
-  background: var(--nalar-ui-surface);
-}
-.nalar-summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  padding: 5px 0;
-  font-size: 11px;
-}
-.nalar-summary-row + .nalar-summary-row {
-  border-top: 1px solid var(--nalar-ui-line);
-}
 /* ==========================================================================
-   Why Nalar Stopped Card (2nd Focal Point)
+   Why Stopped Card (Primary Attention)
    ========================================================================== */
 
-/* Why Nalar Stopped Card */
 .nalar-why-stopped-card {
   margin-top: 14px !important;
-  margin-top: 16px !important;
-  padding: 16px 18px !important;
-  border: 1px solid var(--nalar-ui-line-strong) !important;
-  border-radius: 10px !important;
-  border-radius: 8px !important;
+  padding: 14px 18px !important;
+  border-radius: var(--nalar-radius-md) !important;
   background: var(--nalar-ui-surface) !important;
+  border: 1px solid var(--nalar-ui-border) !important;
 }
 
 .nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card {
-  border-color: rgba(239, 128, 111, 0.28) !important;
-  background: linear-gradient(180deg, rgba(239, 128, 111, 0.05), transparent 60%), var(--nalar-ui-surface) !important;
-  border-color: rgba(242, 120, 112, 0.3) !important;
-  background: linear-gradient(180deg, rgba(242, 120, 112, 0.05), transparent 70%), var(--nalar-ui-surface) !important;
+  border-left: 3px solid var(--nalar-ui-danger) !important;
+  background: var(--nalar-ui-danger-bg) !important;
+  border-color: var(--nalar-ui-danger-border) !important;
 }
 
 .nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card {
-  border-color: rgba(224, 183, 109, 0.28) !important;
-  background: linear-gradient(180deg, rgba(224, 183, 109, 0.05), transparent 60%), var(--nalar-ui-surface) !important;
-  border-color: rgba(211, 171, 103, 0.3) !important;
-  background: linear-gradient(180deg, rgba(211, 171, 103, 0.05), transparent 70%), var(--nalar-ui-surface) !important;
+  border-left: 3px solid var(--nalar-ui-warning) !important;
+  background: var(--nalar-ui-warning-bg) !important;
+  border-color: var(--nalar-ui-warning-border) !important;
+}
+
+.nalar-decision-overlay[data-decision="allow"] .nalar-why-stopped-card {
+  border-left: 3px solid var(--nalar-ui-safe) !important;
+  background: var(--nalar-ui-safe-bg) !important;
+  border-color: var(--nalar-ui-safe-border) !important;
 }
 
 .nalar-why-stopped-primary {
-  margin-top: 8px !important;
-  font-size: 14px !important;
   font-size: 13.5px !important;
-  font-weight: 500 !important;
-  line-height: 1.6 !important;
+  line-height: 1.55 !important;
   color: var(--nalar-ui-text) !important;
+  font-weight: 500 !important;
 }
 
-/* Intent vs Actual Comparison Card */
 .nalar-why-stopped-impact {
-  margin-top: 10px !important;
-  padding-top: 10px !important;
-  border-top: 1px solid var(--nalar-ui-line) !important;
   font-size: 12px !important;
-  line-height: 1.55 !important;
+  line-height: 1.5 !important;
   color: var(--nalar-ui-soft) !important;
+  margin-top: 6px !important;
 }
 
 /* ==========================================================================
@@ -648,27 +489,27 @@
    ========================================================================== */
 
 .nalar-comparison-card {
-  margin-top: 10px !important;
-  padding: 16px !important;
   margin-top: 12px !important;
-  padding: 16px 18px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 10px !important;
-  border-radius: 8px !important;
+  border: 1px solid var(--nalar-ui-border) !important;
+  border-radius: var(--nalar-radius-md) !important;
   background: var(--nalar-ui-surface) !important;
+  overflow: hidden !important;
 }
 
 .nalar-comparison-header {
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  margin-bottom: 12px !important;
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
+  background: var(--nalar-ui-bg-deep) !important;
 }
 
 .nalar-comparison-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 10px !important;
+  gap: 1px !important;
+  background: var(--nalar-ui-border) !important;
 }
 
 @media (max-width: 480px) {
@@ -678,163 +519,99 @@
 }
 
 .nalar-comparison-box {
-  padding: 11px 12px !important;
-  padding: 12px 14px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 8px !important;
-  border-radius: 6px !important;
-  background: var(--nalar-ui-surface-2) !important;
+  padding: 12px 16px !important;
+  background: var(--nalar-ui-surface) !important;
 }
 
 .nalar-comp-expected {
-  animation: nalar-slide-left 220ms var(--nalar-ease-out) both;
+  animation: nalar-slide-left 220ms var(--nalar-ease-out) both !important;
 }
 
 .nalar-comp-actual {
-  animation: nalar-slide-right 220ms var(--nalar-ease-out) both;
-}
-
-.nalar-comp-actual[data-mismatch="true"] {
-  border-color: rgba(242, 120, 112, 0.32) !important;
-  background: rgba(242, 120, 112, 0.04) !important;
+  animation: nalar-slide-right 220ms var(--nalar-ease-out) both !important;
 }
 
 .nalar-comparison-label {
-  font-family: var(--nalar-font-mono) !important;
   font-size: 9px !important;
   font-weight: 700 !important;
   letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
   color: var(--nalar-ui-muted) !important;
+  margin-bottom: 5px !important;
 }
 
 .nalar-comparison-value {
-  margin-top: 6px !important;
-  font-size: 12px !important;
-  line-height: 1.55 !important;
-  margin-top: 7px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  line-height: 1.45 !important;
-  color: var(--nalar-ui-text) !important;
-  word-break: break-word !important;
-}
-
-.nalar-comparison-diff {
-  margin-top: 12px !important;
-  padding-top: 11px !important;
-  border-top: 1px solid var(--nalar-ui-line) !important;
-/* Specific Mismatch Field Accent */
-.nalar-field-mismatch {
-  margin-top: 10px !important;
-  padding: 8px 10px !important;
-  border: 1px solid rgba(242, 120, 112, 0.35) !important;
-  border-radius: 5px !important;
-  background: rgba(242, 120, 112, 0.06) !important;
-  font-size: 11px !important;
+  font-size: 12.5px !important;
   line-height: 1.5 !important;
-  color: var(--nalar-ui-danger) !important;
+  color: var(--nalar-ui-text) !important;
+  font-weight: 500 !important;
 }
 
-/* Badges */
+/* Match / Mismatch Badge */
 .nalar-badge {
   display: inline-flex !important;
   align-items: center !important;
   gap: 4px !important;
   padding: 3px 8px !important;
-  border-radius: 4px !important;
-  font-family: var(--nalar-font-mono) !important;
-  font-size: 9px !important;
-  font-weight: 750 !important;
-  letter-spacing: 0.08em !important;
-  letter-spacing: 0.06em !important;
-  animation: nalar-badge-pop 240ms var(--nalar-ease-out) 80ms both !important;
+  border-radius: var(--nalar-radius-sm) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  animation: nalar-badge-pop 200ms var(--nalar-ease-out) both !important;
 }
 
 .nalar-badge[data-match="true"] {
-  background: rgba(157, 187, 159, 0.12) !important;
+  background: var(--nalar-ui-safe-bg) !important;
   color: var(--nalar-ui-safe) !important;
-  border: 1px solid rgba(157, 187, 159, 0.25) !important;
-  background: rgba(123, 203, 165, 0.12) !important;
-  border: 1px solid rgba(123, 203, 165, 0.3) !important;
+  border: 1px solid var(--nalar-ui-safe-border) !important;
 }
 
 .nalar-badge[data-match="false"] {
-  background: rgba(239, 128, 111, 0.12) !important;
+  background: var(--nalar-ui-danger-bg) !important;
   color: var(--nalar-ui-danger) !important;
-  border: 1px solid rgba(239, 128, 111, 0.25) !important;
-  background: rgba(242, 120, 112, 0.12) !important;
-  border: 1px solid rgba(242, 120, 112, 0.3) !important;
+  border: 1px solid var(--nalar-ui-danger-border) !important;
 }
 
-.nalar-badge-source {
-  display: inline-block !important;
-  padding: 2px 6px !important;
-  border-radius: 3px !important;
-  font-size: 8px !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.08em !important;
-  border: 1px solid var(--nalar-ui-line-strong) !important;
-  background: var(--nalar-ui-surface-2) !important;
-  color: var(--nalar-ui-soft) !important;
+.nalar-field-mismatch {
+  margin-top: 8px !important;
+  padding: 6px 10px !important;
+  border-radius: var(--nalar-radius-sm) !important;
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  color: var(--nalar-ui-danger) !important;
+  background: var(--nalar-ui-danger-bg) !important;
+  border: 1px solid var(--nalar-ui-danger-border) !important;
+  animation: nalar-mismatch-pulse 260ms var(--nalar-ease-out) 1 !important;
+}
+
 /* ==========================================================================
-   What This Means Callout (Lightweight, No Card Overload)
+   What This Means Callout
    ========================================================================== */
 
 .nalar-means-callout {
   margin-top: 12px !important;
-  padding: 10px 14px 10px 16px !important;
-  border-left: 2px solid var(--nalar-ui-accent) !important;
-  border-radius: 0 6px 6px 0 !important;
-  background: rgba(138, 220, 249, 0.035) !important;
+  padding: 12px 16px !important;
+  border-radius: var(--nalar-radius-md) !important;
+  background: var(--nalar-ui-surface) !important;
+  border: 1px solid var(--nalar-ui-border) !important;
+  border-left: 3px solid var(--nalar-ui-accent) !important;
 }
 
-.nalar-badge-source[data-source="ON-CHAIN"],
-.nalar-badge-source[data-source="BNB MCP"] {
-  color: var(--nalar-ui-safe) !important;
-  border-color: rgba(157, 187, 159, 0.25) !important;
-  background: rgba(157, 187, 159, 0.08) !important;
-.nalar-decision-overlay[data-decision="block"] .nalar-means-callout {
-  border-left-color: var(--nalar-ui-danger) !important;
-  background: rgba(242, 120, 112, 0.035) !important;
-}
-
-.nalar-badge-source[data-source="SIMULATION"] {
-  color: var(--nalar-ui-warning) !important;
-  border-color: rgba(224, 183, 109, 0.25) !important;
-  background: rgba(224, 183, 109, 0.08) !important;
-.nalar-decision-overlay[data-decision="review"] .nalar-means-callout {
-  border-left-color: var(--nalar-ui-warning) !important;
-  background: rgba(211, 171, 103, 0.035) !important;
-}
-
-.nalar-badge-source[data-source="POLICY"] {
-  color: var(--nalar-ui-danger) !important;
-  border-color: rgba(239, 128, 111, 0.25) !important;
-  background: rgba(239, 128, 111, 0.08) !important;
 .nalar-means-label {
-  font-family: var(--nalar-font-mono) !important;
-  font-size: 8.5px !important;
+  font-size: 9px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.14em !important;
+  letter-spacing: 0.12em !important;
   text-transform: uppercase !important;
   color: var(--nalar-ui-muted) !important;
+  margin-bottom: 5px !important;
 }
 
-/* What This Means Card */
-.nalar-means-card {
-  padding: 14px 18px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 10px !important;
-  background: var(--nalar-ui-surface) !important;
 .nalar-means-text {
-  margin-top: 4px !important;
   font-size: 12px !important;
-  line-height: 1.6 !important;
+  line-height: 1.55 !important;
   color: var(--nalar-ui-soft) !important;
 }
 
-/* Accordion details (Evidence and Technical details) */
 /* ==========================================================================
    Accordions (Evidence & Technical Details)
    ========================================================================== */
@@ -842,27 +619,23 @@
 .nalar-evidence-details,
 .nalar-tech-details {
   margin-top: 10px !important;
-  padding: 8px 0 10px !important;
-  border-bottom: 1px solid var(--nalar-ui-line) !important;
-  border-top: 1px solid var(--nalar-ui-line) !important;
-  padding-top: 10px !important;
+  border-top: 1px solid var(--nalar-ui-border) !important;
+  padding-top: 8px !important;
 }
 
 .nalar-evidence-details summary,
 .nalar-tech-details summary {
-  list-style: none !important;
   cursor: pointer !important;
-  color: var(--nalar-ui-muted) !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 7px !important;
+  user-select: none !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   color: var(--nalar-ui-muted) !important;
-  user-select: none !important;
-  padding: 4px 0 !important;
-  transition: color 150ms ease !important;
+  padding: 6px 0 !important;
   list-style: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: color var(--nalar-motion-fast) ease !important;
 }
 
 .nalar-evidence-details summary::-webkit-details-marker,
@@ -872,116 +645,94 @@
 
 .nalar-evidence-details summary::before,
 .nalar-tech-details summary::before {
-  content: "▸ " !important;
-  content: "▸" !important;
+  content: "" !important;
   display: inline-block !important;
-  transition: transform 150ms ease !important;
-  font-size: 10px !important;
-  color: var(--nalar-ui-muted) !important;
-  transition: transform 180ms ease, color 150ms ease !important;
+  width: 5px !important;
+  height: 5px !important;
+  border-right: 1.5px solid var(--nalar-ui-muted) !important;
+  border-bottom: 1.5px solid var(--nalar-ui-muted) !important;
+  transform: rotate(-45deg) !important;
+  transition: transform var(--nalar-motion-fast) var(--nalar-ease-out) !important;
 }
 
 .nalar-evidence-details[open] summary::before,
 .nalar-tech-details[open] summary::before {
-  transform: rotate(90deg) !important;
-  color: var(--nalar-ui-soft) !important;
+  transform: rotate(45deg) !important;
 }
 
 .nalar-evidence-details summary:hover,
 .nalar-tech-details summary:hover {
-  color: var(--nalar-ui-soft) !important;
   color: var(--nalar-ui-text) !important;
 }
 
-.nalar-evidence-details[open] summary,
-.nalar-tech-details[open] summary {
-  color: var(--nalar-ui-soft) !important;
-  margin-bottom: 8px !important;
 .nalar-evidence-content,
 .nalar-tech-content {
   margin-top: 8px !important;
   padding: 12px 14px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 6px !important;
+  border-radius: var(--nalar-radius-md) !important;
+  border: 1px solid var(--nalar-ui-border) !important;
   background: var(--nalar-ui-surface) !important;
-  animation: nalar-fade-rise 180ms var(--nalar-ease-out) both !important;
+  animation: nalar-fade-rise 200ms var(--nalar-ease-out) both !important;
 }
 
-.nalar-evidence-content {
-/* Subtle Source Badges */
 .nalar-badge-source {
+  display: inline-flex !important;
+  align-items: center !important;
   padding: 2px 6px !important;
-  border-radius: 4px !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-  border-radius: 8px !important;
-  background: var(--nalar-ui-surface) !important;
-  padding: 12px 14px !important;
-  background: var(--nalar-ui-surface-2) !important;
+  border-radius: 3px !important;
   font-family: var(--nalar-font-mono) !important;
-  font-size: 8px !important;
+  font-size: 8.5px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.08em !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  background: var(--nalar-ui-accent-soft) !important;
+  color: var(--nalar-ui-accent) !important;
+  border: 1px solid var(--nalar-ui-accent-border) !important;
+}
+
+.nalar-finding[data-severity="critical"],
+.nalar-finding[data-severity="high"] {
+  color: var(--nalar-ui-danger) !important;
+}
+
+.nalar-finding[data-severity="medium"] {
+  color: var(--nalar-ui-warning) !important;
+}
+
+.nalar-finding[data-severity="info"],
+.nalar-finding[data-severity="low"] {
   color: var(--nalar-ui-muted) !important;
 }
 
-/* Network overlay */
-.nalar-network-overlay {
-  background: rgba(4, 4, 4, 0.78) !important;
-  backdrop-filter: blur(10px) saturate(0.85) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(0.85) !important;
-.nalar-badge-source[data-source="ON-CHAIN"],
-.nalar-badge-source[data-source="BNB MCP"] {
-  color: var(--nalar-ui-safe) !important;
-  border-color: rgba(123, 203, 165, 0.25) !important;
-}
-
-.nalar-network-modal {
-  width: min(480px, 100%) !important;
-.nalar-badge-source[data-source="SIMULATION"] {
-  color: var(--nalar-ui-accent) !important;
-  border-color: rgba(138, 220, 249, 0.25) !important;
-}
-
-.nalar-badge-source[data-source="POLICY"] {
-  color: var(--nalar-ui-warning) !important;
-  border-color: rgba(211, 171, 103, 0.25) !important;
-}
-
 /* ==========================================================================
-   Buttons & Interactive Elements
+   Buttons
    ========================================================================== */
 
 .nalar-button {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
   min-height: 44px !important;
-  padding: 0 18px !important;
-  border: 1px solid var(--nalar-ui-line-strong) !important;
-  border-radius: 14px !important;
-  background: linear-gradient(180deg, rgba(224, 183, 109, 0.04), transparent 28%), var(--nalar-ui-bg) !important;
-  border-radius: 7px !important;
+  padding: 0 16px !important;
+  border-radius: var(--nalar-radius-md) !important;
+  border: 1px solid var(--nalar-ui-border-strong) !important;
   background: var(--nalar-ui-surface) !important;
   color: var(--nalar-ui-text) !important;
   font-family: var(--nalar-font-sans) !important;
-  font-size: 12px !important;
-  font-weight: 650 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
   letter-spacing: -0.01em !important;
   cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition:
-    transform 140ms ease,
-    border-color 140ms ease,
-    background-color 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease !important;
+    transform var(--nalar-motion-fast) ease,
+    background-color var(--nalar-motion-fast) ease,
+    border-color var(--nalar-motion-fast) ease,
+    box-shadow var(--nalar-motion-fast) ease !important;
 }
 
-.nalar-network-modal::before {
-  background: linear-gradient(90deg, transparent, rgba(224, 183, 109, 0.5), transparent) !important;
 .nalar-button:hover {
-  border-color: var(--nalar-ui-accent) !important;
   background: var(--nalar-ui-surface-2) !important;
-  transform: translateY(-1px) !important;
+  border-color: var(--nalar-ui-accent) !important;
 }
 
 .nalar-button:active {
@@ -993,67 +744,54 @@
   outline-offset: 2px !important;
 }
 
-.nalar-button.nalar-button-primary {
-  border-color: var(--nalar-ui-text) !important;
-  background: var(--nalar-ui-text) !important;
-  color: var(--nalar-ui-bg) !important;
+.nalar-button-primary {
+  background: var(--nalar-ui-accent) !important;
+  border-color: var(--nalar-ui-accent) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 10px rgba(0, 102, 255, 0.28) !important;
 }
 
-.nalar-button.nalar-button-primary:hover {
-  border-color: #ffffff !important;
-  background: #ffffff !important;
+.nalar-button-primary:hover {
+  background: var(--nalar-ui-accent-hover) !important;
+  border-color: var(--nalar-ui-accent-hover) !important;
+  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.38) !important;
 }
 
-.nalar-button.nalar-button-danger {
-  border-color: var(--nalar-ui-danger) !important;
+.nalar-button-danger {
   background: var(--nalar-ui-danger) !important;
-  color: #051018 !important;
+  border-color: var(--nalar-ui-danger) !important;
+  color: #ffffff !important;
 }
 
-.nalar-button.nalar-button-warning {
-  border-color: var(--nalar-ui-warning) !important;
-  background: var(--nalar-ui-warning) !important;
-  color: #051018 !important;
+.nalar-button-danger:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
 }
 
 .nalar-button:disabled {
-  opacity: 0.35 !important;
+  opacity: 0.4 !important;
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
 
 /* ==========================================================================
-   Analysis / Loading Screen (7-step sequence)
+   Analysis / Loading State (Cosmic Electric Blue Progress Rail)
    ========================================================================== */
 
 .nalar-analysis-modal {
-  width: min(460px, 100%) !important;
-  padding: 26px !important;
-  border-radius: 12px !important;
+  border-radius: var(--nalar-radius-lg) !important;
+  background: linear-gradient(180deg, rgba(0, 102, 255, 0.03), transparent 35%), var(--nalar-ui-bg) !important;
 }
 
 .nalar-analysis-step {
-  display: grid !important;
-  grid-template-columns: 24px 22px 1fr !important;
-  align-items: center !important;
-  gap: 8px !important;
-  padding: 8px 0 !important;
-  border-bottom: 1px solid var(--nalar-ui-line) !important;
-  transition: color 180ms ease, opacity 180ms ease !important;
+  position: relative !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
+  transition: color var(--nalar-motion-fast) ease !important;
 }
 
 .nalar-analysis-step:last-child {
-  border-bottom: none !important;
-}
-
-.nalar-step-num {
-  font-family: var(--nalar-font-mono) !important;
-  font-size: 10px !important;
-  color: var(--nalar-ui-dim) !important;
-}
-
-.nalar-analysis-step[data-state="active"] .nalar-step-num {
-  color: var(--nalar-ui-accent) !important;
+  border-bottom: 0 !important;
 }
 
 .nalar-analysis-step[data-state="active"] {
@@ -1068,94 +806,100 @@
   color: var(--nalar-ui-dim) !important;
 }
 
-.nalar-analysis-indicator {
-  width: 20px !important;
-  height: 20px !important;
-  display: grid !important;
-  place-items: center !important;
+.nalar-step-num {
+  font-family: var(--nalar-font-mono) !important;
   font-size: 10px !important;
-  transition: color 180ms ease, transform 180ms ease !important;
+  font-weight: 700 !important;
+  color: var(--nalar-ui-dim) !important;
+}
+
+.nalar-analysis-step[data-state="active"] .nalar-step-num {
+  color: var(--nalar-ui-accent) !important;
+}
+
+.nalar-analysis-indicator {
+  transition:
+    color var(--nalar-motion-fast) ease,
+    transform var(--nalar-motion-fast) ease !important;
 }
 
 .nalar-analysis-step[data-state="active"] .nalar-analysis-indicator {
   color: var(--nalar-ui-accent) !important;
-  transform: scale(1.1) !important;
+  transform: scale(1.15) !important;
+}
+
+.nalar-analysis-step[data-state="done"] .nalar-analysis-indicator {
+  color: var(--nalar-ui-safe) !important;
+}
+
+/* Subtle top scan line for analysis modal */
+.nalar-analysis-modal::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, transparent, var(--nalar-ui-accent), transparent) !important;
+  opacity: 0.75 !important;
+  pointer-events: none !important;
 }
 
 /* ==========================================================================
-   Supported Network Check Modal
+   Network Not Supported Screen
    ========================================================================== */
 
 .nalar-network-modal {
-  border-radius: 12px !important;
+  border-radius: var(--nalar-radius-lg) !important;
+  background: var(--nalar-ui-bg) !important;
 }
 
 .nalar-network-header {
-  padding: 26px 26px 20px !important;
-  padding: 24px 24px 18px !important;
-  border-bottom: 1px solid var(--nalar-ui-line) !important;
-}
-
-.nalar-network-header h2 {
-  font-size: 20px !important;
-  margin: 6px 0 0 !important;
-  font-size: 19px !important;
-  font-weight: 700 !important;
-  line-height: 1.2 !important;
-  letter-spacing: -0.02em !important;
-  color: var(--nalar-ui-text) !important;
+  padding: 24px 26px 18px !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
 }
 
 .nalar-network-body {
-  padding: 20px 26px !important;
-  padding: 20px 24px !important;
+  padding: 18px 26px !important;
 }
 
 .nalar-network-grid {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
-  gap: 12px !important;
+  gap: 10px !important;
+  margin-top: 14px !important;
 }
 
 .nalar-network-box {
-  padding: 14px 15px !important;
-  border-radius: 8px !important;
-  padding: 13px 14px !important;
-  border-radius: 7px !important;
+  padding: 12px 14px !important;
+  border-radius: var(--nalar-radius-md) !important;
+  border: 1px solid var(--nalar-ui-border) !important;
   background: var(--nalar-ui-surface) !important;
-  border: 1px solid var(--nalar-ui-line) !important;
-}
-
-.nalar-network-box[data-type="current"] {
-  border: 1px solid rgba(224, 183, 109, 0.35) !important;
-  border-color: rgba(211, 171, 103, 0.35) !important;
 }
 
 .nalar-network-box[data-type="required"] {
-  border: 1px solid rgba(157, 187, 159, 0.35) !important;
-  border-color: rgba(123, 203, 165, 0.35) !important;
+  border-color: var(--nalar-ui-safe-border) !important;
+  background: var(--nalar-ui-safe-bg) !important;
 }
 
 .nalar-network-status {
-  min-height: 16px !important;
-  margin-top: 8px !important;
+  margin-top: 14px !important;
+  padding: 10px 14px !important;
+  border-radius: var(--nalar-radius-md) !important;
+  background: var(--nalar-ui-surface-2) !important;
+  border: 1px solid var(--nalar-ui-border) !important;
   font-size: 11px !important;
-  color: var(--nalar-ui-warning) !important;
   line-height: 1.5 !important;
+  color: var(--nalar-ui-soft) !important;
 }
 
 .nalar-network-footer {
-  display: grid !important;
-  grid-template-columns: 110px 1fr !important;
-  grid-template-columns: 100px 1fr !important;
-  gap: 10px !important;
-  padding: 0 26px 24px !important;
-  padding: 0 24px 22px !important;
+  padding: 16px 26px 22px !important;
+  border-top: 1px solid var(--nalar-ui-border) !important;
 }
 
-/* Small screens */
 /* ==========================================================================
-   Responsive Constraints
+   Small Screens (Responsive adjustments)
    ========================================================================== */
 
 @media (max-width: 640px) {
@@ -1166,24 +910,15 @@
   .nalar-modal {
     width: 100% !important;
     max-height: calc(100vh - 20px) !important;
-    border-radius: 14px 14px 10px 10px !important;
-    border-radius: 12px 12px 0 0 !important;
+    border-radius: var(--nalar-radius-lg) var(--nalar-radius-lg) 0 0 !important;
   }
   .nalar-decision-body {
-    max-height: calc(100vh - 300px) !important;
     max-height: calc(100vh - 260px) !important;
-  }
-  .nalar-network-grid {
-    grid-template-columns: 1fr !important;
-  }
-  .nalar-network-footer {
-    grid-template-columns: 1fr !important;
   }
 }
 
-/* Reduced motion */
 /* ==========================================================================
-   Accessibility: Reduced Motion
+   Reduced Motion
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1193,9 +928,7 @@
   .nalar-button,
   .nalar-risk-fill,
   .nalar-analysis-indicator,
-  .nalar-analysis-modal::after {
-  .nalar-badge,
-  .nalar-decision-mark,
+  .nalar-analysis-modal::after,
   .nalar-stagger-1,
   .nalar-stagger-2,
   .nalar-stagger-3,
@@ -1203,7 +936,11 @@
   .nalar-stagger-5,
   .nalar-stagger-6,
   .nalar-comp-expected,
-  .nalar-comp-actual {
+  .nalar-comp-actual,
+  .nalar-badge,
+  .nalar-field-mismatch,
+  .nalar-evidence-content,
+  .nalar-tech-content {
     animation: none !important;
     transition: none !important;
   }

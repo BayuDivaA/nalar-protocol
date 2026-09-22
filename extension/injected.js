@@ -48,12 +48,58 @@
     bg: "#0a0a09",
     surface: "#10100f",
     raised: "#151513",
+    bg: "#080b0f",
+    surface: "#0e141a",
+    raised: "#121a21",
+    border: "#202c35",
+    borderStrong: "#3b4a55",
+    text: "#edf4f6",
+    soft: "#a9b8c0",
+    muted: "#74838e",
+    dim: "#465560",
+    danger: "#f27870",
+    warning: "#d3ab67",
+    safe: "#7bcba5",
+    accent: "#8adcf9",
+    accentStrong: "#c1f1ff",
+  };
 
     border: "rgba(255,255,255,.075)",
+  const MOTION = {
+    instant: 100,
+    fast: 150,
+    normal: 220,
+    slow: 350,
+    easeOut: "cubic-bezier(.16, 1, .3, 1)",
+    easeStandard: "cubic-bezier(.2, 0, 0, 1)",
+    easeSoft: "ease",
+  };
 
     borderStrong: "rgba(255,255,255,.14)",
+  function createNalarMarkSvg(size = 12) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 560 560");
+    svg.setAttribute("width", String(size));
+    svg.setAttribute("height", String(size));
+    svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("nalar-brand-mark-svg");
+    svg.style.display = "inline-block";
+    svg.style.verticalAlign = "middle";
+    svg.style.flexShrink = "0";
+    svg.innerHTML = '<rect fill="#fff" x="75.39" y="208.7" width="95.75" height="201.58"/><path fill="#fff" d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"/><path fill="#06f" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z"/>';
+    return svg;
+  }
 
     text: "#f2f1eb",
+  function createBrandEyebrow(text) {
+    const wrap = document.createElement("div");
+    wrap.className = "nalar-brand-eyebrow";
+    wrap.appendChild(createNalarMarkSvg(12));
+    const label = document.createElement("span");
+    label.textContent = text;
+    wrap.appendChild(label);
+    return wrap;
+  }
 
     soft: "#b7b5ad",
 
@@ -73,6 +119,15 @@
   const wrappedProviders = new WeakSet();
 
   const ANALYSIS_STEPS = ["Reading your intent", "Decoding the wallet request", "Simulating execution", "Inspecting contract rules", "Checking on-chain state", "Applying security policy"];
+  const ANALYSIS_STEPS = [
+    "Understanding your request",
+    "Decoding transaction",
+    "Simulating execution",
+    "Checking contract",
+    "Reviewing on-chain evidence",
+    "Evaluating security",
+    "Preparing recommendation",
+  ];
 
   /*
   |--------------------------------------------------------------------------
@@ -86,6 +141,24 @@
     if (element) {
       element.remove();
     }
+  }
+
+  function dismissNalarElement(id, onRemoved) {
+    const element = document.getElementById(id);
+    if (!element) {
+      if (onRemoved) onRemoved();
+      return;
+    }
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      element.remove();
+      if (onRemoved) onRemoved();
+      return;
+    }
+    element.classList.add("nalar-closing");
+    setTimeout(() => {
+      element.remove();
+      if (onRemoved) onRemoved();
+    }, 180);
   }
 
   function formatAddress(address) {
@@ -1026,9 +1099,11 @@
 
       header.style.padding = "28px 28px 22px";
 
+      header.style.padding = "24px 26px 20px";
       header.style.borderBottom = `1px solid ${UI.border}`;
 
       const eyebrow = createLabel("NALAR PROTOCOL");
+      const eyebrow = createBrandEyebrow("NALAR PROTOCOL");
 
       const title = document.createElement("h2");
 
@@ -1168,6 +1243,7 @@
       const close = () => {
         overlay.remove();
         resolve(null);
+        dismissNalarElement(IDS.intent, () => resolve(null));
       };
 
       cancel.onclick = close;
@@ -1183,6 +1259,7 @@
         overlay.remove();
 
         resolve(value);
+        dismissNalarElement(IDS.intent, () => resolve(value));
       };
 
       footer.appendChild(cancel);
@@ -1258,6 +1335,7 @@
 
     const eyebrow = createLabel("SUPPORTED NETWORK CHECK");
     eyebrow.style.color = UI.warning;
+    const eyebrow = createBrandEyebrow("NALAR PROTOCOL · NETWORK CHECK");
     header.appendChild(eyebrow);
 
     const title = document.createElement("h2");
@@ -1415,6 +1493,11 @@
       if (typeof onCancel === "function") {
         onCancel();
       }
+      dismissNalarElement(IDS.network, () => {
+        if (typeof onCancel === "function") {
+          onCancel();
+        }
+      });
     };
 
     switchBtn.onclick = async () => {
@@ -1446,6 +1529,8 @@
       },
       remove: () => {
         overlay.remove();
+      remove: (cb) => {
+        dismissNalarElement(IDS.network, cb);
       },
     };
   }
@@ -1476,9 +1561,12 @@
     Object.assign(modal.style, {
       width: "min(480px, 100%)",
       padding: "28px",
+      width: "min(460px, 100%)",
+      padding: "26px",
     });
 
     const eyebrow = createLabel("NALAR PROTOCOL");
+    const eyebrow = createBrandEyebrow("NALAR PROTOCOL · SECURITY");
 
     const title = document.createElement("h2");
 
@@ -1489,7 +1577,11 @@
       fontSize: "22px",
       lineHeight: "1.08",
       letterSpacing: "-.03em",
+      fontSize: "20px",
+      lineHeight: "1.1",
+      letterSpacing: "-.025em",
       color: UI.text,
+      fontWeight: "700",
     });
 
     const subtitle = document.createElement("p");
@@ -1500,6 +1592,9 @@
       margin: "10px 0 0",
       fontSize: "13px",
       lineHeight: "1.6",
+      margin: "8px 0 0",
+      fontSize: "12.5px",
+      lineHeight: "1.55",
       color: UI.soft,
     });
 
@@ -1507,9 +1602,12 @@
 
     Object.assign(counter.style, {
       marginTop: "20px",
+      marginTop: "18px",
       fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
       fontSize: "10px",
+      letterSpacing: ".08em",
       color: UI.muted,
+      fontWeight: "700",
     });
 
     counter.textContent = `01 / ${String(ANALYSIS_STEPS.length).padStart(2, "0")}`;
@@ -1521,6 +1619,7 @@
     const rows = ANALYSIS_STEPS.map((label, index) => {
       const row = document.createElement("div");
 
+      row.className = "nalar-analysis-step";
       row.setAttribute("data-state", index === 0 ? "active" : "pending");
 
       Object.assign(row.style, {
@@ -1533,6 +1632,9 @@
         opacity: index === 0 ? "1" : "0",
         animation: `nalarStepIn 200ms ease-out ${index * 80}ms both`,
       });
+      const num = document.createElement("span");
+      num.className = "nalar-step-num";
+      num.textContent = String(index + 1).padStart(2, "0");
 
       if (index === ANALYSIS_STEPS.length - 1) {
         row.style.borderBottom = "none";
@@ -1555,6 +1657,7 @@
         indicator.textContent = "●";
         indicator.style.color = UI.text;
         indicator.classList.add("nalar-analysis-active");
+        indicator.style.color = UI.accent;
       } else {
         indicator.textContent = "○";
         indicator.style.color = UI.dim;
@@ -1564,6 +1667,7 @@
 
       const text = document.createElement("div");
 
+      text.className = "nalar-step-text";
       text.textContent = label;
 
       text.style.fontSize = "12px";
@@ -1597,13 +1701,16 @@
 
       textWrap.appendChild(progress);
 
+      row.appendChild(num);
       row.appendChild(indicator);
+      row.appendChild(text);
 
       row.appendChild(textWrap);
 
       list.appendChild(row);
 
       return { indicator, text, row, progressFill };
+      return { num, indicator, text, row };
     });
 
     modal.appendChild(eyebrow);
@@ -1635,13 +1742,16 @@
           item.indicator.classList.remove("nalar-analysis-active");
           item.text.style.color = UI.soft;
           item.progressFill.style.transform = "scaleX(1)";
+          item.num.style.color = UI.muted;
           item.row.setAttribute("data-state", "done");
         } else if (index === current) {
           item.indicator.textContent = "●";
           item.indicator.classList.add("nalar-analysis-active");
           item.indicator.style.color = UI.text;
+          item.indicator.style.color = UI.accent;
           item.text.style.color = UI.text;
           item.progressFill.style.transform = "scaleX(0.6)";
+          item.num.style.color = UI.accent;
           item.row.setAttribute("data-state", "active");
         } else {
           item.indicator.textContent = "○";
@@ -1649,6 +1759,7 @@
           item.indicator.style.color = UI.dim;
           item.text.style.color = UI.dim;
           item.progressFill.style.transform = "scaleX(0)";
+          item.num.style.color = UI.dim;
           item.row.setAttribute("data-state", "pending");
         }
       });
@@ -1662,11 +1773,14 @@
         current = rows.length - 1;
       }
     }, 520);
+    }, 450);
 
     return {
       remove() {
+      remove(callback) {
         clearInterval(timer);
         removeNalarElement(IDS.analysis);
+        dismissNalarElement(IDS.analysis, callback);
       },
     };
   }
@@ -1769,6 +1883,11 @@
         if (onCancel) {
           onCancel();
         }
+        dismissNalarElement(IDS.decision, () => {
+          if (onCancel) {
+            onCancel();
+          }
+        });
       }
     });
   }
@@ -1777,10 +1896,12 @@
     const header = document.createElement("header");
 
     header.className = "nalar-decision-header";
+    header.className = "nalar-decision-header nalar-stagger-1";
 
     Object.assign(header.style, {
       display: "grid",
       gridTemplateColumns: "40px 1fr auto",
+      gridTemplateColumns: "42px 1fr auto",
       gap: "14px",
       alignItems: "center",
       padding: "22px 24px 20px",
@@ -1790,12 +1911,15 @@
     const mark = document.createElement("div");
 
     mark.className = "nalar-decision-mark";
+    mark.setAttribute("data-decision", decision.toLowerCase());
 
     mark.textContent = decision === "BLOCK" ? "✕" : decision === "REVIEW" ? "?" : "✓";
 
     Object.assign(mark.style, {
       width: "40px",
       height: "40px",
+      width: "42px",
+      height: "42px",
       display: "grid",
       placeItems: "center",
       border: `1px solid ${UI.borderStrong}`,
@@ -1809,6 +1933,7 @@
     const headingWrap = document.createElement("div");
 
     const eyebrow = createLabel("NALAR PROTOCOL · SECURITY");
+    const eyebrow = createBrandEyebrow("NALAR PROTOCOL · SECURITY");
 
     const heading = document.createElement("h2");
 
@@ -1817,8 +1942,10 @@
     Object.assign(heading.style, {
       margin: "4px 0 0",
       fontSize: "20px",
+      fontSize: "19px",
       lineHeight: "1.1",
       letterSpacing: "-.02em",
+      letterSpacing: "-.025em",
       color: UI.text,
       fontWeight: "700",
     });
@@ -1857,9 +1984,27 @@
       whiteSpace: "nowrap",
     });
 
+    const riskIndicator = document.createElement("div");
+    riskIndicator.className = "nalar-risk-indicator";
+    riskIndicator.setAttribute("data-level", riskLevel.toLowerCase());
+
+    const scoreEl = document.createElement("span");
+    scoreEl.className = "nalar-risk-score";
+    scoreEl.textContent = String(riskScore);
+    scoreEl.style.color = pillColor;
+
+    const levelEl = document.createElement("span");
+    levelEl.className = "nalar-risk-level";
+    levelEl.textContent = riskLevel;
+    levelEl.style.color = pillColor;
+
+    riskIndicator.appendChild(scoreEl);
+    riskIndicator.appendChild(levelEl);
+
     header.appendChild(mark);
     header.appendChild(headingWrap);
     header.appendChild(riskPill);
+    header.appendChild(riskIndicator);
 
     return header;
   }
@@ -1945,6 +2090,7 @@
     const card = document.createElement("section");
 
     card.className = "nalar-why-stopped-card";
+    card.className = "nalar-why-stopped-card nalar-stagger-2";
 
     Object.assign(card.style, {
       marginTop: "16px",
@@ -1952,6 +2098,9 @@
       borderRadius: "10px",
       border: `1px solid ${isBlock ? "rgba(239,128,111,.28)" : isReview ? "rgba(224,183,109,.28)" : UI.border}`,
       background: isBlock ? "rgba(239,128,111,.04)" : isReview ? "rgba(224,183,109,.04)" : UI.surface,
+      borderRadius: "8px",
+      border: `1px solid ${isBlock ? "rgba(242,120,112,.3)" : isReview ? "rgba(211,171,103,.3)" : UI.border}`,
+      background: isBlock ? "linear-gradient(180deg, rgba(242,120,112,.05), transparent 70%), " + UI.surface : isReview ? "linear-gradient(180deg, rgba(211,171,103,.05), transparent 70%), " + UI.surface : UI.surface,
     });
 
     const labelText = isBlock ? "WHY IT WAS STOPPED" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT";
@@ -1971,12 +2120,24 @@
     Object.assign(reasonEl.style, {
       marginTop: "8px",
       fontSize: "14px",
+      fontSize: "13.5px",
       fontWeight: "500",
       lineHeight: "1.6",
       color: UI.text,
     });
 
     card.appendChild(reasonEl);
+
+    const impactText = typeof explanation?.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim()
+      ? explanation.whyStopped.userImpact.trim()
+      : null;
+
+    if (impactText && impactText !== primaryReasonText) {
+      const impactEl = document.createElement("div");
+      impactEl.className = "nalar-why-stopped-impact";
+      impactEl.textContent = impactText;
+      card.appendChild(impactEl);
+    }
 
     return card;
   }
@@ -1985,12 +2146,14 @@
     const card = document.createElement("section");
 
     card.className = "nalar-comparison-card";
+    card.className = "nalar-comparison-card nalar-stagger-3";
 
     Object.assign(card.style, {
       marginTop: "12px",
       padding: "16px 18px",
       border: `1px solid ${UI.border}`,
       borderRadius: "10px",
+      borderRadius: "8px",
       background: UI.surface,
     });
 
@@ -2016,17 +2179,23 @@
     let badgeColor = UI.safe;
     let badgeBg = "rgba(157,187,159,.12)";
     let badgeBorder = "rgba(157,187,159,.25)";
+    let badgeBg = "rgba(123,203,165,.12)";
+    let badgeBorder = "rgba(123,203,165,.28)";
 
     if (isMismatch) {
       badgeText = "✕ DOESN'T MATCH";
       badgeColor = UI.danger;
       badgeBg = "rgba(239,128,111,.12)";
       badgeBorder = "rgba(239,128,111,.25)";
+      badgeBg = "rgba(242,120,112,.12)";
+      badgeBorder = "rgba(242,120,112,.28)";
     } else if (isUncertain) {
       badgeText = "? UNVERIFIED";
       badgeColor = UI.warning;
       badgeBg = "rgba(224,183,109,.12)";
       badgeBorder = "rgba(224,183,109,.25)";
+      badgeBg = "rgba(211,171,103,.12)";
+      badgeBorder = "rgba(211,171,103,.28)";
     }
 
     const matchBadge = document.createElement("div");
@@ -2083,10 +2252,13 @@
 
     const intentBox = document.createElement("div");
     intentBox.className = "nalar-comparison-box";
+    intentBox.className = "nalar-comparison-box nalar-comp-expected";
     Object.assign(intentBox.style, {
       padding: "11px 12px",
+      padding: "12px 14px",
       border: `1px solid ${UI.border}`,
       borderRadius: "8px",
+      borderRadius: "6px",
       background: UI.raised,
     });
 
@@ -2106,8 +2278,11 @@
     Object.assign(intentVal.style, {
       marginTop: "5px",
       fontSize: "12px",
+      marginTop: "6px",
+      fontSize: "12.5px",
       fontWeight: "600",
       lineHeight: "1.5",
+      lineHeight: "1.45",
       color: UI.text,
       wordBreak: "break-word",
     });
@@ -2118,11 +2293,17 @@
 
     const actualBox = document.createElement("div");
     actualBox.className = "nalar-comparison-box";
+    actualBox.className = "nalar-comparison-box nalar-comp-actual";
+    actualBox.setAttribute("data-mismatch", String(isMismatch));
     Object.assign(actualBox.style, {
       padding: "11px 12px",
       border: `1px solid ${isMatch ? UI.border : "rgba(239,128,111,.3)"}`,
       borderRadius: "8px",
       background: isMatch ? UI.raised : "rgba(239,128,111,.03)",
+      padding: "12px 14px",
+      border: `1px solid ${isMismatch ? "rgba(242,120,112,.32)" : UI.border}`,
+      borderRadius: "6px",
+      background: isMismatch ? "rgba(242,120,112,.04)" : UI.raised,
     });
 
     const actualLabel = document.createElement("div");
@@ -2134,6 +2315,9 @@
       letterSpacing: ".12em",
       color: isMatch ? UI.muted : UI.danger,
     });
+    if (isMismatch) {
+      actualLabel.style.color = UI.danger;
+    }
 
     const actualVal = document.createElement("div");
     actualVal.className = "nalar-comparison-value";
@@ -2141,9 +2325,13 @@
     Object.assign(actualVal.style, {
       marginTop: "5px",
       fontSize: "12px",
+      marginTop: "6px",
+      fontSize: "12.5px",
       fontWeight: "600",
       lineHeight: "1.5",
       color: isMatch ? UI.text : UI.danger,
+      lineHeight: "1.45",
+      color: isMismatch ? UI.danger : UI.text,
       wordBreak: "break-word",
     });
 
@@ -2197,6 +2385,7 @@
           paddingTop: "10px",
           borderTop: `1px solid ${UI.border}`,
         });
+        diffContainer.className = "nalar-field-mismatch";
 
         mismatchesList.forEach((diff) => {
           const diffRow = document.createElement("div");
@@ -2239,8 +2428,14 @@
     }
 
     const card = document.createElement("section");
+    const callout = document.createElement("section");
+    callout.className = "nalar-means-callout nalar-stagger-4";
 
     card.className = "nalar-means-card";
+    const label = document.createElement("div");
+    label.className = "nalar-means-label";
+    label.textContent = "WHAT THIS MEANS";
+    callout.appendChild(label);
 
     Object.assign(card.style, {
       marginTop: "12px",
@@ -2255,6 +2450,7 @@
     card.appendChild(label);
 
     const body = document.createElement("div");
+    body.className = "nalar-means-text";
     body.textContent = text;
     Object.assign(body.style, {
       fontSize: "12px",
@@ -2262,8 +2458,10 @@
       color: UI.soft,
     });
     card.appendChild(body);
+    callout.appendChild(body);
 
     return card;
+    return callout;
   }
 
   function createEvidenceSection(explanation, security) {
@@ -2278,6 +2476,7 @@
 
     const wrapper = document.createElement("details");
     wrapper.className = "nalar-evidence-details";
+    wrapper.className = "nalar-evidence-details nalar-stagger-5";
 
     Object.assign(wrapper.style, {
       marginTop: "12px",
@@ -2467,6 +2666,7 @@
     const wrapper = document.createElement("details");
 
     wrapper.className = "nalar-tech-details";
+    wrapper.className = "nalar-tech-details nalar-stagger-6";
 
     Object.assign(wrapper.style, {
       marginTop: "8px",
@@ -2490,6 +2690,7 @@
     wrapper.appendChild(summary);
 
     const content = document.createElement("div");
+    content.className = "nalar-tech-content";
 
     Object.assign(content.style, {
       marginTop: "8px",
@@ -2585,6 +2786,11 @@
       if (onCancel) {
         onCancel();
       }
+      dismissNalarElement(IDS.decision, () => {
+        if (onCancel) {
+          onCancel();
+        }
+      });
     };
 
     actions.appendChild(cancel);
@@ -2598,6 +2804,11 @@
         if (onContinue) {
           onContinue();
         }
+        dismissNalarElement(IDS.decision, () => {
+          if (onContinue) {
+            onContinue();
+          }
+        });
       };
 
       actions.appendChild(continueButton);

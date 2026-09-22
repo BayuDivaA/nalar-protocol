@@ -6,6 +6,15 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Nalar Protocol",
   description: "Understand what you are signing before it reaches your wallet.",
+  icons: {
+    icon: [
+      { url: "/brand/n-dark.svg", media: "(prefers-color-scheme: dark)", type: "image/svg+xml" },
+      { url: "/brand/n-light.svg", media: "(prefers-color-scheme: light)", type: "image/svg+xml" },
+      { url: "/brand/n-dark.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/brand/n-dark.svg",
+    apple: "/brand/n-dark.svg",
+  },
 };
 
 export default function RootLayout({

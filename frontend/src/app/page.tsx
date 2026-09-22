@@ -361,9 +361,7 @@ export default function LandingPage() {
       <footer className="site-footer landing-footer">
         <div className="page-frame site-footer-inner">
           <div>
-            <Link href="/" className="footer-brand">
-              NALAR PROTOCOL
-            </Link>
+            <Link href="/" className="footer-brand"></Link>
             <p>Know what you&apos;re signing.</p>
           </div>
           <div className="footer-links">

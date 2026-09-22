@@ -1,289 +1,326 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <style>
-    :root {
-      --bg: #0a0a09;
-      --surface: #10100f;
-      --surface-2: #151513;
-      --line: rgba(255,255,255,.075);
-      --line-strong: rgba(255,255,255,.14);
-      --text: #f2f1eb;
-      --soft: #b7b5ad;
-      --muted: #73736d;
-      --danger: #ef806f;
-      --warning: #e0b76d;
-      --safe: #9dbb9f;
-    }
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      width: 380px;
-      min-height: 500px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-    body {
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    button, textarea { font: inherit; }
-    @media (prefers-reduced-motion: reduce) {
-      * { transition: none !important; }
-    }
-    .header {
-      position: sticky;
-      top: 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--line);
-      background: rgba(10,10,9,.92);
-      backdrop-filter: blur(8px);
-    }
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand-mark {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      background: var(--surface);
-      border: 1px solid var(--line-strong);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 11px;
-      color: var(--text);
-    }
-    .brand-name {
-      font-size: 12px;
-      font-weight: 650;
-      letter-spacing: -0.01em;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 2px;
-      background: var(--muted);
-    }
-    .status-text {
-      font-size: 10px;
-      color: var(--muted);
-    }
-    .main {
-      padding: 24px 20px 22px;
-      flex: 1;
-    }
-    .section-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 9px;
-      display: block;
-    }
-    .site-card {
-      padding: 11px 12px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: var(--surface);
-      box-shadow: inset 2px 0 0 var(--safe);
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 10px;
-      color: var(--soft);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .mt-24 {
-      margin-top: 24px;
-    }
-    textarea {
-      width: 100%;
-      min-height: 105px;
-      padding: 13px;
-      border: 1px solid var(--line-strong);
-      border-radius: 6px;
-      background: rgba(16,16,15,.9);
-      color: var(--text);
-      font-size: 12px;
-      line-height: 1.6;
-      resize: vertical;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    textarea::placeholder {
-      color: var(--muted);
-    }
-    textarea:focus {
-      border-color: rgba(255,255,255,.26);
-      box-shadow: 0 0 0 3px rgba(255,255,255,.045);
-    }
-    .btn-save {
-      width: 100%;
-      min-height: 42px;
-      margin-top: 8px;
-      border: 1px solid var(--text);
-      border-radius: 6px;
-      background: var(--text);
-      color: var(--bg);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .btn-save:hover {
-      background: #ffffff;
-      transform: translateY(-1px);
-    }
-    .btn-save:active {
-      transform: translateY(1px);
-    }
-    .btn-save:focus-visible {
-      outline: 2px solid var(--safe);
-      outline-offset: 2px;
-    }
-    .message {
-      min-height: 16px;
-      margin-top: 8px;
-      color: var(--soft);
-      font-size: 10px;
-    }
-    .protection-card {
-      padding: 14px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: var(--surface);
-    }
-    .protection-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .protection-title {
-      font-size: 13px;
-      font-weight: 650;
-    }
-    .protection-desc {
-      font-size: 10px;
-      color: var(--muted);
-      max-width: 230px;
-      line-height: 1.5;
-      margin-top: 5px;
-    }
-    .btn-toggle {
-      min-width: 86px;
-      height: 34px;
-      border: 1px solid var(--line-strong);
-      border-radius: 5px;
-      background: var(--surface-2);
-      color: var(--safe);
-      font-size: 9px;
-      font-weight: 750;
-      letter-spacing: 0.1em;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s, color 0.2s;
-    }
-    .btn-toggle.paused {
-      color: var(--muted);
-    }
-    .btn-toggle:hover {
-      border-color: rgba(255,255,255,.2);
-      background: rgba(255,255,255,.04);
-    }
-    .btn-toggle:focus-visible {
-      outline: 2px solid var(--safe);
-      outline-offset: 2px;
-    }
-    .protection-row {
-      margin-top: 13px;
-      padding-top: 11px;
-      border-top: 1px solid var(--line);
-      font-size: 9px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-    }
-    .protection-row-val {
-      color: var(--soft);
-      font-weight: 600;
-    }
-    .footer {
-      padding: 14px 20px 18px;
-      border-top: 1px solid var(--line);
-      display: flex;
-      justify-content: space-between;
-      color: var(--muted);
-      font-size: 9px;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="header-left">
-      <div class="brand-mark">N</div>
-      <div class="brand-name">Nalar Protocol</div>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      :root {
+        --bg: #0a0a09;
+        --surface: #10100f;
+        --surface-2: #151513;
+        --line: rgba(255, 255, 255, 0.075);
+        --line-strong: rgba(255, 255, 255, 0.14);
+        --text: #f2f1eb;
+        --soft: #b7b5ad;
+        --muted: #73736d;
+        --danger: #ef806f;
+        --warning: #e0b76d;
+        --safe: #9dbb9f;
+        --bg: #080b0f;
+        --surface: #0e141a;
+        --surface-2: #121a21;
+        --line: #202c35;
+        --line-strong: #3b4a55;
+        --text: #edf4f6;
+        --soft: #a9b8c0;
+        --muted: #74838e;
+        --danger: #f27870;
+        --warning: #d3ab67;
+        --safe: #7bcba5;
+        --accent: #8adcf9;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 380px;
+        min-height: 500px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      body {
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      button,
+      textarea {
+        font: inherit;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+        }
+      }
+      .header {
+        position: sticky;
+        top: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(10, 10, 9, 0.92);
+        backdrop-filter: blur(8px);
+      }
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: var(--surface);
+        border: 1px solid var(--line-strong);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 11px;
+        color: var(--text);
+      }
+      .brand-name {
+        font-size: 12px;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 2px;
+        background: var(--muted);
+      }
+      .status-text {
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .main {
+        padding: 24px 20px 22px;
+        flex: 1;
+      }
+      .section-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 9px;
+        display: block;
+      }
+      .site-card {
+        padding: 11px 12px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface);
+        box-shadow: inset 2px 0 0 var(--safe);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10px;
+        color: var(--soft);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .mt-24 {
+        margin-top: 24px;
+      }
+      textarea {
+        width: 100%;
+        min-height: 105px;
+        padding: 13px;
+        border: 1px solid var(--line-strong);
+        border-radius: 6px;
+        background: rgba(16, 16, 15, 0.9);
+        color: var(--text);
+        font-size: 12px;
+        line-height: 1.6;
+        resize: vertical;
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+      textarea::placeholder {
+        color: var(--muted);
+      }
+      textarea:focus {
+        border-color: rgba(255, 255, 255, 0.26);
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.045);
+      }
+      .btn-save {
+        width: 100%;
+        min-height: 42px;
+        margin-top: 8px;
+        border: 1px solid var(--text);
+        border-radius: 6px;
+        background: var(--text);
+        color: var(--bg);
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+      }
+      .btn-save:hover {
+        background: #ffffff;
+        transform: translateY(-1px);
+      }
+      .btn-save:active {
+        transform: translateY(1px);
+      }
+      .btn-save:focus-visible {
+        outline: 2px solid var(--safe);
+        outline-offset: 2px;
+      }
+      .message {
+        min-height: 16px;
+        margin-top: 8px;
+        color: var(--soft);
+        font-size: 10px;
+      }
+      .protection-card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: var(--surface);
+      }
+      .protection-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .protection-title {
+        font-size: 13px;
+        font-weight: 650;
+      }
+      .protection-desc {
+        font-size: 10px;
+        color: var(--muted);
+        max-width: 230px;
+        line-height: 1.5;
+        margin-top: 5px;
+      }
+      .btn-toggle {
+        min-width: 86px;
+        height: 34px;
+        border: 1px solid var(--line-strong);
+        border-radius: 5px;
+        background: var(--surface-2);
+        color: var(--safe);
+        font-size: 9px;
+        font-weight: 750;
+        letter-spacing: 0.1em;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s,
+          color 0.2s;
+      }
+      .btn-toggle.paused {
+        color: var(--muted);
+      }
+      .btn-toggle:hover {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .btn-toggle:focus-visible {
+        outline: 2px solid var(--safe);
+        outline-offset: 2px;
+      }
+      .protection-row {
+        margin-top: 13px;
+        padding-top: 11px;
+        border-top: 1px solid var(--line);
+        font-size: 9px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+      }
+      .protection-row-val {
+        color: var(--soft);
+        font-weight: 600;
+      }
+      .footer {
+        padding: 14px 20px 18px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 9px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="header-left">
+        <div class="brand-mark">N</div>
+        <div class="brand-mark">
+          <img src="icons/n-dark.svg" width="18" height="18" alt="Nalar Protocol" />
+        </div>
+        <div class="brand-name">Nalar Protocol</div>
+      </div>
+      <div class="header-right">
+        <div class="status-dot" id="statusDot"></div>
+        <div class="status-text" id="systemStatus">Protection active</div>
+      </div>
     </div>
-    <div class="header-right">
-      <div class="status-dot" id="statusDot"></div>
-      <div class="status-text" id="systemStatus">Protection active</div>
-    </div>
-  </div>
 
-  <div class="main">
-    <div>
-      <span class="section-label">CURRENT SITE</span>
-      <div class="site-card" id="siteName">Loading...</div>
-    </div>
+    <div class="main">
+      <div>
+        <span class="section-label">CURRENT SITE</span>
+        <div class="site-card" id="siteName">Loading...</div>
+      </div>
 
-    <div class="mt-24">
-      <span class="section-label">YOUR INTENT</span>
-      <textarea id="intent" placeholder="Example: Swap 0.001 tBNB to NDEMO"></textarea>
-      <button class="btn-save" id="save">Save intent for this site</button>
-      <div class="message" id="message" role="status" aria-live="polite"></div>
-    </div>
+      <div class="mt-24">
+        <span class="section-label">YOUR INTENT</span>
+        <textarea id="intent" placeholder="Example: Swap 0.001 tBNB to NDEMO"></textarea>
+        <button class="btn-save" id="save">Save intent for this site</button>
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+      </div>
 
-    <div class="mt-24">
-      <span class="section-label">PROTECTION</span>
-      <div class="protection-card">
-        <div class="protection-top">
-          <div>
-            <div class="protection-title">Transaction firewall</div>
-            <div class="protection-desc">Check wallet requests before signing.</div>
+      <div class="mt-24">
+        <span class="section-label">PROTECTION</span>
+        <div class="protection-card">
+          <div class="protection-top">
+            <div>
+              <div class="protection-title">Transaction firewall</div>
+              <div class="protection-desc">Check wallet requests before signing.</div>
+            </div>
+            <button class="btn-toggle" id="toggle" aria-pressed="true">ACTIVE</button>
           </div>
-          <button class="btn-toggle" id="toggle" aria-pressed="true">ACTIVE</button>
-        </div>
-        <div class="protection-row">
-          <span>Network</span>
-          <span class="protection-row-val">BNB Testnet · 97</span>
-        </div>
-        <div class="protection-row" style="margin-top: 8px; padding-top: 0; border-top: none;">
-          <span>Decision engine</span>
-          <span class="protection-row-val">Deterministic</span>
+          <div class="protection-row">
+            <span>Network</span>
+            <span class="protection-row-val">BNB Testnet · 97</span>
+          </div>
+          <div class="protection-row" style="margin-top: 8px; padding-top: 0; border-top: none">
+            <span>Decision engine</span>
+            <span class="protection-row-val">Deterministic</span>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="footer">
-    <span>Nalar Protocol</span>
-    <span>TxSentry</span>
-  </div>
+    <div class="footer">
+      <span>Nalar Protocol</span>
+      <span>TxSentry</span>
+    </div>
 
-  <script src="popup.js"></script>
-</body>
+    <script src="popup.js"></script>
+  </body>
 </html>

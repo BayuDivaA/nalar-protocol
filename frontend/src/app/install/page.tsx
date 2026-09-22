@@ -126,7 +126,11 @@ export default function InstallPage() {
         <div className="page-frame site-footer-inner">
           <div>
             <Link href="/" className="footer-brand">
-              NALAR PROTOCOL
+              <span className="footer-brand-mark" aria-hidden="true">
+                <img src="/brand/n-dark.svg" alt="Nalar Protocol" width={14} height={14} className="brand-logo-dark" />
+                <img src="/brand/n-light.svg" alt="Nalar Protocol" width={14} height={14} className="brand-logo-light" />
+              </span>
+              <span>NALAR PROTOCOL</span>
             </Link>
             <p>Security for transactions humans can understand.</p>
           </div>

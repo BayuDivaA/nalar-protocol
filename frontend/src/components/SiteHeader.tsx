@@ -35,7 +35,8 @@ export default function SiteHeader() {
       <div className="site-header-inner">
         <Link href="/" className="site-brand" onClick={close}>
           <span className="site-brand-mark" aria-hidden="true">
-            N
+            <img src="/brand/n-dark.svg" alt="Nalar Protocol" width={18} height={18} className="brand-logo-dark" />
+            <img src="/brand/n-light.svg" alt="Nalar Protocol" width={18} height={18} className="brand-logo-light" />
           </span>
           <span>Nalar Protocol</span>
         </Link>

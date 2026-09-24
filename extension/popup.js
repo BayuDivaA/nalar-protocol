@@ -105,7 +105,7 @@
     const resolved = applyTheme(stored.nalarTheme || (prefersLight ? "light" : "dark"));
     // Persist the resolved theme on first run. Without this the popup would
     // render light while the in-page overlay, reading an empty key, fell back
-    // to dark - the same product disagreeing with itself.
+    // to dark — the same product disagreeing with itself.
     if (stored.nalarTheme !== resolved) {
       await chrome.storage.local.set({ nalarTheme: resolved });
     }
@@ -195,10 +195,7 @@
       els.intentHint.textContent = "No intent saved for this site yet.";
       return;
     }
-    els.intentHint.textContent =
-      els.intent.value.trim() === savedIntent
-        ? "Nalar compares this against what the transaction actually does."
-        : "Unsaved changes.";
+    els.intentHint.textContent = els.intent.value.trim() === savedIntent ? "Nalar compares this against what the transaction actually does." : "Unsaved changes.";
   }
 
   els.intent.addEventListener("input", renderIntentHint);
@@ -245,7 +242,7 @@
     } else {
       // The field stays editable on purpose. A disabled input reads as a
       // broken popup, and the user cannot tell "wrong tab" from "Nalar is
-      // broken" - so typing always works and only saving needs a website.
+      // broken" — so typing always works and only saving needs a website.
       els.siteName.textContent = "No website in this tab";
     }
     renderIntentHint();

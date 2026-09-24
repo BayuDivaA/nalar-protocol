@@ -115,13 +115,7 @@ function quantityToRawAmount(quantity: number, decimals: number): bigint | null 
   }
 }
 
-export function compareIntent(
-  intent: NormalizedIntent,
-  actualAction: TransactionAction,
-  effects: TransactionEffects,
-  value: bigint,
-  context?: CompareIntentContext,
-): IntentComparison {
+export function compareIntent(intent: NormalizedIntent, actualAction: TransactionAction, effects: TransactionEffects, value: bigint, context?: CompareIntentContext): IntentComparison {
   const mismatches: string[] = [];
 
   let actionComparison: FieldComparison<string>;

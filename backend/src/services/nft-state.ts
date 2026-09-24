@@ -1,33 +1,21 @@
-import type { Address } from 'viem'
+import type { Address } from "viem";
 
-import { publicClient } from '../lib/viem'
-import { demoNftAbi } from '../lib/demo-nft'
+import { publicClient } from "../lib/viem";
+import { demoNftAbi } from "../lib/demo-nft";
 
-export async function getApprovalState(
-  collection: Address,
-  owner: Address,
-  operator: Address,
-): Promise<boolean | null> {
+export async function getApprovalState(collection: Address, owner: Address, operator: Address): Promise<boolean | null> {
   try {
-    const result =
-      await publicClient.readContract({
-        address: collection,
-        abi: demoNftAbi,
-        functionName:
-          'isApprovedForAll',
-        args: [
-          owner,
-          operator,
-        ],
-      })
+    const result = await publicClient.readContract({
+      address: collection,
+      abi: demoNftAbi,
+      functionName: "isApprovedForAll",
+      args: [owner, operator],
+    });
 
-    return result
+    return result;
   } catch (error) {
-    console.error(
-      'Failed to read NFT approval state:',
-      error,
-    )
+    console.error("Failed to read NFT approval state:", error);
 
-    return null
+    return null;
   }
 }

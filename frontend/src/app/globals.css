@@ -1487,7 +1487,7 @@ button {
   margin-top: 42px;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 14px;
   animation: landing-rise 0.78s 0.27s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .hero-meta-line > span:last-child {

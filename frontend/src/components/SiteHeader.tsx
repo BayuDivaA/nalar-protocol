@@ -72,7 +72,7 @@ export default function SiteHeader() {
             Why Nalar
           </a>
           <a href="#mechanism" onClick={close}>
-            How it works
+            Mechanism
           </a>
           <a href="#intelligence" onClick={close}>
             Intelligence

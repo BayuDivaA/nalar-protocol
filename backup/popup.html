@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nalar Protocol</title>
+    <style>
+      :root {
+        --bg: #0b132b;
+        --bg-deep: #050811;
+        --surface: #101a2e;
+        --surface-2: #14213a;
+        --raised: #14213a;
+        --border: #1e293b;
+        --border-strong: #334155;
+        --text: #ffffff;
+        --soft: #cbd5e1;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --accent: #0066ff;
+        --accent-hover: #2563eb;
+        --accent-soft: #0d1b34;
+        --accent-border: #1d4ed8;
+        --danger: #f87171;
+        --danger-bg: rgba(248, 113, 113, 0.08);
+        --warning: #fbbf24;
+        --warning-bg: rgba(251, 191, 36, 0.08);
+        --safe: #4ade80;
+        --safe-bg: rgba(74, 222, 128, 0.08);
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+      }
+
+      [data-theme="light"] {
+        --bg: #ffffff;
+        --bg-deep: #f8fafc;
+        --surface: #f8fafc;
+        --surface-2: #f1f5f9;
+        --raised: #f1f5f9;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text: #0b132b;
+        --soft: #334155;
+        --muted: #64748b;
+        --dim: #94a3b8;
+        --accent: #0066ff;
+        --accent-hover: #0052cc;
+        --accent-soft: #eff6ff;
+        --accent-border: #bfdbfe;
+        --danger: #b91c1c;
+        --danger-bg: rgba(185, 28, 28, 0.06);
+        --warning: #b45309;
+        --warning-bg: rgba(180, 83, 9, 0.06);
+        --safe: #15803d;
+        --safe-bg: rgba(21, 128, 61, 0.06);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 380px;
+        min-height: 520px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        transition:
+          background-color 200ms ease,
+          color 200ms ease;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+      }
+
+      button,
+      textarea {
+        font: inherit;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+
+      /* Header */
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .brand-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: var(--text);
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .theme-btn {
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        transition:
+          color 150ms ease,
+          border-color 150ms ease;
+      }
+
+      .theme-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      .theme-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--safe);
+        transition: background-color 200ms ease;
+      }
+
+      .status-dot.paused {
+        background: var(--warning);
+      }
+
+      .status-text {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      /* Main Content */
+      .main {
+        padding: 20px 18px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .section-label {
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      /* Current Site Card */
+      .site-card {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        border-left: 3px solid var(--accent);
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--soft);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Intent Textarea */
+      textarea {
+        width: 100%;
+        min-height: 96px;
+        padding: 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 12.5px;
+        line-height: 1.55;
+        resize: vertical;
+        outline: none;
+        transition:
+          border-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      textarea::placeholder {
+        color: var(--muted);
+      }
+
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.18);
+      }
+
+      .btn-save {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 8px;
+        border: 1px solid var(--accent);
+        border-radius: var(--radius-md);
+        background: var(--accent);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+        transition:
+          transform 120ms ease,
+          background-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .btn-save:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.35);
+      }
+
+      .btn-save:active {
+        transform: scale(0.98);
+      }
+
+      .btn-save:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .message {
+        min-height: 16px;
+        margin-top: 6px;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      /* Protection Card */
+      .protection-card {
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+      }
+
+      .protection-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .protection-title {
+        font-size: 13px;
+        font-weight: 650;
+        color: var(--text);
+      }
+
+      .protection-desc {
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.45;
+        margin-top: 4px;
+      }
+
+      .btn-toggle {
+        min-width: 88px;
+        height: 36px;
+        border: 1px solid var(--accent-border);
+        border-radius: var(--radius-sm);
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition:
+          transform 140ms ease,
+          border-color 200ms ease,
+          background-color 200ms ease,
+          color 200ms ease;
+      }
+
+      .btn-toggle:hover {
+        background: rgba(0, 102, 255, 0.15);
+      }
+
+      .btn-toggle:active {
+        transform: scale(0.98);
+      }
+
+      .btn-toggle.paused {
+        border-color: var(--border-strong);
+        background: var(--surface-2);
+        color: var(--warning);
+      }
+
+      .btn-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .protection-row {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .protection-row-val {
+        color: var(--soft);
+        font-weight: 600;
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 10px;
+      }
+
+      /* Footer */
+      .footer {
+        padding: 12px 18px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .footer-badge {
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--dim);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-left">
+        <div class="brand-mark">
+          <svg viewBox="0 0 560 560" width="16" height="16" aria-hidden="true">
+            <rect fill="currentColor" x="75.39" y="208.7" width="95.75" height="201.58" />
+            <path
+              fill="currentColor"
+              d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"
+            />
+            <path fill="#0066FF" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z" />
+          </svg>
+        </div>
+        <div class="brand-name">Nalar Protocol</div>
+      </div>
+      <div class="header-right">
+        <button class="theme-btn" id="themeToggle" aria-label="Toggle light or dark theme" title="Toggle theme">◐</button>
+        <div class="status-badge">
+          <div class="status-dot" id="statusDot"></div>
+          <span class="status-text" id="systemStatus">Active</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section>
+        <span class="section-label">Current Site</span>
+        <div class="site-card" id="siteName">Loading...</div>
+      </section>
+
+      <section>
+        <span class="section-label">Your Intent</span>
+        <textarea id="intent" placeholder="Example: Swap 0.001 tBNB to NDEMO"></textarea>
+        <button class="btn-save" id="save">Save intent for this site</button>
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section>
+        <span class="section-label">Protection Firewall</span>
+        <div class="protection-card">
+          <div class="protection-top">
+            <div>
+              <div class="protection-title">Transaction Firewall</div>
+              <div class="protection-desc">Evaluates simulation and on-chain effects before signing.</div>
+            </div>
+            <button class="btn-toggle" id="toggle" aria-pressed="true">ACTIVE</button>
+          </div>
+          <div class="protection-row">
+            <span>Network</span>
+            <span class="protection-row-val">BNB Testnet (97)</span>
+          </div>
+          <div class="protection-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border)">
+            <span>Engine</span>
+            <span class="protection-row-val">Deterministic + AI</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Nalar Protocol</span>
+      <span class="footer-badge">TxSentry</span>
+    </footer>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

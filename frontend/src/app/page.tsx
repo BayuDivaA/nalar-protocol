@@ -79,19 +79,40 @@ export default function LandingPage() {
         <section className="landing-hero">
           <div className="page-frame landing-hero-grid">
             <div className="landing-hero-copy">
-              <p className="hero-overline">&gt; Web3 transaction security firewall</p>
+              <div className="hero-meta-line">
+                <span className="signal-pip" /> Read first. Sign second. <span>BNB Chain ready</span>
+              </div>
               <h1>Know what you&apos;re signing.</h1>
               <p className="landing-hero-description">Nalar reads your intent, simulates the transaction, inspects on-chain evidence, and stops dangerous requests before your wallet signs.</p>
               <div className="landing-actions">
                 <Link href="/demo" className="landing-button landing-button-primary">
-                  Open the demo <span aria-hidden="true">↗</span>
+                  Open the demo
+                  {/* <span aria-hidden="true">↗</span> */}
                 </Link>
                 <Link href="/install" className="landing-button landing-button-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                    <defs>
+                      <linearGradient id="a7ee2b34-5d31-4c40-9ffe-8433e6b85e09" x1="8.144" y1="13.837" x2="8.144" y2="6.11" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stopColor="#32bedd" />
+                        <stop offset="0.175" stopColor="#32caea" />
+                        <stop offset="0.41" stopColor="#32d2f2" />
+                        <stop offset="0.775" stopColor="#32d4f5" />
+                      </linearGradient>
+                    </defs>
+                    <title>MsPortalFx.base.images-21</title>
+                    <g id="b60cdf7c-998d-4b07-83eb-3c17ec41d74f">
+                      <g>
+                        <rect x="4.281" y="6.11" width="7.726" height="7.726" rx="0.303" fill="url(#a7ee2b34-5d31-4c40-9ffe-8433e6b85e09)" />
+                        <path d="M16.894.66h-7.3a.3.3,0,0,0-.3.3V2.287a.3.3,0,0,0,.3.3h5.371a.605.605,0,0,1,.605.606V8.651a.3.3,0,0,0,.3.3H17.2a.3.3,0,0,0,.3-.3V1.266A.606.606,0,0,0,16.894.66Z" fill="#773adc" />
+                        <path
+                          d="M14.333,10.223v4.806a.552.552,0,0,1-.552.552H2.81a.552.552,0,0,1-.552-.552V4.672A.552.552,0,0,1,2.81,4.12h5.5a.3.3,0,0,0,.3-.3V2.665a.3.3,0,0,0-.3-.3H1.052A.552.552,0,0,0,.5,2.914V16.788a.552.552,0,0,0,.552.552H15.539a.553.553,0,0,0,.553-.552V10.223a.3.3,0,0,0-.3-.3H14.636A.3.3,0,0,0,14.333,10.223Z"
+                          fill="#b3b3b3"
+                        />
+                      </g>
+                    </g>
+                  </svg>
                   Install extension
                 </Link>
-              </div>
-              <div className="hero-meta-line">
-                <span className="signal-pip" /> Read first. Sign second. <span>BNB testnet ready</span>
               </div>
             </div>
             <HeroSecurityScene />

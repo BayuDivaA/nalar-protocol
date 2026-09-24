@@ -57,7 +57,7 @@ export default function HeroSecurityScene() {
             <ProductMark />
             <div>
               <span className="console-label">Nalar interceptor</span>
-              <span className="console-subtitle">REQUEST / 7F23 / BNB TESTNET</span>
+              <span className="console-subtitle">REQUEST / 7F23 / BNB Chain</span>
             </div>
           </div>
           <button type="button" className="console-control" onClick={() => setPaused((value) => !value)} aria-pressed={paused}>
@@ -67,7 +67,7 @@ export default function HeroSecurityScene() {
 
         <div className="console-intent-line">
           <span className="console-kicker">USER INTENT</span>
-          <strong>Swap 0.001 tBNB to NDEMO</strong>
+          <strong>Swap 10 BNB to SCAM TOKEN</strong>
           <span className="console-intent-status">captured</span>
         </div>
 

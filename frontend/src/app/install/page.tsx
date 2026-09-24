@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import SiteHeader, { githubUrl } from "@/src/components/SiteHeader";
 import Image from "next/image";
+import { AiOutlineDownload } from "react-icons/ai";
 
 const downloadUrl = "https://github.com/BayuDivaA/nalar-extension/archive/refs/heads/main.zip";
 
@@ -39,15 +40,12 @@ export default function InstallPage() {
 
       <main className="install-page">
         <section className="install-hero page-frame">
-          <p className="eyebrow hero-kicker">
-            {/* <span className="kicker-mark" aria-hidden="true" /> */}
-            Local extension install
-          </p>
           <h1>Put Nalar between the dApp and your wallet.</h1>
           <p className="install-hero-copy">Nalar is distributed as an unpacked Chromium extension for the hackathon demo. You can inspect the source, load it locally, and remove it whenever you choose.</p>
           <div className="hero-actions">
             <a href={downloadUrl} className="button button-primary" target="_blank" rel="noreferrer">
-              Download extension source
+              <AiOutlineDownload className="text-xl mr-1" />
+              <p> Download extension source</p>
             </a>
             <a href={githubUrl} className="button button-quiet gap-x-1" target="_blank" rel="noreferrer">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-github" viewBox="0 0 16 16">

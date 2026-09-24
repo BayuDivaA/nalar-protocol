@@ -44,55 +44,37 @@
     banner: "__nalar_banner__",
   };
 
-  /*
-   * Explorers for the chains Nalar can analyse. A chain missing from this map
-   * gets plain text rather than a link to an explorer that does not know it.
-   */
-  const EXPLORERS = {
-    97: "https://testnet.bscscan.com",
-    56: "https://bscscan.com",
+  const UI = {
+    bg: "#0B132B",
+    bgDeep: "#050811",
+    surface: "#101A2E",
+    raised: "#14213A",
+    border: "#1E293B",
+    borderStrong: "#334155",
+    text: "#FFFFFF",
+    soft: "#CBD5E1",
+    muted: "#94A3B8",
+    dim: "#64748B",
+    danger: "#F87171",
+    warning: "#FBBF24",
+    safe: "#4ADE80",
+    accent: "#0066FF",
+    accentHover: "#2563EB",
+    dangerBg: "rgba(248, 113, 113, 0.08)",
+    warningBg: "rgba(251, 191, 36, 0.08)",
+    safeBg: "rgba(74, 222, 128, 0.08)",
+    accentBg: "#0D1B34",
   };
 
-  const SUPPORTED_CHAIN_IDS = new Set([97, 56]);
-
-  function isSupportedChain(chainId) {
-    const num = parseNumericChainId(chainId);
-    return num !== null && SUPPORTED_CHAIN_IDS.has(num);
-  }
-
-  /*
-   * Theme, read once per overlay through the bridge: injected.js -> bridge.js
-   * -> background.js -> chrome.storage. It is never taken from the page, so a
-   * site cannot decide how Nalar's own surface looks. Dark until it arrives.
-   */
-  let nalarTheme = "dark";
-
-  let elementUid = 0;
-
-  /* Unique ids for aria-labelledby / aria-describedby, one per overlay. */
-  function nextId(prefix) {
-    elementUid += 1;
-
-    return `nalar-${prefix}-${elementUid}`;
-  }
-
-  /*
-   * Milliseconds, mirroring the --nalar-motion-* tokens in theme.css. These
-   * are the few values a script must hold as numbers, because they drive
-   * setTimeout and the analysis interval.
-   */
   const MOTION = {
-    instant: 120,
-    fast: 160,
+    instant: 100,
+    fast: 150,
     normal: 220,
     enter: 300,
-    slow: 420,
-    exit: 160,
+    slow: 400,
+    easeOut: "cubic-bezier(.16, 1, .3, 1)",
+    easeStandard: "cubic-bezier(.2, 0, 0, 1)",
   };
-
-  /* Section reveal offsets for the decision result, in ms. Mirrors
-     NALAR_THEME.stagger in theme.js and feeds --nalar-delay on .nalar-rise. */
-  const STAGGER = [0, 80, 140, 200, 260];
 
   function createNalarMarkSvg(size = 12) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -100,16 +82,18 @@
     svg.setAttribute("width", String(size));
     svg.setAttribute("height", String(size));
     svg.setAttribute("aria-hidden", "true");
+    svg.classList.add("nalar-brand-mark-svg");
+    svg.style.display = "inline-block";
+    svg.style.verticalAlign = "middle";
     svg.style.flexShrink = "0";
-    svg.style.fill = "var(--nalar-text)";
     svg.innerHTML =
-      '<rect x="75.39" y="208.7" width="95.75" height="201.58"/><path d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"/><path fill="#0066FF" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z"/>';
+      '<rect fill="#fff" x="75.39" y="208.7" width="95.75" height="201.58"/><path fill="#fff" d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"/><path fill="#06f" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z"/>';
     return svg;
   }
 
-  function createEyebrow(text) {
+  function createBrandEyebrow(text) {
     const wrap = document.createElement("div");
-    wrap.className = "nalar-eyebrow";
+    wrap.className = "nalar-brand-eyebrow";
     wrap.appendChild(createNalarMarkSvg(12));
     const label = document.createElement("span");
     label.textContent = text;
@@ -117,12 +101,7 @@
     return wrap;
   }
 
-  /*
-   * The six checks Nalar runs, in the order the rail shows them. Each one
-   * names a source the decision can cite, so a step here always has a
-   * counterpart in the evidence: on-chain, simulation, intent, policy, MCP.
-   */
-  const ANALYSIS_STEPS = ["Understanding your request", "Decoding transaction", "Simulating execution", "Checking contract", "Reviewing on-chain evidence", "Evaluating risk"];
+  const ANALYSIS_STEPS = ["Understanding your request", "Decoding transaction", "Simulating execution", "Checking contract", "Reviewing on-chain evidence", "Evaluating security", "Preparing recommendation"];
 
   const wrappedProviders = new WeakSet();
 
@@ -152,11 +131,10 @@
       return;
     }
     element.classList.add("nalar-closing");
-    // Matches the exit animation in ui.css (--nalar-motion-fast).
     setTimeout(() => {
       element.remove();
       if (onRemoved) onRemoved();
-    }, MOTION.exit);
+    }, 180);
   }
 
   function formatAddress(address) {
@@ -260,6 +238,197 @@
           .filter(Boolean),
       ),
     ];
+  }
+
+  function riskColor(level) {
+    switch (String(level).toUpperCase()) {
+      case "CRITICAL":
+      case "HIGH":
+        return UI.danger;
+
+      case "MEDIUM":
+        return UI.warning;
+
+      default:
+        return UI.safe;
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Global style
+  |--------------------------------------------------------------------------
+  */
+
+  function installStyles() {
+    if (document.getElementById("__nalar_styles__")) {
+      return;
+    }
+
+    const style = document.createElement("style");
+
+    style.id = "__nalar_styles__";
+
+    style.textContent = `
+      @keyframes nalarFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes nalarFadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+      }
+
+      @keyframes nalarModalIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px) scale(.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes nalarModalOut {
+        from {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(6px) scale(.99);
+        }
+      }
+
+      @keyframes nalarFadeRise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes nalarStepIn {
+        from {
+          opacity: 0;
+          transform: translateX(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes nalarPulseBlock {
+        0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.45); }
+        70% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+      }
+
+      @keyframes nalarPulseReview {
+        0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); }
+        70% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+      }
+
+      @keyframes nalarPulseAllow {
+        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45); }
+        70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+      }
+
+      .nalar-overlay {
+        animation: nalarFadeIn 240ms cubic-bezier(.16, 1, .3, 1);
+      }
+
+      .nalar-overlay.nalar-closing {
+        animation: nalarFadeOut 180ms ease-in forwards !important;
+      }
+
+      .nalar-modal {
+        isolation: isolate;
+        animation: nalarModalIn 300ms cubic-bezier(.16, 1, .3, 1);
+      }
+
+      .nalar-overlay.nalar-closing .nalar-modal {
+        animation: nalarModalOut 180ms ease-in forwards !important;
+      }
+
+      .nalar-modal::before {
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 1px;
+        content: "";
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+        pointer-events: none;
+      }
+
+      .nalar-decision-overlay[data-decision="block"] .nalar-modal::before {
+        background: linear-gradient(90deg, transparent, ${UI.danger}, transparent) !important;
+      }
+      .nalar-decision-overlay[data-decision="review"] .nalar-modal::before {
+        background: linear-gradient(90deg, transparent, ${UI.warning}, transparent) !important;
+      }
+      .nalar-decision-overlay[data-decision="allow"] .nalar-modal::before {
+        background: linear-gradient(90deg, transparent, ${UI.safe}, transparent) !important;
+      }
+
+      .nalar-stagger-1 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 0ms both !important; }
+      .nalar-stagger-2 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 70ms both !important; }
+      .nalar-stagger-3 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 130ms both !important; }
+      .nalar-stagger-4 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 190ms both !important; }
+      .nalar-stagger-5 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 250ms both !important; }
+      .nalar-stagger-6 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 310ms both !important; }
+
+      .nalar-button {
+        transition:
+          background-color 150ms ease,
+          border-color 150ms ease,
+          transform 120ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .nalar-button:hover {
+        border-color: ${UI.accent} !important;
+      }
+
+      .nalar-button:active {
+        transform: scale(0.98);
+      }
+
+      .nalar-button:focus-visible {
+        outline: 2px solid ${UI.accent};
+        outline-offset: 2px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .nalar-overlay,
+        .nalar-modal,
+        .nalar-stagger-1,
+        .nalar-stagger-2,
+        .nalar-stagger-3,
+        .nalar-stagger-4,
+        .nalar-stagger-5,
+        .nalar-stagger-6 {
+          animation: none !important;
+        }
+
+        .nalar-button {
+          transition: none !important;
+        }
+
+        .nalar-modal::before {
+          animation: none !important;
+        }
+      }
+    `;
+
+    document.documentElement.appendChild(style);
   }
 
   /*
@@ -440,20 +609,7 @@
   async function handleTransactionRequest({ originalRequest, provider, args, providerLabel }) {
     console.info("[Nalar] Intercepting transaction:", providerLabel);
 
-    let protectionEnabled;
-
-    try {
-      protectionEnabled = await getProtectionStatus();
-    } catch (error) {
-      /*
-       * Fails closed. Without a readable protection state Nalar cannot claim
-       * this transaction was checked, so it is not forwarded - and the notice
-       * says why rather than leaving a rejected promise unexplained.
-       */
-      showErrorNotice(error, "STATUS_UNAVAILABLE");
-
-      throw new Error("[Nalar] Protection status could not be read.");
-    }
+    const protectionEnabled = await getProtectionStatus();
 
     console.info("[Nalar] Protection status:", {
       provider: providerLabel,
@@ -467,14 +623,6 @@
     if (!protectionEnabled) {
       return originalRequest(args);
     }
-
-    /*
-     * Settle the theme before any overlay is built. Every surface reads it once
-     * at construction, so it has to be resolved before the first one mounts -
-     * and only when a surface might actually appear.
-     */
-
-    await refreshTheme();
 
     /*
      * Validate transaction
@@ -509,11 +657,11 @@
     let numericChainId = parseNumericChainId(rawChainId);
 
     const explicitTxChainId = parseNumericChainId(transaction.chainId);
-    if (explicitTxChainId !== null && !isSupportedChain(explicitTxChainId)) {
+    if (explicitTxChainId !== null && explicitTxChainId !== 97) {
       numericChainId = explicitTxChainId;
     }
 
-    if (!isSupportedChain(numericChainId)) {
+    if (numericChainId !== 97) {
       console.warn("[Nalar] Unsupported network detected before security check:", {
         chainId: numericChainId,
         rawChainId,
@@ -537,18 +685,15 @@
           }
         }
 
-        async function doSwitch(targetId) {
-          const targetChainId = targetId === 56 || explicitTxChainId === 56 ? 56 : 97;
-          const targetHex = targetChainId === 56 ? "0x38" : "0x61";
-
+        async function doSwitch() {
           try {
             await originalRequest({
               method: "wallet_switchEthereumChain",
-              params: [{ chainId: targetHex }],
+              params: [{ chainId: "0x61" }],
             });
 
             if (transaction.chainId !== undefined && transaction.chainId !== null) {
-              transaction.chainId = typeof transaction.chainId === "number" ? targetChainId : targetHex;
+              transaction.chainId = typeof transaction.chainId === "number" ? 97 : "0x61";
             }
 
             cleanup();
@@ -575,9 +720,9 @@
         if (provider && typeof provider.on === "function") {
           chainChangedHandler = (newChainIdHex) => {
             const switched = parseNumericChainId(newChainIdHex);
-            if (isSupportedChain(switched)) {
+            if (switched === 97) {
               if (transaction.chainId !== undefined && transaction.chainId !== null) {
-                transaction.chainId = typeof transaction.chainId === "number" ? switched : switched === 56 ? "0x38" : "0x61";
+                transaction.chainId = typeof transaction.chainId === "number" ? 97 : "0x61";
               }
               cleanup();
               resolve(
@@ -668,8 +813,6 @@
         settled = true;
 
         cleanupSecurityWait();
-
-        showErrorNotice("Security analysis timed out.", "TIMEOUT");
 
         reject(new Error("[Nalar] Security check timed out."));
       }, 60_000);
@@ -807,8 +950,6 @@
          */
 
         if (!message.security) {
-          showErrorNotice(message.error, message.errorCode);
-
           cancelTransaction(message.error ?? "[Nalar] Security response was missing.");
 
           return;
@@ -909,16 +1050,6 @@
 
   /*
   |--------------------------------------------------------------------------
-  | DEAD CODE - pending deletion.
-  |
-  | Everything from here to the "Overlay shell" section below is the previous
-  | presentation layer. It is unreachable: every function in it is redeclared
-  | later in this file (function declarations hoist, so the later one wins),
-  | and it references the removed UI palette and installStyles(), which no
-  | longer exist. It is kept only because the tooling that would delete it was
-  | unavailable; it is not called and not maintained. Do not add to it.
-  |--------------------------------------------------------------------------
-  |
   | Intent overlay
   |--------------------------------------------------------------------------
   */
@@ -3019,2087 +3150,6 @@
     return wrapper;
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Overlay shell
-  |--------------------------------------------------------------------------
-  |
-  | Four surfaces share one frame: the intent prompt, the analysis rail, the
-  | decision result and the network gate. They are built from the classes in
-  | ui.css, so all four render from the tokens in theme.css and not one
-  | builder carries a colour of its own.
-  |
-  */
-
-  /*
-   * Theme, read once per overlay through the bridge: injected.js -> bridge.js
-   * -> background.js -> chrome.storage. It is never taken from the page, so a
-   * site cannot decide how Nalar's own surface looks.
-   */
-  async function refreshTheme() {
-    try {
-      const result = await requestBridge("GET_THEME", {}, 800);
-
-      if (result && (result.theme === "light" || result.theme === "dark")) {
-        nalarTheme = result.theme;
-      }
-    } catch {
-      /* Keep the cached theme. Failing to read a preference is not a reason to
-         re-theme a surface the user is already reading. */
-    }
-  }
-
-  function createRoot(id, labelledBy) {
-    const root = document.createElement("div");
-
-    root.id = id;
-
-    root.className = "nalar-root";
-
-    root.setAttribute("role", "dialog");
-
-    root.setAttribute("aria-modal", "true");
-
-    root.setAttribute("data-nalar-theme", nalarTheme);
-
-    if (labelledBy) {
-      root.setAttribute("aria-labelledby", labelledBy);
-    }
-
-    return root;
-  }
-
-  function createModal(options = {}) {
-    const modal = document.createElement("div");
-
-    let classes = "nalar-modal";
-    if (options.compact) {
-      classes += " nalar-modal--compact";
-    }
-    if (options.variant) {
-      classes += ` nalar-modal--${options.variant}`;
-    }
-
-    modal.className = classes;
-
-    return modal;
-  }
-
-  /* Two light points and one arc, static, clipped to the header. This is the
-     entire cosmic budget, and the only decorative element Nalar ships. */
-  function createCosmos() {
-    const cosmos = document.createElement("div");
-
-    cosmos.className = "nalar-cosmos";
-
-    cosmos.setAttribute("aria-hidden", "true");
-
-    ["a", "b"].forEach((variant) => {
-      const star = document.createElement("span");
-
-      star.className = `nalar-star nalar-star--${variant}`;
-
-      cosmos.appendChild(star);
-    });
-
-    const orbit = document.createElement("span");
-
-    orbit.className = "nalar-orbit";
-
-    cosmos.appendChild(orbit);
-
-    return cosmos;
-  }
-
-  function createHead() {
-    const head = document.createElement("header");
-
-    head.className = "nalar-head";
-
-    head.appendChild(createCosmos());
-
-    return head;
-  }
-
-  function createTitle(text, id) {
-    const title = document.createElement("h2");
-
-    title.className = "nalar-title";
-
-    title.id = id;
-
-    title.textContent = text;
-
-    return title;
-  }
-
-  function createLede(text) {
-    const lede = document.createElement("p");
-
-    lede.className = "nalar-lede";
-
-    lede.textContent = text;
-
-    return lede;
-  }
-
-  function createBody() {
-    const body = document.createElement("main");
-
-    body.className = "nalar-body";
-
-    return body;
-  }
-
-  function createFoot() {
-    const foot = document.createElement("footer");
-
-    foot.className = "nalar-foot";
-
-    return foot;
-  }
-
-  function createLabel(text, node) {
-    const label = document.createElement("p");
-
-    label.className = node ? "nalar-label nalar-label--node" : "nalar-label";
-
-    label.textContent = text;
-
-    return label;
-  }
-
-  function createProse(text, variant) {
-    const prose = document.createElement("p");
-
-    prose.className = variant ? `nalar-prose nalar-prose--${variant}` : "nalar-prose";
-
-    prose.textContent = text;
-
-    return prose;
-  }
-
-  function createMono(text) {
-    const mono = document.createElement("span");
-
-    mono.className = "nalar-mono";
-
-    mono.textContent = text;
-
-    return mono;
-  }
-
-  function createRow(key, value) {
-    const row = document.createElement("div");
-
-    row.className = "nalar-row";
-
-    const keyEl = document.createElement("span");
-
-    keyEl.className = "nalar-row-key";
-
-    keyEl.textContent = key;
-
-    const valueEl = document.createElement("span");
-
-    valueEl.className = "nalar-row-val";
-
-    if (value instanceof Node) {
-      valueEl.appendChild(value);
-    } else {
-      valueEl.textContent = String(value ?? "");
-    }
-
-    row.appendChild(keyEl);
-
-    row.appendChild(valueEl);
-
-    return row;
-  }
-
-  function createButton(label, primary) {
-    const button = document.createElement("button");
-
-    button.className = primary ? "nalar-btn nalar-btn--primary" : "nalar-btn";
-
-    button.type = "button";
-
-    button.textContent = label;
-
-    return button;
-  }
-
-  function createActions() {
-    const actions = document.createElement("div");
-
-    actions.className = "nalar-actions nalar-actions--split";
-
-    return actions;
-  }
-
-  function createNote(text) {
-    const note = document.createElement("p");
-
-    note.className = "nalar-foot-note";
-
-    note.textContent = text;
-
-    return note;
-  }
-
-  function createStatusLine() {
-    const status = document.createElement("p");
-
-    status.className = "nalar-status-line";
-
-    status.setAttribute("role", "status");
-
-    return status;
-  }
-
-  function createDisclosure(title, count) {
-    const details = document.createElement("details");
-
-    details.className = "nalar-disclosure";
-
-    const summary = document.createElement("summary");
-
-    const label = document.createElement("span");
-
-    label.textContent = title;
-
-    summary.appendChild(label);
-
-    if (count) {
-      const counter = document.createElement("span");
-
-      counter.className = "nalar-disclosure-count";
-
-      counter.textContent = count;
-
-      summary.appendChild(counter);
-    }
-
-    const body = document.createElement("div");
-
-    body.className = "nalar-disclosure-body";
-
-    details.appendChild(summary);
-
-    details.appendChild(body);
-
-    return { details, body };
-  }
-
-  /* Staggered reveal: one class and one custom property, set from JS. */
-  function rise(element, step) {
-    element.classList.add("nalar-rise");
-
-    element.style.setProperty("--nalar-delay", `${STAGGER[step] ?? 0}ms`);
-
-    return element;
-  }
-
-  function mount(root) {
-    document.documentElement.appendChild(root);
-
-    return root;
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Keyboard and focus
-  |--------------------------------------------------------------------------
-  */
-
-  function rememberFocus() {
-    const active = document.activeElement;
-
-    return active && typeof active.focus === "function" ? active : null;
-  }
-
-  function restoreFocus(element) {
-    if (!element || !document.contains(element)) {
-      return;
-    }
-
-    try {
-      element.focus({ preventScroll: true });
-    } catch {}
-  }
-
-  function focusableIn(root) {
-    const selector = 'a[href], button:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
-
-    return Array.from(root.querySelectorAll(selector)).filter((element) => element.offsetParent !== null);
-  }
-
-  /*
-   * A decision has to hold the keyboard while it is open and give it back when
-   * it closes. Escape is wired to the same action as the cancel path, so there
-   * is no state the mouse can leave and the keyboard cannot.
-   */
-  function trapFocus(root, onEscape) {
-    function onKeydown(event) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-
-        onEscape();
-
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const items = focusableIn(root);
-
-      if (items.length === 0) {
-        return;
-      }
-
-      const first = items[0];
-
-      const last = items[items.length - 1];
-
-      const active = document.activeElement;
-
-      if (event.shiftKey && (active === first || !root.contains(active))) {
-        event.preventDefault();
-
-        last.focus();
-
-        return;
-      }
-
-      if (!event.shiftKey && active === last) {
-        event.preventDefault();
-
-        first.focus();
-      }
-    }
-
-    document.addEventListener("keydown", onKeydown, true);
-
-    return () => document.removeEventListener("keydown", onKeydown, true);
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Values: addresses, sources, token differences
-  |--------------------------------------------------------------------------
-  */
-
-  function explorerUrl(chainId, address) {
-    const base = EXPLORERS[chainId] || (Number(chainId) === 56 ? "https://bscscan.com" : "https://testnet.bscscan.com");
-
-    if (!base || !/^0x[a-fA-F0-9]{40}$/.test(String(address))) {
-      return null;
-    }
-
-    return `${base}/address/${address}`;
-  }
-
-  function txExplorerUrl(chainId, hash) {
-    const base = EXPLORERS[chainId] || (Number(chainId) === 56 ? "https://bscscan.com" : "https://testnet.bscscan.com");
-
-    if (!base || !/^0x[a-fA-F0-9]{64}$/.test(String(hash))) {
-      return null;
-    }
-
-    return `${base}/tx/${hash}`;
-  }
-
-  /*
-   * A contract address is the one value a user may want to check away from
-   * this modal, so it is a real link into the chain's explorer. An address on
-   * a chain with no explorer entry stays plain text rather than pointing at an
-   * explorer that would not know it.
-   */
-  function createAddress(address, chainId = 97) {
-    const text = formatAddress(address);
-
-    const href = explorerUrl(chainId, address);
-
-    if (!href) {
-      return createMono(text);
-    }
-
-    const link = document.createElement("a");
-
-    link.className = "nalar-addr";
-
-    link.href = href;
-
-    link.target = "_blank";
-
-    link.rel = "noopener noreferrer";
-
-    link.title = `${address} · opens the block explorer`;
-
-    link.textContent = text;
-
-    const external = document.createElement("span");
-
-    external.className = "nalar-addr-ext";
-
-    external.setAttribute("aria-hidden", "true");
-
-    external.textContent = "↗";
-
-    link.appendChild(external);
-
-    return link;
-  }
-
-  function createTxLink(hash, chainId = 97) {
-    const text = typeof hash === "string" && hash.length > 14 ? `${hash.slice(0, 8)}...${hash.slice(-6)}` : String(hash);
-
-    const href = txExplorerUrl(chainId, hash);
-
-    if (!href) {
-      return createMono(text);
-    }
-
-    const link = document.createElement("a");
-
-    link.className = "nalar-addr";
-
-    link.href = href;
-
-    link.target = "_blank";
-
-    link.rel = "noopener noreferrer";
-
-    link.title = `${hash} · opens the block explorer`;
-
-    link.textContent = text;
-
-    const external = document.createElement("span");
-
-    external.className = "nalar-addr-ext";
-
-    external.setAttribute("aria-hidden", "true");
-
-    external.textContent = "↗";
-
-    link.appendChild(external);
-
-    return link;
-  }
-
-  const SOURCE_LABELS = {
-    ONCHAIN: "ON-CHAIN",
-    "ON-CHAIN": "ON-CHAIN",
-    ON_CHAIN: "ON-CHAIN",
-    SIMULATION: "SIMULATION",
-    INTENT: "INTENT",
-    POLICY: "POLICY",
-    MCP: "BNB MCP",
-    BNB_MCP: "BNB MCP",
-    "BNB MCP": "BNB MCP",
-  };
-
-  function formatSource(source) {
-    if (!source) {
-      return "";
-    }
-
-    const key = String(source).trim().toUpperCase();
-
-    return SOURCE_LABELS[key] ?? key.replaceAll("_", " ");
-  }
-
-  function createSourceBadge(source) {
-    const badge = document.createElement("span");
-
-    badge.className = "nalar-source";
-
-    badge.textContent = formatSource(source);
-
-    return badge;
-  }
-
-  function tokenize(text) {
-    return String(text ?? "")
-      .split(/\s+/)
-      .filter(Boolean);
-  }
-
-  function normalizeToken(token) {
-    return token.toLowerCase().replace(/[^a-z0-9.]/g, "");
-  }
-
-  /*
-   * Longest common subsequence over the two sentences, so only the tokens the
-   * transaction actually changed get marked: "swap tBNB to NDEMO" against
-   * "swap tBNB to DHON" marks DHON and leaves the rest of the line alone.
-   *
-   * When almost nothing is shared the two sentences have too little in common
-   * for a mark to read as a difference, and marking every word would only
-   * shout, so nothing is marked and the rows below state the difference.
-   */
-  function diffTokens(expected, actual) {
-    const left = tokenize(expected).map(normalizeToken);
-
-    const right = tokenize(actual).map(normalizeToken);
-
-    const table = Array.from({ length: left.length + 1 }, () => new Uint16Array(right.length + 1));
-
-    for (let i = left.length - 1; i >= 0; i -= 1) {
-      for (let j = right.length - 1; j >= 0; j -= 1) {
-        table[i][j] = left[i] === right[j] ? table[i + 1][j + 1] + 1 : Math.max(table[i + 1][j], table[i][j + 1]);
-      }
-    }
-
-    const kept = new Array(right.length).fill(false);
-
-    let i = 0;
-
-    let j = 0;
-
-    while (i < left.length && j < right.length) {
-      if (left[i] === right[j]) {
-        kept[j] = true;
-
-        i += 1;
-
-        j += 1;
-      } else if (table[i + 1][j] >= table[i][j + 1]) {
-        i += 1;
-      } else {
-        j += 1;
-      }
-    }
-
-    const marked = kept.filter((value) => !value).length;
-
-    if (right.length === 0 || marked > right.length * 0.6) {
-      return null;
-    }
-
-    return kept;
-  }
-
-  function createComparedText(text, expected, markDifferences) {
-    const prose = document.createElement("p");
-
-    prose.className = "nalar-compare-text";
-
-    const tokens = tokenize(text);
-
-    const kept = markDifferences ? diffTokens(expected, text) : null;
-
-    if (!kept || tokens.length === 0) {
-      prose.textContent = text;
-
-      return prose;
-    }
-
-    tokens.forEach((token, index) => {
-      if (index > 0) {
-        prose.appendChild(document.createTextNode(" "));
-      }
-
-      if (kept[index]) {
-        prose.appendChild(document.createTextNode(token));
-
-        return;
-      }
-
-      const mark = document.createElement("span");
-
-      mark.className = "nalar-diff";
-
-      mark.textContent = token;
-
-      prose.appendChild(mark);
-    });
-
-    return prose;
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Intent prompt
-  |--------------------------------------------------------------------------
-  */
-
-  function showIntentOverlay(existingIntent = "") {
-    removeNalarElement(IDS.intent);
-
-    return new Promise((resolve) => {
-      const titleId = nextId("intent-title");
-
-      const textareaId = nextId("intent-field");
-
-      const statusId = nextId("intent-status");
-
-      const previousFocus = rememberFocus();
-
-      const root = createRoot(IDS.intent, titleId);
-
-      const modal = createModal({ compact: true, variant: "intent" });
-
-      const head = createHead();
-
-      head.appendChild(createEyebrow("NALAR PROTOCOL"));
-
-      head.appendChild(createTitle("What are you trying to do?", titleId));
-
-      head.appendChild(createLede("Describe what you expect this transaction to do."));
-
-      const body = createBody();
-
-      const section = document.createElement("section");
-
-      section.className = "nalar-section nalar-section--first";
-
-      /* Node dot on the section label only, so it reads as the section head and
-       not as a second field label next to YOUR INTENT below it. */
-      section.appendChild(createLabel("REQUEST FROM", true));
-
-      const site = document.createElement("p");
-
-      site.className = "nalar-site";
-
-      site.textContent = window.location.hostname || "This website";
-
-      section.appendChild(site);
-
-      const fieldLabel = document.createElement("label");
-
-      fieldLabel.className = "nalar-label nalar-field-label";
-
-      fieldLabel.setAttribute("for", textareaId);
-
-      fieldLabel.textContent = "YOUR INTENT";
-
-      section.appendChild(fieldLabel);
-
-      const textarea = document.createElement("textarea");
-
-      textarea.className = "nalar-textarea";
-
-      textarea.id = textareaId;
-
-      textarea.spellcheck = false;
-
-      textarea.setAttribute("aria-describedby", statusId);
-
-      textarea.placeholder = "Example: Swap 0.001 tBNB to NDEMO";
-
-      textarea.value = typeof existingIntent === "string" ? existingIntent : "";
-
-      section.appendChild(textarea);
-
-      body.appendChild(section);
-
-      const foot = createFoot();
-
-      foot.appendChild(createNote("Nalar checks this before your wallet is asked to sign."));
-
-      const status = createStatusLine();
-
-      status.id = statusId;
-
-      foot.appendChild(status);
-
-      const actions = createActions();
-
-      const cancelButton = createButton("Cancel", false);
-
-      const analyzeButton = createButton("Analyze transaction", true);
-
-      actions.appendChild(cancelButton);
-
-      actions.appendChild(analyzeButton);
-
-      foot.appendChild(actions);
-
-      modal.appendChild(head);
-
-      modal.appendChild(body);
-
-      modal.appendChild(foot);
-
-      root.appendChild(modal);
-
-      let released = false;
-
-      let release = () => {};
-
-      function finish(value) {
-        if (released) {
-          return;
-        }
-
-        released = true;
-
-        release();
-
-        restoreFocus(previousFocus);
-
-        dismissNalarElement(IDS.intent, () => resolve(value));
-      }
-
-      cancelButton.onclick = () => finish(null);
-
-      analyzeButton.onclick = () => {
-        const value = textarea.value.trim();
-
-        if (!value) {
-          status.textContent = "Add a short description before analyzing.";
-
-          textarea.setAttribute("aria-invalid", "true");
-
-          textarea.focus();
-
-          return;
-        }
-
-        textarea.removeAttribute("aria-invalid");
-
-        finish(value);
-      };
-
-      textarea.addEventListener("input", () => {
-        textarea.removeAttribute("aria-invalid");
-
-        if (status.textContent) {
-          status.textContent = "";
-        }
-      });
-
-      textarea.addEventListener("keydown", (event) => {
-        if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-          event.preventDefault();
-
-          analyzeButton.click();
-        }
-      });
-
-      mount(root);
-
-      release = trapFocus(root, () => finish(null));
-
-      textarea.focus();
-    });
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Network gate
-  |--------------------------------------------------------------------------
-  |
-  | The gate is a comparison too: where the wallet is against where the
-  | analysis happens. Same primitive as the intent check, so the user learns
-  | one shape and reads four screens with it.
-  |
-  */
-
-  function showNetworkNotSupportedOverlay({ currentChainId, onSwitch, onCancel }) {
-    removeNalarElement(IDS.network);
-
-    removeNalarElement(IDS.analysis);
-
-    removeNalarElement(IDS.decision);
-
-    removeNalarElement(IDS.intent);
-
-    const titleId = nextId("network-title");
-
-    const previousFocus = rememberFocus();
-
-    const root = createRoot(IDS.network, titleId);
-
-    const modal = createModal({ compact: true, variant: "network" });
-
-    const head = createHead();
-
-    head.appendChild(createEyebrow("NALAR PROTOCOL · NETWORK CHECK"));
-
-    head.appendChild(createTitle("Network not supported", titleId));
-
-    head.appendChild(createLede("Nalar supports BNB Smart Chain Testnet (97) and Mainnet (56)."));
-
-    const body = createBody();
-
-    const section = document.createElement("section");
-
-    section.className = "nalar-section nalar-section--first";
-
-    /* No section label: the compare already names both sides, and a third
-       heading above them would only repeat the title. */
-    const compareBlock = document.createElement("div");
-
-    compareBlock.className = "nalar-compare-block";
-
-    compareBlock.setAttribute("data-match", "false");
-
-    const compare = document.createElement("div");
-
-    compare.className = "nalar-compare";
-
-    const walletSide = document.createElement("div");
-
-    walletSide.className = "nalar-compare-side";
-
-    walletSide.appendChild(createLabel("YOUR WALLET"));
-
-    const walletName = document.createElement("p");
-
-    walletName.className = "nalar-network-name";
-
-    walletName.textContent = getChainName(currentChainId);
-
-    walletSide.appendChild(walletName);
-
-    const walletId = document.createElement("p");
-
-    walletId.className = "nalar-network-id";
-
-    walletId.textContent = currentChainId === null || currentChainId === undefined ? "Chain ID unknown" : `Chain ID ${currentChainId}`;
-
-    walletSide.appendChild(walletId);
-
-    const rail = document.createElement("div");
-
-    rail.className = "nalar-compare-rail";
-
-    rail.setAttribute("aria-hidden", "true");
-
-    const requiredSide = document.createElement("div");
-
-    requiredSide.className = "nalar-compare-side";
-
-    requiredSide.appendChild(createLabel("SUPPORTED NETWORKS"));
-
-    const requiredBox = document.createElement("div");
-
-    requiredBox.className = "nalar-network-box";
-
-    requiredBox.setAttribute("data-role", "required");
-
-    const requiredName = document.createElement("p");
-
-    requiredName.className = "nalar-network-name";
-
-    requiredName.textContent = "BNB Smart Chain";
-
-    requiredBox.appendChild(requiredName);
-
-    const requiredId = document.createElement("p");
-
-    requiredId.className = "nalar-network-id";
-
-    requiredId.textContent = "Mainnet (56) · Testnet (97)";
-
-    requiredBox.appendChild(requiredId);
-
-    requiredSide.appendChild(requiredBox);
-
-    compare.appendChild(walletSide);
-
-    compare.appendChild(rail);
-
-    compare.appendChild(requiredSide);
-
-    compareBlock.appendChild(compare);
-
-    const chip = document.createElement("p");
-
-    chip.className = "nalar-verdict-chip";
-
-    chip.textContent = "✕ SWITCH REQUIRED";
-
-    compareBlock.appendChild(chip);
-
-    section.appendChild(compareBlock);
-
-    section.appendChild(createProse("Switch your wallet to BNB Smart Chain (Mainnet 56 or Testnet 97) to continue. Nalar runs the check again on the supported network.", "muted"));
-
-    body.appendChild(section);
-
-    const foot = createFoot();
-
-    const status = createStatusLine();
-
-    foot.appendChild(status);
-
-    const actions = createActions();
-
-    const cancelButton = createButton("Cancel", false);
-
-    const switchButton = createButton("Switch to BNB Chain", true);
-
-    actions.appendChild(cancelButton);
-
-    actions.appendChild(switchButton);
-
-    foot.appendChild(actions);
-
-    modal.appendChild(head);
-
-    modal.appendChild(body);
-
-    modal.appendChild(foot);
-
-    root.appendChild(modal);
-
-    let released = false;
-
-    let release = () => {};
-
-    function finish(callback) {
-      if (released) {
-        return;
-      }
-
-      released = true;
-
-      release();
-
-      restoreFocus(previousFocus);
-
-      dismissNalarElement(IDS.network, () => {
-        if (typeof callback === "function") {
-          callback();
-        }
-      });
-    }
-
-    cancelButton.onclick = () => finish(onCancel);
-
-    switchButton.onclick = async () => {
-      if (typeof onSwitch !== "function") {
-        return;
-      }
-
-      switchButton.disabled = true;
-
-      switchButton.textContent = "Switching…";
-
-      status.textContent = "Waiting for your wallet to confirm the switch.";
-
-      try {
-        await onSwitch();
-      } catch {
-        switchButton.disabled = false;
-
-        switchButton.textContent = "Switch to BNB Testnet";
-
-        status.textContent = "The switch did not go through. Open your wallet and select BNB Smart Chain Testnet.";
-      }
-    };
-
-    mount(root);
-
-    release = trapFocus(root, () => finish(onCancel));
-
-    switchButton.focus();
-
-    return {
-      overlay: root,
-
-      setStatus(message) {
-        status.textContent = message;
-      },
-
-      remove(callback) {
-        released = true;
-
-        release();
-
-        dismissNalarElement(IDS.network, callback);
-      },
-    };
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Analysis rail
-  |--------------------------------------------------------------------------
-  |
-  | The six checks on a vertical rail. The rail replaces a spinner because a
-  | spinner says "wait" while this says what is being waited for, and the light
-  | travelling down it is the only motion in the product that runs on its own.
-  | It is CSS on a node that is removed with the overlay, so no timer and no
-  | listener outlives the check.
-  |
-  | The step timing is theatre, and it is capped: the overlay is removed the
-  | moment the backend answers, so a fast check shows a step or two and a
-  | result rather than a full six-step performance.
-  |
-  */
-
-  /* Per-step reveal offset, and how long the rail dwells on a step. */
-  const RAIL_STEP_DELAY = 48;
-
-  const RAIL_STEP_MS = 560;
-
-  function showAnalysisOverlay() {
-    removeNalarElement(IDS.analysis);
-
-    const titleId = nextId("analysis-title");
-
-    const root = createRoot(IDS.analysis, titleId);
-
-    const modal = createModal({ compact: true, variant: "analysis" });
-
-    const head = createHead();
-
-    head.appendChild(createEyebrow("NALAR PROTOCOL"));
-
-    head.appendChild(createTitle("Analyzing transaction", titleId));
-
-    head.appendChild(createLede("Understanding what you're about to sign."));
-
-    const body = createBody();
-
-    const section = document.createElement("section");
-
-    section.className = "nalar-section nalar-section--first";
-
-    const rail = document.createElement("div");
-
-    rail.className = "nalar-rail";
-
-    rail.setAttribute("role", "status");
-
-    rail.setAttribute("aria-live", "polite");
-
-    const rows = ANALYSIS_STEPS.map((label, index) => {
-      const row = document.createElement("div");
-
-      row.className = "nalar-step nalar-rise";
-
-      row.setAttribute("data-state", index === 0 ? "active" : "pending");
-
-      row.style.setProperty("--nalar-delay", `${index * RAIL_STEP_DELAY}ms`);
-
-      const node = document.createElement("span");
-
-      node.className = "nalar-step-node";
-
-      const num = document.createElement("span");
-
-      num.className = "nalar-step-num";
-
-      num.textContent = String(index + 1).padStart(2, "0");
-
-      const text = document.createElement("span");
-
-      text.className = "nalar-step-text";
-
-      text.textContent = label;
-
-      row.appendChild(node);
-
-      row.appendChild(num);
-
-      row.appendChild(text);
-
-      rail.appendChild(row);
-
-      return row;
-    });
-
-    section.appendChild(rail);
-
-    body.appendChild(section);
-
-    modal.appendChild(head);
-
-    modal.appendChild(body);
-
-    root.appendChild(modal);
-
-    mount(root);
-
-    let current = 0;
-
-    const timer = setInterval(() => {
-      if (!document.getElementById(IDS.analysis)) {
-        clearInterval(timer);
-
-        return;
-      }
-
-      /* Hold on the last step until the backend answers: inventing progress
-         past the final check would be a lie about what is still running. */
-      if (current >= rows.length - 1) {
-        return;
-      }
-
-      rows[current].setAttribute("data-state", "done");
-
-      current += 1;
-
-      rows[current].setAttribute("data-state", "active");
-    }, RAIL_STEP_MS);
-
-    return {
-      remove(callback) {
-        clearInterval(timer);
-
-        dismissNalarElement(IDS.analysis, callback);
-      },
-    };
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Decision result
-  |--------------------------------------------------------------------------
-  |
-  | Ordered so the answer arrives before the reasoning: decision, then why,
-  | then what you asked against what this does, then what it means. Evidence
-  | and technical detail are collapsed, because they are what a user reaches
-  | for after the first four have done their job.
-  |
-  */
-
-  function showDecisionOverlay(security, decision, onContinue, onCancel) {
-    removeNalarElement(IDS.decision);
-
-    removeNalarElement(IDS.analysis);
-
-    const riskLevel = String(security?.riskLevel ?? "UNKNOWN").toUpperCase();
-
-    const riskScore = Number.isFinite(Number(security?.riskScore)) ? Math.max(0, Math.min(100, Number(security.riskScore))) : 0;
-
-    const status = getDecisionStatus(decision);
-
-    const explanation = security?.explanation ?? {};
-
-    const titleId = nextId("decision-title");
-
-    const previousFocus = rememberFocus();
-
-    const root = createRoot(IDS.decision, titleId);
-
-    const modal = createModal({ variant: "decision" });
-
-    modal.setAttribute("data-decision", String(decision).toLowerCase());
-
-    const head = createHead();
-
-    const tx = security?.transaction || security?.request || {};
-    const chainId = Number(tx.chainId ?? security?.chainId ?? 97);
-    const networkBadge = chainId === 56 ? "BSC MAINNET" : "BSC TESTNET";
-
-    head.appendChild(createEyebrow(`NALAR PROTOCOL · ${networkBadge}`));
-
-    head.appendChild(createVerdict(decision, status, riskLevel, riskScore, titleId));
-
-    head.appendChild(createLede(status.subtitle));
-
-    rise(head, 0);
-
-    const body = createBody();
-
-    body.appendChild(createRootCauseSection(explanation, security, decision));
-
-    body.appendChild(createComparisonSection(explanation, security, decision));
-
-    const means = createWhatThisMeansSection(explanation, security, decision);
-
-    if (means) {
-      body.appendChild(means);
-    }
-
-    const evidence = createEvidenceDisclosure(explanation, security);
-
-    if (evidence) {
-      body.appendChild(evidence);
-    }
-
-    body.appendChild(createTechnicalDisclosure(explanation, security));
-
-    const foot = createFoot();
-
-    foot.appendChild(createNote(getFooterNote(decision)));
-
-    const actions = createActions();
-
-    const cancelButton = createButton(decision === "BLOCK" ? "Close" : "Cancel", decision === "BLOCK");
-
-    actions.appendChild(cancelButton);
-
-    if (decision !== "BLOCK") {
-      const continueButton = createButton(decision === "REVIEW" ? "Review & Continue" : "Continue", true);
-
-      continueButton.onclick = () => finish(onContinue);
-
-      actions.appendChild(continueButton);
-    }
-
-    foot.appendChild(actions);
-
-    modal.appendChild(head);
-
-    modal.appendChild(body);
-
-    modal.appendChild(foot);
-
-    root.appendChild(modal);
-
-    let released = false;
-
-    let release = () => {};
-
-    function finish(callback) {
-      if (released) {
-        return;
-      }
-
-      released = true;
-
-      release();
-
-      restoreFocus(previousFocus);
-
-      dismissNalarElement(IDS.decision, () => {
-        if (typeof callback === "function") {
-          callback();
-        }
-      });
-    }
-
-    cancelButton.onclick = () => finish(onCancel);
-
-    mount(root);
-
-    release = trapFocus(root, () => finish(onCancel));
-
-    /* Focus lands on the safe action, never on the one that signs. */
-    cancelButton.focus();
-  }
-
-  function createVerdict(decision, status, riskLevel, riskScore, titleId) {
-    const verdict = document.createElement("div");
-
-    verdict.className = "nalar-verdict";
-
-    const mark = document.createElement("div");
-
-    mark.className = "nalar-verdict-mark";
-
-    mark.setAttribute("aria-hidden", "true");
-
-    mark.textContent = decision === "BLOCK" ? "✕" : decision === "REVIEW" ? "!" : "✓";
-
-    const title = document.createElement("h2");
-
-    title.className = "nalar-verdict-title";
-
-    title.id = titleId;
-
-    title.textContent = status.title;
-
-    const score = document.createElement("div");
-
-    score.className = "nalar-score";
-
-    const value = document.createElement("span");
-
-    value.className = "nalar-score-value";
-
-    value.textContent = String(riskScore);
-
-    const max = document.createElement("span");
-
-    max.className = "nalar-score-max";
-
-    max.textContent = " / 100";
-
-    const level = document.createElement("span");
-
-    level.className = "nalar-score-level";
-
-    level.textContent = riskLevel;
-
-    score.appendChild(value);
-
-    score.appendChild(max);
-
-    score.appendChild(level);
-
-    verdict.appendChild(mark);
-
-    verdict.appendChild(title);
-
-    verdict.appendChild(score);
-
-    return verdict;
-  }
-
-  /*
-   * The single sentence that answers "why". Ordered by how directly each
-   * source explains the decision: a stated intent mismatch first, because that
-   * is the failure the user can act on, then the concrete contract hazards the
-   * scam analyses found, then the generic explanations.
-   */
-  function getPrimaryRootCause(explanation, security, decision) {
-    const comparison = security?.comparison || {};
-
-    const isMismatch = security?.intentMatch === false || comparison.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH";
-
-    if (isMismatch) {
-      if (typeof explanation?.whyStopped?.primaryReason === "string" && explanation.whyStopped.primaryReason.trim()) {
-        return explanation.whyStopped.primaryReason.trim();
-      }
-
-      if (typeof explanation?.comparison?.summary === "string" && explanation.comparison.summary.trim()) {
-        return explanation.comparison.summary.trim();
-      }
-
-      if (comparison.summary) {
-        return comparison.summary;
-      }
-
-      let userIntent = "complete your transaction";
-
-      if (typeof explanation?.userIntent === "string" && explanation.userIntent.trim()) {
-        userIntent = explanation.userIntent.trim();
-      } else if (explanation?.userIntent?.description) {
-        userIntent = explanation.userIntent.description;
-      } else if (security?.intent?.description) {
-        userIntent = security.intent.description;
-      }
-
-      let actualAction = "perform a different action";
-
-      if (typeof explanation?.actualTransaction === "string" && explanation.actualTransaction.trim()) {
-        actualAction = explanation.actualTransaction.trim();
-      } else if (explanation?.actualTransaction?.summary) {
-        actualAction = explanation.actualTransaction.summary;
-      } else if (security?.transactionSummary?.title) {
-        actualAction = security.transactionSummary.title;
-      } else if (security?.actual?.action) {
-        actualAction = humanizeAction(security.actual.action);
-      }
-
-      return `You asked to ${userIntent}, but this transaction asks for ${actualAction} instead.`;
-    }
-
-    const analyses = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
-
-    for (const analysis of analyses) {
-      const state = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
-
-      const sellTax = state.find((entry) => entry?.code === "CURRENT_SELL_TAX");
-
-      if (sellTax && Number(sellTax.value) >= 2000) {
-        const percent = (Number(sellTax.value) / 100).toFixed(0);
-
-        return `The contract charges a ${percent}% sell tax, so you may not be able to exit at the value you expect.`;
-      }
-
-      const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
-
-      const critical = findings.find((finding) => String(finding?.severity).toUpperCase() === "CRITICAL" || String(finding?.severity).toUpperCase() === "HIGH");
-
-      if (critical?.title) {
-        return critical.title;
-      }
-    }
-
-    if (security?.simulation && security.simulation.success === false) {
-      return "The transaction failed during simulation and would revert on-chain.";
-    }
-
-    if (typeof explanation?.whyStopped?.primaryReason === "string" && explanation.whyStopped.primaryReason.trim()) {
-      return explanation.whyStopped.primaryReason.trim();
-    }
-
-    if (typeof explanation?.summary === "string" && explanation.summary.trim()) {
-      return explanation.summary.trim();
-    }
-
-    return getFallbackSummary(security, decision);
-  }
-
-  function createRootCauseSection(explanation, security, decision) {
-    const section = document.createElement("section");
-
-    section.className = "nalar-section nalar-section--first nalar-section--state";
-
-    rise(section, 1);
-
-    const label = decision === "BLOCK" ? "WHY NALAR STOPPED THIS" : decision === "REVIEW" ? "WHY THIS NEEDS YOUR ATTENTION" : "SECURITY ASSESSMENT";
-
-    /* Node dot: the rail motif, and this section is --state so the dot takes
-       the decision colour rather than the accent. */
-    section.appendChild(createLabel(label, true));
-
-    const reason = getPrimaryRootCause(explanation, security, decision);
-
-    section.appendChild(createProse(reason, "strong"));
-
-    const impact = typeof explanation?.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim() ? explanation.whyStopped.userImpact.trim() : null;
-
-    if (impact && impact !== reason) {
-      section.appendChild(createProse(impact, "muted"));
-    }
-
-    return section;
-  }
-
-  function readIntentText(explanation, security) {
-    if (typeof explanation?.userIntent === "string" && explanation.userIntent.trim()) {
-      return explanation.userIntent.trim();
-    }
-
-    if (typeof explanation?.userIntent?.summary === "string" && explanation.userIntent.summary.trim()) {
-      return explanation.userIntent.summary.trim();
-    }
-
-    if (typeof explanation?.userIntent?.description === "string" && explanation.userIntent.description.trim()) {
-      return explanation.userIntent.description.trim();
-    }
-
-    if (security?.intent?.description) {
-      return security.intent.description;
-    }
-
-    return "Not specified";
-  }
-
-  function readActualText(explanation, security) {
-    if (typeof explanation?.actualTransaction === "string" && explanation.actualTransaction.trim()) {
-      return explanation.actualTransaction.trim();
-    }
-
-    if (typeof explanation?.actualTransaction?.summary === "string" && explanation.actualTransaction.summary.trim()) {
-      return explanation.actualTransaction.summary.trim();
-    }
-
-    if (security?.transactionSummary?.title) {
-      return security.transactionSummary.title;
-    }
-
-    if (security?.transactionSummary?.summary) {
-      return security.transactionSummary.summary;
-    }
-
-    if (security?.actual?.action) {
-      return humanizeAction(security.actual.action);
-    }
-
-    return "Contract call";
-  }
-
-  /* The per-field differences, for when the headline sentence is not enough. */
-  function buildMismatchRows(comparison) {
-    const rows = [];
-
-    const comp = comparison || {};
-
-    const isMint = comp.action?.expected === "MINT" || comp.action?.actual === "MINT";
-
-    if (comp.quantity && comp.quantity.status === "MISMATCH") {
-      rows.push(`${isMint ? "NFT quantity" : "Quantity"}: expected ${comp.quantity.expected}, actual ${comp.quantity.actual}`);
-    }
-
-    if (comp.amount && comp.amount.status === "MISMATCH") {
-      rows.push(`${isMint ? "Payment" : "Amount"}: expected ${comp.amount.expected}, actual ${comp.amount.actual}`);
-    }
-
-    if (comp.outputToken && comp.outputToken.status === "MISMATCH") {
-      rows.push(`Receive token: expected ${comp.outputToken.expected || "token"}, actual ${comp.outputToken.actual || "token"}`);
-    }
-
-    if (comp.inputToken && comp.inputToken.status === "MISMATCH") {
-      rows.push(`Send token: expected ${comp.inputToken.expected || "token"}, actual ${comp.inputToken.actual || "token"}`);
-    }
-
-    if (comp.action && comp.action.status === "MISMATCH") {
-      rows.push(`Action: expected ${humanizeAction(comp.action.expected)}, actual ${humanizeAction(comp.action.actual)}`);
-    }
-
-    if (comp.recipient && comp.recipient.status === "MISMATCH") {
-      rows.push(`Recipient: expected ${formatAddress(comp.recipient.expected)}, actual ${formatAddress(comp.recipient.actual)}`);
-    }
-
-    if (Array.isArray(comp.mismatches)) {
-      const mentionsContract = comp.mismatches.some((mismatch) => typeof mismatch === "string" && mismatch.toLowerCase().includes("not a smart contract"));
-
-      if (mentionsContract) {
-        rows.push("Target: the destination is not a smart contract");
-      }
-    }
-
-    if (rows.length === 0 && Array.isArray(comp.mismatches)) {
-      comp.mismatches.forEach((mismatch) => {
-        if (typeof mismatch === "string" && mismatch.trim()) {
-          rows.push(mismatch.trim());
-        }
-      });
-    }
-
-    return rows;
-  }
-
-  function createComparisonSection(explanation, security, decision) {
-    const section = document.createElement("section");
-
-    section.className = "nalar-section";
-
-    rise(section, 2);
-
-    section.appendChild(createLabel("YOUR REQUEST VS ACTUAL TRANSACTION"));
-
-    const comp = security?.comparison || {};
-
-    const isMismatch = comp.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH" || security?.intentMatch === false;
-
-    const isUncertain = !isMismatch && (comp.overall === "UNCERTAIN" || explanation?.comparison?.status === "UNKNOWN");
-
-    const block = document.createElement("div");
-
-    block.className = "nalar-compare-block";
-
-    block.setAttribute("data-match", isMismatch ? "false" : isUncertain ? "unknown" : "true");
-
-    const intentText = readIntentText(explanation, security);
-
-    const actualText = readActualText(explanation, security);
-
-    const compare = document.createElement("div");
-
-    compare.className = "nalar-compare";
-
-    const expectedSide = document.createElement("div");
-
-    expectedSide.className = "nalar-compare-side";
-
-    expectedSide.appendChild(createLabel("YOUR REQUEST"));
-
-    expectedSide.appendChild(createComparedText(intentText, "", false));
-
-    const rail = document.createElement("div");
-
-    rail.className = "nalar-compare-rail";
-
-    rail.setAttribute("aria-hidden", "true");
-
-    const actualSide = document.createElement("div");
-
-    actualSide.className = "nalar-compare-side nalar-compare-side--actual";
-
-    actualSide.appendChild(createLabel("ACTUAL TRANSACTION"));
-
-    /* Only the tokens that differ are marked, and only when the two sentences
-       are close enough that a mark reads as a difference rather than noise. */
-    actualSide.appendChild(createComparedText(actualText, intentText, isMismatch && intentText !== "Not specified"));
-
-    compare.appendChild(expectedSide);
-
-    compare.appendChild(rail);
-
-    compare.appendChild(actualSide);
-
-    block.appendChild(compare);
-
-    const chip = document.createElement("p");
-
-    chip.className = "nalar-verdict-chip";
-
-    chip.textContent = isMismatch ? "✕ DOESN'T MATCH YOUR REQUEST" : isUncertain ? "? NOT VERIFIED" : "✓ MATCHES YOUR REQUEST";
-
-    block.appendChild(chip);
-
-    if (isMismatch) {
-      const rows = buildMismatchRows(comp);
-
-      if (rows.length > 0) {
-        const diffs = document.createElement("div");
-
-        diffs.className = "nalar-diffs";
-
-        rows.forEach((text) => {
-          const row = document.createElement("p");
-
-          row.className = "nalar-diff-row";
-
-          row.textContent = text;
-
-          diffs.appendChild(row);
-        });
-
-        block.appendChild(diffs);
-      }
-    }
-
-    section.appendChild(block);
-
-    return section;
-  }
-
-  function createWhatThisMeansSection(explanation, security, decision) {
-    const meaning = typeof explanation?.whatThisMeans === "string" ? explanation.whatThisMeans.trim() : typeof explanation?.whyStopped?.userImpact === "string" ? explanation.whyStopped.userImpact.trim() : "";
-
-    const nextStep = typeof explanation?.recommendation === "string" ? explanation.recommendation.trim() : "";
-
-    if (!meaning && !nextStep) {
-      return null;
-    }
-
-    const section = document.createElement("section");
-
-    section.className = "nalar-section";
-
-    rise(section, 3);
-
-    section.appendChild(createLabel("WHAT THIS MEANS", true));
-
-    if (meaning) {
-      section.appendChild(createProse(meaning));
-    }
-
-    if (nextStep) {
-      section.appendChild(createProse(nextStep, "muted"));
-    }
-
-    return section;
-  }
-
-  /*
-   * Everything the decision was based on, flattened into one list. Each row
-   * keeps its source so a user can tell a simulation result from a policy
-   * rule - the difference matters when judging how much to trust it.
-   */
-  function collectFindings(explanation, security) {
-    const findings = [];
-
-    const analyses = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
-
-    analyses.forEach((analysis) => {
-      if (analysis?.contractName || analysis?.name) {
-        findings.push({
-          text: `${analysis.contractName ?? analysis.name}${analysis.contractAddress ? ` · ${formatAddress(analysis.contractAddress)}` : ""}`,
-          severity: "info",
-          source: "ON-CHAIN",
-        });
-      }
-
-      const state = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
-
-      state.forEach((entry) => {
-        if (!entry?.code) {
-          return;
-        }
-
-        const isBad = entry.risk === "HIGH" || entry.risk === "CRITICAL" || entry.safe === false;
-
-        findings.push({
-          text: `${humanizeEvidenceLabel(entry.code)}: ${entry.description ?? entry.value ?? "reported"}`,
-          severity: isBad ? "high" : "info",
-          source: "ON-CHAIN",
-        });
-      });
-
-      const analysisFindings = Array.isArray(analysis?.findings) ? analysis.findings : [];
-
-      analysisFindings.forEach((finding) => {
-        if (!finding?.title && !finding?.description) {
-          return;
-        }
-
-        findings.push({
-          text: finding.title ? `${finding.title}${finding.description ? ` - ${finding.description}` : ""}` : finding.description,
-          severity: String(finding.severity ?? "info").toLowerCase(),
-          source: finding.source ?? "ON-CHAIN",
-        });
-      });
-    });
-
-    const evidence = Array.isArray(explanation?.evidence) ? explanation.evidence : [];
-
-    evidence.forEach((item) => {
-      const text = typeof item === "string" ? item : (item?.description ?? item?.text ?? item?.title);
-
-      if (!text) {
-        return;
-      }
-
-      findings.push({
-        text: String(text),
-        severity: String(item?.severity ?? "info").toLowerCase(),
-        source: item?.source ?? "POLICY",
-      });
-    });
-
-    if (security?.simulation) {
-      const success = security.simulation.success !== false;
-
-      findings.push({
-        text: success ? "Simulation completed without reverting." : `Simulation reverted${security.simulation.revertReason ? `: ${security.simulation.revertReason}` : "."}`,
-        severity: success ? "info" : "high",
-        source: "SIMULATION",
-      });
-    }
-
-    if (security?.mcp || security?.transactionScamContext) {
-      findings.push({
-        text: "Contract context retrieved for this target.",
-        severity: "info",
-        source: "BNB MCP",
-      });
-    }
-
-    return findings;
-  }
-
-  function createEvidenceDisclosure(explanation, security) {
-    const findings = collectFindings(explanation, security);
-
-    const { details, body } = createDisclosure("Security evidence", findings.length > 0 ? String(findings.length) : null);
-
-    rise(details, 4);
-
-    if (findings.length === 0) {
-      const empty = document.createElement("p");
-
-      empty.className = "nalar-empty";
-
-      empty.textContent = "No individual findings were returned for this transaction.";
-
-      body.appendChild(empty);
-
-      return details;
-    }
-
-    findings.forEach((finding) => {
-      const row = document.createElement("div");
-
-      row.className = "nalar-finding";
-
-      row.setAttribute("data-severity", finding.severity);
-
-      row.appendChild(document.createTextNode(finding.text));
-
-      row.appendChild(createSourceBadge(finding.source));
-
-      body.appendChild(row);
-    });
-
-    return details;
-  }
-
-  function createTechnicalDisclosure(explanation, security) {
-    const { details, body } = createDisclosure("Technical details");
-
-    rise(details, 4);
-
-    const rows = document.createElement("div");
-
-    rows.className = "nalar-rows";
-
-    const tx = security?.transaction || security?.request || {};
-
-    const chainId = Number(tx.chainId ?? security?.chainId ?? 97);
-
-    rows.appendChild(createRow("Network", chainId === 56 ? "BNB Smart Chain Mainnet (56)" : "BNB Smart Chain Testnet (97)"));
-    rows.appendChild(createRow("Native asset", chainId === 56 ? "BNB" : "tBNB"));
-
-    if (tx.to) {
-      rows.appendChild(createRow("Target", createAddress(tx.to, chainId)));
-    }
-
-    if (tx.from) {
-      rows.appendChild(createRow("From", createAddress(tx.from, chainId)));
-    }
-
-    if (tx.value && tx.value !== "0") {
-      const sym = chainId === 56 ? "BNB" : "tBNB";
-      try {
-        const valEth = Number(BigInt(tx.value)) / 1e18;
-        rows.appendChild(createRow("Value", `${valEth} ${sym}`));
-      } catch {
-        rows.appendChild(createRow("Value", `${tx.value} wei`));
-      }
-    }
-
-    if (Array.isArray(security?.effects?.swaps)) {
-      security.effects.swaps.forEach((swap, idx) => {
-        const labelPrefix = security.effects.swaps.length > 1 ? ` (${idx + 1})` : "";
-        if (swap.tokenIn && /^0x[a-fA-F0-9]{40}$/.test(swap.tokenIn)) {
-          rows.appendChild(createRow(`Send token${labelPrefix}`, createAddress(swap.tokenIn, chainId)));
-        }
-        if (swap.tokenOut && /^0x[a-fA-F0-9]{40}$/.test(swap.tokenOut)) {
-          rows.appendChild(createRow(`Receive token${labelPrefix}`, createAddress(swap.tokenOut, chainId)));
-        }
-      });
-    }
-
-    if (Array.isArray(security?.effects?.approvals)) {
-      security.effects.approvals.forEach((app) => {
-        if (app.spender && /^0x[a-fA-F0-9]{40}$/.test(app.spender)) {
-          rows.appendChild(createRow("Spender", createAddress(app.spender, chainId)));
-        }
-        if (app.token && /^0x[a-fA-F0-9]{40}$/.test(app.token)) {
-          rows.appendChild(createRow("Approved token", createAddress(app.token, chainId)));
-        }
-      });
-    }
-
-    const txHash = tx.hash || security?.txHash || security?.transactionHash;
-    if (txHash && typeof txHash === "string" && /^0x[a-fA-F0-9]{64}$/.test(txHash)) {
-      rows.appendChild(createRow("Transaction", createTxLink(txHash, chainId)));
-    }
-
-    if (tx.data && tx.data !== "0x") {
-      const selector = tx.data.slice(0, 10);
-
-      rows.appendChild(createRow("Selector", createMono(selector)));
-
-      const subhead = document.createElement("p");
-
-      subhead.className = "nalar-subhead";
-
-      subhead.textContent = tx.data.length > 74 ? `${tx.data.slice(0, 74)}…` : tx.data;
-
-      body.appendChild(subhead);
-    }
-
-    const riskScore = Number.isFinite(Number(security?.riskScore)) ? Number(security.riskScore) : null;
-
-    if (riskScore !== null) {
-      rows.appendChild(createRow("Risk score", `${riskScore} / 100`));
-    }
-
-    if (security?.riskLevel) {
-      rows.appendChild(createRow("Risk level", String(security.riskLevel).toUpperCase()));
-    }
-
-    const sources = Array.isArray(security?.sources) && security.sources.length > 0 ? security.sources.map(formatSource) : ["INTENT", "ON-CHAIN", "SIMULATION"];
-
-    const sourceRow = document.createElement("div");
-
-    sourceRow.className = "nalar-row";
-
-    const sourceKey = document.createElement("span");
-
-    sourceKey.className = "nalar-row-key";
-
-    sourceKey.textContent = "Checked against";
-
-    const sourceVal = document.createElement("span");
-
-    sourceVal.className = "nalar-row-val";
-
-    const seen = new Set();
-
-    sources.forEach((source) => {
-      if (seen.has(source)) {
-        return;
-      }
-
-      seen.add(source);
-
-      sourceVal.appendChild(createSourceBadge(source));
-    });
-
-    sourceRow.appendChild(sourceKey);
-
-    sourceRow.appendChild(sourceVal);
-
-    rows.appendChild(sourceRow);
-
-    body.appendChild(rows);
-
-    return details;
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Failure notice
-  |--------------------------------------------------------------------------
-  |
-  | The transaction is not sent either way - a failure means Nalar could not
-  | answer, so the safe outcome is the same as a block. The notice only says
-  | why, in one sentence, with the raw code kept small underneath for a
-  | support conversation.
-  */
-
-  const FAILURE_COPY = {
-    STATUS_UNAVAILABLE: {
-      title: "Nalar is not responding",
-      text: "Nalar could not read its own settings, so it could not check this transaction. Reload the page and try again.",
-    },
-    TIMEOUT: {
-      title: "Nalar could not finish in time",
-      text: "The blockchain investigation took longer than expected, so the transaction was not sent.",
-    },
-    OFFLINE: {
-      title: "Nalar is unreachable",
-      text: "The security service could not be contacted. Check your connection and try again.",
-    },
-    NO_INTENT: {
-      title: "No intent set for this site",
-      text: "Nalar compares a transaction against what you said this site should do. Set that first, then try again.",
-    },
-    UNAUTHORIZED: {
-      title: "Nalar was refused",
-      text: "The security service rejected this request. The transaction was not sent.",
-    },
-    RATE_LIMITED: {
-      title: "Too many requests",
-      text: "The security service is rate limiting. Wait a moment and try again.",
-    },
-    SERVER: {
-      title: "Analysis could not be completed",
-      text: "The security service failed while analysing this transaction. Nothing was sent to your wallet.",
-    },
-    INVALID: {
-      title: "Unreadable response",
-      text: "Nalar received an answer it could not parse, so it did not act on it.",
-    },
-    UNKNOWN: {
-      title: "Nalar could not check this transaction",
-      text: "The security check did not complete, so the transaction was stopped.",
-    },
-  };
-
-  /* One place that turns a failure into copy, so every path reads the same. */
-  function describeFailure(error, errorCode) {
-    const code = String(errorCode ?? "").toUpperCase();
-
-    const message = typeof error === "string" ? error : typeof error?.message === "string" ? error.message : "";
-
-    const lower = message.toLowerCase();
-
-    let key = "UNKNOWN";
-
-    if (code === "STATUS_UNAVAILABLE") {
-      key = "STATUS_UNAVAILABLE";
-    } else if (code === "TIMEOUT" || lower.includes("timed out") || lower.includes("timeout")) {
-      key = "TIMEOUT";
-    } else if (code === "NO_INTENT" || lower.includes("no transaction intent")) {
-      key = "NO_INTENT";
-    } else if (code === "UNAUTHORIZED" || lower.includes("unauthorized")) {
-      key = "UNAUTHORIZED";
-    } else if (code === "RATE_LIMITED" || lower.includes("rate limit")) {
-      key = "RATE_LIMITED";
-    } else if (code === "SERVER_ERROR" || lower.includes("could not be completed by the server") || lower.includes("http 5")) {
-      key = "SERVER";
-    } else if (lower.includes("invalid response")) {
-      key = "INVALID";
-    } else if (lower.includes("unavailable") || lower.includes("network connection") || lower.includes("failed to fetch")) {
-      key = "OFFLINE";
-    }
-
-    const copy = FAILURE_COPY[key] ?? FAILURE_COPY.UNKNOWN;
-
-    return {
-      key,
-      title: copy.title,
-      text: copy.text,
-      code: message || null,
-    };
-  }
-
-  /*
-   * A low, self-dismissing notice. It never blocks the page and never asks for
-   * input: by the time it appears the transaction has already been refused.
-   */
-  function showErrorNotice(error, errorCode, onRetry) {
-    removeNalarElement(IDS.banner);
-
-    const { title, text, code } = describeFailure(error, errorCode);
-
-    const notice = document.createElement("div");
-
-    notice.className = "nalar-notice";
-
-    notice.id = IDS.banner;
-
-    notice.setAttribute("role", "alert");
-
-    if (nalarTheme === "light") {
-      notice.setAttribute("data-nalar-theme", "light");
-    }
-
-    const body = document.createElement("div");
-
-    body.className = "nalar-notice-body";
-
-    const titleEl = document.createElement("p");
-
-    titleEl.className = "nalar-notice-title";
-
-    titleEl.textContent = title;
-
-    const textEl = document.createElement("p");
-
-    textEl.className = "nalar-notice-text";
-
-    textEl.textContent = text;
-
-    body.appendChild(titleEl);
-
-    body.appendChild(textEl);
-
-    if (code) {
-      const codeEl = document.createElement("p");
-
-      codeEl.className = "nalar-notice-code";
-
-      codeEl.textContent = code;
-
-      body.appendChild(codeEl);
-    }
-
-    const close = document.createElement("button");
-
-    close.className = "nalar-notice-close";
-
-    close.type = "button";
-
-    close.textContent = "✕";
-
-    close.setAttribute("aria-label", "Dismiss");
-
-    let timer = 0;
-
-    function remove() {
-      clearTimeout(timer);
-
-      if (!notice.isConnected) {
-        return;
-      }
-
-      notice.classList.add("nalar-closing");
-
-      setTimeout(() => notice.remove(), MOTION.exit);
-    }
-
-    close.onclick = () => {
-      remove();
-
-      if (typeof onRetry === "function") {
-        onRetry();
-      }
-    };
-
-    notice.appendChild(body);
-
-    notice.appendChild(close);
-
-    mount(notice);
-
-    /* Long enough to read three lines, short enough not to linger. */
-    timer = setTimeout(remove, 9000);
-
-    return { remove };
-  }
-
-  /* NALAR_LAYER_CHUNK_5_END */
-
   function getDecisionStatus(decision) {
     switch (decision) {
       case "BLOCK":
@@ -5147,7 +3197,7 @@
     }
 
     if (decision === "REVIEW") {
-      return "Continuing will send the original request to your wallet for final confirmation.";
+      return "Continuing will send the original request to your wallet.";
     }
 
     return "Your wallet will ask for final confirmation.";

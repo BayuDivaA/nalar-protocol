@@ -28,7 +28,7 @@
     {
       "matches": ["<all_urls>"],
       "js": ["bridge.js"],
-      "css": ["ui.css"],
+      "css": ["theme.css", "ui.css"],
       "run_at": "document_start"
     },
     {

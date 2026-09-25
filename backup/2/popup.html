@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en" data-nalar-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nalar Protocol</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="ui.css" />
+    <style>
+      /* Popup-only layout. Shares theme.css tokens and the ui.css primitives
+         (buttons, rows, labels, cosmic atmosphere) with the in-page overlay,
+         so the two surfaces are visibly the same product. */
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 380px;
+        min-height: 460px;
+        background: var(--nalar-bg);
+        color: var(--nalar-text);
+        font-family: var(--nalar-font-sans);
+        font-size: var(--nalar-text-base);
+        line-height: 1.5;
+        transition:
+          background-color var(--nalar-motion-normal) var(--nalar-ease-standard),
+          color var(--nalar-motion-normal) var(--nalar-ease-standard);
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        overflow-x: hidden;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      /* --- Header: brand, theme control, live protection state ------------- */
+
+      .pop-head {
+        position: relative;
+        overflow: hidden;
+        padding: var(--nalar-space-5) var(--nalar-space-5) var(--nalar-space-4);
+        border-bottom: 1px solid var(--nalar-border);
+        background-image: var(--nalar-atmosphere);
+      }
+
+      .pop-brand {
+        display: flex;
+        align-items: center;
+        gap: var(--nalar-space-3);
+      }
+
+      .pop-mark {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        flex-shrink: 0;
+        border: 1px solid var(--nalar-border-strong);
+        border-radius: var(--nalar-radius-sm);
+        background: var(--nalar-surface);
+      }
+
+      .pop-mark svg {
+        display: block;
+      }
+
+      .pop-name {
+        font-size: var(--nalar-text-base);
+        font-weight: 650;
+        letter-spacing: -0.015em;
+      }
+
+      .pop-theme {
+        margin-left: auto;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid var(--nalar-border);
+        border-radius: var(--nalar-radius-sm);
+        background: var(--nalar-surface);
+        color: var(--nalar-text-muted);
+        font-size: var(--nalar-text-md);
+        line-height: 1;
+        cursor: pointer;
+        transition:
+          color var(--nalar-motion-fast) var(--nalar-ease-standard),
+          border-color var(--nalar-motion-fast) var(--nalar-ease-standard);
+      }
+
+      .pop-theme:hover {
+        color: var(--nalar-text);
+        border-color: var(--nalar-border-strong);
+      }
+
+      .pop-theme:focus-visible {
+        outline: 2px solid var(--nalar-focus);
+        outline-offset: 2px;
+      }
+
+      /* --- Security state: the answer to "am I covered right now?" --------- */
+
+      .pop-state {
+        margin-top: var(--nalar-space-5);
+      }
+
+      .pop-state-head {
+        display: flex;
+        align-items: center;
+        gap: var(--nalar-space-2);
+        font-size: var(--nalar-text-md);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--nalar-state, var(--nalar-accent-text));
+      }
+
+      .pop-dot {
+        width: 7px;
+        height: 7px;
+        flex-shrink: 0;
+        border-radius: var(--nalar-radius-full);
+        background: var(--nalar-state, var(--nalar-accent));
+        transition: background-color var(--nalar-motion-normal) var(--nalar-ease-standard);
+      }
+
+      .pop-state-note {
+        margin-top: var(--nalar-space-2);
+        font-size: var(--nalar-text-md);
+        line-height: 1.55;
+        color: var(--nalar-text-secondary);
+      }
+
+      .pop-state[data-state="active"] {
+        --nalar-state: var(--nalar-accent);
+      }
+
+      .pop-state[data-state="paused"] {
+        --nalar-state: var(--nalar-warning);
+      }
+
+      .pop-state[data-state="error"] {
+        --nalar-state: var(--nalar-danger);
+      }
+
+      /* One ring, once, when protection returns. Confirmation, not alarm. */
+      .pop-state.is-confirming .pop-dot {
+        animation: pop-confirm 520ms var(--nalar-ease-out) 1;
+      }
+
+      @keyframes pop-confirm {
+        0% {
+          box-shadow: 0 0 0 0 var(--nalar-accent-soft);
+        }
+        70% {
+          box-shadow: 0 0 0 6px transparent;
+        }
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+      }
+
+      /* --- Body ------------------------------------------------------------ */
+
+      .pop-main {
+        flex: 1 1 auto;
+        padding: var(--nalar-space-5);
+      }
+
+      .pop-block + .pop-block {
+        margin-top: var(--nalar-space-5);
+        padding-top: var(--nalar-space-4);
+        border-top: 1px solid var(--nalar-border);
+      }
+
+      .pop-site {
+        margin-top: var(--nalar-space-2);
+        font-family: var(--nalar-font-mono);
+        font-size: var(--nalar-text-sm);
+        color: var(--nalar-text-secondary);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .pop-textarea {
+        min-height: 88px !important;
+        resize: none !important;
+      }
+
+      .pop-hint {
+        margin-top: var(--nalar-space-2);
+        font-size: var(--nalar-text-sm);
+        color: var(--nalar-text-muted);
+      }
+
+      .pop-save {
+        width: 100%;
+        margin-top: var(--nalar-space-3) !important;
+      }
+
+      .pop-message {
+        min-height: 16px;
+        margin-top: var(--nalar-space-2);
+        font-size: var(--nalar-text-sm);
+        color: var(--nalar-accent-text);
+      }
+
+      .pop-message[data-tone="error"] {
+        color: var(--nalar-danger);
+      }
+
+      .pop-message[data-tone="warning"] {
+        color: var(--nalar-warning);
+      }
+
+      /* --- Protection control ---------------------------------------------
+         State and action on one row: the chip reports, the trailing label
+         says what pressing it will do. */
+
+      .pop-foot {
+        flex: 0 0 auto;
+        padding: var(--nalar-space-4) var(--nalar-space-5) var(--nalar-space-5);
+        border-top: 1px solid var(--nalar-border);
+        background: var(--nalar-bg);
+      }
+
+      .pop-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--nalar-space-3);
+        width: 100%;
+        min-height: 48px;
+        padding: 0 var(--nalar-space-4);
+        border: 1px solid var(--nalar-state-border, var(--nalar-accent-line));
+        border-radius: var(--nalar-radius-sm);
+        background: var(--nalar-state-soft, var(--nalar-accent-soft));
+        color: var(--nalar-text);
+        font: inherit;
+        cursor: pointer;
+        transition:
+          background-color var(--nalar-motion-normal) var(--nalar-ease-standard),
+          border-color var(--nalar-motion-normal) var(--nalar-ease-standard),
+          transform var(--nalar-motion-instant) var(--nalar-ease-standard);
+      }
+
+      .pop-toggle:hover {
+        border-color: var(--nalar-state, var(--nalar-accent));
+      }
+
+      .pop-toggle:active {
+        transform: scale(0.98);
+      }
+
+      .pop-toggle:focus-visible {
+        outline: 2px solid var(--nalar-focus);
+        outline-offset: 2px;
+      }
+
+      .pop-toggle[aria-pressed="true"] {
+        --nalar-state: var(--nalar-accent);
+        --nalar-state-soft: var(--nalar-accent-soft);
+        --nalar-state-border: var(--nalar-accent-line);
+      }
+
+      .pop-toggle[aria-pressed="false"] {
+        --nalar-state: var(--nalar-warning);
+        --nalar-state-soft: var(--nalar-warning-soft);
+        --nalar-state-border: var(--nalar-warning);
+      }
+
+      .pop-toggle-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--nalar-space-2);
+        font-size: var(--nalar-text-sm);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--nalar-state, var(--nalar-accent-text));
+      }
+
+      .pop-toggle-chip::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: var(--nalar-radius-full);
+        background: var(--nalar-state, var(--nalar-accent));
+        transition: background-color var(--nalar-motion-normal) var(--nalar-ease-standard);
+      }
+
+      .pop-toggle-action {
+        font-size: var(--nalar-text-md);
+        color: var(--nalar-text-secondary);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html,
+        body,
+        .pop-dot,
+        .pop-toggle,
+        .pop-toggle-chip::before,
+        .pop-state.is-confirming .pop-dot {
+          animation: none !important;
+          transition: none !important;
+        }
+
+        .pop-toggle:active {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="pop-head">
+      <div class="nalar-cosmos" aria-hidden="true">
+        <span class="nalar-star nalar-star--a"></span>
+        <span class="nalar-star nalar-star--b"></span>
+        <span class="nalar-orbit"></span>
+      </div>
+
+      <div class="pop-brand">
+        <span class="pop-mark" aria-hidden="true">
+          <svg viewBox="0 0 560 560" width="17" height="17">
+            <rect fill="currentColor" x="75.39" y="208.7" width="95.75" height="201.58" />
+            <path
+              fill="currentColor"
+              d="M484.8,209.73V410.59a289.14,289.14,0,0,1-95.91-16.24q-12.28-4.31-24-9.66A291.05,291.05,0,0,1,244.77,283.24a.07.07,0,0,1,0-.06,191.77,191.77,0,0,0-10.9-17.37s0,0,0-.05A194.59,194.59,0,0,0,171.48,209a2.9,2.9,0,0,0-.34-.19V103.88q12.3,4.32,24.07,9.66a290.94,290.94,0,0,1,116,95.47c1.41,2,2.77,3.91,4.11,5.91a187.43,187.43,0,0,0,11,17.5s0,0,0,0a194.47,194.47,0,0,0,62.73,57V209.73Z"
+            />
+            <path fill="#0066FF" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z" />
+          </svg>
+        </span>
+        <span class="pop-name">Nalar Protocol</span>
+        <button class="pop-theme" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch theme">◐</button>
+      </div>
+
+      <div class="pop-state" id="state" data-state="active">
+        <p class="pop-state-head">
+          <span class="pop-dot" aria-hidden="true"></span>
+          <span id="stateTitle">Protected</span>
+        </p>
+        <p class="pop-state-note" id="stateNote">Your transactions are being checked before signing.</p>
+      </div>
+    </header>
+
+    <main class="pop-main">
+      <section class="pop-block">
+        <p class="nalar-label">Network</p>
+        <div class="nalar-rows" style="margin-top: var(--nalar-space-2)">
+          <div class="nalar-row">
+            <span class="nalar-row-key">Analyzing on</span>
+            <span class="nalar-row-val">
+              <span id="networkName">BNB Smart Chain Testnet</span>
+              <span class="nalar-mono" id="networkMeta" style="display: block; color: var(--nalar-text-muted)"> Chain ID 97 · tBNB </span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="pop-block">
+        <p class="nalar-label">Your intent for this site</p>
+        <p class="pop-site" id="siteName">Checking current tab…</p>
+        <label class="nalar-label" for="intent" style="display: block; margin-top: var(--nalar-space-4)"> What you expect this transaction to do </label>
+        <textarea class="nalar-textarea pop-textarea" id="intent" style="margin-top: var(--nalar-space-2)" placeholder="Example: Swap 0.001 tBNB to NDEMO" spellcheck="false"></textarea>
+        <p class="pop-hint" id="intentHint">No intent saved for this site yet.</p>
+        <button class="nalar-btn nalar-btn--primary pop-save" id="save" type="button">Save intent</button>
+        <p class="pop-message" id="message" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <footer class="pop-foot">
+      <button class="pop-toggle" id="toggle" type="button" aria-pressed="true">
+        <span class="pop-toggle-chip" id="toggleState">Active</span>
+        <span class="pop-toggle-action" id="toggleAction">Pause protection</span>
+      </button>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="theme.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,0 +1,1496 @@
+/* ==========================================================================
+   NALAR PROTOCOL · IN-PAGE OVERLAY
+   ==========================================================================
+
+   Styles for the four surfaces Nalar draws inside a web page: the intent
+   prompt, the analysis rail, the decision result and the network gate.
+
+   Loaded two ways from manifest.json: as a content-script stylesheet (every
+   page) and by popup.html for the shared primitives. It contains structure
+   only. Every value comes from theme.css.
+
+   Two rules govern this file:
+   1. Nothing here is decorative. If a rule does not carry hierarchy,
+      readability or state, it does not belong.
+   2. Element-level !important is confined to the host-isolation block below.
+      Everywhere else, states are expressed with [data-*] attributes so the
+      markup says what it is and the CSS says how it looks.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Host isolation
+   The overlay renders inside an arbitrary page whose reset (Tailwind
+   preflight, `button { border: 0 }`, global font rules) can otherwise win.
+   A security decision that renders wrong is a decision the user ignores, so
+   this one block pins the properties a host reset would take.
+   -------------------------------------------------------------------------- */
+
+.nalar-root {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  padding: clamp(16px, 4vh, 32px) clamp(16px, 4vw, 24px) !important;
+  box-sizing: border-box !important;
+  background: var(--nalar-scrim) !important;
+  font-family: var(--nalar-font-sans) !important;
+  font-size: var(--nalar-text-base) !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: normal !important;
+  text-align: left !important;
+  text-transform: none !important;
+}
+
+.nalar-root,
+.nalar-root *,
+.nalar-root *::before,
+.nalar-root *::after {
+  box-sizing: border-box;
+}
+
+.nalar-root p,
+.nalar-root h1,
+.nalar-root h2,
+.nalar-root ol,
+.nalar-root ul,
+.nalar-root li,
+.nalar-root footer,
+.nalar-root header,
+.nalar-root section,
+.nalar-root details,
+.nalar-root summary,
+.nalar-root textarea {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nalar-root button,
+.nalar-root textarea,
+.nalar-root summary,
+.nalar-root a {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+}
+
+/* Blur sits on the scrim only. One blurred surface in the whole product, so
+   the modal itself reads as a hard, printed surface rather than more glass. */
+.nalar-root {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.nalar-modal {
+  position: relative !important;
+  width: min(580px, 100%) !important;
+  max-height: min(88vh, 760px) !important;
+  max-height: min(88dvh, 760px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  margin: auto !important;
+  border: 1px solid var(--nalar-border-strong) !important;
+  border-radius: var(--nalar-radius-lg) !important;
+  background-color: var(--nalar-bg) !important;
+  background-image: var(--nalar-atmosphere) !important;
+  color: var(--nalar-text) !important;
+  box-shadow: var(--nalar-shadow-modal) !important;
+  text-align: left !important;
+  transform: translateZ(0);
+}
+
+.nalar-modal--compact {
+  width: min(480px, 100%) !important;
+  max-height: min(88vh, 640px) !important;
+  max-height: min(88dvh, 640px) !important;
+}
+
+.nalar-modal--intent {
+  width: min(480px, 100%) !important;
+  max-height: min(88vh, 640px) !important;
+  max-height: min(88dvh, 640px) !important;
+}
+
+.nalar-modal--analysis {
+  width: min(440px, 100%) !important;
+  max-height: min(88vh, 580px) !important;
+  max-height: min(88dvh, 580px) !important;
+}
+
+.nalar-modal--decision {
+  width: min(580px, 100%) !important;
+  max-height: min(88vh, 760px) !important;
+  max-height: min(88dvh, 760px) !important;
+}
+
+.nalar-modal--network {
+  width: min(480px, 100%) !important;
+  max-height: min(88vh, 640px) !important;
+  max-height: min(88dvh, 640px) !important;
+}
+
+/* The top light: a single hairline that catches the modal edge. It is the
+   only "material" cue in the system, which is why it is worth its one rule. */
+.nalar-modal::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--nalar-veil), transparent);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Cosmic atmosphere
+   Two light points and one arc, clipped to the modal header, static. This is
+   the whole cosmic budget: it marks the surface as Nalar's and stops there.
+   -------------------------------------------------------------------------- */
+
+.nalar-cosmos {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 132px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.nalar-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: var(--nalar-radius-full);
+  background: var(--nalar-star);
+}
+
+.nalar-star--a {
+  top: 26px;
+  right: 32px;
+}
+
+.nalar-star--b {
+  top: 62px;
+  right: 74px;
+  width: 2px;
+  height: 2px;
+  opacity: 0.75;
+}
+
+/* A single arc of an orbit crossing the corner. Geometry, not iconography. */
+.nalar-orbit {
+  position: absolute;
+  top: -96px;
+  right: -72px;
+  width: 232px;
+  height: 232px;
+  border: 1px solid var(--nalar-orbit);
+  border-radius: var(--nalar-radius-full);
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.nalar-head {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 24px 28px 18px 28px;
+  border-bottom: 1px solid var(--nalar-border);
+}
+
+.nalar-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nalar-space-2);
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nalar-accent-text);
+}
+
+.nalar-eyebrow svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.nalar-title {
+  margin-top: 10px !important;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--nalar-text);
+}
+
+.nalar-lede {
+  margin-top: 8px !important;
+  max-width: 44ch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--nalar-text-secondary);
+}
+
+/* --------------------------------------------------------------------------
+   Body, sections and micro-labels
+   Sections are separated by hairlines and space rather than boxed in cards,
+   so the eye reads a document: decision, reason, evidence.
+   -------------------------------------------------------------------------- */
+
+.nalar-body {
+  flex: 1 1 auto;
+  padding: 0 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--nalar-border-strong) transparent;
+}
+
+.nalar-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.nalar-body::-webkit-scrollbar-thumb {
+  background: var(--nalar-border-strong);
+  border-radius: var(--nalar-radius-full);
+}
+
+.nalar-section {
+  padding: 20px 0;
+  border-top: 1px solid var(--nalar-border);
+}
+
+.nalar-section--first {
+  border-top: 0;
+  padding-top: 18px;
+}
+
+.nalar-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nalar-text-muted);
+}
+
+/* The rail motif: a hairline node marking where a section starts. It is the
+   same shape as the loading rail and the compare rail, which is what makes
+   three different surfaces read as one product. Accent by default; a section
+   that carries the decision itself switches the node to the state colour. */
+.nalar-label--node {
+  display: flex;
+  align-items: center;
+  gap: var(--nalar-space-2);
+}
+
+.nalar-label--node::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: var(--nalar-radius-full);
+  background: var(--nalar-accent-line);
+}
+
+.nalar-section--state {
+  margin-top: 4px;
+  padding: 16px 18px !important;
+  border: 1px solid var(--nalar-border);
+  border-left: 3px solid var(--nalar-state, var(--nalar-border-strong)) !important;
+  border-radius: var(--nalar-radius-md);
+  background: var(--nalar-surface);
+}
+
+.nalar-section--state .nalar-label--node::before {
+  background: var(--nalar-state, var(--nalar-accent-line));
+}
+
+.nalar-prose {
+  margin-top: var(--nalar-space-3) !important;
+  font-size: var(--nalar-text-base);
+  line-height: 1.6;
+  color: var(--nalar-text);
+  /* Prose here can quote the user's own intent back at them, so it is the one
+     body-copy element that has to survive a pasted token with no spaces in it. */
+  overflow-wrap: anywhere;
+}
+
+.nalar-prose--strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nalar-prose--muted {
+  font-size: var(--nalar-text-md);
+  line-height: 1.55;
+  color: var(--nalar-text-secondary);
+}
+
+.nalar-prose + .nalar-prose {
+  margin-top: var(--nalar-space-2) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Intent prompt
+   -------------------------------------------------------------------------- */
+
+.nalar-site {
+  display: flex;
+  align-items: center;
+  gap: var(--nalar-space-2);
+  margin-top: 8px !important;
+  margin-bottom: 20px !important;
+  padding: 10px 14px;
+  border: 1px solid var(--nalar-border);
+  border-radius: var(--nalar-radius-sm);
+  background: var(--nalar-surface);
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-sm);
+  color: var(--nalar-text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.nalar-field-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nalar-text-muted);
+}
+
+.nalar-textarea {
+  display: block !important;
+  width: 100% !important;
+  min-height: 112px !important;
+  margin-top: 0 !important;
+  padding: 12px 14px !important;
+  border: 1px solid var(--nalar-border-strong) !important;
+  border-radius: var(--nalar-radius-sm) !important;
+  background: var(--nalar-surface) !important;
+  color: var(--nalar-text) !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+  resize: vertical !important;
+  outline: none !important;
+  transition:
+    border-color var(--nalar-motion-fast) var(--nalar-ease-standard),
+    box-shadow var(--nalar-motion-fast) var(--nalar-ease-standard) !important;
+}
+
+.nalar-textarea::placeholder {
+  color: var(--nalar-text-muted);
+}
+
+.nalar-textarea:focus {
+  border-color: var(--nalar-accent) !important;
+  box-shadow: 0 0 0 3px var(--nalar-accent-soft) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Analysis rail
+   The one place the product shows work in progress. Named steps on a
+   vertical rail: the user sees which checks have run, and the light moving
+   down the rail says the remaining ones are still running. It replaces a
+   spinner, which would say nothing about what Nalar actually does.
+   -------------------------------------------------------------------------- */
+
+.nalar-rail {
+  position: relative;
+  margin-top: 8px !important;
+  padding: 12px 18px !important;
+  border: 1px solid var(--nalar-border);
+  border-radius: var(--nalar-radius-md);
+  background: var(--nalar-surface);
+}
+
+/* Static rail line, centered through the 16px step nodes. */
+.nalar-rail::before {
+  content: "";
+  position: absolute;
+  left: 26.5px;
+  top: 24px;
+  bottom: 24px;
+  width: 1px;
+  background: var(--nalar-border-strong);
+}
+
+/* The travelling light. Animates background-position (paint only, no layout)
+   and dies with the node when the overlay is removed. */
+.nalar-rail::after {
+  content: "";
+  position: absolute;
+  left: 26px;
+  top: 24px;
+  bottom: 24px;
+  width: 2px;
+  background-image: linear-gradient(180deg, transparent 0%, var(--nalar-accent) 46%, transparent 88%);
+  background-size: 100% 220%;
+  background-repeat: no-repeat;
+  background-position: 0 -120%;
+  opacity: 0.6;
+  pointer-events: none;
+  animation: nalar-rail-sweep 2800ms linear infinite;
+}
+
+@keyframes nalar-rail-sweep {
+  from {
+    background-position: 0 -120%;
+  }
+  to {
+    background-position: 0 220%;
+  }
+}
+
+.nalar-step {
+  display: grid;
+  grid-template-columns: 18px 28px 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  transition: color var(--nalar-motion-normal) var(--nalar-ease-standard);
+}
+
+.nalar-step-node {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--nalar-border-strong);
+  border-radius: var(--nalar-radius-full);
+  background: var(--nalar-bg);
+  transition:
+    border-color var(--nalar-motion-normal) var(--nalar-ease-standard),
+    box-shadow var(--nalar-motion-normal) var(--nalar-ease-standard);
+}
+
+.nalar-step-num {
+  grid-column: 2;
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-xs);
+  font-weight: 600;
+  color: var(--nalar-text-muted);
+  transition: color var(--nalar-motion-normal) var(--nalar-ease-standard);
+}
+
+.nalar-step-text {
+  grid-column: 3;
+  font-size: var(--nalar-text-base);
+  color: var(--nalar-text-muted);
+  transition: color var(--nalar-motion-normal) var(--nalar-ease-standard);
+}
+
+/* Pending: hollow. Done: ticked, and deliberately muted, because a completed
+   step is history and green belongs to the verdict, not to progress. */
+.nalar-step[data-state="done"] .nalar-step-node::after {
+  content: "";
+  width: 7px;
+  height: 4px;
+  margin-top: -2px;
+  border-left: 1.5px solid var(--nalar-text-muted);
+  border-bottom: 1.5px solid var(--nalar-text-muted);
+  transform: rotate(-45deg);
+}
+
+.nalar-step[data-state="done"] .nalar-step-text,
+.nalar-step[data-state="done"] .nalar-step-num {
+  color: var(--nalar-text-secondary);
+}
+
+.nalar-step[data-state="active"] .nalar-step-node {
+  border-color: var(--nalar-accent);
+  box-shadow: 0 0 0 3px var(--nalar-accent-soft);
+}
+
+.nalar-step[data-state="active"] .nalar-step-node::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--nalar-radius-full);
+  background: var(--nalar-accent);
+}
+
+.nalar-step[data-state="active"] .nalar-step-text {
+  color: var(--nalar-text);
+}
+
+.nalar-step[data-state="active"] .nalar-step-num {
+  color: var(--nalar-accent-text);
+}
+
+/* --------------------------------------------------------------------------
+   Verdict header
+   -------------------------------------------------------------------------- */
+
+.nalar-verdict {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.nalar-verdict-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--nalar-border-strong);
+  border-radius: 10px;
+  background: var(--nalar-surface);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--nalar-text-secondary);
+}
+
+.nalar-verdict-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: var(--nalar-text);
+  /* The title sits in the 1fr track beside the mark and the score. Without
+     min-width: 0 that track refuses to shrink below the title's longest word,
+     which is what pushes the score off the right edge on a narrow viewport. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Risk score: the number the user is meant to read first after the verdict,
+   so it sits at the optical top-right of the header. */
+.nalar-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--nalar-surface);
+  border: 1px solid var(--nalar-border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.nalar-score-value {
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-lg);
+  font-weight: 700;
+  color: var(--nalar-state, var(--nalar-text));
+}
+
+.nalar-score-max {
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-xs);
+  color: var(--nalar-text-muted);
+}
+
+.nalar-score-level {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--nalar-text-xs);
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--nalar-state, var(--nalar-text-muted));
+}
+
+/* Decision states. --nalar-state is the single switch every child reads, so a
+   decision is declared once on the modal instead of re-stated per node. */
+.nalar-modal[data-decision="block"] {
+  --nalar-state: var(--nalar-danger);
+  --nalar-state-soft: var(--nalar-danger-soft);
+}
+
+.nalar-modal[data-decision="review"] {
+  --nalar-state: var(--nalar-warning);
+  --nalar-state-soft: var(--nalar-warning-soft);
+}
+
+.nalar-modal[data-decision="allow"] {
+  --nalar-state: var(--nalar-success);
+  --nalar-state-soft: var(--nalar-success-soft);
+}
+
+.nalar-modal[data-decision] .nalar-verdict-mark {
+  border-color: var(--nalar-state);
+  background: var(--nalar-state-soft);
+  color: var(--nalar-state);
+  /* One ring, once, as the modal mounts. Purpose: anchor attention on the
+     verdict at the moment it appears. Not a persistent glow. */
+  animation: nalar-verdict-ring 420ms var(--nalar-ease-out) 160ms 1 both;
+}
+
+@keyframes nalar-verdict-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--nalar-state-soft);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.nalar-modal[data-decision] .nalar-verdict-title {
+  color: var(--nalar-text);
+}
+
+/* --------------------------------------------------------------------------
+   Your request / actual transaction
+   The product's core claim made visible: two panes joined by the rail, with
+   the node between them stating match or mismatch. Only the tokens that
+   differ are marked, never a whole pane.
+   -------------------------------------------------------------------------- */
+
+.nalar-compare-block[data-match="true"] {
+  --nalar-compare-state: var(--nalar-success);
+  --nalar-compare-state-soft: var(--nalar-success-soft);
+}
+
+.nalar-compare-block[data-match="false"] {
+  --nalar-compare-state: var(--nalar-danger);
+  --nalar-compare-state-soft: var(--nalar-danger-soft);
+}
+
+.nalar-compare-block[data-match="unknown"] {
+  --nalar-compare-state: var(--nalar-warning);
+  --nalar-compare-state-soft: var(--nalar-warning-soft);
+}
+
+.nalar-compare {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  gap: 16px;
+  margin-top: 14px !important;
+}
+
+.nalar-compare-side {
+  padding: 14px 16px;
+  border: 1px solid var(--nalar-border);
+  border-radius: 8px;
+  background: var(--nalar-surface);
+}
+
+.nalar-compare-rail {
+  position: relative;
+  background: var(--nalar-border);
+}
+
+/* The node that states the verdict of the comparison. */
+.nalar-compare-rail::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: var(--nalar-radius-full);
+  background: var(--nalar-compare-state, var(--nalar-text-muted));
+}
+
+.nalar-compare-text {
+  margin-top: 8px !important;
+  font-size: var(--nalar-text-base);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--nalar-text);
+  overflow-wrap: anywhere;
+}
+
+/* The actual side is named, not flooded: its label takes the state colour so
+   the eye finds the divergence, while the value stays legible and only the
+   differing tokens are marked. */
+.nalar-compare-side--actual {
+  border-color: var(--nalar-border-strong);
+}
+
+.nalar-compare-block[data-match="false"] .nalar-compare-side--actual {
+  border-color: var(--nalar-danger);
+}
+
+.nalar-compare-block[data-match="false"] .nalar-compare-side--actual .nalar-label {
+  color: var(--nalar-danger);
+}
+
+/* The one token that differs. Underlined as well as tinted, so the mark does
+   not depend on colour alone. */
+.nalar-diff {
+  padding: 0 2px;
+  border-bottom: 1px solid currentColor;
+  border-radius: var(--nalar-radius-xs);
+  background: var(--nalar-danger-soft);
+  color: var(--nalar-danger);
+  font-weight: 600;
+}
+
+.nalar-verdict-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nalar-space-2);
+  margin-top: 14px !important;
+  padding: 6px 12px;
+  border: 1px solid var(--nalar-compare-state);
+  border-radius: 6px;
+  background: var(--nalar-compare-state-soft);
+  font-size: var(--nalar-text-sm);
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--nalar-compare-state);
+}
+
+/* Per-field differences, when the backend reports more than the headline. */
+.nalar-diffs {
+  margin-top: var(--nalar-space-3) !important;
+}
+
+.nalar-diff-row {
+  display: flex;
+  gap: var(--nalar-space-2);
+  padding: 3px 0;
+  font-size: var(--nalar-text-sm);
+  line-height: 1.5;
+  color: var(--nalar-text-secondary);
+  /* Same reason as .nalar-finding: the sentence is an anonymous flex item,
+     and a backend mismatch string can carry an unbreakable address. */
+  overflow-wrap: anywhere;
+}
+
+.nalar-diff-row::before {
+  content: "";
+  flex-shrink: 0;
+  width: 4px;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: var(--nalar-radius-full);
+  background: var(--nalar-danger);
+}
+
+/* --------------------------------------------------------------------------
+   Disclosure: evidence and technical details
+   Both collapsed by default. They are the answer to "show me why", asked
+   after the user has already understood the decision.
+   -------------------------------------------------------------------------- */
+
+.nalar-disclosure {
+  border-top: 1px solid var(--nalar-border);
+}
+
+.nalar-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--nalar-space-2);
+  padding: var(--nalar-space-4) 0;
+  font-size: var(--nalar-text-sm);
+  font-weight: 600;
+  color: var(--nalar-text-muted);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  transition: color var(--nalar-motion-fast) var(--nalar-ease-standard);
+}
+
+.nalar-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.nalar-disclosure > summary::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform var(--nalar-motion-fast) var(--nalar-ease-out);
+}
+
+.nalar-disclosure[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.nalar-disclosure > summary:hover {
+  color: var(--nalar-text);
+}
+
+.nalar-disclosure > summary:focus-visible {
+  outline: 2px solid var(--nalar-focus);
+  outline-offset: 2px;
+  border-radius: var(--nalar-radius-xs);
+}
+
+.nalar-disclosure-count {
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-xs);
+  color: var(--nalar-text-muted);
+}
+
+.nalar-disclosure-body {
+  padding-bottom: var(--nalar-space-4);
+  animation: nalar-rise var(--nalar-motion-normal) var(--nalar-ease-out) both;
+}
+
+/* Compact evidence and technical rows. No cards: a data table is already the
+   right shape for key/value pairs at this width. */
+.nalar-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.nalar-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--nalar-space-4);
+  padding: var(--nalar-space-2) 0;
+  border-top: 1px solid var(--nalar-border);
+  font-size: var(--nalar-text-sm);
+}
+
+.nalar-row:first-child {
+  border-top: 0;
+}
+
+.nalar-row-key {
+  flex-shrink: 0;
+  color: var(--nalar-text-muted);
+}
+
+.nalar-row-val {
+  min-width: 0;
+  color: var(--nalar-text-secondary);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.nalar-row-val--state {
+  color: var(--nalar-state, var(--nalar-text-secondary));
+  font-weight: 600;
+}
+
+.nalar-mono {
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-sm);
+}
+
+.nalar-source {
+  margin-left: var(--nalar-space-2);
+  padding: 2px 5px;
+  border-radius: var(--nalar-radius-xs);
+  background: var(--nalar-accent-soft);
+  font-family: var(--nalar-font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nalar-accent-text);
+  white-space: nowrap;
+  /* Inside .nalar-finding the badge is a flex item. Without this it absorbs
+     the row's shrinkage, and because the label cannot wrap it would push the
+     row past the modal edge on a 320px viewport instead of letting the
+     finding text wrap. */
+  flex-shrink: 0;
+}
+
+.nalar-subhead {
+  margin-top: var(--nalar-space-4) !important;
+  padding-top: var(--nalar-space-3);
+  border-top: 1px solid var(--nalar-border);
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-sm);
+  color: var(--nalar-text);
+  overflow-wrap: anywhere;
+}
+
+.nalar-finding {
+  display: flex;
+  gap: var(--nalar-space-2);
+  padding: 3px 0;
+  font-size: var(--nalar-text-sm);
+  line-height: 1.5;
+  color: var(--nalar-text-secondary);
+  /* A finding can carry a raw hash or address from the backend, and the text
+     is an anonymous flex item that CSS cannot target directly. Setting the
+     property on the container lets it inherit into that item and keeps the
+     min-content width small enough for the row to shrink. */
+  overflow-wrap: anywhere;
+}
+
+.nalar-finding::before {
+  content: "";
+  flex-shrink: 0;
+  width: 4px;
+  height: 4px;
+  margin-top: 7px;
+  border-radius: var(--nalar-radius-full);
+  background: currentColor;
+}
+
+.nalar-finding[data-severity="critical"],
+.nalar-finding[data-severity="high"] {
+  color: var(--nalar-danger);
+}
+
+.nalar-finding[data-severity="medium"] {
+  color: var(--nalar-warning);
+}
+
+.nalar-empty {
+  font-size: var(--nalar-text-sm);
+  color: var(--nalar-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Addresses
+   A contract address is the one value a user may want to verify away from
+   this modal, so it is a real link to the chain's explorer. The arrow is the
+   conventional "opens elsewhere" affordance and appears on nothing else.
+   -------------------------------------------------------------------------- */
+
+.nalar-addr {
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-sm);
+  color: var(--nalar-text-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition:
+    color var(--nalar-motion-fast) var(--nalar-ease-standard),
+    border-color var(--nalar-motion-fast) var(--nalar-ease-standard);
+}
+
+.nalar-addr:hover {
+  color: var(--nalar-accent-text);
+  border-bottom-color: currentColor;
+}
+
+.nalar-addr:focus-visible {
+  outline: 2px solid var(--nalar-focus);
+  outline-offset: 2px;
+  border-radius: var(--nalar-radius-xs);
+}
+
+.nalar-addr-ext {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.nalar-foot {
+  flex: 0 0 auto;
+  padding: 18px 28px 22px 28px;
+  border-top: 1px solid var(--nalar-border);
+  background: var(--nalar-bg);
+}
+
+.nalar-foot-note {
+  margin-bottom: 12px !important;
+  font-size: var(--nalar-text-sm);
+  line-height: 1.5;
+  color: var(--nalar-text-muted);
+}
+
+.nalar-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.nalar-actions--split > .nalar-btn {
+  flex: 1 1 0;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+.nalar-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px !important;
+  padding: 0 20px !important;
+  border: 1px solid var(--nalar-border-strong) !important;
+  border-radius: var(--nalar-radius-sm) !important;
+  background-color: var(--nalar-surface) !important;
+  background-image: none !important;
+  color: var(--nalar-text) !important;
+  font-family: var(--nalar-font-sans) !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    background-color var(--nalar-motion-fast) var(--nalar-ease-standard),
+    border-color var(--nalar-motion-fast) var(--nalar-ease-standard),
+    transform var(--nalar-motion-instant) var(--nalar-ease-standard) !important;
+}
+
+.nalar-btn:hover {
+  border-color: var(--nalar-accent) !important;
+}
+
+.nalar-btn:active {
+  transform: scale(0.98);
+}
+
+.nalar-btn:focus-visible {
+  outline: 2px solid var(--nalar-focus) !important;
+  outline-offset: 2px !important;
+}
+
+.nalar-btn--primary {
+  border-color: var(--nalar-accent) !important;
+  background-color: var(--nalar-accent) !important;
+  color: #ffffff !important;
+}
+
+.nalar-btn--primary:hover {
+  background-color: var(--nalar-accent-hover) !important;
+  border-color: var(--nalar-accent-hover) !important;
+}
+
+/* A single soft highlight crosses the primary button on hover: confirmation
+   that the action is live, once per hover, transform only. */
+.nalar-btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 32%, rgba(255, 255, 255, 0.22) 50%, transparent 68%);
+  transform: translateX(-110%);
+  pointer-events: none;
+}
+
+.nalar-btn--primary:hover::after {
+  animation: nalar-sheen 620ms var(--nalar-ease-out) 1;
+}
+
+@keyframes nalar-sheen {
+  to {
+    transform: translateX(110%);
+  }
+}
+
+.nalar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Network gate
+   Reuses the compare primitive: the two networks are, literally, a
+   comparison, and the rail between them states whether they agree.
+   -------------------------------------------------------------------------- */
+
+.nalar-network-box {
+  padding: var(--nalar-space-3) var(--nalar-space-4);
+  border: 1px solid var(--nalar-border);
+  border-radius: var(--nalar-radius-sm);
+  background: var(--nalar-raised);
+}
+
+.nalar-network-box[data-role="required"] {
+  border-color: var(--nalar-success);
+  background: var(--nalar-success-soft);
+}
+
+.nalar-network-name {
+  margin-top: var(--nalar-space-2) !important;
+  font-size: var(--nalar-text-base);
+  font-weight: 600;
+  color: var(--nalar-text);
+  overflow-wrap: anywhere;
+}
+
+.nalar-network-id {
+  margin-top: 2px !important;
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-sm);
+  color: var(--nalar-text-muted);
+}
+
+.nalar-status-line {
+  margin-top: var(--nalar-space-4) !important;
+  font-size: var(--nalar-text-sm);
+  line-height: 1.5;
+  color: var(--nalar-warning);
+  min-height: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   Failure notice
+   Shown when the security service cannot answer. The transaction is rejected
+   exactly as before - this only says why. It sits low, never covers the page,
+   never takes input, and leaves on its own. It lives outside .nalar-root, so
+   it needs its own host-isolation block rather than inheriting one.
+   -------------------------------------------------------------------------- */
+
+.nalar-notice {
+  position: fixed !important;
+  inset: auto 0 var(--nalar-space-6) 0 !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: var(--nalar-space-3) !important;
+  width: min(420px, calc(100vw - 32px)) !important;
+  margin: 0 auto !important;
+  padding: var(--nalar-space-4) !important;
+  box-sizing: border-box !important;
+  border: 1px solid var(--nalar-border-strong) !important;
+  border-left: 3px solid var(--nalar-warning) !important;
+  border-radius: var(--nalar-radius-sm) !important;
+  background: var(--nalar-surface) !important;
+  box-shadow: var(--nalar-shadow-modal) !important;
+  color: var(--nalar-text) !important;
+  font-family: var(--nalar-font-sans) !important;
+  font-size: var(--nalar-text-base) !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: normal !important;
+  text-align: left !important;
+  text-transform: none !important;
+  animation: nalar-notice-in var(--nalar-motion-enter) var(--nalar-ease-out) both;
+}
+
+.nalar-notice p {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.nalar-notice button {
+  font-family: var(--nalar-font-sans) !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+.nalar-notice.nalar-closing {
+  animation: nalar-notice-out var(--nalar-motion-fast) var(--nalar-ease-standard) both;
+}
+
+.nalar-notice-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nalar-notice-title {
+  font-size: var(--nalar-text-base);
+  font-weight: 650;
+  color: var(--nalar-text);
+}
+
+/* Doubled class so these beat the reset above, which is a type selector. */
+.nalar-notice .nalar-notice-text {
+  margin-top: var(--nalar-space-1) !important;
+  font-size: var(--nalar-text-md);
+  line-height: 1.5;
+  color: var(--nalar-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.nalar-notice .nalar-notice-code {
+  margin-top: var(--nalar-space-2) !important;
+  font-family: var(--nalar-font-mono);
+  font-size: var(--nalar-text-xs);
+  color: var(--nalar-text-muted);
+}
+
+.nalar-notice-close {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--nalar-radius-xs);
+  background: transparent;
+  color: var(--nalar-text-muted);
+  font-size: var(--nalar-text-md);
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--nalar-motion-fast) var(--nalar-ease-standard);
+}
+
+.nalar-notice-close:hover {
+  color: var(--nalar-text);
+}
+
+.nalar-notice-close:focus-visible {
+  outline: 2px solid var(--nalar-focus);
+  outline-offset: 2px;
+}
+
+@keyframes nalar-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes nalar-notice-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Motion
+   Enter and exit mirror each other: 300ms in, 160ms out, opacity and
+   transform only. Section content rises in a short stagger so the eye lands
+   on the verdict before the explanation.
+   -------------------------------------------------------------------------- */
+
+.nalar-root {
+  animation: nalar-scrim-in var(--nalar-motion-enter) var(--nalar-ease-out) both;
+}
+
+.nalar-modal {
+  animation: nalar-modal-in var(--nalar-motion-enter) var(--nalar-ease-out) both;
+}
+
+.nalar-root.nalar-closing {
+  animation: nalar-scrim-out var(--nalar-motion-fast) var(--nalar-ease-standard) both;
+}
+
+.nalar-root.nalar-closing .nalar-modal {
+  animation: nalar-modal-out var(--nalar-motion-fast) var(--nalar-ease-standard) both;
+}
+
+@keyframes nalar-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nalar-scrim-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes nalar-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes nalar-modal-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+  }
+}
+
+@keyframes nalar-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Set --nalar-delay from JS; one class carries every stagger step. */
+.nalar-rise {
+  animation: nalar-rise var(--nalar-motion-enter) var(--nalar-ease-out) both;
+  animation-delay: var(--nalar-delay, 0ms);
+}
+
+/* --------------------------------------------------------------------------
+   Narrow viewports & responsive reflow
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .nalar-head,
+  .nalar-body,
+  .nalar-foot {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .nalar-compare {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Rail lies flat between the stacked panes. */
+  .nalar-compare-rail {
+    height: 1px;
+    width: auto;
+  }
+
+  .nalar-compare-rail::after {
+    top: 50%;
+    left: 50%;
+    margin: -3.5px 0 0 -3.5px;
+  }
+
+  .nalar-actions--split {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nalar-root {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .nalar-modal {
+    width: 100% !important;
+    max-height: 92dvh !important;
+    border-radius: var(--nalar-radius-lg) var(--nalar-radius-lg) 0 0 !important;
+    border-bottom: 0 !important;
+  }
+
+  .nalar-verdict {
+    grid-template-columns: auto 1fr;
+    row-gap: 8px;
+  }
+
+  .nalar-score {
+    grid-column: 2;
+    text-align: left;
+    align-items: flex-start;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Very narrow viewports
+   At 360px and below a key and its value stop sharing a line: the key holds
+   its width because a label that wraps mid-phrase is unreadable, which leaves
+   the value whatever is left over. Stacking the two gives the value the full
+   width, which is the shape a key/value row takes when there is only one
+   column to give it.
+
+   360px and not 380px: popup.html is a fixed 380px document that reuses
+   .nalar-row, and a 380px query would restyle the popup from this file.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 360px) {
+  .nalar-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--nalar-space-1);
+  }
+
+  .nalar-row-val {
+    text-align: left;
+  }
+
+  .nalar-head,
+  .nalar-body,
+  .nalar-foot {
+    padding-left: var(--nalar-space-4);
+    padding-right: var(--nalar-space-4);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Short viewports
+   A window can be wide and still short. The header and footer are fixed
+   furniture around a scrolling body, so on a short window they are what the
+   user runs out of room for. Their padding gives way first; the type scale
+   stays, because the body scrolls and the text has to remain readable.
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 580px) {
+  .nalar-head {
+    padding-top: 14px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .nalar-foot {
+    padding-top: 12px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .nalar-section {
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .nalar-section--first {
+    padding-top: 12px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion
+   State changes stay (a user must see protection switch), decoration goes.
+   The analysis rail keeps its position but stops travelling, and the active
+   step still marks itself with colour and the node.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .nalar-root,
+  .nalar-modal,
+  .nalar-notice,
+  .nalar-rail::after,
+  .nalar-rise,
+  .nalar-btn--primary:hover::after,
+  .nalar-modal[data-decision] .nalar-verdict-mark,
+  .nalar-disclosure-body {
+    animation: none !important;
+  }
+
+  .nalar-btn,
+  .nalar-textarea,
+  .nalar-step,
+  .nalar-step-node,
+  .nalar-step-num,
+  .nalar-step-text,
+  .nalar-addr,
+  .nalar-notice-close,
+  .nalar-disclosure > summary,
+  .nalar-disclosure > summary::before {
+    transition: none !important;
+  }
+
+  .nalar-btn:active {
+    transform: none;
+  }
+}

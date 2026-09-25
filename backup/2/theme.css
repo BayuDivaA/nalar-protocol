@@ -20,27 +20,28 @@
    ========================================================================== */
 
 :root {
-  /* --- Cosmic Electric Blue: surface ladder, dark (default) -------------- */
-  --nalar-bg: #0b132b;
+  /* --- Surface ladder, dark (default) ----------------------------------- */
+  --nalar-bg: #080b0f;
   --nalar-bg-deep: #050811;
-  --nalar-surface: #101a2e;
-  --nalar-raised: #14213a;
+  --nalar-surface: #0e141a;
+  --nalar-raised: #121a21;
 
   /* --- Text ------------------------------------------------------------- */
-  --nalar-text: #ffffff;
-  --nalar-text-secondary: #cbd5e1;
-  --nalar-text-muted: #94a3b8;
+  --nalar-text: #edf4f6;
+  --nalar-text-secondary: #a9b8c0;
+  --nalar-text-muted: #74838e;
+  --nalar-text-dim: #465560;
 
   /* --- Lines ------------------------------------------------------------ */
-  --nalar-border: #1e293b;
-  --nalar-border-strong: #334155;
+  --nalar-border: #202c35;
+  --nalar-border-strong: #3b4a55;
 
   /* --- Accent -----------------------------------------------------------
      --nalar-accent is the brand fill: buttons, rails, focal marks. It is
      NOT AA-safe as text on the dark background (3.8:1), so accent-coloured
      text uses --nalar-accent-text (7.5:1) instead. Same hue, readable. */
   --nalar-accent: #0066ff;
-  --nalar-accent-hover: #2563eb;
+  --nalar-accent-hover: #1a75ff;
   --nalar-accent-text: #6aa6ff;
   --nalar-accent-soft: rgba(0, 102, 255, 0.12);
   --nalar-accent-line: rgba(0, 102, 255, 0.42);
@@ -51,23 +52,23 @@
   --nalar-focus: #6aa6ff;
 
   /* --- Semantic states (functional, not decorative) --------------------- */
-  --nalar-success: #4ade80;
-  --nalar-success-soft: rgba(74, 222, 128, 0.1);
-  --nalar-warning: #fbbf24;
-  --nalar-warning-soft: rgba(251, 191, 36, 0.1);
-  --nalar-danger: #f87171;
-  --nalar-danger-soft: rgba(248, 113, 113, 0.1);
+  --nalar-success: #7bcba5;
+  --nalar-success-soft: rgba(123, 203, 165, 0.1);
+  --nalar-warning: #d3ab67;
+  --nalar-warning-soft: rgba(211, 171, 103, 0.1);
+  --nalar-danger: #f27870;
+  --nalar-danger-soft: rgba(242, 120, 112, 0.1);
 
   /* --- Cosmic atmosphere ------------------------------------------------
      Three static elements only: two light points and one faint arc, drawn
      in the modal header. No galaxy imagery, no particle layer, no motion.
      Purpose: mark Nalar's own surface so a security decision never reads as
      a generic page modal. Budget: well under 10% of the visual language. */
-  --nalar-star: rgba(255, 255, 255, 0.5);
-  --nalar-orbit: rgba(0, 102, 255, 0.3);
-  --nalar-veil: rgba(255, 255, 255, 0.06);
+  --nalar-star: rgba(255, 255, 255, 0.45);
+  --nalar-orbit: rgba(0, 102, 255, 0.25);
+  --nalar-veil: rgba(255, 255, 255, 0.04);
   --nalar-scrim: rgba(5, 8, 17, 0.72);
-  --nalar-atmosphere: radial-gradient(120% 80% at 82% -10%, rgba(0, 102, 255, 0.12), transparent 62%);
+  --nalar-atmosphere: radial-gradient(120% 80% at 82% -10%, rgba(0, 102, 255, 0.1), transparent 62%);
 
   /* --- Space scale ------------------------------------------------------ */
   --nalar-space-1: 4px;
@@ -115,25 +116,23 @@
 
   /* --- Elevation --------------------------------------------------------
      One shadow in the system. Only the modal floats; nothing else does. */
-  --nalar-shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.5), 0 1px 0 var(--nalar-veil) inset;
+  --nalar-shadow-modal: 0 24px 64px rgba(0, 0, 0, 0.48), 0 1px 0 var(--nalar-veil) inset;
 }
 
 [data-nalar-theme="light"] {
-  --nalar-bg: #ffffff;
-  --nalar-bg-deep: #f8fafc;
+  --nalar-bg: #f4f7f8;
+  --nalar-bg-deep: #edf0f2;
   --nalar-surface: #ffffff;
-  --nalar-raised: #f8fafc;
+  --nalar-raised: #e9eef1;
 
-  --nalar-text: #0b132b;
-  --nalar-text-secondary: #334155;
-  --nalar-text-muted: #64748b;
+  --nalar-text: #0b1419;
+  --nalar-text-secondary: #40515b;
+  --nalar-text-muted: #687b86;
+  --nalar-text-dim: #9aabb3;
 
-  --nalar-border: #e2e8f0;
-  --nalar-border-strong: #cbd5e1;
+  --nalar-border: #d5e0e5;
+  --nalar-border-strong: #aebfc8;
 
-  /* Brand blue as a fill; #0052cc as text. The brand blue itself only
-     reaches 4.4:1 on the soft blue surface, so the darker shade carries
-     every accent-coloured label (6.3:1 there, 6.8:1 on white). */
   --nalar-accent: #0066ff;
   --nalar-accent-hover: #0052cc;
   --nalar-accent-text: #0052cc;
@@ -142,18 +141,18 @@
 
   --nalar-focus: #0066ff;
 
-  --nalar-success: #15803d;
-  --nalar-success-soft: rgba(21, 128, 61, 0.07);
-  --nalar-warning: #b45309;
-  --nalar-warning-soft: rgba(180, 83, 9, 0.07);
-  --nalar-danger: #b91c1c;
-  --nalar-danger-soft: rgba(185, 28, 28, 0.06);
+  --nalar-success: #2b7657;
+  --nalar-success-soft: rgba(43, 118, 87, 0.07);
+  --nalar-warning: #956f22;
+  --nalar-warning-soft: rgba(149, 111, 34, 0.07);
+  --nalar-danger: #b54343;
+  --nalar-danger-soft: rgba(181, 67, 67, 0.06);
 
-  --nalar-star: rgba(11, 19, 43, 0.3);
-  --nalar-orbit: rgba(0, 102, 255, 0.22);
-  --nalar-veil: rgba(255, 255, 255, 0.9);
-  --nalar-scrim: rgba(11, 19, 43, 0.44);
-  --nalar-atmosphere: radial-gradient(120% 80% at 82% -10%, rgba(0, 102, 255, 0.07), transparent 62%);
+  --nalar-star: rgba(11, 19, 43, 0.25);
+  --nalar-orbit: rgba(0, 102, 255, 0.18);
+  --nalar-veil: rgba(255, 255, 255, 0.88);
+  --nalar-scrim: rgba(11, 19, 43, 0.38);
+  --nalar-atmosphere: radial-gradient(120% 80% at 82% -10%, rgba(0, 102, 255, 0.06), transparent 62%);
 
-  --nalar-shadow-modal: 0 24px 64px rgba(11, 19, 43, 0.18), 0 1px 0 var(--nalar-veil) inset;
+  --nalar-shadow-modal: 0 24px 64px rgba(11, 19, 43, 0.15), 0 1px 0 var(--nalar-veil) inset;
 }

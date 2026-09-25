@@ -36,6 +36,7 @@
       text: css("text"),
       textSecondary: css("text-secondary"),
       textMuted: css("text-muted"),
+      textDim: css("text-dim"),
       border: css("border"),
       borderStrong: css("border-strong"),
       accent: css("accent"),
@@ -62,7 +63,7 @@
     },
 
     /* Section reveal offsets for the decision result, in ms. */
-    stagger: [0, 80, 140, 200, 260],
+    stagger: [0, 80, 150, 220, 280],
 
     themes: ["dark", "light"],
 

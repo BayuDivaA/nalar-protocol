@@ -1,14 +1,60 @@
 <!doctype html>
-<html lang="en" data-nalar-theme="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nalar Protocol</title>
-    <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="ui.css" />
     <style>
-      /* Popup-only layout. Shares theme.css tokens and the ui.css primitives
-         (buttons, rows, labels, cosmic atmosphere) with the in-page overlay,
-         so the two surfaces are visibly the same product. */
+      :root {
+        --bg: #0b132b;
+        --bg-deep: #050811;
+        --surface: #101a2e;
+        --surface-2: #14213a;
+        --raised: #14213a;
+        --border: #1e293b;
+        --border-strong: #334155;
+        --text: #ffffff;
+        --soft: #cbd5e1;
+        --muted: #94a3b8;
+        --dim: #64748b;
+        --accent: #0066ff;
+        --accent-hover: #2563eb;
+        --accent-soft: #0d1b34;
+        --accent-border: #1d4ed8;
+        --danger: #f87171;
+        --danger-bg: rgba(248, 113, 113, 0.08);
+        --warning: #fbbf24;
+        --warning-bg: rgba(251, 191, 36, 0.08);
+        --safe: #4ade80;
+        --safe-bg: rgba(74, 222, 128, 0.08);
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+      }
+
+      [data-theme="light"] {
+        --bg: #ffffff;
+        --bg-deep: #f8fafc;
+        --surface: #f8fafc;
+        --surface-2: #f1f5f9;
+        --raised: #f1f5f9;
+        --border: #e2e8f0;
+        --border-strong: #cbd5e1;
+        --text: #0b132b;
+        --soft: #334155;
+        --muted: #64748b;
+        --dim: #94a3b8;
+        --accent: #0066ff;
+        --accent-hover: #0052cc;
+        --accent-soft: #eff6ff;
+        --accent-border: #bfdbfe;
+        --danger: #b91c1c;
+        --danger-bg: rgba(185, 28, 28, 0.06);
+        --warning: #b45309;
+        --warning-bg: rgba(180, 83, 9, 0.06);
+        --safe: #15803d;
+        --safe-bg: rgba(21, 128, 61, 0.06);
+      }
 
       * {
         box-sizing: border-box;
@@ -18,15 +64,22 @@
       body {
         margin: 0;
         width: 380px;
-        min-height: 460px;
-        background: var(--nalar-bg);
-        color: var(--nalar-text);
-        font-family: var(--nalar-font-sans);
-        font-size: var(--nalar-text-base);
+        min-height: 520px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        font-size: 13px;
         line-height: 1.5;
         transition:
-          background-color var(--nalar-motion-normal) var(--nalar-ease-standard),
-          color var(--nalar-motion-normal) var(--nalar-ease-standard);
+          background-color 200ms ease,
+          color 200ms ease;
       }
 
       body {
@@ -35,299 +88,331 @@
         overflow-x: hidden;
       }
 
-      p {
-        margin: 0;
-      }
-
-      /* --- Header: brand, theme control, live protection state ------------- */
-
-      .pop-head {
-        position: relative;
-        overflow: hidden;
-        padding: var(--nalar-space-5) var(--nalar-space-5) var(--nalar-space-4);
-        border-bottom: 1px solid var(--nalar-border);
-        background-image: var(--nalar-atmosphere);
-      }
-
-      .pop-brand {
-        display: flex;
-        align-items: center;
-        gap: var(--nalar-space-3);
-      }
-
-      .pop-mark {
-        display: grid;
-        place-items: center;
-        width: 30px;
-        height: 30px;
-        flex-shrink: 0;
-        border: 1px solid var(--nalar-border-strong);
-        border-radius: var(--nalar-radius-sm);
-        background: var(--nalar-surface);
-      }
-
-      .pop-mark svg {
-        display: block;
-      }
-
-      .pop-name {
-        font-size: var(--nalar-text-base);
-        font-weight: 650;
-        letter-spacing: -0.015em;
-      }
-
-      .pop-theme {
-        margin-left: auto;
-        width: 30px;
-        height: 30px;
-        padding: 0;
-        border: 1px solid var(--nalar-border);
-        border-radius: var(--nalar-radius-sm);
-        background: var(--nalar-surface);
-        color: var(--nalar-text-muted);
-        font-size: var(--nalar-text-md);
-        line-height: 1;
-        cursor: pointer;
-        transition:
-          color var(--nalar-motion-fast) var(--nalar-ease-standard),
-          border-color var(--nalar-motion-fast) var(--nalar-ease-standard);
-      }
-
-      .pop-theme:hover {
-        color: var(--nalar-text);
-        border-color: var(--nalar-border-strong);
-      }
-
-      .pop-theme:focus-visible {
-        outline: 2px solid var(--nalar-focus);
-        outline-offset: 2px;
-      }
-
-      /* --- Security state: the answer to "am I covered right now?" --------- */
-
-      .pop-state {
-        margin-top: var(--nalar-space-5);
-      }
-
-      .pop-state-head {
-        display: flex;
-        align-items: center;
-        gap: var(--nalar-space-2);
-        font-size: var(--nalar-text-md);
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--nalar-state, var(--nalar-accent-text));
-      }
-
-      .pop-dot {
-        width: 7px;
-        height: 7px;
-        flex-shrink: 0;
-        border-radius: var(--nalar-radius-full);
-        background: var(--nalar-state, var(--nalar-accent));
-        transition: background-color var(--nalar-motion-normal) var(--nalar-ease-standard);
-      }
-
-      .pop-state-note {
-        margin-top: var(--nalar-space-2);
-        font-size: var(--nalar-text-md);
-        line-height: 1.55;
-        color: var(--nalar-text-secondary);
-      }
-
-      .pop-state[data-state="active"] {
-        --nalar-state: var(--nalar-accent);
-      }
-
-      .pop-state[data-state="paused"] {
-        --nalar-state: var(--nalar-warning);
-      }
-
-      .pop-state[data-state="error"] {
-        --nalar-state: var(--nalar-danger);
-      }
-
-      /* One ring, once, when protection returns. Confirmation, not alarm. */
-      .pop-state.is-confirming .pop-dot {
-        animation: pop-confirm 520ms var(--nalar-ease-out) 1;
-      }
-
-      @keyframes pop-confirm {
-        0% {
-          box-shadow: 0 0 0 0 var(--nalar-accent-soft);
-        }
-        70% {
-          box-shadow: 0 0 0 6px transparent;
-        }
-        100% {
-          box-shadow: 0 0 0 0 transparent;
-        }
-      }
-
-      /* --- Body ------------------------------------------------------------ */
-
-      .pop-main {
-        flex: 1 1 auto;
-        padding: var(--nalar-space-5);
-      }
-
-      .pop-block + .pop-block {
-        margin-top: var(--nalar-space-5);
-        padding-top: var(--nalar-space-4);
-        border-top: 1px solid var(--nalar-border);
-      }
-
-      .pop-site {
-        margin-top: var(--nalar-space-2);
-        font-family: var(--nalar-font-mono);
-        font-size: var(--nalar-text-sm);
-        color: var(--nalar-text-secondary);
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-      }
-
-      .pop-textarea {
-        min-height: 88px !important;
-        resize: none !important;
-      }
-
-      .pop-hint {
-        margin-top: var(--nalar-space-2);
-        font-size: var(--nalar-text-sm);
-        color: var(--nalar-text-muted);
-      }
-
-      .pop-save {
-        width: 100%;
-        margin-top: var(--nalar-space-3) !important;
-      }
-
-      .pop-message {
-        min-height: 16px;
-        margin-top: var(--nalar-space-2);
-        font-size: var(--nalar-text-sm);
-        color: var(--nalar-accent-text);
-      }
-
-      .pop-message[data-tone="error"] {
-        color: var(--nalar-danger);
-      }
-
-      .pop-message[data-tone="warning"] {
-        color: var(--nalar-warning);
-      }
-
-      /* --- Protection control ---------------------------------------------
-         State and action on one row: the chip reports, the trailing label
-         says what pressing it will do. */
-
-      .pop-foot {
-        flex: 0 0 auto;
-        padding: var(--nalar-space-4) var(--nalar-space-5) var(--nalar-space-5);
-        border-top: 1px solid var(--nalar-border);
-        background: var(--nalar-bg);
-      }
-
-      .pop-toggle {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: var(--nalar-space-3);
-        width: 100%;
-        min-height: 48px;
-        padding: 0 var(--nalar-space-4);
-        border: 1px solid var(--nalar-state-border, var(--nalar-accent-line));
-        border-radius: var(--nalar-radius-sm);
-        background: var(--nalar-state-soft, var(--nalar-accent-soft));
-        color: var(--nalar-text);
+      button,
+      textarea {
         font: inherit;
-        cursor: pointer;
-        transition:
-          background-color var(--nalar-motion-normal) var(--nalar-ease-standard),
-          border-color var(--nalar-motion-normal) var(--nalar-ease-standard),
-          transform var(--nalar-motion-instant) var(--nalar-ease-standard);
-      }
-
-      .pop-toggle:hover {
-        border-color: var(--nalar-state, var(--nalar-accent));
-      }
-
-      .pop-toggle:active {
-        transform: scale(0.98);
-      }
-
-      .pop-toggle:focus-visible {
-        outline: 2px solid var(--nalar-focus);
-        outline-offset: 2px;
-      }
-
-      .pop-toggle[aria-pressed="true"] {
-        --nalar-state: var(--nalar-accent);
-        --nalar-state-soft: var(--nalar-accent-soft);
-        --nalar-state-border: var(--nalar-accent-line);
-      }
-
-      .pop-toggle[aria-pressed="false"] {
-        --nalar-state: var(--nalar-warning);
-        --nalar-state-soft: var(--nalar-warning-soft);
-        --nalar-state-border: var(--nalar-warning);
-      }
-
-      .pop-toggle-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--nalar-space-2);
-        font-size: var(--nalar-text-sm);
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--nalar-state, var(--nalar-accent-text));
-      }
-
-      .pop-toggle-chip::before {
-        content: "";
-        width: 7px;
-        height: 7px;
-        border-radius: var(--nalar-radius-full);
-        background: var(--nalar-state, var(--nalar-accent));
-        transition: background-color var(--nalar-motion-normal) var(--nalar-ease-standard);
-      }
-
-      .pop-toggle-action {
-        font-size: var(--nalar-text-md);
-        color: var(--nalar-text-secondary);
       }
 
       @media (prefers-reduced-motion: reduce) {
-        html,
-        body,
-        .pop-dot,
-        .pop-toggle,
-        .pop-toggle-chip::before,
-        .pop-state.is-confirming .pop-dot {
+        * {
           animation: none !important;
           transition: none !important;
         }
+      }
 
-        .pop-toggle:active {
-          transform: none;
-        }
+      /* Header */
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg);
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        border: 1px solid var(--border-strong);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+      }
+
+      .brand-name {
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        color: var(--text);
+      }
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .theme-btn {
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        transition:
+          color 150ms ease,
+          border-color 150ms ease;
+      }
+
+      .theme-btn:hover {
+        color: var(--text);
+        border-color: var(--border-strong);
+      }
+
+      .theme-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        border: 1px solid var(--border);
+      }
+
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--safe);
+        transition: background-color 200ms ease;
+      }
+
+      .status-dot.paused {
+        background: var(--warning);
+      }
+
+      .status-text {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+
+      /* Main Content */
+      .main {
+        padding: 20px 18px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .section-label {
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      /* Current Site Card */
+      .site-card {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        border-left: 3px solid var(--accent);
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 11px;
+        color: var(--soft);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Intent Textarea */
+      textarea {
+        width: 100%;
+        min-height: 96px;
+        padding: 12px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        color: var(--text);
+        font-size: 12.5px;
+        line-height: 1.55;
+        resize: vertical;
+        outline: none;
+        transition:
+          border-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      textarea::placeholder {
+        color: var(--muted);
+      }
+
+      textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.18);
+      }
+
+      .btn-save {
+        width: 100%;
+        min-height: 44px;
+        margin-top: 8px;
+        border: 1px solid var(--accent);
+        border-radius: var(--radius-md);
+        background: var(--accent);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);
+        transition:
+          transform 120ms ease,
+          background-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .btn-save:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        box-shadow: 0 4px 12px rgba(0, 102, 255, 0.35);
+      }
+
+      .btn-save:active {
+        transform: scale(0.98);
+      }
+
+      .btn-save:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .message {
+        min-height: 16px;
+        margin-top: 6px;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 500;
+      }
+
+      /* Protection Card */
+      .protection-card {
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+      }
+
+      .protection-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .protection-title {
+        font-size: 13px;
+        font-weight: 650;
+        color: var(--text);
+      }
+
+      .protection-desc {
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.45;
+        margin-top: 4px;
+      }
+
+      .btn-toggle {
+        min-width: 88px;
+        height: 36px;
+        border: 1px solid var(--accent-border);
+        border-radius: var(--radius-sm);
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        cursor: pointer;
+        transition:
+          transform 140ms ease,
+          border-color 200ms ease,
+          background-color 200ms ease,
+          color 200ms ease;
+      }
+
+      .btn-toggle:hover {
+        background: rgba(0, 102, 255, 0.15);
+      }
+
+      .btn-toggle:active {
+        transform: scale(0.98);
+      }
+
+      .btn-toggle.paused {
+        border-color: var(--border-strong);
+        background: var(--surface-2);
+        color: var(--warning);
+      }
+
+      .btn-toggle:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .protection-row {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .protection-row-val {
+        color: var(--soft);
+        font-weight: 600;
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 10px;
+      }
+
+      /* Footer */
+      .footer {
+        padding: 12px 18px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .footer-badge {
+        font-family: "SF Mono", "Cascadia Code", "Fira Code", ui-monospace, Menlo, Consolas, monospace;
+        font-size: 9px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--dim);
       }
     </style>
   </head>
   <body>
-    <header class="pop-head">
-      <div class="nalar-cosmos" aria-hidden="true">
-        <span class="nalar-star nalar-star--a"></span>
-        <span class="nalar-star nalar-star--b"></span>
-        <span class="nalar-orbit"></span>
-      </div>
-
-      <div class="pop-brand">
-        <span class="pop-mark" aria-hidden="true">
-          <svg viewBox="0 0 560 560" width="17" height="17">
+    <header class="header">
+      <div class="header-left">
+        <div class="brand-mark">
+          <svg viewBox="0 0 560 560" width="16" height="16" aria-hidden="true">
             <rect fill="currentColor" x="75.39" y="208.7" width="95.75" height="201.58" />
             <path
               fill="currentColor"
@@ -335,54 +420,58 @@
             />
             <path fill="#0066FF" d="M484.8,103.88H389.05v33.38l62.37,62.37H484.8Z" />
           </svg>
-        </span>
-        <span class="pop-name">Nalar Protocol</span>
-        <button class="pop-theme" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch theme">◐</button>
+        </div>
+        <div class="brand-name">Nalar Protocol</div>
       </div>
-
-      <div class="pop-state" id="state" data-state="active">
-        <p class="pop-state-head">
-          <span class="pop-dot" aria-hidden="true"></span>
-          <span id="stateTitle">Protected</span>
-        </p>
-        <p class="pop-state-note" id="stateNote">Your transactions are being checked before signing.</p>
+      <div class="header-right">
+        <button class="theme-btn" id="themeToggle" aria-label="Toggle light or dark theme" title="Toggle theme">◐</button>
+        <div class="status-badge">
+          <div class="status-dot" id="statusDot"></div>
+          <span class="status-text" id="systemStatus">Active</span>
+        </div>
       </div>
     </header>
 
-    <main class="pop-main">
-      <section class="pop-block">
-        <p class="nalar-label">Network</p>
-        <div class="nalar-rows" style="margin-top: var(--nalar-space-2)">
-          <div class="nalar-row">
-            <span class="nalar-row-key">Analyzing on</span>
-            <span class="nalar-row-val">
-              <span id="networkName">BNB Smart Chain Testnet</span>
-              <span class="nalar-mono" id="networkMeta" style="display: block; color: var(--nalar-text-muted)"> Chain ID 97 · tBNB </span>
-            </span>
+    <main class="main">
+      <section>
+        <span class="section-label">Current Site</span>
+        <div class="site-card" id="siteName">Loading...</div>
+      </section>
+
+      <section>
+        <span class="section-label">Your Intent</span>
+        <textarea id="intent" placeholder="Example: Swap 0.001 tBNB to NDEMO"></textarea>
+        <button class="btn-save" id="save">Save intent for this site</button>
+        <div class="message" id="message" role="status" aria-live="polite"></div>
+      </section>
+
+      <section>
+        <span class="section-label">Protection Firewall</span>
+        <div class="protection-card">
+          <div class="protection-top">
+            <div>
+              <div class="protection-title">Transaction Firewall</div>
+              <div class="protection-desc">Evaluates simulation and on-chain effects before signing.</div>
+            </div>
+            <button class="btn-toggle" id="toggle" aria-pressed="true">ACTIVE</button>
+          </div>
+          <div class="protection-row">
+            <span>Network</span>
+            <span class="protection-row-val">BNB Testnet (97)</span>
+          </div>
+          <div class="protection-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border)">
+            <span>Engine</span>
+            <span class="protection-row-val">Deterministic + AI</span>
           </div>
         </div>
       </section>
-
-      <section class="pop-block">
-        <p class="nalar-label">Your intent for this site</p>
-        <p class="pop-site" id="siteName">Checking current tab…</p>
-        <label class="nalar-label" for="intent" style="display: block; margin-top: var(--nalar-space-4)"> What you expect this transaction to do </label>
-        <textarea class="nalar-textarea pop-textarea" id="intent" style="margin-top: var(--nalar-space-2)" placeholder="Example: Swap 0.001 tBNB to NDEMO" spellcheck="false"></textarea>
-        <p class="pop-hint" id="intentHint">No intent saved for this site yet.</p>
-        <button class="nalar-btn nalar-btn--primary pop-save" id="save" type="button">Save intent</button>
-        <p class="pop-message" id="message" role="status" aria-live="polite"></p>
-      </section>
     </main>
 
-    <footer class="pop-foot">
-      <button class="pop-toggle" id="toggle" type="button" aria-pressed="true">
-        <span class="pop-toggle-chip" id="toggleState">Active</span>
-        <span class="pop-toggle-action" id="toggleAction">Pause protection</span>
-      </button>
+    <footer class="footer">
+      <span>Nalar Protocol</span>
+      <span class="footer-badge">TxSentry</span>
     </footer>
 
-    <script src="config.js"></script>
-    <script src="theme.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -28,22 +28,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  if (message?.type === "GET_THEME") {
-    getTheme()
-      .then((theme) => {
-        sendResponse({
-          theme,
-        });
-      })
-      .catch(() => {
-        sendResponse({
-          theme: "dark",
-        });
-      });
-
-    return true;
-  }
-
   if (message?.type === "GET_INTENT") {
     getIntent(message.origin)
       .then((intent) => {
@@ -118,20 +102,6 @@ async function getProtectionStatus() {
   const result = await chrome.storage.local.get(["protectionEnabled"]);
 
   return result.protectionEnabled !== false;
-}
-
-/*
- * Theme preference.
- *
- * Stored under one key so the popup and the in-page overlay cannot disagree.
- * Dark is the fallback in both directions: a surface that cannot read the
- * preference renders dark rather than unthemed.
- */
-
-async function getTheme() {
-  const result = await chrome.storage.local.get(["nalarTheme"]);
-
-  return result.nalarTheme === "light" ? "light" : "dark";
 }
 
 /*

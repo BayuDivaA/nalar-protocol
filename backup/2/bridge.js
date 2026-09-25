@@ -47,6 +47,29 @@
           return;
         }
 
+        case "GET_THEME": {
+          const response = await chrome.runtime.sendMessage({
+            type: "GET_THEME",
+
+            id: message.id,
+          });
+
+          window.postMessage(
+            {
+              source: "NALAR_EXTENSION",
+
+              type: "THEME_RESULT",
+
+              id: message.id,
+
+              theme: response?.theme === "light" ? "light" : "dark",
+            },
+            "*",
+          );
+
+          return;
+        }
+
         case "GET_INTENT": {
           const response = await chrome.runtime.sendMessage({
             type: "GET_INTENT",

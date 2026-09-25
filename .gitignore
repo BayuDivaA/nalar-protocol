@@ -54,7 +54,7 @@ Thumbs.db
 # =========================
 .vscode/
 .idea/
-.claude/
+
 
 # =========================
 # Temporary files
@@ -64,3 +64,4 @@ Thumbs.db
 *.swp
 .vercel
 .env*
+.claude

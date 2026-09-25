@@ -4,6 +4,7 @@
 .env
 .env.*
 !.env.example
+backup/
 
 # =========================
 # Node / Bun
@@ -53,6 +54,7 @@ Thumbs.db
 # =========================
 .vscode/
 .idea/
+.claude/
 
 # =========================
 # Temporary files

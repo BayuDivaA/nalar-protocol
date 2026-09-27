@@ -3,6 +3,7 @@ import { formatUnits, getAddress, type Address } from "viem";
 import type { TransactionAction } from "../lib/classifier";
 import type { TransactionEffects } from "./effect-analyzer";
 import { formatTokenAmount } from "./token-amount";
+import { getNativeSymbol, getWbnbAddress } from "../config/networks";
 
 export interface AssetTransferSummary {
   amount?: string | null;
@@ -25,6 +26,7 @@ export interface TransactionSummary {
 }
 
 interface TranslateInput {
+  chainId?: number;
   from: Address;
   to: Address;
   value: bigint;
@@ -42,10 +44,9 @@ interface TranslateInput {
   targetIsContract?: boolean | null;
 }
 
-const WBNB_TESTNET = "0xae13d989dac2f0debff460ac112a837c89baa7cd".toLowerCase();
 const ROUTER_ETH_FLAG = "0x0000000000000000000000000000000000000002".toLowerCase();
 
-export function formatDisplaySymbol(symbol?: string | null, address?: string | null): string {
+export function formatDisplaySymbol(symbol?: string | null, address?: string | null, chainId = 97): string {
   if (!symbol && !address) {
     return "tokens";
   }
@@ -53,8 +54,8 @@ export function formatDisplaySymbol(symbol?: string | null, address?: string | n
   const symUpper = symbol?.trim().toUpperCase();
   const addrLower = address?.toLowerCase();
 
-  if (symUpper === "WBNB" || symUpper === "BNB" || symUpper === "TBNB" || addrLower === WBNB_TESTNET || addrLower === ROUTER_ETH_FLAG || addrLower === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
-    return "tBNB";
+  if (symUpper === "WBNB" || symUpper === "BNB" || symUpper === "TBNB" || addrLower === getWbnbAddress(chainId)?.toLowerCase() || addrLower === ROUTER_ETH_FLAG || addrLower === "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee") {
+    return getNativeSymbol(chainId);
   }
 
   if (symbol && symbol.trim()) {
@@ -86,6 +87,8 @@ function getAddressArg(value: unknown): Address | null {
 
 export function translateTransaction(input: TranslateInput): TransactionSummary {
   const { to, value, action, functionName, args, effects } = input;
+  const chainId = input.chainId ?? 97;
+  const nativeSymbol = getNativeSymbol(chainId);
 
   const valueNative = value > 0n ? formatUnits(value, 18) : null;
 
@@ -96,8 +99,8 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
    */
   if (action === "MINT") {
     if (input.targetIsContract === false) {
-      const title = valueNative ? `Send ${valueNative} tBNB` : "Personal transfer";
-      const desc = valueNative ? `Send ${valueNative} tBNB to an address (the destination is not a smart contract).` : "Call an address that is not a smart contract.";
+      const title = valueNative ? `Send ${valueNative} ${nativeSymbol}` : "Personal transfer";
+      const desc = valueNative ? `Send ${valueNative} ${nativeSymbol} to an address (the destination is not a smart contract).` : "Call an address that is not a smart contract.";
       return {
         title,
         action: "PAYMENT",
@@ -105,15 +108,15 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
         target: to,
         description: desc,
         summary: desc,
-        input: valueNative ? { amount: valueNative, symbol: "tBNB" } : null,
-        details: ["The destination address is an externally owned account (EOA), not a smart contract.", "No smart contract minting logic was detected at this address.", ...(valueNative ? [`Amount sent: ${valueNative} tBNB.`] : [])],
+        input: valueNative ? { amount: valueNative, symbol: nativeSymbol } : null,
+        details: ["The destination address is an externally owned account (EOA), not a smart contract.", "No smart contract minting logic was detected at this address.", ...(valueNative ? [`Amount sent: ${valueNative} ${nativeSymbol}.`] : [])],
       };
     }
 
     const mintEffect = effects.mints?.[0];
     const qty = mintEffect?.quantity;
     const title = qty && qty > 1 ? `Mint ${qty} NFTs` : "Mint NFT";
-    const desc = valueNative ? `Mint an NFT by sending ${valueNative} tBNB to the contract.` : "Mint an NFT through this contract.";
+    const desc = valueNative ? `Mint an NFT by sending ${valueNative} ${nativeSymbol} to the contract.` : "Mint an NFT through this contract.";
     return {
       title,
       action: "MINT",
@@ -121,8 +124,8 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
       target: to,
       description: desc,
       summary: desc,
-      input: valueNative ? { amount: valueNative, symbol: "tBNB" } : null,
-      details: ["The transaction calls the contract's mint function.", ...(valueNative ? [`Amount sent: ${valueNative} tBNB.`] : []), ...(qty ? [`Mint quantity: ${qty}.`] : [])],
+      input: valueNative ? { amount: valueNative, symbol: nativeSymbol } : null,
+      details: ["The transaction calls the contract's mint function.", ...(valueNative ? [`Amount sent: ${valueNative} ${nativeSymbol}.`] : []), ...(qty ? [`Mint quantity: ${qty}.`] : [])],
     };
   }
 
@@ -242,8 +245,8 @@ export function translateTransaction(input: TranslateInput): TransactionSummary 
     const swap = effects.swaps[0];
 
     if (swap) {
-      const tokenInDisplay = formatDisplaySymbol(swap.tokenInSymbol, swap.tokenIn);
-      const tokenOutDisplay = formatDisplaySymbol(swap.tokenOutSymbol, swap.tokenOut);
+      const tokenInDisplay = formatDisplaySymbol(swap.tokenInSymbol, swap.tokenIn, chainId);
+      const tokenOutDisplay = formatDisplaySymbol(swap.tokenOutSymbol, swap.tokenOut, chainId);
       const protocol = swap.protocol ?? "PancakeSwap";
 
       let amountInFormatted: string | null = null;

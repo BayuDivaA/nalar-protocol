@@ -1,6 +1,6 @@
 import { getAddress, isAddress, type Abi, type AbiFunction, type Address, type Hex } from "viem";
 
-import { publicClient } from "../../lib/viem";
+import { getPublicClient } from "../../lib/viem";
 import { resolveContractAbi } from "../contract-resolver";
 import type { AccessControlEvidence, BlockchainEvidenceProvider, ContractCapability, ContractEvidence, ContractStateEvidence, EvidenceSource, SellSimulationRequest } from "./evidence-provider";
 import type { SellSimulation } from "./findings";
@@ -25,7 +25,7 @@ function readValueForState(value: unknown): string | boolean | bigint | null {
   return null;
 }
 
-async function readKnownState(address: Address, abi: Abi): Promise<ContractStateEvidence[]> {
+async function readKnownState(address: Address, abi: Abi, client: ReturnType<typeof getPublicClient>): Promise<ContractStateEvidence[]> {
   const reads: Array<{ names: string[]; code: ContractStateEvidence["code"]; label: string; unit?: ContractStateEvidence["unit"] }> = [
     { names: ["sellTaxBps", "sellTaxBasisPoints"], code: "CURRENT_SELL_TAX", label: "sellTaxBps", unit: "BPS" },
     { names: ["sellTax", "currentSellTax"], code: "CURRENT_SELL_TAX", label: "sellTax" },
@@ -46,7 +46,7 @@ async function readKnownState(address: Address, abi: Abi): Promise<ContractState
       if (!fn || (fn.stateMutability !== "view" && fn.stateMutability !== "pure")) return [];
 
       return [
-        publicClient
+        client
           .readContract({ address, abi: [fn], functionName: fn.name })
           .then((value) => ({ code: read.code, label: read.label, value: readValueForState(value), unit: read.unit, status: "KNOWN" as const, evidenceSource: "ONCHAIN" as const }))
           .catch(() => ({ code: read.code, label: read.label, value: null, unit: read.unit, status: "UNKNOWN" as const, evidenceSource: "ONCHAIN" as const })),
@@ -55,12 +55,12 @@ async function readKnownState(address: Address, abi: Abi): Promise<ContractState
   );
 }
 
-async function readOwner(address: Address, abi: Abi): Promise<Address | null> {
+async function readOwner(address: Address, abi: Abi, client: ReturnType<typeof getPublicClient>): Promise<Address | null> {
   const fn = functionByName(abi, ["owner", "getOwner"]);
   if (!fn || (fn.stateMutability !== "view" && fn.stateMutability !== "pure")) return null;
 
   try {
-    const value = await publicClient.readContract({ address, abi: [fn], functionName: fn.name });
+    const value = await client.readContract({ address, abi: [fn], functionName: fn.name });
     return isAddress(value) ? getAddress(value) : null;
   } catch {
     return null;
@@ -98,11 +98,11 @@ function accessControlEvidence(abi: Abi, owner: Address | null): AccessControlEv
   return evidence;
 }
 
-async function inspectAbi(address: Address, abi: Abi, source: EvidenceSource): Promise<{ capabilities: ContractCapability[]; accessControl: AccessControlEvidence[]; state: ContractStateEvidence[] }> {
+async function inspectAbi(address: Address, abi: Abi, source: EvidenceSource, client: ReturnType<typeof getPublicClient>): Promise<{ capabilities: ContractCapability[]; accessControl: AccessControlEvidence[]; state: ContractStateEvidence[] }> {
   const capabilities = detectContractCapabilities(abi, source);
-  const owner = await readOwner(address, abi);
+  const owner = await readOwner(address, abi, client);
   const accessControl = accessControlEvidence(abi, owner);
-  const state = await readKnownState(address, abi);
+  const state = await readKnownState(address, abi, client);
 
   return { capabilities, accessControl, state };
 }
@@ -110,20 +110,21 @@ async function inspectAbi(address: Address, abi: Abi, source: EvidenceSource): P
 /** Read-only BNB-chain adapter. It intentionally does not construct a sell without state overrides. */
 export class BscEvidenceProvider implements BlockchainEvidenceProvider {
   async inspectContract(input: { chainId: number; address: Address }): Promise<ContractEvidence> {
+    const client = getPublicClient(input.chainId);
     const [resolution, codeResult, implementationResult] = await Promise.allSettled([
       resolveContractAbi({ chainId: input.chainId, address: input.address }),
-      publicClient.getCode({ address: input.address }),
-      publicClient.getStorageAt({ address: input.address, slot: EIP1967_IMPLEMENTATION_SLOT }),
+      client.getCode({ address: input.address }),
+      client.getStorageAt({ address: input.address, slot: EIP1967_IMPLEMENTATION_SLOT }),
     ]);
 
     const resolutionValue = resolution.status === "fulfilled" ? resolution.value : null;
     const code = codeResult.status === "fulfilled" ? codeResult.value : null;
     const implementationValue = implementationResult.status === "fulfilled" ? implementationResult.value : null;
     const implementation = implementationValue ? addressFromImplementationSlot(implementationValue) : null;
-    const baseInspection = resolutionValue?.found && resolutionValue.contract ? await inspectAbi(input.address, resolutionValue.contract.abi, "ABI") : { capabilities: [], accessControl: [], state: [] };
+    const baseInspection = resolutionValue?.found && resolutionValue.contract ? await inspectAbi(input.address, resolutionValue.contract.abi, "ABI", client) : { capabilities: [], accessControl: [], state: [] };
     const implementationResolution = implementation ? await resolveContractAbi({ chainId: input.chainId, address: implementation }) : null;
     const implementationInspection =
-      implementationResolution?.found && implementationResolution.contract ? await inspectAbi(input.address, implementationResolution.contract.abi, "IMPLEMENTATION") : { capabilities: [], accessControl: [], state: [] };
+      implementationResolution?.found && implementationResolution.contract ? await inspectAbi(input.address, implementationResolution.contract.abi, "IMPLEMENTATION", client) : { capabilities: [], accessControl: [], state: [] };
 
     return {
       verified: resolutionValue?.found ? (resolutionValue.contract?.verified ?? null) : resolutionValue?.error?.includes("not found") ? false : null,

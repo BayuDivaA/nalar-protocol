@@ -72,6 +72,9 @@ export function makeSecurityDecision(input: {
     for (const mismatch of input.comparison.mismatches) {
       reasons.add(mismatch);
     }
+    if (reasons.size === 0 && input.comparison.overall === "UNCERTAIN") {
+      reasons.add(input.comparison.summary);
+    }
 
     if (input.policy.requiresReview) {
       for (const reason of input.policy.reasons) {

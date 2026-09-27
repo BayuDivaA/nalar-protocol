@@ -58,3 +58,6 @@ Official @bnb-chain/mcp process
        │
        ▼
 BSC Testnet RPC (Chain ID 97)
+
+
+Arsitektur yang aktif ternyata extension vanilla JS: popup.js menyimpan intent, tema, dan status; bridge.js meneruskan transaksi ke background.js; hasil keamanan ditampilkan oleh injected.js

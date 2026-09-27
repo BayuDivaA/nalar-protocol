@@ -14,6 +14,8 @@ import { resolveEffectState } from "../services/effect-state";
 import { calculateRisk } from "../services/risk-engine";
 import { normalizeIntent } from "../services/intent-normalizer";
 import { compareIntent } from "../services/intent-comparator";
+import { isSupportedChainId } from "../config/networks";
+import { verifyNetworkRpc } from "../lib/viem";
 
 export const transactionRoute = new Hono();
 
@@ -40,12 +42,13 @@ transactionRoute.post("/analyze", async (c) => {
     /**
      * Chain validation
      */
-    if (tx.chainId !== 97) {
+    if (!isSupportedChainId(tx.chainId)) {
       return c.json(
         {
           ok: false,
           error: "UNSUPPORTED_CHAIN",
           expectedChainId: 97,
+          supportedChainIds: [97, 56],
           receivedChainId: tx.chainId,
         },
         400,
@@ -81,6 +84,10 @@ transactionRoute.post("/analyze", async (c) => {
     const from = getAddress(tx.from);
     const to = getAddress(tx.to);
 
+    if (tx.chainId === 56 && !(await verifyNetworkRpc(56))) {
+      return c.json({ ok: false, error: "NETWORK_CONNECTION_FAILED", receivedChainId: 56 }, 503);
+    }
+
     /**
      * Validate bigint
      */
@@ -115,16 +122,22 @@ transactionRoute.post("/analyze", async (c) => {
     });
 
     const simulation = await simulateTransaction({
+      chainId: tx.chainId,
       from,
       to,
       value,
       data: tx.data as Hex,
     });
 
-    const effectState = simulation.success ? await resolveEffectState(effects) : [];
+    if (tx.chainId === 56 && !simulation.success && !(await verifyNetworkRpc(56))) {
+      return c.json({ ok: false, error: "NETWORK_CONNECTION_FAILED", receivedChainId: 56 }, 503);
+    }
+
+    const effectState = simulation.success ? await resolveEffectState(effects, tx.chainId) : [];
 
     const stateDiff = simulation.success
       ? await analyzeStateDiff({
+          chainId: tx.chainId,
           from,
           to,
           data: tx.data as Hex,

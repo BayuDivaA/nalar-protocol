@@ -149,6 +149,39 @@
     return `${address.slice(0, 6)}…${address.slice(-4)}`;
   }
 
+  function linkifyAddresses(root, chainId) {
+    const explorer = NALAR_CONFIG.SUPPORTED_CHAINS[parseNumericChainId(chainId)]?.explorer;
+    if (!explorer) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.parentElement?.closest("a, script, style") && /0x(?:[a-fA-F0-9]{64}|[a-fA-F0-9]{40})(?![a-fA-F0-9])/.test(node.nodeValue ?? "")) nodes.push(node);
+    }
+    nodes.forEach((node) => {
+      const value = node.nodeValue ?? "";
+      const fragment = document.createDocumentFragment();
+      let cursor = 0;
+      for (const match of value.matchAll(/0x(?:[a-fA-F0-9]{64}|[a-fA-F0-9]{40})(?![a-fA-F0-9])/g)) {
+        const address = match[0];
+        const kind = address.length === 66 ? "tx" : "address";
+        fragment.append(document.createTextNode(value.slice(cursor, match.index)));
+        const link = document.createElement("a");
+        link.className = "nalar-address-link";
+        link.href = `${explorer}/${kind}/${address}`;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.title = address;
+        link.setAttribute("aria-label", `View ${kind === "tx" ? "transaction" : "address"} ${address} on BscScan`);
+        link.textContent = `${formatAddress(address)} ↗`;
+        fragment.append(link);
+        cursor = match.index + address.length;
+      }
+      fragment.append(document.createTextNode(value.slice(cursor)));
+      node.replaceWith(fragment);
+    });
+  }
+
   function humanizeAction(action) {
     const labels = {
       TOKEN_APPROVAL: "Token approval",
@@ -188,8 +221,6 @@
   const CHAIN_NAMES = {
     1: "Ethereum Mainnet",
     10: "Optimism",
-    56: "BNB Smart Chain Mainnet",
-    97: "BNB Smart Chain Testnet",
     137: "Polygon Mainnet",
     8453: "Base",
     42161: "Arbitrum One",
@@ -205,9 +236,8 @@
       if (/^0x[0-9a-fA-F]+$/i.test(trimmed)) {
         return Number.parseInt(trimmed, 16);
       }
-      const dec = Number.parseInt(trimmed, 10);
-      if (Number.isFinite(dec)) {
-        return dec;
+      if (/^[0-9]+$/.test(trimmed)) {
+        return Number.parseInt(trimmed, 10);
       }
     }
     return null;
@@ -223,6 +253,9 @@
       return "Unknown Network";
     }
     const numeric = typeof chainId === "number" ? chainId : parseNumericChainId(chainId);
+    if (NALAR_CONFIG.SUPPORTED_CHAINS[numeric]) {
+      return NALAR_CONFIG.SUPPORTED_CHAINS[numeric].fullName;
+    }
     if (numeric !== null && CHAIN_NAMES[numeric]) {
       return CHAIN_NAMES[numeric];
     }
@@ -590,6 +623,15 @@
     return typeof result.intent === "string" ? result.intent : "";
   }
 
+  async function getSelectedNetwork() {
+    const result = await requestBridge("GET_NETWORK");
+    const chainId = parseNumericChainId(result.chainId);
+    if (result.error || !NALAR_CONFIG.SUPPORTED_CHAINS[chainId]) {
+      throw new Error("NETWORK_UNAVAILABLE");
+    }
+    return chainId;
+  }
+
   async function saveIntent(intent) {
     const result = await requestBridge("SET_INTENT", {
       intent,
@@ -642,26 +684,62 @@
      * Resolve current chain before asking for intent or security check.
      */
     let rawChainId = null;
+    let selectedChainId = null;
     try {
       rawChainId = await originalRequest({
         method: "eth_chainId",
       });
     } catch (err) {
       console.warn("[Nalar] Could not query eth_chainId:", err);
+      return showRecoverableFailure("NETWORK CONNECTION FAILED", "Unable to connect to the wallet network. Check your connection and try again.");
     }
 
-    if (rawChainId === null || rawChainId === undefined) {
-      rawChainId = transaction.chainId;
+    const numericChainId = parseNumericChainId(rawChainId);
+    try {
+      selectedChainId = await getSelectedNetwork();
+    } catch {
+      return showRecoverableFailure("NETWORK UNAVAILABLE", "NALAR could not determine the selected network.");
     }
 
-    let numericChainId = parseNumericChainId(rawChainId);
+    async function switchToTestnet() {
+      await originalRequest({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x61" }] });
+      const active = parseNumericChainId(await originalRequest({ method: "eth_chainId" }));
+      if (active !== 97) throw new Error("Wallet did not switch to BNB Testnet.");
+      await originalRequest({ method: "eth_blockNumber" });
+      const saved = await requestBridge("SET_NETWORK", { chainId: 97 });
+      if (!saved.ok) throw new Error("Could not save BNB Testnet selection.");
+      return true;
+    }
+
+    function showRecoverableFailure(title, description) {
+      return new Promise((resolve, reject) => {
+        showNetworkFailureOverlay({
+          title,
+          description,
+          onRetry: () => resolve(handleTransactionRequest({ originalRequest, provider, args, providerLabel })),
+          onCancel: () => reject(new Error(`[Nalar] ${title}. Transaction cancelled.`)),
+          onSwitchTestnet: selectedChainId !== 97 ? async () => {
+            await switchToTestnet();
+            reject(new Error("[Nalar] Network changed. Start a new transaction on BNB Testnet."));
+          } : null,
+        });
+      });
+    }
+
+    if (numericChainId === null) {
+      return showRecoverableFailure("NETWORK UNAVAILABLE", "NALAR could not determine the current wallet network.");
+    }
 
     const explicitTxChainId = parseNumericChainId(transaction.chainId);
-    if (explicitTxChainId !== null && explicitTxChainId !== 97) {
-      numericChainId = explicitTxChainId;
+    if (transaction.chainId != null && explicitTxChainId !== numericChainId) {
+      return showRecoverableFailure("NETWORK MISMATCH", "The transaction chain does not match the wallet network. Check the DApp request before continuing.");
     }
 
-    if (numericChainId !== 97) {
+    if (transaction.chainId != null && explicitTxChainId !== selectedChainId) {
+      return showRecoverableFailure("NETWORK MISMATCH", "The DApp requested a different network. Switch the DApp network and start a new transaction.");
+    }
+
+    if (numericChainId !== selectedChainId || !NALAR_CONFIG.SUPPORTED_CHAINS[numericChainId]) {
       console.warn("[Nalar] Unsupported network detected before security check:", {
         chainId: numericChainId,
         rawChainId,
@@ -671,6 +749,7 @@
       return new Promise((resolve, reject) => {
         let overlayHandle = null;
         let chainChangedHandler = null;
+        let resuming = false;
 
         function cleanup() {
           if (overlayHandle) {
@@ -686,16 +765,20 @@
         }
 
         async function doSwitch() {
+          if (resuming) return;
           try {
             await originalRequest({
               method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x61" }],
+              params: [{ chainId: NALAR_CONFIG.SUPPORTED_CHAINS[selectedChainId].hex }],
             });
 
-            if (transaction.chainId !== undefined && transaction.chainId !== null) {
-              transaction.chainId = typeof transaction.chainId === "number" ? 97 : "0x61";
-            }
+            if (resuming) return;
 
+            const switched = parseNumericChainId(await originalRequest({ method: "eth_chainId" }));
+            if (switched !== selectedChainId) throw new Error("Wallet did not switch to the selected network.");
+            await originalRequest({ method: "eth_blockNumber" });
+
+            resuming = true;
             cleanup();
 
             resolve(
@@ -720,10 +803,8 @@
         if (provider && typeof provider.on === "function") {
           chainChangedHandler = (newChainIdHex) => {
             const switched = parseNumericChainId(newChainIdHex);
-            if (switched === 97) {
-              if (transaction.chainId !== undefined && transaction.chainId !== null) {
-                transaction.chainId = typeof transaction.chainId === "number" ? 97 : "0x61";
-              }
+            if (switched === selectedChainId && !resuming) {
+              resuming = true;
               cleanup();
               resolve(
                 handleTransactionRequest({
@@ -742,13 +823,20 @@
 
         overlayHandle = showNetworkNotSupportedOverlay({
           currentChainId: numericChainId,
+          requiredChainId: selectedChainId,
           onSwitch: doSwitch,
           onCancel: doCancel,
         });
       });
     }
 
-    const chainIdHex = normalizeChainIdHex(rawChainId) ?? "0x61";
+    try {
+      await originalRequest({ method: "eth_blockNumber" });
+    } catch {
+      return showRecoverableFailure("NETWORK CONNECTION FAILED", `Unable to connect to ${NALAR_CONFIG.SUPPORTED_CHAINS[numericChainId].fullName}. Check your connection and try again.`);
+    }
+
+    const chainIdHex = normalizeChainIdHex(numericChainId);
 
     /*
      * Get previously stored intent
@@ -774,8 +862,8 @@
 
     try {
       await saveIntent(intent);
-    } catch (error) {
-      console.warn("[Nalar] Could not persist intent:", error);
+    } catch {
+      return showRecoverableFailure("INTENT UNAVAILABLE", "NALAR could not save your request for this site. Retry or cancel. The transaction was not sent to your wallet.");
     }
 
     /*
@@ -809,12 +897,7 @@
         if (settled) {
           return;
         }
-
-        settled = true;
-
-        cleanupSecurityWait();
-
-        reject(new Error("[Nalar] Security check timed out."));
+        failAnalysis("ANALYSIS TIMED OUT", "NALAR could not finish checking this transaction. Retry or cancel.");
       }, 60_000);
 
       /*
@@ -833,6 +916,22 @@
         analysis?.remove();
       }
 
+      function failAnalysis(title, description) {
+        if (settled) return;
+        settled = true;
+        cleanupSecurityWait();
+        showNetworkFailureOverlay({
+          title,
+          description,
+          onRetry: () => resolve(handleTransactionRequest({ originalRequest, provider, args, providerLabel })),
+          onCancel: () => reject(new Error(`[Nalar] ${title}. Transaction cancelled.`)),
+          onSwitchTestnet: numericChainId === 56 ? async () => {
+            await switchToTestnet();
+            reject(new Error("[Nalar] Network changed. Start a new transaction on BNB Testnet."));
+          } : null,
+        });
+      }
+
       /*
        * Continue to actual wallet.
        */
@@ -841,17 +940,32 @@
         if (settled) {
           return;
         }
-
         settled = true;
-
-        console.info("[Nalar] Forwarding transaction to wallet.");
-
+        let walletReady = false;
         try {
+          const activeChainId = parseNumericChainId(await originalRequest({ method: "eth_chainId" }));
+          const activeSelection = await getSelectedNetwork();
+          if (activeChainId !== numericChainId || activeSelection !== numericChainId) {
+            throw new Error("[Nalar] Network changed during analysis. Start a new transaction.");
+          }
+          await originalRequest({ method: "eth_blockNumber" });
+          walletReady = true;
+          console.info("[Nalar] Forwarding transaction to wallet.");
           const result = await originalRequest(args);
 
           resolve(result);
         } catch (error) {
-          reject(error);
+          if (walletReady) {
+            reject(error);
+            return;
+          }
+          const changed = error instanceof Error && error.message.includes("Network changed");
+          showNetworkFailureOverlay({
+            title: changed ? "NETWORK MISMATCH" : "NETWORK CONNECTION FAILED",
+            description: changed ? "The wallet network changed during analysis. Start a new security check before signing." : "NALAR could not verify the wallet network before signing. Check your connection and retry.",
+            onRetry: () => resolve(handleTransactionRequest({ originalRequest, provider, args, providerLabel })),
+            onCancel: () => reject(new Error("[Nalar] Transaction cancelled: network could not be verified.")),
+          });
         }
       }
 
@@ -884,7 +998,7 @@
           return;
         }
 
-        if (message.type !== "TX_RESULT") {
+        if (message.type !== "TX_RESULT" && message.type !== "BRIDGE_ERROR") {
           return;
         }
 
@@ -903,26 +1017,31 @@
          * Do NOT wait another 60 seconds.
          */
 
-        cleanupSecurityWait();
-
         /*
          * Check for Network Not Supported error fallback
          */
         const isNetworkNotSupported =
           message.errorCode === "NETWORK_NOT_SUPPORTED" || message.errorCode === "UNSUPPORTED_CHAIN" || (typeof message.error === "string" && (message.error.includes("BNB Testnet only") || message.error.includes("UNSUPPORTED_CHAIN")));
 
+        if (isNetworkNotSupported && NALAR_CONFIG.SUPPORTED_CHAINS[numericChainId]) {
+          failAnalysis("ANALYSIS UNAVAILABLE", "NALAR could not complete security analysis for this network. Retry or switch network.");
+          return;
+        }
+
         if (isNetworkNotSupported) {
+          cleanupSecurityWait();
           console.warn("[Nalar] Backend reported unsupported network:", message);
 
           const reportedChainId = parseNumericChainId(message.receivedChainId) ?? parseNumericChainId(chainIdHex) ?? numericChainId ?? 1;
 
           showNetworkNotSupportedOverlay({
             currentChainId: reportedChainId,
+            requiredChainId: selectedChainId,
             onSwitch: async () => {
               try {
                 await originalRequest({
                   method: "wallet_switchEthereumChain",
-                  params: [{ chainId: "0x61" }],
+                  params: [{ chainId: NALAR_CONFIG.SUPPORTED_CHAINS[selectedChainId].hex }],
                 });
                 removeNalarElement(IDS.network);
                 resolve(
@@ -950,12 +1069,25 @@
          */
 
         if (!message.security) {
-          cancelTransaction(message.error ?? "[Nalar] Security response was missing.");
+          if (message.errorCode === "NETWORK_CONNECTION_FAILED") {
+            failAnalysis("NETWORK CONNECTION FAILED", `Unable to connect to ${NALAR_CONFIG.SUPPORTED_CHAINS[numericChainId].fullName}. Check your connection and try again.`);
+          } else if (message.errorCode === "ANALYSIS_TIMEOUT" || /timed out/i.test(message.error ?? "")) {
+            failAnalysis("ANALYSIS TIMED OUT", "NALAR could not finish checking this transaction. Retry or cancel.");
+          } else {
+            failAnalysis("ANALYSIS UNAVAILABLE", "NALAR could not complete security analysis for this network. Retry or switch network.");
+          }
 
           return;
         }
 
+        cleanupSecurityWait();
+
         const security = message.security;
+
+        if (!security || !["ALLOW", "REVIEW", "BLOCK"].includes(security.decision)) {
+          failAnalysis("ANALYSIS UNAVAILABLE", "NALAR received an incomplete security result. Retry or cancel this transaction.");
+          return;
+        }
 
         /*
          * BLOCK
@@ -969,7 +1101,7 @@
         if (security.decision === "BLOCK") {
           showDecisionOverlay(security, "BLOCK", null, () => {
             cancelTransaction("[Nalar] Transaction blocked by security policy.");
-          });
+          }, numericChainId);
 
           return;
         }
@@ -981,7 +1113,7 @@
         if (security.decision === "REVIEW") {
           showDecisionOverlay(security, "REVIEW", continueToWallet, () => {
             cancelTransaction("[Nalar] Transaction cancelled during review.");
-          });
+          }, numericChainId);
 
           return;
         }
@@ -992,7 +1124,7 @@
 
         showDecisionOverlay(security, "ALLOW", continueToWallet, () => {
           cancelTransaction("[Nalar] Transaction cancelled by user.");
-        });
+        }, numericChainId);
       }
 
       /*
@@ -1004,12 +1136,6 @@
       /*
        * Send transaction to bridge.
        */
-
-      console.info("[Nalar] Sending security request:", {
-        id,
-        chainId: chainIdHex,
-        transaction,
-      });
 
       window.postMessage(
         {
@@ -1277,7 +1403,58 @@
   |--------------------------------------------------------------------------
   */
 
-  function showNetworkNotSupportedOverlay({ currentChainId, onSwitch, onCancel }) {
+  function showNetworkFailureOverlay({ title, description, onRetry, onCancel, onSwitchTestnet }) {
+    removeNalarElement(IDS.network);
+    removeNalarElement(IDS.analysis);
+    installStyles();
+
+    const overlay = document.createElement("div");
+    overlay.id = IDS.network;
+    overlay.className = "nalar-overlay nalar-network-overlay";
+    applyOverlayStyle(overlay);
+    const modal = createModal();
+    modal.classList.add("nalar-network-modal");
+    Object.assign(modal.style, { width: "min(440px, 100%)", padding: "24px" });
+    modal.appendChild(createBrandEyebrow("NALAR PROTOCOL · NETWORK CHECK"));
+
+    const heading = document.createElement("h2");
+    heading.textContent = title;
+    Object.assign(heading.style, { margin: "14px 0 8px", fontSize: "20px", color: UI.text });
+    modal.appendChild(heading);
+
+    const explanation = document.createElement("p");
+    explanation.textContent = description;
+    Object.assign(explanation.style, { margin: "0 0 18px", fontSize: "13px", lineHeight: "1.55", color: UI.soft });
+    modal.appendChild(explanation);
+
+    const actions = document.createElement("div");
+    Object.assign(actions.style, { display: "flex", flexWrap: "wrap", gap: "8px" });
+    const retry = createButton("Retry", true);
+    retry.onclick = () => { overlay.remove(); onRetry(); };
+    actions.appendChild(retry);
+    if (onSwitchTestnet) {
+      const switchButton = createButton("Switch to BNB Testnet", false);
+      switchButton.onclick = async () => {
+        switchButton.disabled = true;
+        try {
+          await onSwitchTestnet();
+          overlay.remove();
+        } catch {
+          switchButton.disabled = false;
+          explanation.textContent = "COULD NOT SWITCH NETWORK. Your current network remains unchanged. Retry or cancel this transaction.";
+        }
+      };
+      actions.appendChild(switchButton);
+    }
+    const cancel = createButton("Cancel", false);
+    cancel.onclick = () => { overlay.remove(); onCancel(); };
+    actions.appendChild(cancel);
+    modal.appendChild(actions);
+    overlay.appendChild(modal);
+    document.documentElement.appendChild(overlay);
+  }
+
+  function showNetworkNotSupportedOverlay({ currentChainId, requiredChainId = 97, onSwitch, onCancel }) {
     removeNalarElement(IDS.network);
     removeNalarElement(IDS.analysis);
     removeNalarElement(IDS.decision);
@@ -1309,7 +1486,7 @@
     header.appendChild(eyebrow);
 
     const title = document.createElement("h2");
-    title.textContent = "NETWORK NOT SUPPORTED";
+    title.textContent = NALAR_CONFIG.SUPPORTED_CHAINS[currentChainId] ? "NETWORK MISMATCH" : "NETWORK NOT SUPPORTED";
     Object.assign(title.style, {
       margin: "10px 0 0",
       fontSize: "20px",
@@ -1321,7 +1498,7 @@
     header.appendChild(title);
 
     const subtitle = document.createElement("p");
-    subtitle.textContent = "Nalar currently analyzes transactions on BNB Smart Chain Testnet.";
+    subtitle.textContent = "NALAR supports BNB Testnet and BNB Mainnet. The wallet must match the selected network before analysis.";
     Object.assign(subtitle.style, {
       margin: "8px 0 0",
       fontSize: "13px",
@@ -1400,7 +1577,7 @@
     requiredBox.appendChild(requiredLabel);
 
     const requiredName = document.createElement("div");
-    requiredName.textContent = "BNB Smart Chain Testnet";
+    requiredName.textContent = NALAR_CONFIG.SUPPORTED_CHAINS[requiredChainId].fullName;
     Object.assign(requiredName.style, {
       marginTop: "6px",
       fontSize: "13px",
@@ -1410,7 +1587,7 @@
     requiredBox.appendChild(requiredName);
 
     const requiredId = document.createElement("div");
-    requiredId.textContent = "Chain ID 97";
+    requiredId.textContent = `Chain ID ${requiredChainId}`;
     Object.assign(requiredId.style, {
       marginTop: "3px",
       fontSize: "11px",
@@ -1424,7 +1601,7 @@
     body.appendChild(grid);
 
     const messageText = document.createElement("div");
-    messageText.textContent = "Switch your wallet to BNB Smart Chain Testnet before continuing.";
+    messageText.textContent = `Switch your wallet to ${NALAR_CONFIG.SUPPORTED_CHAINS[requiredChainId].fullName} before continuing.`;
     Object.assign(messageText.style, {
       marginTop: "16px",
       fontSize: "12px",
@@ -1456,7 +1633,7 @@
     });
 
     const cancelBtn = createButton("Cancel", false);
-    const switchBtn = createButton("Switch to BNB Testnet", true);
+    const switchBtn = createButton(`Switch to ${NALAR_CONFIG.SUPPORTED_CHAINS[requiredChainId].name}`, true);
 
     cancelBtn.onclick = () => {
       overlay.remove();
@@ -1479,8 +1656,8 @@
           await onSwitch();
         } catch (err) {
           switchBtn.disabled = false;
-          switchBtn.textContent = "Switch to BNB Testnet";
-          statusEl.textContent = "Open your wallet and switch to BNB Smart Chain Testnet.";
+          switchBtn.textContent = `Switch to ${NALAR_CONFIG.SUPPORTED_CHAINS[requiredChainId].name}`;
+          statusEl.textContent = `COULD NOT SWITCH NETWORK. Open your wallet and select ${NALAR_CONFIG.SUPPORTED_CHAINS[requiredChainId].fullName}.`;
         }
       }
     };
@@ -1675,7 +1852,7 @@
   |--------------------------------------------------------------------------
   */
 
-  function showDecisionOverlay(security, decision, onContinue, onCancel) {
+  function showDecisionOverlay(security, decision, onContinue, onCancel, chainId) {
     removeNalarElement(IDS.decision);
 
     installStyles();
@@ -1740,7 +1917,7 @@
     }
 
     // 6. Technical Details (Collapsible accordion, closed by default)
-    body.appendChild(createTechnicalSection(explanation, security));
+    body.appendChild(createTechnicalSection(explanation, security, chainId));
 
     // 7. Footer Actions
     const footer = createDecisionFooter(decision, onContinue, onCancel, overlay);
@@ -1754,6 +1931,7 @@
     overlay.appendChild(modal);
 
     document.documentElement.appendChild(overlay);
+    linkifyAddresses(modal, chainId);
 
     document.addEventListener("keydown", function onKeydown(event) {
       if (!document.getElementById(IDS.decision)) {
@@ -1859,7 +2037,8 @@
   }
 
   function getPrimaryRootCause(explanation, security, decision) {
-    const isMismatch = security?.intentMatch === false || security?.comparison?.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH";
+    const isUncertain = security?.comparison?.overall === "UNCERTAIN" || explanation?.comparison?.status === "UNKNOWN";
+    const isMismatch = !isUncertain && (security?.intentMatch === false || security?.comparison?.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH");
     const comp = security?.comparison || {};
 
     // 1. Intent mismatch (highest priority)
@@ -1904,7 +2083,7 @@
       const sellTax = state.find((s) => s?.code === "CURRENT_SELL_TAX");
       if (sellTax && Number(sellTax.value) >= 2000) {
         const pct = (Number(sellTax.value) / 100).toFixed(0);
-        return `Contract charges an excessive ${pct}% sell tax, preventing you from recovering funds.`;
+        return `The token contract reports a configured ${pct}% sell tax. If enforced during a sale, you could receive less than expected.`;
       }
 
       const findings = Array.isArray(a?.findings) ? a.findings : [];
@@ -1945,7 +2124,6 @@
       borderRadius: "8px",
       border: `1px solid ${isBlock ? "rgba(248, 113, 113, 0.28)" : isReview ? "rgba(251, 191, 36, 0.28)" : UI.border}`,
       background: isBlock ? UI.dangerBg : isReview ? UI.warningBg : UI.surface,
-      borderLeft: `3px solid ${isBlock ? UI.danger : isReview ? UI.warning : UI.safe}`,
     });
 
     const labelText = isBlock ? "WHY THIS WAS STOPPED" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT";
@@ -2001,8 +2179,8 @@
     });
 
     const comp = security?.comparison || {};
-    const isMismatch = comp.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH" || security?.intentMatch === false;
     const isUncertain = comp.overall === "UNCERTAIN" || explanation?.comparison?.status === "UNKNOWN";
+    const isMismatch = !isUncertain && (comp.overall === "MISMATCH" || explanation?.comparison?.status === "MISMATCH" || security?.intentMatch === false);
     const isMatch = !isMismatch && !isUncertain && (explanation?.comparison?.status === "MATCH" || security?.intentMatch === true || comp.overall === "MATCH");
 
     const headerRow = document.createElement("div");
@@ -2181,7 +2359,7 @@
         mismatchesList.push(`Action: Expected ${humanizeAction(comp.action.expected)}, Actual ${humanizeAction(comp.action.actual)}`);
       }
       if (comp.recipient && comp.recipient.status === "MISMATCH") {
-        mismatchesList.push(`Recipient: Expected ${formatAddress(comp.recipient.expected)}, Actual ${formatAddress(comp.recipient.actual)}`);
+        mismatchesList.push(`Recipient: Expected ${comp.recipient.expected}, Actual ${comp.recipient.actual}`);
       }
 
       if (Array.isArray(comp.mismatches)) {
@@ -2230,7 +2408,8 @@
   function createWhatThisMeansSection(explanation, security, decision) {
     const isBlock = decision === "BLOCK";
     const isReview = decision === "REVIEW";
-    const isMismatch = security?.intentMatch === false || security?.comparison?.overall === "MISMATCH";
+    const isUncertain = security?.comparison?.overall === "UNCERTAIN" || explanation?.comparison?.status === "UNKNOWN";
+    const isMismatch = !isUncertain && (security?.intentMatch === false || security?.comparison?.overall === "MISMATCH");
 
     let text = "";
     if (typeof explanation?.whatThisMeans === "string" && explanation.whatThisMeans.trim().length > 0) {
@@ -2241,10 +2420,12 @@
       text = "Signing this request would execute an action different from what you intended, potentially transferring permissions or assets unexpectedly.";
     } else if (isBlock) {
       text = "Signing this transaction could result in irreversible loss of assets or unverified contract execution.";
+    } else if (isReview && isUncertain) {
+      text = "NALAR could not confirm a match because your request was too broad. Check the action, token, amount, and recipient before continuing.";
     } else if (isReview) {
       text = "This transaction interacts with contract functions or addresses that require careful verification before signing.";
     } else {
-      text = "This transaction matches your requested parameters and will execute with standard network confirmation.";
+      text = "No blocking issue was found in the available checks. Simulation reflects the state at the time of analysis and cannot guarantee the mined outcome.";
     }
 
     const callout = document.createElement("section");
@@ -2253,7 +2434,6 @@
       marginTop: "12px",
       padding: "12px 16px",
       border: `1px solid ${UI.border}`,
-      borderLeft: `3px solid ${UI.accent}`,
       borderRadius: "8px",
       background: UI.surface,
     });
@@ -2286,12 +2466,8 @@
   function createEvidenceSection(explanation, security) {
     const evidenceItems = Array.isArray(explanation?.evidence) && explanation.evidence.length > 0 ? explanation.evidence : null;
     const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
-
-    if (!evidenceItems && !reports.length) {
-      return null;
-    }
-
-    const count = evidenceItems ? evidenceItems.length : reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0);
+    const mcpObservations = Array.isArray(security?.bnbIntelligence?.observations) ? security.bnbIntelligence.observations : [];
+    const count = (evidenceItems ? evidenceItems.length : reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0)) + mcpObservations.length;
 
     const wrapper = document.createElement("details");
     wrapper.className = "nalar-evidence-details nalar-stagger-5";
@@ -2303,7 +2479,7 @@
     });
 
     const summary = document.createElement("summary");
-    summary.textContent = `Security evidence (${count > 0 ? `${count} items` : "verified"})`;
+    summary.textContent = `Security evidence (${count > 0 ? `${count} items` : "unavailable"})`;
 
     Object.assign(summary.style, {
       cursor: "pointer",
@@ -2326,6 +2502,12 @@
       background: UI.surface,
     });
 
+    const checkedAt = typeof security?.checkedAt === "string" && !Number.isNaN(Date.parse(security.checkedAt)) ? new Date(security.checkedAt).toLocaleString() : "Time unavailable";
+    const provenance = document.createElement("p");
+    provenance.textContent = `Analysis completed: ${checkedAt}. Sources identify observed data; intent and policy are system comparisons, not on-chain facts.`;
+    Object.assign(provenance.style, { margin: "0 0 8px", fontSize: "10px", lineHeight: "1.5", color: UI.muted });
+    content.appendChild(provenance);
+
     if (evidenceItems) {
       evidenceItems.forEach((item, index) => {
         const row = document.createElement("div");
@@ -2343,7 +2525,7 @@
         });
 
         const labelEl = document.createElement("span");
-        labelEl.textContent = item.label;
+        labelEl.textContent = item?.label ?? "Evidence";
         Object.assign(labelEl.style, {
           fontSize: "11px",
           fontWeight: "600",
@@ -2358,7 +2540,7 @@
         });
 
         const valEl = document.createElement("span");
-        valEl.textContent = item.value;
+        valEl.textContent = item?.value ?? "Unavailable";
         Object.assign(valEl.style, {
           fontSize: "11px",
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
@@ -2367,8 +2549,8 @@
 
         const badge = document.createElement("span");
         badge.className = "nalar-badge-source";
-        badge.setAttribute("data-source", item.source);
-        badge.textContent = item.source;
+        badge.setAttribute("data-source", item?.source ?? "UNKNOWN");
+        badge.textContent = item?.source ?? "UNKNOWN";
 
         rightSide.appendChild(valEl);
         rightSide.appendChild(badge);
@@ -2376,7 +2558,7 @@
         topLine.appendChild(rightSide);
         row.appendChild(topLine);
 
-        if (item.explanation) {
+        if (item?.explanation) {
           const expEl = document.createElement("div");
           expEl.textContent = item.explanation;
           Object.assign(expEl.style, {
@@ -2390,7 +2572,7 @@
 
         content.appendChild(row);
       });
-    } else {
+    } else if (reports.length) {
       reports.forEach((analysis, rIdx) => {
         const sub = document.createElement("div");
         if (rIdx > 0) {
@@ -2408,7 +2590,7 @@
         });
 
         const token = document.createElement("div");
-        token.textContent = formatAddress(analysis?.token);
+        token.textContent = analysis?.token ?? "Unknown";
         token.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
         token.style.fontSize = "11px";
         token.style.color = UI.text;
@@ -2456,7 +2638,7 @@
           sLabel.style.color = UI.muted;
 
           const sVal = document.createElement("span");
-          let displayVal = entry?.value ?? "Unknown";
+          let displayVal = entry?.status === "UNKNOWN" || entry?.value == null ? "Unavailable" : entry.value;
           if (entry?.code === "CURRENT_SELL_TAX" && entry?.unit === "PERCENT") {
             const numeric = Number(displayVal);
             if (Number.isFinite(numeric)) {
@@ -2476,11 +2658,30 @@
       });
     }
 
+    mcpObservations.forEach((observation) => {
+      const row = document.createElement("div");
+      row.className = "nalar-finding";
+      row.textContent = `BNB MCP · ${humanizeEvidenceLabel(observation?.type)}: ${observation?.value ?? "Unavailable"}`;
+      Object.assign(row.style, { padding: "5px 0", fontSize: "10px", lineHeight: "1.5", color: UI.soft, overflowWrap: "anywhere" });
+      content.appendChild(row);
+    });
+
+    if (!count) {
+      const unavailable = document.createElement("p");
+      unavailable.textContent = "No detailed evidence was returned for this transaction.";
+      Object.assign(unavailable.style, { margin: "4px 0", fontSize: "11px", color: UI.soft });
+      content.appendChild(unavailable);
+    }
+
     wrapper.appendChild(content);
+    wrapper.addEventListener("toggle", () => {
+      if (!wrapper.open) return;
+      try { window.NALAR_MOTION?.enter(content); } catch {}
+    });
     return wrapper;
   }
 
-  function createTechnicalSection(explanation, security) {
+  function createTechnicalSection(explanation, security, chainId) {
     const wrapper = document.createElement("details");
 
     wrapper.className = "nalar-tech-details nalar-stagger-6";
@@ -2522,12 +2723,13 @@
     const sim = security?.simulation ?? {};
 
     const rows = [
-      ["Network", "BNB Smart Chain Testnet (97)"],
-      ["Target contract", tx.target ? formatAddress(tx.target) : security?.transaction?.to ? formatAddress(security.transaction.to) : "N/A"],
+      ["Network", getChainName(chainId)],
+      ["Target contract", tx.target ?? security?.transaction?.to ?? "N/A"],
       ["Action", humanizeAction(actual.action)],
       ["Function name", actual.functionName ?? "N/A"],
-      ["Simulation status", sim.success === true ? "Success" : sim.success === false ? "Reverted / Failed" : "Not simulated"],
-      ["Risk score", `${security?.riskScore ?? 0} / 100 (${security?.riskLevel ?? "UNKNOWN"})`],
+      ["Simulation status", sim.success === true ? "Passed at check time" : sim.success === false ? "Reverted / Failed" : "Unavailable"],
+      ["Risk score", Number.isFinite(security?.riskScore) ? `${security.riskScore} / 100 (${security?.riskLevel ?? "UNKNOWN"})` : "Unavailable"],
+      ["Analysis completed", typeof security?.checkedAt === "string" && !Number.isNaN(Date.parse(security.checkedAt)) ? new Date(security.checkedAt).toLocaleString() : "Unavailable"],
     ];
 
     rows.forEach(([label, value]) => {
@@ -2550,6 +2752,7 @@
       right.style.color = UI.soft;
       right.style.fontSize = "10px";
       right.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+      right.style.overflowWrap = "anywhere";
 
       row.appendChild(left);
       row.appendChild(right);
@@ -2557,6 +2760,10 @@
     });
 
     wrapper.appendChild(content);
+    wrapper.addEventListener("toggle", () => {
+      if (!wrapper.open) return;
+      try { window.NALAR_MOTION?.enter(content); } catch {}
+    });
 
     return wrapper;
   }
@@ -2665,6 +2872,11 @@
       background: UI.bg,
       color: UI.text,
       boxShadow: "0 32px 80px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.06) inset",
+    });
+
+    queueMicrotask(() => {
+      if (!modal.isConnected) return;
+      try { window.NALAR_MOTION?.enter(modal); } catch {}
     });
 
     return modal;

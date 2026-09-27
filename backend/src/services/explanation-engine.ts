@@ -91,7 +91,7 @@ export function humanizeFinding(code: string, metadata?: Record<string, any>): H
       return {
         headline: metadata?.sellTaxPercent !== undefined ? `An unusually high sell fee was found (${taxStr})` : "An unusually high sell fee was found",
         fact: metadata?.sellTaxPercent !== undefined ? `The token contract reports a configured ${taxStr} sell tax.` : "The token contract reports an unusually high sell tax.",
-        meaning: "This is an unusually large fee applied to selling.",
+        meaning: "The contract reports a high sell fee setting; whether it is charged during a sale has not been confirmed.",
         impact: "If enforced during a sale, you could receive substantially less than expected.",
       };
     }
@@ -483,8 +483,8 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
   const threatCodeSet = new Set(context.transactionThreats.map((t) => t.code));
 
   const isSimFailed = !context.simulation.success;
-  const isMismatch = !input.intentMatch || context.intentComparison.overall === "MISMATCH" || context.intentComparison.matches === false;
   const isUncertain = context.intentComparison.overall === "UNCERTAIN";
+  const isMismatch = !isUncertain && (!input.intentMatch || context.intentComparison.overall === "MISMATCH" || context.intentComparison.matches === false);
 
   const compOverall: "MATCH" | "MISMATCH" | "UNKNOWN" =
     context.intentComparison.overall === "MATCH" || (input.intentMatch && context.intentComparison.matches !== false && !isUncertain && !isMismatch) ? "MATCH" : isMismatch ? "MISMATCH" : "UNKNOWN";
@@ -495,7 +495,7 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
 
   let primaryReason = input.reasons.length > 0 ? input.reasons[0]! : "Security evaluation completed.";
   let userImpact = "Nalar evaluated the transaction against deterministic safety rules.";
-  let whatThisMeans = "Nalar verified that the on-chain parameters adhere to your intent and security policy.";
+  let whatThisMeans = "The available checks did not find a conflict with your request or security policy.";
   let summaryText = primaryReason;
 
   // A. Excessive Sell Tax Case
@@ -506,7 +506,7 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
     summaryText = h.fact;
     primaryReason = h.fact;
     userImpact = "The contract is configured to take an unusually large portion from a sale. If enforced during a sale, you could receive substantially less than expected.";
-    whatThisMeans = "This is an unusually large fee applied to selling. Even if buying succeeds, selling later could result in receiving significantly less or being unable to exit your position.";
+    whatThisMeans = "The contract reports an unusually high sell fee setting. If enforced during a sale, you could receive substantially less than expected.";
   }
   // B. Unlimited Allowance
   else if (threatCodeSet.has("UNLIMITED_ALLOWANCE")) {
@@ -642,7 +642,7 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
     summaryText = "The transaction matches what you asked to do and passed all automated checks.";
     primaryReason = summaryText;
     userImpact = "No high-risk patterns or policy violations were detected on BNB Chain.";
-    whatThisMeans = "Nalar verified that the on-chain execution path matches your intent with no hidden allowances or dangerous contract configurations.";
+    whatThisMeans = "The available checks did not find a mismatch, hidden allowance, or known dangerous contract configuration. Simulation reflects the state at the time of the check, not a guarantee of future execution.";
   }
 
   // 2. User Intent Breakdown
@@ -714,7 +714,7 @@ export function buildDeterministicExplanation(input: GenerateExplanationInput): 
     evidence.push({
       label: "Simulation",
       value: input.simulation.success ? "Passed" : "Reverted",
-      explanation: input.simulation.success ? `Simulation completed with gas estimate ${input.simulation.gasEstimate ?? "unknown"}.` : `Execution reverted on-chain: ${input.simulation.error ?? "0x"}.`,
+      explanation: input.simulation.success ? `Simulation completed with gas estimate ${input.simulation.gasEstimate ?? "unknown"} at the time of the check.` : `Simulation reverted with error: ${input.simulation.error ?? "unknown"}.`,
       source: "SIMULATION",
     });
   }

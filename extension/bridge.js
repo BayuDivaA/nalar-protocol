@@ -22,6 +22,18 @@
 
     try {
       switch (message.type) {
+        case "GET_NETWORK": {
+          const response = await chrome.runtime.sendMessage({ type: "GET_NETWORK" });
+          window.postMessage({ source: "NALAR_EXTENSION", type: "NETWORK_RESULT", id: message.id, chainId: response?.chainId ?? null, error: response?.error ?? null }, "*");
+          return;
+        }
+
+        case "SET_NETWORK": {
+          const response = await chrome.runtime.sendMessage({ type: "SET_NETWORK", chainId: message.chainId });
+          window.postMessage({ source: "NALAR_EXTENSION", type: "NETWORK_SAVED", id: message.id, ok: response?.ok === true, error: response?.error ?? null }, "*");
+          return;
+        }
+
         case "GET_PROTECTION_STATUS": {
           const response = await chrome.runtime.sendMessage({
             type: "GET_PROTECTION_STATUS",

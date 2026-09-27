@@ -72,6 +72,13 @@ describe("Intent Comparator - SWAP", () => {
     expect(result.mismatches).toHaveLength(0);
   });
 
+  test("Mainnet WBNB without token metadata matches native BNB intent", () => {
+    const mainnetWbnb = "0xbb4CdB9CBD36B01bD1cBaEBF2De08d9173bc095c" as Address;
+    const result = compareIntent(createIntent(), "SWAP", createSwapEffects({ tokenOut: mainnetWbnb, tokenOutSymbol: null }), 0n, { chainId: 56 });
+    expect(result.overall).toBe("MATCH");
+    expect(result.outputToken.actual).toBe("BNB");
+  });
+
   test("wrong input token should mismatch", () => {
     const result = compareIntent(
       createIntent(),
@@ -122,7 +129,7 @@ describe("Intent Comparator - SWAP", () => {
     expect(result.mismatches.some((message) => message.toLowerCase().includes("no swap effect"))).toBe(true);
   });
 
-  test("unspecified token should not constrain the swap", () => {
+  test("unspecified token pair must require review rather than match", () => {
     const result = compareIntent(
       createIntent({
         tokenIn: null,
@@ -137,7 +144,8 @@ describe("Intent Comparator - SWAP", () => {
       0n,
     );
 
-    expect(result.matches).toBe(true);
+    expect(result.matches).toBe(false);
+    expect(result.overall).toBe("UNCERTAIN");
   });
 
   test("matching input amount should match", () => {
@@ -225,7 +233,38 @@ describe("Intent Comparator - SWAP", () => {
   });
 });
 
+describe("Intent Comparator - TRANSFER", () => {
+  const recipient = "0x3333333333333333333333333333333333333333" as Address;
+  const other = "0x4444444444444444444444444444444444444444" as Address;
+  const transferIntent = createIntent({ action: "TRANSFER", quantity: 1, tokenIn: "BNB", tokenOut: null, targetAddress: recipient, maxValueNative: "1", maxValueWei: 1_000_000_000_000_000_000n });
+
+  test("native transfer to a different address is a mismatch", () => {
+    const result = compareIntent(transferIntent, "PAYMENT", { approvals: [], swaps: [] }, 1_000_000_000_000_000_000n, { to: other });
+    expect(result.overall).toBe("MISMATCH");
+    expect(result.recipient.status).toBe("MISMATCH");
+  });
+
+  test("native transfer to the requested address can match", () => {
+    const result = compareIntent(transferIntent, "PAYMENT", { approvals: [], swaps: [] }, 1_000_000_000_000_000_000n, { to: recipient });
+    expect(result.overall).toBe("MATCH");
+  });
+
+  test("transfer without a verifiable recipient requires review", () => {
+    const result = compareIntent(createIntent({ ...transferIntent, targetAddress: null, recipient: "Alice" }), "PAYMENT", { approvals: [], swaps: [] }, 1_000_000_000_000_000_000n, { to: other });
+    expect(result.overall).toBe("UNCERTAIN");
+  });
+
+  test("transfer without an amount requires review", () => {
+    const result = compareIntent(createIntent({ ...transferIntent, quantity: null, maxValueNative: null, maxValueWei: null }), "PAYMENT", { approvals: [], swaps: [] }, 1_000_000_000_000_000_000n, { to: recipient });
+    expect(result.overall).toBe("UNCERTAIN");
+  });
+});
+
 describe("Intent Comparator - MINT and Invariant Checks", () => {
+  test("mint without a requested quantity cannot be called a match", () => {
+    const result = compareIntent(createIntent({ action: "MINT", quantity: null, tokenIn: null, tokenOut: null, maxValueNative: null }), "MINT", { approvals: [], swaps: [] }, 0n, { targetIsContract: true, functionName: "mint" });
+    expect(result.overall).toBe("UNCERTAIN");
+  });
   const CONTRACT = "0x5555555555555555555555555555555555555555" as Address;
   const EOA = "0x6666666666666666666666666666666666666666" as Address;
 

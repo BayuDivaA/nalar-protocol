@@ -1,5 +1,7 @@
 # NALAR PROTOCOL — PROJECT CONTEXT
 
+<!-- impeccable:product-schema 1 -->
+
 ## 1. PROJECT OVERVIEW
 
 Nalar Protocol adalah Web3 transaction security protocol.
@@ -219,9 +221,7 @@ string containing decimal digits
 data:
 hex string
 
-The backend currently expects BNB Testnet:
-
-chainId = 97
+The local backend code supports BNB Testnet (chainId = 97) and BNB Mainnet (chainId = 56). On 27 September 2026, the canonical production endpoint at `https://nalar-protocol.vercel.app/api/transactions/security-check` still returned `UNSUPPORTED_CHAIN` for chainId 56. A new production-target build was deployed with `--skip-domain` (deployment `dpl_25vacgbP7UNunm4dA1J4pZKLgVpq`). Its authenticated smoke test completed a Chain ID 56 analysis with simulation and BNB evidence; it has not been promoted to the canonical URL. Real MetaMask/Rabby QA is still required before Mainnet release. The extension must keep failed analysis blocked while versions differ.
 
 Do not invent a new request schema unless explicitly required.
 
@@ -396,6 +396,8 @@ NOT:
 "Selling the token will definitely lose 98%"
 
 Do not claim behavior that has not been proven by simulation/code.
+
+The `sellTax()` getter does not declare its unit by itself. Its interpretation must be tied to verified contract semantics; an on-chain number alone does not prove the percentage charged on transfer.
 
 ---
 

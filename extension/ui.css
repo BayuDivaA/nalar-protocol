@@ -453,19 +453,16 @@
 }
 
 .nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card {
-  border-left: 3px solid var(--nalar-ui-danger) !important;
   background: var(--nalar-ui-danger-bg) !important;
   border-color: var(--nalar-ui-danger-border) !important;
 }
 
 .nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card {
-  border-left: 3px solid var(--nalar-ui-warning) !important;
   background: var(--nalar-ui-warning-bg) !important;
   border-color: var(--nalar-ui-warning-border) !important;
 }
 
 .nalar-decision-overlay[data-decision="allow"] .nalar-why-stopped-card {
-  border-left: 3px solid var(--nalar-ui-safe) !important;
   background: var(--nalar-ui-safe-bg) !important;
   border-color: var(--nalar-ui-safe-border) !important;
 }
@@ -594,7 +591,6 @@
   border-radius: var(--nalar-radius-md) !important;
   background: var(--nalar-ui-surface) !important;
   border: 1px solid var(--nalar-ui-border) !important;
-  border-left: 3px solid var(--nalar-ui-accent) !important;
 }
 
 .nalar-means-label {
@@ -625,6 +621,7 @@
 
 .nalar-evidence-details summary,
 .nalar-tech-details summary {
+  min-height: 44px !important;
   cursor: pointer !important;
   user-select: none !important;
   font-size: 11px !important;
@@ -945,3 +942,129 @@
     transition: none !important;
   }
 }
+
+.nalar-modal.nalar-motion-driven,
+.nalar-motion-driven .nalar-stagger-1,
+.nalar-motion-driven .nalar-stagger-2,
+.nalar-motion-driven .nalar-stagger-3,
+.nalar-motion-driven .nalar-stagger-4,
+.nalar-motion-driven .nalar-stagger-5,
+.nalar-motion-driven .nalar-stagger-6,
+.nalar-evidence-content.nalar-motion-driven,
+.nalar-tech-content.nalar-motion-driven { animation: none !important; }
+
+.nalar-decision-header {
+  grid-template-columns: 28px minmax(0, 1fr) !important;
+  gap: 10px 12px !important;
+  padding: 21px 24px 18px !important;
+}
+.nalar-decision-mark {
+  width: 28px !important;
+  height: 28px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+.nalar-risk-pill {
+  grid-column: 2;
+  justify-self: start;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  font-size: 10px !important;
+  letter-spacing: .025em !important;
+}
+.nalar-decision-body { padding: 0 24px 10px !important; }
+.nalar-why-stopped-card,
+.nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card,
+.nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card,
+.nalar-decision-overlay[data-decision="allow"] .nalar-why-stopped-card {
+  margin: 0 !important;
+  padding: 18px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.nalar-why-stopped-primary { font-size: 14px !important; line-height: 1.6 !important; }
+.nalar-comparison-card {
+  margin: 0 !important;
+  padding: 18px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.nalar-comparison-header {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+}
+.nalar-comparison-grid { gap: 0 !important; background: transparent !important; }
+.nalar-comparison-box {
+  padding: 5px 12px 5px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.nalar-comparison-box + .nalar-comparison-box {
+  padding-left: 16px !important;
+  border-left: 1px solid var(--nalar-ui-border) !important;
+}
+.nalar-means-callout {
+  margin: 0 !important;
+  padding: 17px 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--nalar-ui-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.nalar-evidence-content, .nalar-tech-content {
+  padding: 3px 0 8px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.nalar-field-mismatch { animation: none !important; }
+.nalar-network-box[data-type="required"] {
+  border-color: var(--nalar-ui-border) !important;
+  background: var(--nalar-ui-surface) !important;
+}
+.nalar-address-link {
+  color: var(--nalar-ui-accent) !important;
+  font-family: var(--nalar-font-mono) !important;
+  font-size: inherit !important;
+  text-decoration: none !important;
+  overflow-wrap: anywhere !important;
+}
+.nalar-address-link:hover { text-decoration: underline !important; }
+.nalar-address-link:focus-visible { outline: 2px solid var(--nalar-ui-accent) !important; outline-offset: 2px !important; }
+.nalar-decision-body span, .nalar-decision-body div { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .nalar-decision-header { padding: 18px 18px 16px !important; }
+  .nalar-decision-body { padding: 0 18px 10px !important; }
+  .nalar-comparison-box + .nalar-comparison-box {
+    padding: 12px 0 0 !important;
+    border-left: 0 !important;
+    border-top: 1px solid var(--nalar-ui-border) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nalar-address-link { transition: none !important; }
+}
+
+.nalar-overlay {
+  background: rgba(5, 8, 17, .84) !important;
+  backdrop-filter: blur(3px) !important;
+  -webkit-backdrop-filter: blur(3px) !important;
+}
+.nalar-motion-driven .nalar-comp-expected,
+.nalar-motion-driven .nalar-comp-actual,
+.nalar-motion-driven .nalar-badge { animation: none !important; }
+.nalar-brand-eyebrow,
+.nalar-section-label,
+.nalar-comparison-label,
+.nalar-means-label { font-family: var(--nalar-font-sans) !important; }
+.nalar-decision-overlay .nalar-why-stopped-card .nalar-section-label { color: var(--nalar-ui-muted) !important; }

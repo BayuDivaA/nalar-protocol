@@ -3,7 +3,7 @@
   "name": "Nalar Protocol",
   "version": "0.1.0",
   "description": "Intent-aware Web3 transaction security by Nalar Protocol.",
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "activeTab", "scripting"],
   "host_permissions": ["https://nalar-protocol.vercel.app/*", "http://localhost:3001/*"],
   "background": {
     "service_worker": "background.js"
@@ -33,7 +33,7 @@
     },
     {
       "matches": ["<all_urls>"],
-      "js": ["injected.js"],
+      "js": ["config.js", "motion-ui.js", "injected.js"],
       "run_at": "document_start",
       "world": "MAIN"
     }

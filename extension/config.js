@@ -20,13 +20,29 @@ const NALAR_CONFIG = {
   // Analysis timeout in milliseconds (30s accommodates on-chain simulation and BNB Agent investigation)
   TIMEOUT_MS: 30000,
 
-  // Supported blockchain networks for MVP
+  // Shared network context for popup, background, and page UI.
   SUPPORTED_CHAINS: {
     97: {
-      id: 97,
+      id: "bnb-testnet",
+      chainId: 97,
       hex: "0x61",
-      name: "BNB Smart Chain Testnet",
+      name: "BNB TESTNET",
+      fullName: "BNB Smart Chain Testnet",
       symbol: "tBNB",
+      nativeAsset: "tBNB",
+      explorer: "https://testnet.bscscan.com",
+      rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    },
+    56: {
+      id: "bnb-mainnet",
+      chainId: 56,
+      hex: "0x38",
+      name: "BNB MAINNET",
+      fullName: "BNB Smart Chain Mainnet",
+      symbol: "BNB",
+      nativeAsset: "BNB",
+      explorer: "https://bscscan.com",
+      rpcUrl: "https://bsc-dataseed.binance.org",
     },
   },
 };

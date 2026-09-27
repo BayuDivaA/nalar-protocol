@@ -356,7 +356,8 @@ securityRoute.post("/", async (c) => {
       return c.json({ ok: false, error: "ANALYSIS_UNAVAILABLE", receivedChainId: transaction.chainId }, 503);
     }
 
-    const targetIsContract = bnbTransactionInvestigation.available ? bnbTransactionInvestigation.contractAddresses.includes(to.toLowerCase()) : null;
+    const targetStatus = bnbTransactionInvestigation.observations.find((observation) => observation.type === "TARGET_CONTRACT")?.value;
+    const targetIsContract = targetStatus === "true" ? true : targetStatus === "false" ? false : null;
 
     const counterpartyContracts = new Set(bnbTransactionInvestigation.contractAddresses.map((address) => address.toLowerCase()));
 

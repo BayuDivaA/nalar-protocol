@@ -1,7 +1,7 @@
 // Bun supplies this module at test runtime; the backend TypeScript setup does
 // not include Bun's type declarations.
 // @ts-expect-error Bun's test module is available when running the test suite.
-import { describe, expect, test, mock, beforeEach } from "bun:test";
+import { describe, expect, test, mock, beforeEach, spyOn } from "bun:test";
 
 type SecurityCheckResponse = {
   ok: boolean;
@@ -173,6 +173,7 @@ mock.module("../../services/simulator", () => ({
 process.env.BNB_INVESTIGATOR_ENABLED = "false";
 
 const { default: app } = await import("../../index");
+const { getBnbMcpClient } = await import("../security");
 
 const DEMO_NFT = "0x4ACCcd7a3d2e2a7c99BE0ea035B40cE03C7A14d1";
 
@@ -556,5 +557,41 @@ describe("POST /api/transactions/security-check", () => {
     expect(body.transactionSummary).toBeDefined();
 
     expect(body.transactionSummary?.action).toBe("TOKEN_APPROVAL");
+  });
+
+  test("MCP isContract result determines EOA finding without contradicting normalized evidence", async () => {
+    const previous = process.env.BNB_INVESTIGATOR_ENABLED;
+    process.env.BNB_INVESTIGATOR_ENABLED = "true";
+    const client = getBnbMcpClient()!;
+    let isContract: boolean | null = true;
+    const contractSpy = spyOn(client, "isContract").mockImplementation(async () => ({ content: [{ type: "text", text: JSON.stringify({ isContract }) }] }));
+    const blockSpy = spyOn(client, "getLatestBlock").mockResolvedValue({ content: [{ type: "text", text: "{}" }] });
+
+    try {
+      for (const status of [true, false, null]) {
+        isContract = status;
+        const response = await app.fetch(new Request("http://localhost/api/transactions/security-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ intent: "Approve 100 USDT", transaction: {
+            chainId: 97, from: USER, to: ERC20_TOKEN, value: "0",
+            data: "0x095ea7b3" + "0000000000000000000000003333333333333333333333333333333333333333" + "0000000000000000000000000000000000000000000000000000000005f5e100",
+          } }),
+        }));
+        expect(response.status).toBe(status === null ? 503 : 200);
+        const body = await response.json();
+        if (status === null) {
+          expect(body).toMatchObject({ ok: false, error: "ANALYSIS_UNAVAILABLE" });
+          continue;
+        }
+        expect(body.bnbIntelligence.observations[0].value).toBe(String(status));
+        expect(body.transactionThreats.some((finding: { code: string }) => finding.code === "CONTRACT_TARGET_IS_EOA")).toBe(!status);
+      }
+    } finally {
+      contractSpy.mockRestore();
+      blockSpy.mockRestore();
+      if (previous === undefined) delete process.env.BNB_INVESTIGATOR_ENABLED;
+      else process.env.BNB_INVESTIGATOR_ENABLED = previous;
+    }
   });
 });

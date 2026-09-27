@@ -55,7 +55,8 @@ export class BnbTransactionInvestigator {
         network,
       });
 
-      const targetValue = this.extractValue(targetResult);
+      const targetStatus = this.contractStatus(targetResult);
+      const targetValue = targetStatus === null ? "unavailable" : String(targetStatus);
 
       observations.push({
         type: "TARGET_CONTRACT",
@@ -69,7 +70,7 @@ export class BnbTransactionInvestigator {
         evidence: `BNB MCP is_contract result for ${input.to}: ${targetValue}`,
       });
 
-      if (this.looksLikeContract(targetValue)) {
+      if (targetStatus === true) {
         contractAddresses.add(input.to.toLowerCase());
       }
 
@@ -93,7 +94,8 @@ export class BnbTransactionInvestigator {
             network,
           });
 
-          const value = this.extractValue(result);
+          const status = this.contractStatus(result);
+          const value = status === null ? "unavailable" : String(status);
 
           observations.push({
             type: "COUNTERPARTY_CONTRACT",
@@ -107,7 +109,7 @@ export class BnbTransactionInvestigator {
             evidence: `BNB MCP is_contract result for ${address}: ${value}`,
           });
 
-          if (this.looksLikeContract(value)) {
+          if (status === true) {
             contractAddresses.add(address.toLowerCase());
           }
         } catch {
@@ -143,7 +145,7 @@ export class BnbTransactionInvestigator {
       }
 
       return {
-        available: observations.length > 0,
+        available: targetStatus !== null,
 
         observations,
 
@@ -208,9 +210,25 @@ export class BnbTransactionInvestigator {
     return "unavailable";
   }
 
-  private looksLikeContract(value: string): boolean {
-    const normalized = value.toLowerCase();
-
-    return normalized === "true" || normalized === "is_contract: true" || normalized.includes('"iscontract":true');
+  private contractStatus(value: unknown): boolean | null {
+    if (typeof value === "boolean") return value;
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === "true" || normalized === "is_contract: true") return true;
+      if (normalized === "false" || normalized === "is_contract: false") return false;
+      try { return this.contractStatus(JSON.parse(value)); } catch { return null; }
+    }
+    if (Array.isArray(value)) return value.length === 1 ? this.contractStatus(value[0]) : null;
+    if (value && typeof value === "object") {
+      const object = value as Record<string, unknown>;
+      if (typeof object.isContract === "boolean") return object.isContract;
+      for (const key of ["structuredContent", "content", "text", "value", "result", "output", "data"]) {
+        if (key in object) {
+          const status = this.contractStatus(object[key]);
+          if (status !== null) return status;
+        }
+      }
+    }
+    return null;
   }
 }

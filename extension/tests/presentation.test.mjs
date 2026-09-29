@@ -137,11 +137,11 @@ test('missing or invalid saved network falls back only when Testnet is verified'
   const unsupported = openPopup(unsupportedStorage, { chainId: 1 });
   await new Promise(setImmediate);
   assert.equal(unsupportedStorage.selectedNetwork, undefined);
-  assert.equal(unsupported.elements.networkErrorTitle.textContent, 'NETWORK NOT SUPPORTED');
+  assert.equal(unsupported.elements.networkErrorTitle.textContent, 'Network not supported');
 
   const unavailable = openPopup({ selectedNetwork: 56 }, null);
   await new Promise(setImmediate);
-  assert.equal(unavailable.elements.networkErrorTitle.textContent, 'NETWORK CONNECTION FAILED');
+  assert.equal(unavailable.elements.networkErrorTitle.textContent, 'Wallet not detected');
   assert.equal(unavailable.elements.securityHeading.textContent, 'Checks unavailable');
 });
 
@@ -301,4 +301,47 @@ test('uncertain intent is not described as mismatch and configured tax is not de
   const tax = context.getPrimaryRootCause({}, { scamAnalyses: [{ contractPrivileges: { state: [{ code: 'CURRENT_SELL_TAX', value: 9800 }] } }] }, 'BLOCK');
   assert.match(tax, /configured 98% sell tax/);
   assert.doesNotMatch(tax, /charges|preventing you/);
+});
+
+test('security evidence renders normalized findings without raw MCP observations', () => {
+  const source = file('injected.js');
+  const start = source.indexOf('  function createEvidenceSection(');
+  const end = source.indexOf('  function createDecisionFooter(', start);
+  const document = { createElement: (tag) => ({ tag, children: [], style: {}, attributes: {}, textContent: '',
+    appendChild(child) { this.children.push(child); },
+    addEventListener() {},
+    setAttribute(name, value) { this.attributes[name] = value; },
+  }) };
+  const context = { document, UI: { border: '#1E293B', surface: '#101A2E', muted: '#94A3B8', text: '#FFFFFF', soft: '#CBD5E1' }, window: {},
+    humanizeEvidenceLabel: (value) => value, riskColor: () => '#FFFFFF', getChainName: () => 'BNB TESTNET', humanizeAction: (value) => value };
+  vm.runInNewContext(`${source.slice(start, end)};this.createEvidenceSection = createEvidenceSection;this.createTechnicalSection = createTechnicalSection`, context);
+  const raw = JSON.stringify({ isContract: true, transactionHashes: ['0xdeadbeef'], gasUsed: 21000, timestamp: 123456 });
+  const target = `0x${'a'.repeat(40)}`;
+  const spender = `0x${'b'.repeat(40)}`;
+  const security = {
+    transactionSummary: { target }, actual: { action: 'TOKEN_APPROVAL', functionName: 'approve', selector: '0x095ea7b3' },
+    effects: { approvals: [{ spender }] }, simulation: { success: true },
+    bnbIntelligence: { observations: [{ type: 'TARGET_CONTRACT', value: raw }, { type: 'LATEST_BLOCK', value: raw }] },
+  };
+  const rendered = context.createEvidenceSection({ evidence: [{ label: 'Intent check', value: 'Mismatch', source: 'INTENT' }] }, security);
+  const allText = (node) => [node.textContent, ...node.children.map(allText)].join(' ');
+  assert.match(allText(rendered), /Security evidence \(1 item\)/);
+  assert.match(allText(rendered), /Intent check.*Mismatch/s);
+  assert.doesNotMatch(allText(rendered), /BNB MCP|transactionHashes|gasUsed|timestamp|Latest Block|Target Contract/);
+  const findingsOnly = context.createEvidenceSection({}, { ...security, transactionThreats: [{ title: 'Unidentified contract call' }] });
+  assert.match(allText(findingsOnly), /Security evidence \(1 item\).*Unidentified contract call/s);
+  assert.doesNotMatch(allText(findingsOnly), /BNB MCP|transactionHashes|gasUsed|timestamp/);
+  const rawOnly = context.createEvidenceSection({}, { bnbIntelligence: security.bnbIntelligence });
+  assert.match(allText(rawOnly), /Security evidence \(unavailable\)/);
+  assert.doesNotMatch(allText(rawOnly), /transactionHashes|gasUsed|timestamp/);
+  const technical = context.createTechnicalSection({}, security, 97);
+  assert.match(allText(technical), /Target address.*0x[a]{40}/s);
+  assert.match(allText(technical), /Spender \/ operator.*0x[b]{40}/s);
+  assert.match(allText(technical), /Selector.*0x095ea7b3/s);
+  assert.match(allText(technical), /BNB MCP status.*Unavailable/s);
+  assert.doesNotMatch(allText(technical), /transactionHashes|gasUsed|timestamp/);
+  const longValue = 'x'.repeat(100);
+  const truncated = context.createTechnicalSection({}, { ...security, actual: { ...security.actual, functionName: longValue } }, 97);
+  assert.doesNotMatch(allText(truncated), new RegExp(longValue));
+  assert.ok(truncated.children[1].children.some((row) => row.children[1]?.title === longValue));
 });

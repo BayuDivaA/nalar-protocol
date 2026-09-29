@@ -28,7 +28,7 @@ function showNetworkError(title, description) {
   networkErrorTitle.textContent = title;
   networkErrorText.textContent = description;
   networkError.hidden = false;
-  networkNote.textContent = "Security checks are paused until the network is verified.";
+  networkNote.textContent = "Transactions stay on hold until the network is verified.";
   renderProtection(protectionEnabled);
 }
 
@@ -76,23 +76,23 @@ async function inspectWalletNetwork(targetChainId = null) {
 
 function describeNetworkFailure(error, target) {
   if (error === "NETWORK_SWITCH_FAILED") {
-    return ["COULD NOT SWITCH NETWORK", `${NALAR_CONFIG.SUPPORTED_CHAINS[target].name} could not be activated. Your current selection remains ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].name}.`];
+    return ["Could not switch network", `${NALAR_CONFIG.SUPPORTED_CHAINS[target].name} was not activated. Still on ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].name}.`];
   }
   if (error === "NETWORK_CONNECTION_FAILED") {
-    return ["NETWORK CONNECTION FAILED", `Unable to connect to ${NALAR_CONFIG.SUPPORTED_CHAINS[target].fullName}. Check your network connection and try again.`];
+    return ["Connection interrupted", `Cannot reach ${NALAR_CONFIG.SUPPORTED_CHAINS[target].name}. ${target === selectedNetwork ? "Check your connection and retry." : `Still on ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].name}.`}`];
   }
   if (error === "PROVIDER_UNAVAILABLE") {
-    return ["NETWORK CONNECTION FAILED", `Unable to connect to ${NALAR_CONFIG.SUPPORTED_CHAINS[target].fullName}. Connect your wallet and try again.`];
+    return ["Wallet not detected", "Open a wallet-enabled site and retry. Checks are unavailable here."];
   }
   if (error === "NETWORK_NOT_SUPPORTED") {
-    return ["NETWORK NOT SUPPORTED", "NALAR supports BNB Testnet and BNB Mainnet. Switch to a supported network to continue."];
+    return ["Network not supported", "Use BNB Testnet or BNB Mainnet to continue."];
   }
-  return ["NETWORK UNAVAILABLE", "NALAR could not determine the current wallet network. Connect a wallet and retry."];
+  return ["Network unavailable", "Wallet network unknown. Connect a wallet and retry."];
 }
 
 async function switchNetwork(target) {
   if (!NALAR_CONFIG.SUPPORTED_CHAINS[target]) {
-    showNetworkError("NETWORK NOT SUPPORTED", "NALAR supports BNB Testnet and BNB Mainnet.");
+    showNetworkError("Network not supported", "Use BNB Testnet or BNB Mainnet.");
     networkSelect.value = String(selectedNetwork);
     return;
   }
@@ -103,7 +103,7 @@ async function switchNetwork(target) {
     if (saved?.ok) {
       selectedNetwork = target;
       networkError.hidden = true;
-      networkNote.textContent = `Connected to ${NALAR_CONFIG.SUPPORTED_CHAINS[target].fullName}.`;
+      networkNote.textContent = `Connected to ${NALAR_CONFIG.SUPPORTED_CHAINS[target].name}.`;
       networkState = "verified";
       renderProtection(protectionEnabled);
     } else {
@@ -120,7 +120,7 @@ async function loadNetwork() {
   try {
     ({ selectedNetwork: stored } = await chrome.storage.local.get(["selectedNetwork"]));
   } catch {
-    showNetworkError("NETWORK UNAVAILABLE", "NALAR could not read the selected network. Retry to continue.");
+    showNetworkError("Network unavailable", "Cannot read your network. Retry to continue.");
     return;
   }
   let validStored = Number.isInteger(stored) && NALAR_CONFIG.SUPPORTED_CHAINS[stored];
@@ -134,19 +134,19 @@ async function loadNetwork() {
   if ((stored === undefined || !validStored) && result.chainId === 97) {
     const fallback = await chrome.runtime.sendMessage({ type: "SET_NETWORK", chainId: 97 }).catch(() => null);
     if (!fallback?.ok) {
-      showNetworkError("NETWORK UNAVAILABLE", "NALAR could not save the validated BNB Testnet network. Retry to continue.");
+      showNetworkError("Network unavailable", "Cannot save BNB Testnet. Retry to continue.");
       return;
     }
     stored = 97;
     validStored = true;
   }
   if (stored !== undefined && !validStored) {
-    showNetworkError("NETWORK UNAVAILABLE", "The saved network is invalid. Select a supported network to continue.");
+    showNetworkError("Network unavailable", "Saved network invalid. Select BNB Testnet or Mainnet.");
   } else if (result.chainId !== selectedNetwork) {
-    showNetworkError("NETWORK MISMATCH", `Wallet: ${NALAR_CONFIG.SUPPORTED_CHAINS[result.chainId].name}. NALAR: ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].name}. Select a network to continue.`);
+    showNetworkError("Networks do not match", `Wallet: ${NALAR_CONFIG.SUPPORTED_CHAINS[result.chainId].name}. NALAR: ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].name}. Select a network to continue.`);
   } else {
     networkError.hidden = true;
-    networkNote.textContent = `Connected to ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].fullName}.`;
+    networkNote.textContent = `Connected to ${NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork].name}.`;
     networkState = "verified";
     renderProtection(protectionEnabled);
   }
@@ -180,7 +180,6 @@ async function initTheme() {
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   if (themeToggle) {
-    themeToggle.textContent = theme === "light" ? "LIGHT MODE" : "DARK MODE";
     themeToggle.setAttribute("title", `Switch to ${theme === "light" ? "dark" : "light"} mode`);
     themeToggle.setAttribute("aria-label", `Switch to ${theme === "light" ? "dark" : "light"} theme`);
   }
@@ -231,12 +230,12 @@ function renderProtection(enabled) {
   statusDot.classList.toggle("paused", !enabled);
   securityHeading.textContent = !enabled ? "Protection paused" : networkState === "verified" ? "Ready before signing" : networkState === "checking" ? "Checking network" : "Checks unavailable";
   securityDescription.textContent = !enabled
-    ? "NALAR is inactive. Resume protection to inspect the next transaction."
+    ? "Resume to check transactions before signing."
     : networkState === "verified"
-      ? "NALAR will inspect the next transaction before it reaches your wallet. The result appears over the current site."
+      ? "Transactions are checked before wallet signing."
       : networkState === "checking"
-        ? "NALAR is verifying the selected wallet network before analysis."
-        : "NALAR will hold transaction requests until the wallet network can be verified.";
+        ? "Verifying your wallet network."
+        : "Transactions stay on hold until the network is verified.";
 }
 
 toggle.addEventListener("click", async () => {
@@ -245,7 +244,7 @@ toggle.addEventListener("click", async () => {
   const next = !current;
   await chrome.storage.local.set({ protectionEnabled: next });
   renderProtection(next);
-  window.NALAR_MOTION?.status(toggle, next);
+  window.NALAR_MOTION?.enter(systemStatus);
   if (next) window.NALAR_MOTION?.pulse(statusDot);
   message.textContent = next ? "Protection active." : "Protection paused.";
   setTimeout(() => {

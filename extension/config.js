@@ -31,7 +31,7 @@ const NALAR_CONFIG = {
       symbol: "tBNB",
       nativeAsset: "tBNB",
       explorer: "https://testnet.bscscan.com",
-      rpcUrl: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      rpcUrl: "https://bnb-testnet.g.alchemy.com/v2/alch_ga4Afo05mc42FzAK86oLB",
     },
     56: {
       id: "bnb-mainnet",
@@ -42,7 +42,7 @@ const NALAR_CONFIG = {
       symbol: "BNB",
       nativeAsset: "BNB",
       explorer: "https://bscscan.com",
-      rpcUrl: "https://bsc-dataseed.binance.org",
+      rpcUrl: "https://bnb-mainnet.g.alchemy.com/v2/alch_ga4Afo05mc42FzAK86oLB",
     },
   },
 };

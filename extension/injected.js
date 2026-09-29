@@ -2466,8 +2466,8 @@
   function createEvidenceSection(explanation, security) {
     const evidenceItems = Array.isArray(explanation?.evidence) && explanation.evidence.length > 0 ? explanation.evidence : null;
     const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
-    const mcpObservations = Array.isArray(security?.bnbIntelligence?.observations) ? security.bnbIntelligence.observations : [];
-    const count = (evidenceItems ? evidenceItems.length : reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0)) + mcpObservations.length;
+    const threats = Array.isArray(security?.transactionThreats) ? security.transactionThreats : [];
+    const count = evidenceItems ? evidenceItems.length : threats.length + reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0);
 
     const wrapper = document.createElement("details");
     wrapper.className = "nalar-evidence-details nalar-stagger-5";
@@ -2479,7 +2479,7 @@
     });
 
     const summary = document.createElement("summary");
-    summary.textContent = `Security evidence (${count > 0 ? `${count} items` : "unavailable"})`;
+    summary.textContent = `Security evidence (${count > 0 ? `${count} ${count === 1 ? "item" : "items"}` : "unavailable"})`;
 
     Object.assign(summary.style, {
       cursor: "pointer",
@@ -2501,12 +2501,6 @@
       border: `1px solid ${UI.border}`,
       background: UI.surface,
     });
-
-    const checkedAt = typeof security?.checkedAt === "string" && !Number.isNaN(Date.parse(security.checkedAt)) ? new Date(security.checkedAt).toLocaleString() : "Time unavailable";
-    const provenance = document.createElement("p");
-    provenance.textContent = `Analysis completed: ${checkedAt}. Sources identify observed data; intent and policy are system comparisons, not on-chain facts.`;
-    Object.assign(provenance.style, { margin: "0 0 8px", fontSize: "10px", lineHeight: "1.5", color: UI.muted });
-    content.appendChild(provenance);
 
     if (evidenceItems) {
       evidenceItems.forEach((item, index) => {
@@ -2572,7 +2566,7 @@
 
         content.appendChild(row);
       });
-    } else if (reports.length) {
+    } else {
       reports.forEach((analysis, rIdx) => {
         const sub = document.createElement("div");
         if (rIdx > 0) {
@@ -2624,47 +2618,17 @@
           sub.appendChild(fRow);
         });
 
-        const stateEntries = Array.isArray(analysis?.contractPrivileges?.state) ? analysis.contractPrivileges.state : [];
-        stateEntries.slice(0, 5).forEach((entry) => {
-          const sRow = document.createElement("div");
-          Object.assign(sRow.style, {
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "3px 0",
-            fontSize: "10px",
-          });
-          const sLabel = document.createElement("span");
-          sLabel.textContent = humanizeEvidenceLabel(entry?.label ?? entry?.code);
-          sLabel.style.color = UI.muted;
-
-          const sVal = document.createElement("span");
-          let displayVal = entry?.status === "UNKNOWN" || entry?.value == null ? "Unavailable" : entry.value;
-          if (entry?.code === "CURRENT_SELL_TAX" && entry?.unit === "PERCENT") {
-            const numeric = Number(displayVal);
-            if (Number.isFinite(numeric)) {
-              displayVal = `${(numeric / 100).toFixed(2)}%`;
-            }
-          }
-          sVal.textContent = String(displayVal);
-          sVal.style.color = UI.soft;
-          sVal.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-
-          sRow.appendChild(sLabel);
-          sRow.appendChild(sVal);
-          sub.appendChild(sRow);
-        });
-
         content.appendChild(sub);
       });
-    }
 
-    mcpObservations.forEach((observation) => {
-      const row = document.createElement("div");
-      row.className = "nalar-finding";
-      row.textContent = `BNB MCP · ${humanizeEvidenceLabel(observation?.type)}: ${observation?.value ?? "Unavailable"}`;
-      Object.assign(row.style, { padding: "5px 0", fontSize: "10px", lineHeight: "1.5", color: UI.soft, overflowWrap: "anywhere" });
-      content.appendChild(row);
-    });
+      threats.forEach((finding) => {
+        const row = document.createElement("div");
+        row.className = "nalar-finding";
+        row.textContent = finding?.title ?? finding?.code ?? "Security finding";
+        Object.assign(row.style, { padding: "5px 0", fontSize: "11px", lineHeight: "1.5", color: UI.soft });
+        content.appendChild(row);
+      });
+    }
 
     if (!count) {
       const unavailable = document.createElement("p");
@@ -2721,13 +2685,18 @@
     const actual = security?.actual ?? {};
     const tx = security?.transactionSummary ?? {};
     const sim = security?.simulation ?? {};
+    const approval = Array.isArray(security?.effects?.approvals) ? security.effects.approvals[0] : null;
 
     const rows = [
       ["Network", getChainName(chainId)],
-      ["Target contract", tx.target ?? security?.transaction?.to ?? "N/A"],
+      ["Chain ID", chainId],
+      ["Target address", tx.target ?? security?.transaction?.to ?? "N/A"],
+      ...(approval ? [["Spender / operator", approval.spender ?? approval.operator ?? "N/A"]] : []),
       ["Action", humanizeAction(actual.action)],
       ["Function name", actual.functionName ?? "N/A"],
+      ["Selector", actual.selector ?? "N/A"],
       ["Simulation status", sim.success === true ? "Passed at check time" : sim.success === false ? "Reverted / Failed" : "Unavailable"],
+      ["BNB MCP status", security?.bnbIntelligence?.available === true ? "Available" : "Unavailable"],
       ["Risk score", Number.isFinite(security?.riskScore) ? `${security.riskScore} / 100 (${security?.riskLevel ?? "UNKNOWN"})` : "Unavailable"],
       ["Analysis completed", typeof security?.checkedAt === "string" && !Number.isNaN(Date.parse(security.checkedAt)) ? new Date(security.checkedAt).toLocaleString() : "Unavailable"],
     ];
@@ -2748,7 +2717,9 @@
       left.style.fontSize = "10px";
 
       const right = document.createElement("span");
-      right.textContent = String(value);
+      const fullValue = String(value);
+      right.textContent = /^0x[a-fA-F0-9]{40}$/.test(fullValue) ? fullValue : fullValue.length > 72 ? `${fullValue.slice(0, 71)}…` : fullValue;
+      right.title = fullValue;
       right.style.color = UI.soft;
       right.style.fontSize = "10px";
       right.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";

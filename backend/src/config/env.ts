@@ -1,16 +1,17 @@
 /// <reference types="node" />
 
 import { z } from "zod";
+import { NETWORKS } from "./networks";
 
 const envSchema = z
   .object({
     PORT: z.coerce.number().default(3000),
 
-    BNB_RPC_URL: z.string().url("BNB_RPC_URL must be a valid RPC URL").default("https://data-seed-prebsc-1-s1.binance.org:8545"),
+    BNB_RPC_URL: z.string().url("BNB_RPC_URL must be a valid RPC URL").default(NETWORKS[97].defaultRpcUrl),
 
     BSC_TESTNET_RPC_URL: z.string().url("BSC_TESTNET_RPC_URL must be a valid RPC URL").optional(),
 
-    BSC_MAINNET_RPC_URL: z.string().url("BSC_MAINNET_RPC_URL must be a valid RPC URL").default("https://bsc-dataseed.binance.org"),
+    BSC_MAINNET_RPC_URL: z.string().url("BSC_MAINNET_RPC_URL must be a valid RPC URL").default(NETWORKS[56].defaultRpcUrl),
 
     TXSENTRY_DEMO_NFT: z
       .string()
@@ -85,9 +86,9 @@ export const env = parsed.success
   ? parsed.data
   : {
       PORT: Number(process.env.PORT) || 3000,
-      BNB_RPC_URL: process.env.BNB_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545",
+      BNB_RPC_URL: process.env.BNB_RPC_URL || NETWORKS[97].defaultRpcUrl,
       BSC_TESTNET_RPC_URL: process.env.BSC_TESTNET_RPC_URL,
-      BSC_MAINNET_RPC_URL: process.env.BSC_MAINNET_RPC_URL || "https://bsc-dataseed.binance.org",
+      BSC_MAINNET_RPC_URL: process.env.BSC_MAINNET_RPC_URL || NETWORKS[56].defaultRpcUrl,
       TXSENTRY_DEMO_NFT: process.env.TXSENTRY_DEMO_NFT || "0x0000000000000000000000000000000000000000",
       AI_PROVIDER: ((process.env.AI_PROVIDER as any) || "heuristics") as "gemini" | "openrouter" | "openai" | "heuristics",
       AI_API_KEY: process.env.AI_API_KEY || "",

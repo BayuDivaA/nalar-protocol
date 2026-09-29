@@ -1,10 +1,12 @@
-# NALAR PROTOCOL — PROJECT CONTEXT
+# NALAR PROTOCOL: PRODUCT CONTEXT
 
 <!-- impeccable:product-schema 1 -->
 
 ## 1. PROJECT OVERVIEW
 
-Nalar Protocol adalah Web3 transaction security protocol.
+Nalar Protocol adalah lapisan pemeriksaan transaksi Web3 yang saat ini terdiri dari browser extension Manifest V3, backend security-check, dan website demo. Extension yang aktif mengintersep `eth_sendTransaction` sebelum request diteruskan ke wallet.
+
+Implementasi saat ini: extension menggunakan JavaScript pada Manifest V3 (bukan React/Vite), dengan bundle Framer Motion untuk animasi; backend menggunakan TypeScript, Bun, Hono, dan viem; frontend menggunakan Next.js, React, dan Tailwind CSS. Ketiganya adalah bagian berbeda dari produk yang sama.
 
 Tujuan utamanya:
 
@@ -12,7 +14,7 @@ Tujuan utamanya:
 
 Nalar bukan sekadar AI scam detector.
 
-Nalar adalah security layer yang berada di antara user/dApp dan wallet.
+Nalar adalah security layer yang berada di antara dApp dan wallet ketika proteksi extension aktif. Saat proteksi dijeda, request diteruskan tanpa pemeriksaan Nalar.
 
 Nalar menganalisis:
 
@@ -51,7 +53,7 @@ Keputusan security final harus tetap berasal dari deterministic security engine 
 
 ---
 
-# 2. CORE PROBLEM
+## 2. CORE PROBLEM
 
 Transaksi Web3 biasanya terlihat seperti:
 
@@ -96,19 +98,11 @@ kemudian Nalar memeriksa:
 - on-chain evidence
 - intent match
 
-dan menghasilkan:
-
-BLOCK
-CRITICAL
-100 / 100
-
-Reason:
-
-"Current sell tax is excessive."
+Jika bukti yang tersedia menghasilkan finding CRITICAL, contoh ini dapat berakhir dengan BLOCK. Skor dan alasan yang ditampilkan berasal dari analisis transaksi tersebut, bukan angka tetap untuk semua swap NDEMO. Nilai `sellTax` yang terbaca adalah konfigurasi kontrak, bukan bukti jumlah token yang pasti hilang saat menjual.
 
 ---
 
-# 3. CORE PRODUCT PRINCIPLE
+## 3. CORE PRODUCT PRINCIPLE
 
 Nalar bukan:
 
@@ -148,23 +142,17 @@ AI tidak boleh dianggap sebagai satu-satunya decision maker.
 
 ---
 
-# 4. HIGH-LEVEL ARCHITECTURE
+## 4. HIGH-LEVEL ARCHITECTURE
 
-USER
+USER / dApp
 ↓
-dApp / Web Application
+`eth_sendTransaction` pada provider yang dibungkus `injected.js`
 ↓
-Wallet Provider
+`bridge.js` → `background.js` → Nalar Backend
 ↓
-NALAR EXTENSION
+ALLOW / REVIEW / BLOCK ditampilkan di halaman
 ↓
-Nalar Backend
-↓
-Security Decision
-↓
-ALLOW / REVIEW / BLOCK
-↓
-Wallet
+Wallet hanya menerima request setelah pengguna memilih lanjut pada ALLOW atau REVIEW
 
 Browser extension bertugas:
 
@@ -174,6 +162,7 @@ Browser extension bertugas:
 - mengirim transaction ke backend
 - menampilkan security result
 - memblokir / meminta review / meneruskan transaksi
+- menyimpan pilihan network, status proteksi, tema, dan intent per situs di `chrome.storage.local`
 
 Backend bertugas:
 
@@ -191,24 +180,26 @@ Backend bertugas:
 
 ---
 
-# 5. EXISTING BACKEND FLOW
+## 5. EXISTING BACKEND FLOW
 
 Security endpoint:
 
 POST /api/transactions/security-check
 
-Request schema:
+Request schema (nilai alamat dan calldata di bawah hanya placeholder):
 
+```json
 {
-  "intent": "Swap 0.001 tBNB to NDEMO",
-  "transaction": {
-    "chainId": 97,
-    "from": "0x...",
-    "to": "0x...",
-    "value": "0",
-    "data": "0x..."
-  }
+  "intent": "Swap 0.001 tBNB to NDEMO",
+  "transaction": {
+    "chainId": 97,
+    "from": "0x...",
+    "to": "0x...",
+    "value": "1000000000000000",
+    "data": "0x..."
+  }
 }
+```
 
 Important:
 
@@ -221,15 +212,17 @@ string containing decimal digits
 data:
 hex string
 
-The local backend code supports BNB Testnet (chainId = 97) and BNB Mainnet (chainId = 56). On 27 September 2026, the canonical production endpoint at `https://nalar-protocol.vercel.app/api/transactions/security-check` still returned `UNSUPPORTED_CHAIN` for chainId 56. A new production-target build was deployed with `--skip-domain` (deployment `dpl_25vacgbP7UNunm4dA1J4pZKLgVpq`). Its authenticated smoke test completed a Chain ID 56 analysis with simulation and BNB evidence; it has not been promoted to the canonical URL. Real MetaMask/Rabby QA is still required before Mainnet release. The extension must keep failed analysis blocked while versions differ.
+Kode backend dan extension lokal mengenali BNB Testnet (Chain ID 97) serta BNB Mainnet (Chain ID 56). Konfigurasi extension berada di `extension/config.js`; konfigurasi backend berada di `backend/src/config/networks.ts`. Network wallet, network pilihan extension, dan `transaction.chainId` harus cocok sebelum analisis. Explorer mengikuti chain yang dipilih.
+
+Status deployment tidak boleh disamakan dengan kemampuan kode lokal. Pemeriksaan terakhir yang tercatat pada 27 September 2026 menunjukkan endpoint canonical `https://nalar-protocol.vercel.app/api/transactions/security-check` masih menolak Chain ID 56. Build terpisah `dpl_25vacgbP7UNunm4dA1J4pZKLgVpq` pernah lulus smoke test Mainnet, tetapi catatan itu tidak membuktikan endpoint canonical saat ini sudah diperbarui. Validasi ulang deployment dan uji wallet MetaMask/Rabby diperlukan sebelum menyatakan Mainnet siap dipakai. Kegagalan analisis wajib atau respons backend yang tidak valid tidak boleh berubah menjadi ALLOW.
 
 Do not invent a new request schema unless explicitly required.
 
 ---
 
-# 6. BACKEND SECURITY FLOW
+## 6. BACKEND SECURITY FLOW
 
-Current conceptual execution order:
+Alur pada `backend/src/routes/security.ts`:
 
 1. Parse user intent
 2. Normalize user intent
@@ -238,18 +231,18 @@ Current conceptual execution order:
 5. Simulate transaction
 6. Analyze transaction effects
 7. Enrich swap effects
-8. Resolve current blockchain/effect state
-9. Audit swap tokens
-10. Build transaction scam context
-11. Calculate deterministic risk
+8. Investigate target dan counterparty melalui BNB MCP jika diaktifkan
+9. Resolve current blockchain/effect state dan audit swap tokens
+10. Build transaction scam context serta transaction-threat findings
+11. Gabungkan base risk, scam risk, dan transaction-threat risk
 12. Compare user intent with actual effects
 13. Evaluate security policy
-14. Make final security decision
-15. Generate security explanation
+14. Make final deterministic security decision
+15. Generate security explanation; gunakan deterministic explanation bila AI gagal
 
 ---
 
-# 7. INTENT ENGINE
+## 7. INTENT ENGINE
 
 The user can describe their intent in natural language.
 
@@ -271,9 +264,11 @@ WHAT THE TRANSACTION ACTUALLY DOES
 
 This is one of the core differentiators of Nalar.
 
+Jika intent terlalu samar atau detail penting tidak dapat diverifikasi, comparison menghasilkan `UNCERTAIN`, bukan `MATCH`. Decision engine menempatkan kasus tanpa kecocokan terverifikasi dalam REVIEW atau BLOCK sesuai risk/policy; tidak boleh otomatis ALLOW.
+
 ---
 
-# 8. TRANSACTION INTELLIGENCE
+## 8. TRANSACTION INTELLIGENCE
 
 Nalar decodes the transaction and tries to understand:
 
@@ -299,13 +294,15 @@ The system should translate technical transaction information into understandabl
 
 ---
 
-# 9. SIMULATION
+## 9. SIMULATION
 
 Nalar simulates the transaction before forwarding it.
 
-Simulation is used to determine whether execution can happen safely.
+Simulation memeriksa hasil eksekusi terhadap state blockchain pada saat pemeriksaan. Simulasi berhasil tidak menjamin transaksi aman, maupun hasilnya sama ketika akhirnya ditambang.
 
 If simulation fails, the transaction can become an immediate security failure / BLOCK.
+
+Simulasi jual bertingkat untuk menilai sellability setelah pembelian belum tersedia pada adapter RPC saat ini. Kegagalan membaca saldo pada simulasi jual tidak boleh otomatis disebut honeypot; statusnya ditandai tidak tersedia.
 
 Simulation result includes concepts such as:
 
@@ -315,7 +312,7 @@ error
 
 ---
 
-# 10. EFFECT ANALYSIS
+## 10. EFFECT ANALYSIS
 
 Nalar analyzes what the transaction actually changes.
 
@@ -336,11 +333,11 @@ recipient
 
 ---
 
-# 11. CONTRACT / TOKEN SCAM INTELLIGENCE
+## 11. CONTRACT / TOKEN SCAM INTELLIGENCE
 
 Nalar has scam intelligence for token-related transactions.
 
-The system can inspect token contract information such as:
+Jika ABI, RPC, atau MCP menyediakan bukti yang dapat dibaca, sistem dapat memeriksa informasi kontrak seperti:
 
 - owner
 - buy tax
@@ -362,7 +359,7 @@ They should not automatically become a final decision without deterministic secu
 
 ---
 
-# 12. BNB INTELLIGENCE / BNB MCP
+## 12. BNB INTELLIGENCE / BNB MCP
 
 Nalar uses BNB intelligence as an investigator/evidence enrichment layer.
 
@@ -376,36 +373,19 @@ sellTax
 maxTx
 maxWallet
 
-Example real evidence:
+Contoh state NDEMO yang dibaca melalui BNB MCP adalah `sellTax() = 9800`. Itu adalah nilai konfigurasi on-chain, bukan hasil simulasi penjualan. Materi demo yang ada menyatakan nilai tersebut tidak diterapkan sebagai potongan transfer oleh kontrak demo.
 
-CURRENT_SELL_TAX = 9800
-unit = PERCENT
+Batas penting pada implementasi saat ini: `BnbAgentInvestigator` memberi unit `PERCENT` pada hasil mentah `sellTax()` dan `buyTax()` tanpa membuktikan satuan getter dari kontrak. Jalur RPC biasa hanya menetapkan `BPS` bila nama getter menyatakannya secara eksplisit, seperti `sellTaxBps`. Karena itu `9800` tidak boleh otomatis dijelaskan kepada pengguna sebagai "98%" atau "9800%" tanpa verifikasi semantik kontrak. Finding dan copy yang bergantung pada satuan ini perlu ditinjau sebelum dipakai sebagai klaim persentase yang pasti.
 
-This represents a configured 98% sell tax in the demo contract.
-
-Important limitation:
-
-The demo NDEMO token stores a sellTax value of 9800 but does not actually enforce a 98% transfer tax in its transfer logic.
-
-Therefore UI copy must say:
-
-"Nalar detected an on-chain configured 98% sell tax"
-
-NOT:
-
-"Selling the token will definitely lose 98%"
-
-Do not claim behavior that has not been proven by simulation/code.
-
-The `sellTax()` getter does not declare its unit by itself. Its interpretation must be tied to verified contract semantics; an on-chain number alone does not prove the percentage charged on transfer.
+Security Evidence hanya menampilkan finding yang sudah dinormalisasi. Respons mentah MCP, `transactionHashes`, gas, dan payload besar tidak ditampilkan sebagai bukti utama; nilai teknis yang relevan berada di Technical Details. Status kontrak dari MCP dipakai konsisten: `isContract: true` tidak boleh bersamaan dengan klaim target adalah EOA. Jika status target tidak terbaca, analisis BNB MCP yang aktif mengembalikan `ANALYSIS_UNAVAILABLE`.
 
 ---
 
-# 13. DETERMINISTIC RISK ENGINE
+## 13. DETERMINISTIC RISK ENGINE
 
 The security engine evaluates findings.
 
-Example thresholds currently used for sell tax:
+Threshold pada `privilege-analysis.ts` hanya berlaku bila satuan tax evidence diketahui (`BPS` atau `PERCENT`):
 
 HIGH:
 3000 BPS
@@ -424,7 +404,7 @@ The scam risk can be merged into the deterministic risk engine.
 
 ---
 
-# 14. EVIDENCE CORRELATION
+## 14. EVIDENCE CORRELATION
 
 Nalar does not only look at one isolated finding.
 
@@ -432,14 +412,14 @@ It can correlate findings.
 
 Example:
 
-Owner controls tax
+Verified owner control atas mekanisme tax
 
-- Excessive sell tax
+- Excessive sell tax dengan satuan yang diketahui
 
 →
 OWNER_CONTROLLED_EXCESSIVE_SELL_TAX
 
-This can become a CRITICAL finding.
+Ini dapat menjadi finding CRITICAL. `owner()` dan keberadaan fungsi `setSellTax()` saja belum membuktikan siapa yang dapat memanggil fungsi tersebut; capability dan access-control evidence harus dipisahkan.
 
 Another example:
 
@@ -457,7 +437,7 @@ The system should communicate the correlated reason in human language.
 
 ---
 
-# 15. SECURITY DECISION
+## 15. SECURITY DECISION
 
 Final decision is:
 
@@ -481,10 +461,12 @@ Do not move final decision-making into an LLM.
 
 ---
 
-# 16. SECURITY RESPONSE
+## 16. SECURITY RESPONSE
 
 The backend response can contain:
 
+ok
+checkedAt
 decision
 riskScore
 riskLevel
@@ -504,54 +486,41 @@ reasons
 explanation
 contract
 transaction
+transactionThreats
+transactionThreatRisk
+bnbIntelligence
 
 Optional fields must be handled safely.
 
-Never assume:
-scamAnalyses always exists.
+Respons gagal (`ok: false`) menggunakan error seperti `UNSUPPORTED_CHAIN`, `NETWORK_CONNECTION_FAILED`, atau `ANALYSIS_UNAVAILABLE` dan tidak berisi keputusan ALLOW. Beberapa field pada respons sukses juga bersifat opsional, khususnya pada jalur simulation failure; jangan mengasumsikan `scamAnalyses` selalu ada.
 
 ---
 
-# 17. EXTENSION ARCHITECTURE
+## 17. EXTENSION ARCHITECTURE
 
-The extension is a Chrome/Chromium MV3 extension.
+Extension saat ini adalah Chrome/Chromium Manifest V3, dengan file aktif berikut:
 
-Conceptually:
-
+```text
 extension/
 ├── manifest.json
+├── config.js
+├── injected.js
+├── bridge.js
 ├── background.js
-├── content.js
-├── dist/
-│   └── injected.js
-├── src/
-│   ├── background/
-│   │   └── background.js
-│   ├── content/
-│   │   └── content.js
-│   ├── injected/
-│   │   ├── constants.js
-│   │   ├── index.js
-│   │   ├── messaging.js
-│   │   ├── providers.js
-│   │   ├── state.js
-│   │   ├── storage.js
-│   │   ├── transaction.js
-│   │   ├── utils.js
-│   │   └── ui/
-│   │       ├── common.js
-│   │       ├── intent.js
-│   │       ├── analysis.js
-│   │       └── decision.js
-│   └── popup/
-│       ├── popup.html
-│       ├── popup.css
-│       └── popup.js
+├── popup.html
+├── popup.js
+├── popup.css
+├── ui.css
+├── motion-ui.entry.js
+├── motion-ui.js
 └── package.json
+```
+
+`injected.js` berjalan pada page/main world dan membungkus provider. `bridge.js` berjalan sebagai content script, meneruskan pesan berdasarkan request ID. `background.js` menyimpan intent per origin, memvalidasi network, dan memanggil backend. Popup mengatur network, status proteksi, tema, serta intent situs aktif. `motion-ui.js` dibundel dari `motion-ui.entry.js` dan memakai Framer Motion untuk presentasi. Tidak ada struktur `extension/src/`, `content.js`, atau `dist/injected.js` dalam extension aktif.
 
 ---
 
-# 18. EXTENSION PROVIDER SUPPORT
+## 18. EXTENSION PROVIDER SUPPORT
 
 The extension currently supports:
 
@@ -567,9 +536,11 @@ eth_sendTransaction
 
 Do not intercept unrelated wallet methods.
 
+Network yang dikonfigurasi: BNB Testnet (`97`, `tBNB`, `https://testnet.bscscan.com`) dan BNB Mainnet (`56`, `BNB`, `https://bscscan.com`). Pemilihan network di popup memeriksa dan, bila diminta, mencoba mengganti chain wallet sebelum menyimpan pilihan. Pilihan terakhir bertahan di `chrome.storage.local`. Dukungan kode lokal tidak dengan sendirinya membuktikan backend production atau wallet nyata sudah siap untuk Mainnet.
+
 ---
 
-# 19. TRANSACTION FLOW IN EXTENSION
+## 19. TRANSACTION FLOW IN EXTENSION
 
 The flow is:
 
@@ -577,21 +548,21 @@ dApp
 ↓
 eth_sendTransaction
 ↓
-injected.js intercepts
+`injected.js` intercepts
 ↓
-check protection status
+check protection status and wallet/selected network
 ↓
 show intent dialog
 ↓
-save user intent
+save user intent for current origin
 ↓
 show analysis loading UI
 ↓
 send TX_REQUEST
 ↓
-content.js
+`bridge.js`
 ↓
-background.js
+`background.js` validates chain and request
 ↓
 POST /api/transactions/security-check
 ↓
@@ -599,19 +570,19 @@ backend analyzes
 ↓
 security result
 ↓
-background.js
+`background.js`
 ↓
-content.js
+`bridge.js`
 ↓
 TX_RESULT
 ↓
-injected.js
+`injected.js` matches request ID
 ↓
 decision UI
 
 ---
 
-# 20. SECURITY BEHAVIOR IN EXTENSION
+## 20. SECURITY BEHAVIOR IN EXTENSION
 
 BLOCK:
 
@@ -633,11 +604,15 @@ Protection disabled:
 
 Forward transaction normally.
 
+Protection active with unknown/mismatched/unsupported network, RPC failure, backend failure, invalid response, analysis timeout, or unreadable required MCP target status: do not forward automatically. Show recovery options (retry, cancel, or switch network where available). Counterparty MCP inspection is optional enrichment; if unavailable, it must not be described as verified-safe evidence. Re-check network before forwarding an ALLOW or REVIEW request.
+
+Popup reopening preserves the selected network, protection state, theme, and saved intent for the current site. The popup is not the transaction result screen; the intent, analysis, and decision overlays appear on the dApp page.
+
 UI refactoring must never break these guarantees.
 
 ---
 
-# 21. CURRENT MALICIOUS DEMO TOKEN
+## 21. CURRENT MALICIOUS DEMO TOKEN
 
 Current demo malicious token:
 
@@ -656,49 +631,17 @@ Configured state:
 buyTax = 0
 sellTax = 9800
 
-Owner:
+Owner yang diharapkan dalam tes on-chain terakhir, bukan jaminan state saat ini:
 
 0x53E993819F2Bc45A029615e8634BDdEEab4F7817
 
-This contract is used to demonstrate Nalar detecting dangerous on-chain token configuration.
+Kontrak ini digunakan dalam tes integrasi untuk menunjukkan pembacaan konfigurasi on-chain dan finding `EXCESSIVE_SELL_TAX`. Tes security-check untuk skenario NDEMO mengharapkan `BLOCK` dan menemukan state `CURRENT_SELL_TAX = 9800`; tes audit token dapat memiliki skor berbeda dari hasil endpoint karena konteks risk berbeda. Jangan menulis `100 / 100` sebagai hasil tetap semua transaksi NDEMO.
 
-Expected Nalar result:
-
-riskScore:
-100
-
-riskLevel:
-CRITICAL
-
-finding:
-EXCESSIVE_SELL_TAX
-
-decision:
-BLOCK
-
-reason:
-Current sell tax is excessive.
-
-UI should explain:
-
-"Current sell tax is excessive."
-
-Then show supporting evidence:
-
-Current Sell Tax:
-98.00%
-
-Current Buy Tax:
-0.00%
-
-BNB Intelligence:
-ON-CHAIN EVIDENCE
-
-Do not claim that the actual transfer function charges 98% because this demo contract does not enforce the tax.
+UI harus menyebut sumbernya sebagai konfigurasi on-chain dan tidak menjanjikan kerugian transfer tertentu. Satuan angka `9800` perlu diverifikasi sebelum diubah menjadi persentase di copy atau evidence. Kontrak demo yang didokumentasikan tidak menerapkan nilai ini sebagai potongan transfer.
 
 ---
 
-# 22. EXTENSION UI GOAL
+## 22. EXTENSION UI GOAL
 
 The extension UI should feel like a premium security product.
 
@@ -736,62 +679,32 @@ The reason should be more prominent than the score.
 
 ---
 
-# 23. DECISION UI PRIORITY
+## 23. DECISION UI PRIORITY
 
-Information order:
+Urutan decision overlay saat ini:
 
-1. Decision
-2. Risk
-3. User intent
-4. Actual transaction
-5. Why
-6. Evidence
-7. Technical details
-8. Next action
+1. Decision dan risk di header
+2. WHY, memakai penjelasan dari hasil security check
+3. Intent vs actual
+4. What this means, bila tersedia
+5. Security Evidence berisi finding yang sudah dinormalisasi, bukan respons mentah MCP
+6. Technical Details terlipat secara default, termasuk chain, alamat, fungsi, selector, simulation, dan status MCP yang tersedia
+7. Tombol tindakan sesuai ALLOW, REVIEW, atau BLOCK
 
-Example:
-
-TRANSACTION BLOCKED
-
-CRITICAL RISK
-100 / 100
-
-YOUR REQUEST
-Swap 0.001 tBNB to NDEMO
-
-WHAT WILL HAPPEN
-Swap WBNB → NDEMO
-
-WHY IT WAS STOPPED
-Current sell tax is excessive.
-
-EVIDENCE
-Current sell tax: 98.00%
-Current buy tax: 0.00%
-On-chain state: confirmed
-
-TECHNICAL DETAILS
-collapsed by default
-
-Transaction was not forwarded to your wallet.
+Alamat EVM yang ditampilkan dapat dibuka di explorer sesuai Chain ID aktif. Jangan memalsukan evidence yang tidak tersedia atau menampilkan raw JSON/array MCP sebagai finding pengguna.
 
 ---
 
-# 24. WEBSITE / FRONTEND
+## 24. WEBSITE / FRONTEND
 
-The project also has an existing frontend.
+Frontend Next.js yang ada memiliki route:
 
-The frontend currently contains a consumer/demo experience.
+- `/`: landing page Nalar Protocol dengan animasi alur pemeriksaan, decision explorer, arsitektur, dan tautan ke demo/install.
+- `/demo`: demo security-check dengan skenario safe mint dan malicious NFT approval; contoh transaksi pada halaman ini memakai Chain ID 97.
+- `/demo/external-dapp`: dApp contoh yang memanggil `eth_sendTransaction` agar alur intersepsi extension dapat dicoba.
+- `/install`: petunjuk memasang extension sebagai unpacked Chromium extension dari arsip GitHub.
 
-The desired structure:
-
-/
-= Nalar Protocol landing page
-
-/demo
-= existing consumer/security demo
-
-The landing page should explain:
+Landing page yang sudah ada menjelaskan:
 
 - what Nalar is
 - why it exists
@@ -804,15 +717,17 @@ The landing page should explain:
 - how to use the product
 - how the system works technically at a high level
 
-The landing page should lead naturally to:
+Landing page mengarahkan pengguna ke:
 
 /demo
+
+dan `/install`.
 
 Do not replace or destroy the existing demo.
 
 ---
 
-# 25. LANDING PAGE DESIGN DIRECTION
+## 25. LANDING PAGE DESIGN DIRECTION
 
 Nalar website should be:
 
@@ -840,7 +755,7 @@ Avoid:
 
 Instead, demonstrate the actual product.
 
-Hero concept:
+Hero yang sudah diimplementasikan:
 
 KNOW WHAT
 YOU'RE SIGNING.
@@ -859,11 +774,11 @@ Evidence
 ↓
 Decision
 
-The product itself should be the main visual element.
+Visual alur Nalar adalah elemen utama. Halaman juga memiliki contoh NDEMO dan penjelasan BNB MCP sebagai sumber evidence, bukan penentu keputusan. Contoh interaktif pada landing page adalah ilustrasi produk; angka di sana bukan hasil analisis live dari wallet pengguna.
 
 ---
 
-# 26. NALAR PRODUCT PHILOSOPHY
+## 26. NALAR PRODUCT PHILOSOPHY
 
 Nalar is about translating blockchain behavior into human understanding.
 
@@ -892,7 +807,7 @@ Or:
 
 ---
 
-# 27. IMPORTANT IMPLEMENTATION RULES FOR AI
+## 27. IMPORTANT IMPLEMENTATION RULES FOR AI
 
 When working on this project:
 
@@ -928,7 +843,7 @@ When working on this project:
 
 ---
 
-# 28. CURRENT PRODUCT STATUS
+## 28. CURRENT PRODUCT STATUS
 
 The project already has:
 
@@ -948,21 +863,21 @@ The project already has:
 - analysis/loading UI
 - decision UI
 - existing frontend demo
-- NDEMO malicious token test fixture
+- NDEMO sebagai kasus uji konfigurasi token on-chain
 
-The next major product work is primarily:
+Yang sudah ada pada kode lokal: pemilihan BNB Testnet/Mainnet di extension, penyimpanan intent per situs dan penghapusannya, status Active/Pause, tema, tautan explorer, fail-closed saat analisis/network tidak valid, landing page `/`, halaman `/install`, `/demo`, serta `/demo/external-dapp`.
 
-- stabilize extension ↔ backend integration
-- polish extension UX
-- build proper Nalar Protocol landing page
-- connect landing page to existing /demo
-- maintain dark/light themes
-- improve reason/evidence explanation
-- prepare product for hackathon/demo presentation
+Yang masih perlu diverifikasi atau diperbaiki sebelum mengklaim siap production:
+
+- Pastikan endpoint canonical menggunakan backend yang mendukung Chain ID 56; catatan deployment lama tidak cukup untuk memastikan status saat ini.
+- Jalankan QA alur nyata dengan MetaMask dan Rabby, termasuk perubahan chain di tengah analisis, penolakan switch, serta popup yang dibuka ulang. Tes mock belum membuktikan kompatibilitas wallet nyata.
+- Verifikasi satuan getter `sellTax()`/`buyTax()` per kontrak. Implementasi MCP saat ini melabeli nilai mentah sebagai `PERCENT`; jangan mengklaim angka tax atau kerugian aktual sebelum semantiknya terbukti.
+- Pertahankan pemisahan spender approval, recipient transfer, target contract, dan evidence MCP pada setiap request. Perbaikan pemetaan lokal sudah ada, tetapi transaksi pengguna yang spesifik tetap memerlukan payload/hash untuk diverifikasi.
+- Pastikan penjelasan untuk hasil `UNCERTAIN` dan evidence yang tidak tersedia tidak terdengar seperti kecocokan atau keamanan yang telah terbukti.
 
 ---
 
-# 29. GOLDEN RULE
+## 29. GOLDEN RULE
 
 Whenever modifying Nalar, remember:
 

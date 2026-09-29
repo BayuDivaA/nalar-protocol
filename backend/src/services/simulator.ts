@@ -1,8 +1,9 @@
 import type { Address, Hex } from "viem";
 
-import { publicClient } from "../lib/viem";
+import { getPublicClient } from "../lib/viem";
 
 export interface SimulationInput {
+  chainId?: number;
   from: Address;
   to: Address;
   value: bigint;
@@ -17,6 +18,7 @@ export interface SimulationResult {
 }
 
 export async function simulateTransaction(tx: SimulationInput): Promise<SimulationResult> {
+  const publicClient = getPublicClient(tx.chainId);
   try {
     /**
      * Execute the transaction as an eth_call.

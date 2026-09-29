@@ -1,0 +1,15 @@
+{
+  "name": "nalar-extension-ui",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build:motion": "esbuild motion-ui.entry.js --bundle --minify --format=iife --target=chrome116 --outfile=motion-ui.js",
+    "check": "node --check popup.js && node --check injected.js && node --check background.js && node --check bridge.js"
+  },
+  "dependencies": {
+    "framer-motion": "^13.4.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

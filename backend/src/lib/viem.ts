@@ -31,4 +31,12 @@ export function getPublicClient(chainId: number = 97): PublicClient {
   return client;
 }
 
+export async function verifyNetworkRpc(chainId: number): Promise<boolean> {
+  try {
+    return (await getPublicClient(chainId).getChainId()) === chainId;
+  } catch {
+    return false;
+  }
+}
+
 export const publicClient = getPublicClient(97);

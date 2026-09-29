@@ -1,11 +1,11 @@
 import type { Address } from "viem";
 
-import { publicClient } from "../lib/viem";
+import { getPublicClient } from "../lib/viem";
 import { demoNftAbi } from "../lib/demo-nft";
 
-export async function getApprovalState(collection: Address, owner: Address, operator: Address): Promise<boolean | null> {
+export async function getApprovalState(collection: Address, owner: Address, operator: Address, chainId: number = 97): Promise<boolean | null> {
   try {
-    const result = await publicClient.readContract({
+    const result = await getPublicClient(chainId).readContract({
       address: collection,
       abi: demoNftAbi,
       functionName: "isApprovedForAll",

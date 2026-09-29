@@ -1,6 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import { Hono } from "hono";
-import { securityRoute } from "../security";
+import { getBnbMcpClient, securityRoute } from "../security";
 
 const app = new Hono();
 app.route("/api/transactions/security-check", securityRoute);
@@ -35,6 +35,7 @@ describe("Extension API Contract Compatibility", () => {
 
     // Verify root contract keys expected by extension/injected.js
     expect(body.ok).toBe(true);
+    expect(Number.isNaN(Date.parse(body.checkedAt))).toBe(false);
     expect(["ALLOW", "REVIEW", "BLOCK"]).toContain(body.decision);
     expect(typeof body.riskScore).toBe("number");
     expect(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).toContain(body.riskLevel);
@@ -83,7 +84,7 @@ describe("Extension API Contract Compatibility", () => {
     expect(response.status).toBe(400);
   });
 
-  test("rejects unsupported networks (chainId 1, chainId 56) with 400 UNSUPPORTED_CHAIN", async () => {
+  test("rejects unsupported networks and validates BNB Mainnet payloads", async () => {
     // Ethereum Mainnet (chainId 1)
     const ethPayload = {
       intent: "Transfer 1 ETH",
@@ -111,12 +112,12 @@ describe("Extension API Contract Compatibility", () => {
     expect(ethBody.expectedChainId).toBe(97);
     expect(ethBody.receivedChainId).toBe(1);
 
-    // BNB Smart Chain Mainnet (chainId 56)
+    // BNB Smart Chain Mainnet is supported, so validation reaches the address check.
     const bscPayload = {
       intent: "Swap 1 BNB to USDT",
       transaction: {
         chainId: 56,
-        from: "0x53E993819F2Bc45A029615e8634BDdEEab4F7817",
+        from: "0x53E993819F2Bc45A029615e8634BDdEEab4F7816",
         to: "0xe56E18ff683AbF6E1aA01804FaCaeB3694FDdd35",
         value: "0",
         data: "0x",
@@ -134,8 +135,38 @@ describe("Extension API Contract Compatibility", () => {
     expect(bscResponse.status).toBe(400);
     const bscBody = await bscResponse.json();
     expect(bscBody.ok).toBe(false);
-    expect(bscBody.error).toBe("UNSUPPORTED_CHAIN");
-    expect(bscBody.expectedChainId).toBe(97);
-    expect(bscBody.receivedChainId).toBe(56);
+    expect(bscBody.error).toBe("INVALID_FROM_ADDRESS");
   });
+
+  test("does not return a decision when BNB MCP investigation fails", async () => {
+    const previous = process.env.BNB_INVESTIGATOR_ENABLED;
+    process.env.BNB_INVESTIGATOR_ENABLED = "true";
+    const client = getBnbMcpClient();
+    expect(client).toBeDefined();
+    const failure = spyOn(client!, "isContract").mockRejectedValue(new Error("BNB MCP unavailable"));
+    try {
+      const response = await app.fetch(new Request("http://localhost/api/transactions/security-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          intent: "Swap 0.001 tBNB to NDEMO",
+          transaction: {
+            chainId: 97,
+            from: "0x53E993819F2Bc45A029615e8634BDdEEab4F7817",
+            to: "0xe56E18ff683AbF6E1aA01804FaCaeB3694FDdd35",
+            value: "0",
+            data: "0x",
+          },
+        }),
+      }));
+      expect(response.status).toBe(503);
+      const body = await response.json();
+      expect(body.ok).toBe(false);
+      expect(body.error).toBe("ANALYSIS_UNAVAILABLE");
+    } finally {
+      failure.mockRestore();
+      if (previous === undefined) delete process.env.BNB_INVESTIGATOR_ENABLED;
+      else process.env.BNB_INVESTIGATOR_ENABLED = previous;
+    }
+  }, 15000);
 });

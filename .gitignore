@@ -65,3 +65,7 @@ Thumbs.db
 .vercel
 .env*
 .claude
+
+extension/node_modules/
+extension/dist/
+extension/test/

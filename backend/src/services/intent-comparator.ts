@@ -6,6 +6,7 @@ import type { TransactionAction } from "../lib/classifier";
 import { formatUnits, getAddress, parseUnits } from "viem";
 import { formatTokenAmount } from "./token-amount";
 import { formatDisplaySymbol } from "./transaction-translator";
+import { getNativeSymbol, getWbnbAddress } from "../config/networks";
 
 export type FieldMatchStatus = "MATCH" | "MISMATCH" | "UNSPECIFIED";
 
@@ -30,13 +31,14 @@ export interface IntentComparison {
 }
 
 export interface CompareIntentContext {
+  chainId?: number;
+  to?: string;
   targetIsContract?: boolean | null;
   functionName?: string | null;
   args?: readonly unknown[];
   actualQuantity?: number | null;
 }
 
-const WBNB_TESTNET = "0xae13d989dac2f0debff460ac112a837c89baa7cd".toLowerCase();
 const ROUTER_ETH_FLAG = "0x0000000000000000000000000000000000000002".toLowerCase();
 
 function normalizeTokenReference(token: string | null | undefined): string | null {
@@ -67,7 +69,7 @@ function isNativeBnbReference(value: string | null | undefined): boolean {
   return normalized === "BNB" || normalized === "TBNB" || normalized === "WBNB";
 }
 
-function tokenMatches(requested: string, actualAddress: string, actualSymbol?: string | null): boolean {
+function tokenMatches(requested: string, actualAddress: string, actualSymbol?: string | null, chainId = 97): boolean {
   const normalizedRequested = normalizeTokenReference(requested);
 
   if (!normalizedRequested) {
@@ -82,7 +84,7 @@ function tokenMatches(requested: string, actualAddress: string, actualSymbol?: s
    * before executing the actual swap.
    */
   const addrLower = actualAddress.toLowerCase();
-  if (isNativeBnbReference(requested) && (isNativeBnbReference(actualSymbol) || addrLower === WBNB_TESTNET || addrLower === ROUTER_ETH_FLAG)) {
+  if (isNativeBnbReference(requested) && (isNativeBnbReference(actualSymbol) || addrLower === getWbnbAddress(chainId)?.toLowerCase() || addrLower === ROUTER_ETH_FLAG)) {
     return true;
   }
 
@@ -174,12 +176,12 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
       };
       mismatches.push("User intended to swap tokens, but no swap effect was detected.");
     } else {
-      const actualTokenInSymbol = formatDisplaySymbol(swap.tokenInSymbol, swap.tokenIn);
-      const actualTokenOutSymbol = formatDisplaySymbol(swap.tokenOutSymbol, swap.tokenOut);
+      const actualTokenInSymbol = formatDisplaySymbol(swap.tokenInSymbol, swap.tokenIn, context?.chainId);
+      const actualTokenOutSymbol = formatDisplaySymbol(swap.tokenOutSymbol, swap.tokenOut, context?.chainId);
 
       // Compare tokenIn
       if (intent.tokenIn !== null) {
-        const inMatch = tokenMatches(intent.tokenIn, swap.tokenIn, swap.tokenInSymbol);
+        const inMatch = tokenMatches(intent.tokenIn, swap.tokenIn, swap.tokenInSymbol, context?.chainId);
         if (inMatch) {
           inputTokenComparison = {
             status: "MATCH",
@@ -204,7 +206,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
 
       // Compare tokenOut
       if (intent.tokenOut !== null) {
-        const outMatch = tokenMatches(intent.tokenOut, swap.tokenOut, swap.tokenOutSymbol);
+        const outMatch = tokenMatches(intent.tokenOut, swap.tokenOut, swap.tokenOutSymbol, context?.chainId);
         if (outMatch) {
           outputTokenComparison = {
             status: "MATCH",
@@ -287,6 +289,20 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
     }
   }
 
+  const intendedRecipient = intent.action === "TRANSFER" ? intent.targetAddress ?? intent.recipient : null;
+  const verifiableRecipient = intendedRecipient && /^0x[a-fA-F0-9]{40}$/.test(intendedRecipient) ? intendedRecipient : null;
+  if (intent.action === "TRANSFER" && verifiableRecipient) {
+    const actualRecipient = actualAction === "PAYMENT" ? context?.to : undefined;
+    if (!actualRecipient) {
+      recipientComparison = { status: "UNSPECIFIED", expected: verifiableRecipient, reason: "Transfer recipient could not be verified." };
+    } else if (actualRecipient.toLowerCase() === verifiableRecipient.toLowerCase()) {
+      recipientComparison = { status: "MATCH", expected: verifiableRecipient, actual: actualRecipient };
+    } else {
+      recipientComparison = { status: "MISMATCH", expected: verifiableRecipient, actual: actualRecipient };
+      mismatches.push(`Recipient mismatch: Expected ${verifiableRecipient}, transaction sends to ${actualRecipient}.`);
+    }
+  }
+
   /**
    * 3. Check MINT semantics.
    */
@@ -332,8 +348,9 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
 
     // Compare payment / amount for MINT
     if (intent.maxValueNative !== null) {
-      const expectedPayment = `${intent.maxValueNative} tBNB`;
-      const actualPayment = `${formatUnits(value, 18)} tBNB`;
+      const nativeSymbol = getNativeSymbol(context?.chainId ?? 97);
+      const expectedPayment = `${intent.maxValueNative} ${nativeSymbol}`;
+      const actualPayment = `${formatUnits(value, 18)} ${nativeSymbol}`;
 
       if (intent.maxValueWei !== null && value === intent.maxValueWei) {
         amountComparison = {
@@ -358,7 +375,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
    */
   if (intent.action !== "MINT" && intent.maxValueWei !== null && value > intent.maxValueWei) {
     const expectedValue = intent.maxValueNative ?? `${intent.maxValueWei.toString()} wei`;
-    const actualValue = `${formatUnits(value, 18)} tBNB`;
+    const actualValue = `${formatUnits(value, 18)} ${getNativeSymbol(context?.chainId ?? 97)}`;
     if (amountComparison.status !== "MISMATCH") {
       amountComparison = {
         status: "MISMATCH",
@@ -391,13 +408,16 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
    * Invariants:
    * 1. If mismatches.length > 0 -> overall is "MISMATCH", matches is false.
    * 2. If intent action is UNKNOWN -> overall is "UNCERTAIN", matches is false.
-   * 3. If any specified intent requirement is UNVERIFIED / UNSPECIFIED -> overall is "UNCERTAIN", matches is false.
+   * 3. If a core intent detail is missing or a specified requirement is unverified -> overall is "UNCERTAIN", matches is false.
    *    (UNKNOWN != MATCH: A transaction must NEVER show MATCH when a required comparison field is unknown).
    * 4. Only if all specified intent requirements have status "MATCH" -> overall is "MATCH", matches is true.
    */
   const isMismatch = mismatches.length > 0;
 
   let hasUnverifiedRequirement = false;
+  const hasMissingCoreIntent = (intent.action === "SWAP" && (intent.tokenIn === null || intent.tokenOut === null || intent.quantity === null)) ||
+    (intent.action === "TRANSFER" && (!verifiableRecipient || intent.maxValueWei === null)) ||
+    (intent.action === "MINT" && intent.quantity === null);
   if (intent.action === "UNKNOWN") {
     hasUnverifiedRequirement = true;
   }
@@ -413,6 +433,9 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   if (intent.action === "SWAP" && intent.tokenOut !== null && outputTokenComparison.status === "UNSPECIFIED") {
     hasUnverifiedRequirement = true;
   }
+  if (intent.action === "TRANSFER" && verifiableRecipient && recipientComparison.status === "UNSPECIFIED") {
+    hasUnverifiedRequirement = true;
+  }
 
   let overall: "MATCH" | "MISMATCH" | "UNCERTAIN";
   let matches: boolean;
@@ -423,7 +446,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   } else if (isMismatch) {
     overall = "MISMATCH";
     matches = false;
-  } else if (hasUnverifiedRequirement) {
+  } else if (hasUnverifiedRequirement || hasMissingCoreIntent) {
     overall = "UNCERTAIN";
     matches = false;
   } else {
@@ -438,6 +461,8 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
     summary = `You asked to mint ${quantityComparison.expected} NFTs, but the transaction mints ${quantityComparison.actual}.`;
   } else if (outputTokenComparison.status === "MISMATCH") {
     summary = `You asked to receive ${outputTokenComparison.expected}, but this transaction is configured to receive ${outputTokenComparison.actual} instead.`;
+  } else if (recipientComparison.status === "MISMATCH") {
+    summary = `You asked to send to ${recipientComparison.expected}, but this transaction is addressed to ${recipientComparison.actual}.`;
   } else if (inputTokenComparison.status === "MISMATCH") {
     summary = `You asked to spend ${inputTokenComparison.expected}, but this transaction is configured to spend ${inputTokenComparison.actual} instead.`;
   } else if (amountComparison.status === "MISMATCH") {
@@ -447,7 +472,7 @@ export function compareIntent(intent: NormalizedIntent, actualAction: Transactio
   } else if (intent.action === "UNKNOWN") {
     summary = "Could not clearly verify your intent from the description.";
   } else if (overall === "UNCERTAIN") {
-    summary = "Could not verify all requested transaction parameters from the transaction data.";
+    summary = hasMissingCoreIntent ? (intent.action === "TRANSFER" ? "Nalar could not verify both the recipient and amount in your transfer request." : intent.action === "MINT" ? "Your mint request did not specify a quantity, so Nalar cannot confirm a match." : "Your swap request did not specify both tokens and the amount, so Nalar cannot confirm a match.") : "Could not verify all requested transaction parameters from the transaction data.";
   } else if (isMismatch) {
     summary = mismatches[0] ?? "Transaction details do not match your intent.";
   } else {

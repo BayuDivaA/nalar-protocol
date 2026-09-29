@@ -14,7 +14,7 @@ export interface ApprovalStateDiff {
   sourceFunction: string;
 }
 
-export async function resolveEffectState(effects: TransactionEffects): Promise<ApprovalStateDiff[]> {
+export async function resolveEffectState(effects: TransactionEffects, chainId: number = 97): Promise<ApprovalStateDiff[]> {
   const diffs: ApprovalStateDiff[] = [];
 
   for (const approval of effects.approvals) {
@@ -22,7 +22,7 @@ export async function resolveEffectState(effects: TransactionEffects): Promise<A
       continue;
     }
 
-    const before = await getApprovalState(approval.token, approval.owner, approval.operator);
+    const before = await getApprovalState(approval.token, approval.owner, approval.operator, chainId);
 
     diffs.push({
       type: "ERC721_OPERATOR",

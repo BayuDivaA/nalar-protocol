@@ -24,6 +24,8 @@ import { BnbTransactionInvestigator } from "../services/scam/bnb-transaction-inv
 
 import { BnbChainMcpClient } from "../services/scam/bnb-mcp-client";
 import { env } from "../config/env";
+import { isSupportedChainId } from "../config/networks";
+import { verifyNetworkRpc } from "../lib/viem";
 
 export const securityRoute = new Hono();
 
@@ -87,15 +89,13 @@ securityRoute.post("/", async (c) => {
 
     const { intent: intentText, transaction } = parsed.data;
 
-    /**
-     * BNB Testnet only for MVP
-     */
-    if (transaction.chainId !== 97) {
+    if (!isSupportedChainId(transaction.chainId)) {
       return c.json(
         {
           ok: false,
           error: "UNSUPPORTED_CHAIN",
           expectedChainId: 97,
+          supportedChainIds: [97, 56],
           receivedChainId: transaction.chainId,
         },
         400,
@@ -128,6 +128,10 @@ securityRoute.post("/", async (c) => {
     const from = getAddress(transaction.from);
 
     const to = getAddress(transaction.to);
+
+    if (transaction.chainId === 56 && !(await verifyNetworkRpc(56))) {
+      return c.json({ ok: false, error: "NETWORK_CONNECTION_FAILED", receivedChainId: 56 }, 503);
+    }
 
     const value = BigInt(transaction.value);
 
@@ -163,26 +167,22 @@ securityRoute.post("/", async (c) => {
 
     const baseAction = decoded.classification.action;
 
-    console.log("[SWAP DEBUG][INTELLIGENCE]", {
-      to,
-      protocol: decoded.protocol,
-      functionName: decoded.functionName,
-      selector: decoded.selector,
-      args: decoded.args,
-      classification: decoded.classification,
-    });
-
     /**
      * STEP 4
      *
      * Simulate transaction.
      */
     const simulation = await simulateTransaction({
+      chainId: transaction.chainId,
       from,
       to,
       value,
       data,
     });
+
+    if (transaction.chainId === 56 && !simulation.success && !(await verifyNetworkRpc(56))) {
+      return c.json({ ok: false, error: "NETWORK_CONNECTION_FAILED", receivedChainId: 56 }, 503);
+    }
 
     /**
      * Simulation failure is an immediate
@@ -238,6 +238,8 @@ securityRoute.post("/", async (c) => {
 
       return c.json({
         ok: true,
+
+        checkedAt: new Date().toISOString(),
 
         decision: "BLOCK",
 
@@ -328,7 +330,7 @@ securityRoute.post("/", async (c) => {
       protocol: decoded.protocol,
     });
 
-    const enrichedSwaps = await Promise.all(effects.swaps.map((swap) => enrichSwapEffect(swap)));
+    const enrichedSwaps = await Promise.all(effects.swaps.map((swap) => enrichSwapEffect(swap, transaction.chainId)));
 
     const analyzedEffects = {
       ...effects,
@@ -350,21 +352,19 @@ securityRoute.post("/", async (c) => {
           summary: null,
         };
 
-    const targetIsContract = bnbTransactionInvestigation.available ? bnbTransactionInvestigation.contractAddresses.includes(to.toLowerCase()) : null;
+    if (activeTxInvestigator && !bnbTransactionInvestigation.available) {
+      return c.json({ ok: false, error: "ANALYSIS_UNAVAILABLE", receivedChainId: transaction.chainId }, 503);
+    }
+
+    const targetStatus = bnbTransactionInvestigation.observations.find((observation) => observation.type === "TARGET_CONTRACT")?.value;
+    const targetIsContract = targetStatus === "true" ? true : targetStatus === "false" ? false : null;
 
     const counterpartyContracts = new Set(bnbTransactionInvestigation.contractAddresses.map((address) => address.toLowerCase()));
 
     const actualAction = analyzedEffects.swaps.length > 0 ? "SWAP" : decoded.classification.action;
 
-    console.log("[SWAP DEBUG][EFFECTS]", {
-      protocol: decoded.protocol,
-      functionName: decoded.functionName,
-      swapCount: effects.swaps.length,
-      swaps: effects.swaps,
-      approvals: effects.approvals,
-    });
-
     const transactionSummary = translateTransaction({
+      chainId: transaction.chainId,
       from,
       to,
       value,
@@ -384,7 +384,7 @@ securityRoute.post("/", async (c) => {
 
     //Read current blockchain state.
 
-    const stateDiff = await resolveEffectState(analyzedEffects);
+    const stateDiff = await resolveEffectState(analyzedEffects, transaction.chainId);
 
     // Deterministic transaction threat analysis.
 
@@ -411,6 +411,16 @@ securityRoute.post("/", async (c) => {
       investigator: activeAgentInvestigator,
     });
 
+    if (activeAgentInvestigator && scamAnalyses.some(({ agentAnalysis }) =>
+      !agentAnalysis.available || agentAnalysis.summary?.startsWith("BNB investigator could not enrich") || agentAnalysis.summary === "BNB investigator enrichment failed."
+    )) {
+      return c.json({ ok: false, error: "ANALYSIS_UNAVAILABLE", receivedChainId: transaction.chainId }, 503);
+    }
+
+    if (transaction.chainId === 56 && !(await verifyNetworkRpc(56))) {
+      return c.json({ ok: false, error: "NETWORK_CONNECTION_FAILED", receivedChainId: 56 }, 503);
+    }
+
     const transactionScamContext = buildTransactionScamContext(scamAnalyses);
 
     const scamAnalysis = scamAnalyses[0] ?? null;
@@ -435,6 +445,8 @@ securityRoute.post("/", async (c) => {
      * with actual effects.
      */
     const comparison = compareIntent(intent, actualAction, analyzedEffects, value, {
+      chainId: transaction.chainId,
+      to,
       targetIsContract,
       functionName: decoded.functionName ?? null,
       args: decoded.args ?? [],
@@ -557,6 +569,8 @@ securityRoute.post("/", async (c) => {
 
     return c.json({
       ok: true,
+
+      checkedAt: new Date().toISOString(),
 
       decision: decision.decision,
 

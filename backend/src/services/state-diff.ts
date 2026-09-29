@@ -1,6 +1,6 @@
 import { type Address, type Hex } from "viem";
 
-import { publicClient } from "../lib/viem";
+import { getPublicClient } from "../lib/viem";
 import { securityAbi } from "../lib/abis";
 
 import type { ApprovalChange } from "../types/impact";
@@ -13,7 +13,8 @@ interface StateDiffResult {
   approvals: ApprovalChange[];
 }
 
-export async function analyzeStateDiff(input: { from: Address; to: Address; data: Hex }): Promise<StateDiffResult> {
+export async function analyzeStateDiff(input: { from: Address; to: Address; data: Hex; chainId?: number }): Promise<StateDiffResult> {
+  const publicClient = getPublicClient(input.chainId);
   const result: StateDiffResult = {
     approvals: [],
   };
@@ -80,7 +81,7 @@ export async function analyzeStateDiff(input: { from: Address; to: Address; data
 
     const approved = extractBool(input.data, 1);
 
-    const before = await getApprovalState(input.to, input.from, operator);
+    const before = await getApprovalState(input.to, input.from, operator, input.chainId);
 
     if (before === null) {
       result.approvals.push({

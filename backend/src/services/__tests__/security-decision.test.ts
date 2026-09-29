@@ -94,6 +94,24 @@ describe("TxSentry Security Decision", () => {
     expect(decision.decision).toBe("REVIEW");
   });
 
+  test("REVIEW — uncertain intent gives a reason rather than silently matching", () => {
+    const policy = evaluatePolicy({ policy: defaultPolicy, action: "SWAP", value: 0n });
+    const decision = makeSecurityDecision({
+      simulationSuccess: true,
+      risk: { score: 0, level: "LOW", reasons: [] },
+      comparison: {
+        matches: false,
+        mismatches: [],
+        overall: "UNCERTAIN",
+        summary: "Your swap request did not specify both tokens and the amount.",
+      },
+      effects: { approvals: [], swaps: [] },
+      policy,
+    });
+    expect(decision.decision).toBe("REVIEW");
+    expect(decision.reasons).toContain("Your swap request did not specify both tokens and the amount.");
+  });
+
   test("BLOCK — forbidden NFT approval", () => {
     const policy = evaluatePolicy({
       policy: defaultPolicy,

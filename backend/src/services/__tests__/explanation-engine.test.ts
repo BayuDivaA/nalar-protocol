@@ -12,7 +12,7 @@ describe("Human-Readable Explanation Engine", () => {
       const tax = humanizeFinding("EXCESSIVE_SELL_TAX", { sellTaxPercent: 98 });
       expect(tax.headline).toBe("An unusually high sell fee was found (98%)");
       expect(tax.fact).toContain("98% sell tax");
-      expect(tax.meaning).toBe("This is an unusually large fee applied to selling.");
+      expect(tax.meaning).toContain("whether it is charged during a sale has not been confirmed");
       expect(tax.impact).toContain("If enforced during a sale");
 
       const unverified = humanizeFinding("UNVERIFIED_CONTRACT");
@@ -263,6 +263,7 @@ describe("Human-Readable Explanation Engine", () => {
       expect(impact.toLowerCase()).toContain("if enforced");
       expect(impact.toLowerCase()).not.toContain("you will definitely lose");
       expect(impact.toLowerCase()).not.toContain("guaranteed loss");
+      expect(explanation.whatThisMeans.toLowerCase()).toContain("if enforced");
 
       expect(explanation.userIntent?.status).toBe("MATCH");
       expect(explanation.comparison?.status).toBe("MATCH");
@@ -520,6 +521,38 @@ describe("Human-Readable Explanation Engine", () => {
       expect(explanation.headline).toBe("The transaction passed Nalar's checks");
       expect(explanation.recommendedAction).toBe("PROCEED");
       expect(explanation.whyStopped?.title).toBe("Transaction verified");
+      expect(explanation.whatThisMeans).toContain("available checks");
+      expect(explanation.evidence?.find((item) => item.label === "Simulation")?.explanation).toContain("at the time of the check");
+    });
+
+    test("UNCERTAIN intent is explained as unverified, not as a proven mismatch", () => {
+      const explanation = buildDeterministicExplanation({
+        intent: "Swap a token",
+        decision: "REVIEW",
+        riskLevel: "LOW",
+        riskScore: 10,
+        intentMatch: false,
+        actualAction: "SWAP",
+        actualFunction: "swapExactETHForTokens",
+        actualValueNative: "0.01 BNB",
+        reasons: ["Your swap request did not specify both tokens and the amount."],
+        effects: {},
+        comparison: {
+          matches: false,
+          mismatches: [],
+          overall: "UNCERTAIN",
+          action: { status: "MATCH", expected: "SWAP", actual: "SWAP" },
+          inputToken: { status: "UNSPECIFIED" },
+          outputToken: { status: "UNSPECIFIED" },
+          amount: { status: "UNSPECIFIED" },
+          recipient: { status: "UNSPECIFIED" },
+          summary: "Your swap request did not specify both tokens and the amount.",
+        },
+        policy: { allowed: true, requiresReview: false, reasons: [] },
+      });
+
+      expect(explanation.headline).toBe("Intent could not be verified");
+      expect(explanation.comparison?.status).toBe("UNKNOWN");
     });
 
     test("REVIEW outputs 'This transaction needs your attention'", () => {

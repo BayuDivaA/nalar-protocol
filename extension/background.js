@@ -45,6 +45,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
+  if (message?.type === "GET_NETWORK") {
+    chrome.storage.local.get(["selectedNetwork"])
+      .then(({ selectedNetwork }) => sendResponse({ chainId: selectedNetwork === undefined ? 97 : (Number.isInteger(selectedNetwork) ? NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork]?.chainId ?? null : null) }))
+      .catch(() => sendResponse({ chainId: null, error: "NETWORK_UNAVAILABLE" }));
+    return true;
+  }
+
+  if (message?.type === "SET_NETWORK") {
+    const chainId = parseNumericChainId(message.chainId);
+    if (!NALAR_CONFIG.SUPPORTED_CHAINS[chainId]) {
+      sendResponse({ ok: false, error: "NETWORK_NOT_SUPPORTED" });
+      return false;
+    }
+    chrome.storage.local.set({ selectedNetwork: chainId })
+      .then(() => sendResponse({ ok: true, chainId }))
+      .catch(() => sendResponse({ ok: false, error: "NETWORK_UNAVAILABLE" }));
+    return true;
+  }
+
   if (message?.type === "SET_INTENT") {
     saveIntent(message.origin, message.intent)
       .then(() => {
@@ -157,24 +176,44 @@ function parseNumericChainId(chainId) {
     if (/^0x[0-9a-fA-F]+$/i.test(trimmed)) {
       return Number.parseInt(trimmed, 16);
     }
-    const dec = Number.parseInt(trimmed, 10);
-    if (Number.isFinite(dec)) {
-      return dec;
+    if (/^[0-9]+$/.test(trimmed)) {
+      return Number.parseInt(trimmed, 10);
     }
   }
   return null;
 }
 
 async function handleSecurityCheck(transaction, chainId, origin) {
-  const numericChainId = parseNumericChainId(chainId) ?? parseNumericChainId(transaction?.chainId);
+  const numericChainId = parseNumericChainId(chainId);
 
   if (numericChainId === null) {
-    throw new Error("Invalid wallet chain ID.");
+    const err = new Error("Invalid wallet chain ID.");
+    err.code = "NETWORK_UNAVAILABLE";
+    throw err;
   }
 
-  if (numericChainId !== 97) {
-    const err = new Error(`Nalar currently supports BNB Testnet only. Received chain ${numericChainId}.`);
+  if (transaction?.chainId != null && parseNumericChainId(transaction.chainId) !== numericChainId) {
+    const err = new Error("Transaction chain does not match wallet chain.");
+    err.code = "NETWORK_MISMATCH";
+    throw err;
+  }
+
+  if (!NALAR_CONFIG.SUPPORTED_CHAINS[numericChainId]) {
+    const err = new Error(`Nalar does not support chain ${numericChainId}.`);
     err.code = "NETWORK_NOT_SUPPORTED";
+    err.receivedChainId = numericChainId;
+    throw err;
+  }
+
+  const { selectedNetwork } = await chrome.storage.local.get(["selectedNetwork"]);
+  if (selectedNetwork !== undefined && (!Number.isInteger(selectedNetwork) || !NALAR_CONFIG.SUPPORTED_CHAINS[selectedNetwork])) {
+    const err = new Error("Selected NALAR network is invalid.");
+    err.code = "NETWORK_UNAVAILABLE";
+    throw err;
+  }
+  if ((selectedNetwork === undefined ? 97 : selectedNetwork) !== numericChainId) {
+    const err = new Error("Wallet network does not match the selected NALAR network.");
+    err.code = "NETWORK_MISMATCH";
     err.receivedChainId = numericChainId;
     throw err;
   }
@@ -191,17 +230,11 @@ async function handleSecurityCheck(transaction, chainId, origin) {
 
   const normalized = normalizeTransaction(transaction);
 
-  console.log("[Nalar] Security request:", {
-    chainId: numericChainId,
-    origin,
-    intent,
-    transaction: normalized,
-  });
-
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   let response;
+  let responseText;
   try {
     response = await fetch(`${BACKEND_URL}/api/transactions/security-check`, {
       method: "POST",
@@ -220,22 +253,32 @@ async function handleSecurityCheck(transaction, chainId, origin) {
         },
       }),
     });
+    responseText = await response.text();
   } catch (error) {
-    clearTimeout(timeoutId);
     if (error && (error.name === "AbortError" || error.code === 20)) {
-      throw new Error("Security analysis timed out. The blockchain investigation took longer than expected.");
+      const err = new Error("Security analysis timed out. The blockchain investigation took longer than expected.");
+      err.code = "ANALYSIS_TIMEOUT";
+      throw err;
     }
     console.error("[Nalar] Security check network error:", error);
-    throw new Error("Security service is unavailable. Please check your network connection.");
+    const err = new Error("Security service is unavailable. Please check your network connection.");
+    err.code = "ANALYSIS_UNAVAILABLE";
+    throw err;
   } finally {
     clearTimeout(timeoutId);
   }
 
-  const responseText = await response.text();
-
-  console.log("[Nalar] Backend response:", response.status, responseText);
-
   if (!response.ok) {
+    if (response.status === 503) {
+      let code = "ANALYSIS_UNAVAILABLE";
+      try {
+        const body = JSON.parse(responseText);
+        if (body.error === "NETWORK_CONNECTION_FAILED") code = body.error;
+      } catch {}
+      const err = new Error(code === "NETWORK_CONNECTION_FAILED" ? "Unable to connect to the selected BNB network." : "Security analysis is unavailable.");
+      err.code = code;
+      throw err;
+    }
     if (response.status === 400) {
       try {
         const errJson = JSON.parse(responseText);
@@ -272,6 +315,20 @@ async function handleSecurityCheck(transaction, chainId, origin) {
 
   if (!parsed || parsed.ok === false) {
     throw new Error(parsed?.error ?? "Security analysis could not be completed.");
+  }
+
+  if (parsed.ok !== true || !["ALLOW", "REVIEW", "BLOCK"].includes(parsed.decision) ||
+      !Number.isFinite(parsed.riskScore) || parsed.riskScore < 0 || parsed.riskScore > 100 ||
+      typeof parsed.simulation?.success !== "boolean" || typeof parsed.intentMatch !== "boolean" ||
+      parsed.comparison?.matches !== parsed.intentMatch ||
+      (!["MATCH", "MISMATCH", "UNCERTAIN"].includes(parsed.comparison?.overall) &&
+        !(parsed.decision === "BLOCK" && !parsed.simulation.success && parsed.comparison?.overall === undefined)) ||
+      typeof parsed.explanation?.summary !== "string" || !parsed.explanation.summary.trim() ||
+      parsed.bnbIntelligence?.available === false ||
+      (parsed.decision === "ALLOW" && (!parsed.simulation.success || !parsed.intentMatch || parsed.comparison.overall !== "MATCH"))) {
+    const err = new Error("Security analysis returned incomplete or inconsistent data.");
+    err.code = "ANALYSIS_UNAVAILABLE";
+    throw err;
   }
 
   return parsed;

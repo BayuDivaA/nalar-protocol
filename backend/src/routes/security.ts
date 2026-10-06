@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
 import { z } from "zod";
 import { getAddress, isAddress, type Hex } from "viem";
 import { parseUserIntent } from "../services/intent-engine";
@@ -71,6 +72,8 @@ export const getBnbAgentInvestigator = () => getBnbInvestigator().agentInvestiga
 export const getBnbTransactionInvestigator = () => getBnbInvestigator().transactionInvestigator;
 
 securityRoute.post("/", async (c) => {
+  const execute = async (onProgress: (event: { stage: string; status: "running" | "completed" | "failed" | "unavailable"; chainId: number; address?: string }) => Promise<void> = async () => {}) => {
+  const activeStage = { stage: "", chainId: 0 };
   try {
     const body = await c.req.json();
 
@@ -88,6 +91,11 @@ securityRoute.post("/", async (c) => {
     }
 
     const { intent: intentText, transaction } = parsed.data;
+    const progress = async (stage: string, status: "running" | "completed" | "failed" | "unavailable", address?: string) => {
+      if (c.req.raw.signal.aborted) throw new Error("Security request aborted.");
+      if (status === "running") Object.assign(activeStage, { stage, chainId: transaction.chainId });
+      await onProgress({ stage, status, chainId: transaction.chainId, ...(address ? { address } : {}) });
+    };
 
     if (!isSupportedChainId(transaction.chainId)) {
       return c.json(
@@ -142,6 +150,7 @@ securityRoute.post("/", async (c) => {
      *
      * Understand user intent.
      */
+    await progress("intent", "running");
     const rawIntent = await parseUserIntent(intentText);
 
     /**
@@ -151,12 +160,14 @@ securityRoute.post("/", async (c) => {
      * into blockchain units.
      */
     const intent = normalizeIntent(rawIntent);
+    await progress("intent", "completed");
 
     /**
      * STEP 3
      *
      * Decode transaction.
      */
+    await progress("decode", "running");
     const intelligence = await analyzeTransactionIntelligence({
       chainId: transaction.chainId,
       to,
@@ -164,6 +175,7 @@ securityRoute.post("/", async (c) => {
     });
 
     const decoded = intelligence;
+    await progress("decode", "completed");
 
     const baseAction = decoded.classification.action;
 
@@ -172,6 +184,7 @@ securityRoute.post("/", async (c) => {
      *
      * Simulate transaction.
      */
+    await progress("simulate", "running");
     const simulation = await simulateTransaction({
       chainId: transaction.chainId,
       from,
@@ -179,6 +192,7 @@ securityRoute.post("/", async (c) => {
       value,
       data,
     });
+    await progress("simulate", simulation.success ? "completed" : "failed");
 
     if (transaction.chainId === 56 && !simulation.success && !(await verifyNetworkRpc(56))) {
       return c.json({ ok: false, error: "NETWORK_CONNECTION_FAILED", receivedChainId: 56 }, 503);
@@ -322,6 +336,7 @@ securityRoute.post("/", async (c) => {
      *
      * Analyze semantic effects.
      */
+    await progress("effects", "running");
     const effects = analyzeEffects({
       from,
       to,
@@ -336,9 +351,11 @@ securityRoute.post("/", async (c) => {
       ...effects,
       swaps: enrichedSwaps,
     };
+    await progress("effects", "completed");
 
     const { agentInvestigator: activeAgentInvestigator, transactionInvestigator: activeTxInvestigator } = getBnbInvestigator();
 
+    await progress("investigate", "running");
     const bnbTransactionInvestigation = activeTxInvestigator
       ? await activeTxInvestigator.investigate({
           chainId: transaction.chainId,
@@ -351,6 +368,7 @@ securityRoute.post("/", async (c) => {
           contractAddresses: [],
           summary: null,
         };
+    await progress("investigate", bnbTransactionInvestigation.available ? "completed" : "unavailable");
 
     if (activeTxInvestigator && !bnbTransactionInvestigation.available) {
       return c.json({ ok: false, error: "ANALYSIS_UNAVAILABLE", receivedChainId: transaction.chainId }, 503);
@@ -384,7 +402,9 @@ securityRoute.post("/", async (c) => {
 
     //Read current blockchain state.
 
+    await progress("state", "running");
     const stateDiff = await resolveEffectState(analyzedEffects, transaction.chainId);
+    await progress("state", stateDiff.some((entry) => entry.before === null) ? "unavailable" : "completed");
 
     // Deterministic transaction threat analysis.
 
@@ -403,17 +423,27 @@ securityRoute.post("/", async (c) => {
     });
 
     const transactionThreatRisk = calculateScamRisk(transactionThreatFindings.filter((finding) => !["UNLIMITED_ALLOWANCE", "UNEXPECTED_SPENDER", "UNEXPECTED_NFT_OPERATOR", "APPROVAL_TO_CONTRACT"].includes(finding.code)));
+    await progress("scam", "running");
     const scamAnalyses = await auditSwapTokens({
       chainId: transaction.chainId,
       owner: from,
       router: to,
       swaps: analyzedEffects.swaps,
+      addresses: [
+        ...analyzedEffects.approvals.map((approval) => approval.token),
+        ...analyzedEffects.approvals.map((approval) => approval.type === "ERC20_ALLOWANCE" ? approval.spender : approval.operator)
+          .filter((address) => counterpartyContracts.has(address.toLowerCase())),
+        ...(["TOKEN_TRANSFER", "TOKEN_TRANSFER_FROM", "NFT_TRANSFER"].includes(actualAction) ? [to] : []),
+      ],
+      onProgress: (address, status) => progress("scam", status, address),
       investigator: activeAgentInvestigator,
     });
-
-    if (activeAgentInvestigator && scamAnalyses.some(({ agentAnalysis }) =>
+    const agentEvidenceUnavailable = activeAgentInvestigator && scamAnalyses.some(({ agentAnalysis }) =>
       !agentAnalysis.available || agentAnalysis.summary?.startsWith("BNB investigator could not enrich") || agentAnalysis.summary === "BNB investigator enrichment failed."
-    )) {
+    );
+    await progress("scam", agentEvidenceUnavailable || scamAnalyses.some((analysis) => analysis.findings.some((finding) => finding.code === "CONTRACT_EVIDENCE_UNAVAILABLE")) ? "unavailable" : "completed");
+
+    if (agentEvidenceUnavailable) {
       return c.json({ ok: false, error: "ANALYSIS_UNAVAILABLE", receivedChainId: transaction.chainId }, 503);
     }
 
@@ -432,6 +462,7 @@ securityRoute.post("/", async (c) => {
      *
      * Deterministic risk analysis.
      */
+    await progress("decide", "running");
     const baseRisk = calculateRisk(stateDiff, actualAction, analyzedEffects.approvals);
 
     const riskWithTokenScam = mergeScamRisk(baseRisk, scamRisk);
@@ -470,6 +501,7 @@ securityRoute.post("/", async (c) => {
       policy: policyEvaluation,
       scamAnalyses,
     });
+    await progress("decide", "completed");
 
     /**
      * STEP 10
@@ -477,6 +509,7 @@ securityRoute.post("/", async (c) => {
      * AI explains the result.
      */
     let explanation;
+    await progress("explain", "running");
 
     try {
       explanation = await generateSecurityExplanation({
@@ -566,6 +599,7 @@ securityRoute.post("/", async (c) => {
         fallbackReason: error instanceof Error ? error.message : "Unhandled route exception",
       };
     }
+    await progress("explain", "completed");
 
     return c.json({
       ok: true,
@@ -669,6 +703,9 @@ securityRoute.post("/", async (c) => {
       },
     });
   } catch (error) {
+    if (activeStage.stage && !c.req.raw.signal.aborted) {
+      try { await onProgress({ ...activeStage, status: "failed" }); } catch { /* The disconnected client cannot receive progress. */ }
+    }
     console.error("[SECURITY CHECK]", error);
 
     return c.json(
@@ -679,4 +716,15 @@ securityRoute.post("/", async (c) => {
       500,
     );
   }
+  };
+  if (c.req.header("Accept")?.includes("text/event-stream")) {
+    return streamSSE(c, async (stream) => {
+      const response = await execute(async (event) => {
+        if (stream.aborted) throw new Error("Security stream disconnected.");
+        await stream.writeSSE({ event: "progress", data: JSON.stringify(event) });
+      });
+      if (!stream.aborted) await stream.writeSSE({ event: "result", data: JSON.stringify(await response.json()) });
+    });
+  }
+  return execute();
 });

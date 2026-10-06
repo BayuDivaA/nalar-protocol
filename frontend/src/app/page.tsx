@@ -8,6 +8,7 @@ import SiteHeader from "@/src/components/SiteHeader";
 import ArchitectureDiagram from "@/src/components/ArchitectureDiagram";
 import HeroSecurityScene from "@/src/components/HeroSecurityAnimation";
 import ProductMark from "@/src/components/ProductMark";
+import AddressEntry from "@/src/components/AddressEntry";
 
 type DecisionTone = "safe" | "review" | "block";
 
@@ -118,6 +119,8 @@ export default function LandingPage() {
             <HeroSecurityScene />
           </div>
         </section>
+
+        <AddressEntry />
 
         <section id="problem" className="landing-section problem-section">
           <div className="page-frame problem-grid">

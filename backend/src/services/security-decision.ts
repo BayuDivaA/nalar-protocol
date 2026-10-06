@@ -117,8 +117,10 @@ export function makeSecurityDecision(input: {
     };
   }
 
-  return {
-    decision: "ALLOW",
-    reasons: [],
-  };
+  const reviewFindings = input.scamAnalyses?.flatMap((analysis) => analysis.findings
+    .filter((finding) => ["CONTRACT_EVIDENCE_UNAVAILABLE", "PROXY_IMPLEMENTATION_UNKNOWN", "CAPABILITY_ACCESS_UNKNOWN", "TRANSFER_RESTRICTED", "TRADING_CURRENTLY_DISABLED", "LIQUIDITY_LOW", "HOLDER_CONCENTRATION_HIGH"].includes(finding.code))
+    .map((finding) => `${analysis.token}: ${finding.title}`)) ?? [];
+  if (reviewFindings.length) return { decision: "REVIEW", reasons: [...new Set(reviewFindings)] };
+
+  return { decision: "ALLOW", reasons: [] };
 }

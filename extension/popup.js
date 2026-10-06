@@ -171,7 +171,7 @@ async function getCurrentOrigin() {
 async function initTheme() {
   const result = await chrome.storage.local.get(["nalarTheme"]);
   let theme = result.nalarTheme;
-  if (!theme) {
+  if (!["light", "dark"].includes(theme)) {
     theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
   }
   applyTheme(theme);
@@ -232,7 +232,7 @@ function renderProtection(enabled) {
   securityDescription.textContent = !enabled
     ? "Resume to check transactions before signing."
     : networkState === "verified"
-      ? "Transactions are checked before wallet signing."
+      ? "Each wallet request is checked separately."
       : networkState === "checking"
         ? "Verifying your wallet network."
         : "Transactions stay on hold until the network is verified.";

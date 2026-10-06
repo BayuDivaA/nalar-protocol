@@ -24,6 +24,21 @@ const criticalScamAnalysis = {
 };
 
 describe("TxSentry Security Decision", () => {
+  test("requires review for incomplete inspection or observed restrictions, not ALLOW", () => {
+    for (const code of ["CONTRACT_EVIDENCE_UNAVAILABLE", "PROXY_IMPLEMENTATION_UNKNOWN", "CAPABILITY_ACCESS_UNKNOWN", "TRANSFER_RESTRICTED", "TRADING_CURRENTLY_DISABLED", "LIQUIDITY_LOW", "HOLDER_CONCENTRATION_HIGH"] as const) {
+      const decision = makeSecurityDecision({
+        simulationSuccess: true, risk: { score: 35, level: "MEDIUM", reasons: [] },
+        comparison: { matches: true, mismatches: [] }, effects: { approvals: [], swaps: [] },
+        policy: evaluatePolicy({ policy: defaultPolicy, action: "SWAP", value: 0n }),
+        scamAnalyses: [{ ...criticalScamAnalysis, riskLevel: "MEDIUM", riskScore: 35,
+          findings: [{ code, severity: "MEDIUM", title: "Inspection needs review", description: "Available evidence is insufficient or restricted.", source: "ONCHAIN" }],
+        }],
+      });
+      expect(decision.decision).toBe("REVIEW");
+      expect(decision.reasons[0]).toContain("Inspection needs review");
+    }
+  });
+
   test("ALLOW — safe mint under policy threshold", () => {
     const policy = evaluatePolicy({
       policy: defaultPolicy,

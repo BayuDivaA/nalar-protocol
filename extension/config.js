@@ -20,6 +20,18 @@ const NALAR_CONFIG = {
   // Analysis timeout in milliseconds (30s accommodates on-chain simulation and BNB Agent investigation)
   TIMEOUT_MS: 30000,
 
+  ANALYSIS_STEPS: {
+    intent: "Understanding your request",
+    decode: "Decoding transaction",
+    simulate: "Simulating execution",
+    effects: "Checking assets and permissions",
+    investigate: "Inspecting addresses with BNB MCP",
+    state: "Reading on-chain state",
+    scam: "Checking contract risks",
+    decide: "Evaluating security rules",
+    explain: "Preparing the explanation",
+  },
+
   // Shared network context for popup, background, and page UI.
   SUPPORTED_CHAINS: {
     97: {

@@ -393,6 +393,9 @@ export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): Transacti
           commands,
           inputs: routerInputs,
         });
+        let swapDecodingComplete = !commandAnalysis.commands.some(({ command }) =>
+          ["UNKNOWN", "INFI_SWAP", "V2_SWAP_EXACT_OUT", "V3_SWAP_EXACT_OUT", "STABLE_SWAP_EXACT_IN", "STABLE_SWAP_EXACT_OUT", "EXECUTE_SUB_PLAN"].includes(command),
+        );
 
         /**
          * ----------------------------------------------
@@ -433,6 +436,7 @@ export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): Transacti
                 fees: swap.fees,
               });
             } catch (error) {
+              swapDecodingComplete = false;
               /**
                * A malformed swap command should not
                * crash the entire transaction analyzer.
@@ -486,6 +490,7 @@ export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): Transacti
                 fees: [],
               });
             } catch (error) {
+              swapDecodingComplete = false;
               console.error("[V2 SWAP ANALYZER]", error);
             }
           }
@@ -504,6 +509,9 @@ export function analyzeEffects(input: AnalyzeEffectsInput, depth = 0): Transacti
             }
           }
         }
+        // A decoded leg cannot establish the intent of an incompletely decoded route.
+        // Keep any approval evidence, but require review instead of matching the partial swap.
+        if (!swapDecodingComplete) effects.swaps = [];
       } catch (error) {
         /**
          * Invalid Universal Router command stream.

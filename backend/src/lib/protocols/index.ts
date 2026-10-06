@@ -17,6 +17,13 @@ export interface ProtocolContract {
 export const protocolContracts: ProtocolContract[] = [
   {
     name: "PancakeSwap Infinity Universal Router",
+    protocol: "PancakeSwap",
+    chainId: 56,
+    address: "0xd9C500DfF816a1Da21A48A732d3498Bf09dc9AEB",
+    abi: pancakeswapUniversalRouterAbi,
+  },
+  {
+    name: "PancakeSwap Infinity Universal Router",
 
     protocol: "PancakeSwap",
 

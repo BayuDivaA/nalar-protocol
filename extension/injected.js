@@ -45,25 +45,25 @@
   };
 
   const UI = {
-    bg: "#0B132B",
-    bgDeep: "#050811",
-    surface: "#101A2E",
-    raised: "#14213A",
-    border: "#1E293B",
-    borderStrong: "#334155",
-    text: "#FFFFFF",
-    soft: "#CBD5E1",
-    muted: "#94A3B8",
-    dim: "#64748B",
-    danger: "#F87171",
-    warning: "#FBBF24",
-    safe: "#4ADE80",
-    accent: "#0066FF",
-    accentHover: "#2563EB",
-    dangerBg: "rgba(248, 113, 113, 0.08)",
-    warningBg: "rgba(251, 191, 36, 0.08)",
-    safeBg: "rgba(74, 222, 128, 0.08)",
-    accentBg: "#0D1B34",
+    bg: "var(--nalar-ui-bg)",
+    bgDeep: "var(--nalar-ui-bg-deep)",
+    surface: "var(--nalar-ui-surface)",
+    raised: "var(--nalar-ui-raised)",
+    border: "var(--nalar-ui-border)",
+    borderStrong: "var(--nalar-ui-border-strong)",
+    text: "var(--nalar-ui-text)",
+    soft: "var(--nalar-ui-soft)",
+    muted: "var(--nalar-ui-muted)",
+    dim: "var(--nalar-ui-dim)",
+    danger: "var(--nalar-ui-danger)",
+    warning: "var(--nalar-ui-warning)",
+    safe: "var(--nalar-ui-safe)",
+    accent: "var(--nalar-ui-accent)",
+    accentHover: "var(--nalar-ui-accent-hover)",
+    dangerBg: "var(--nalar-ui-danger-bg)",
+    warningBg: "var(--nalar-ui-warning-bg)",
+    safeBg: "var(--nalar-ui-safe-bg)",
+    accentBg: "var(--nalar-ui-accent-soft)",
   };
 
   const MOTION = {
@@ -100,8 +100,6 @@
     wrap.appendChild(label);
     return wrap;
   }
-
-  const ANALYSIS_STEPS = ["Understanding your request", "Decoding transaction", "Simulating execution", "Checking contract", "Reviewing on-chain evidence", "Evaluating security", "Preparing recommendation"];
 
   const wrappedProviders = new WeakSet();
 
@@ -293,176 +291,6 @@
   |--------------------------------------------------------------------------
   */
 
-  function installStyles() {
-    if (document.getElementById("__nalar_styles__")) {
-      return;
-    }
-
-    const style = document.createElement("style");
-
-    style.id = "__nalar_styles__";
-
-    style.textContent = `
-      @keyframes nalarFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-
-      @keyframes nalarFadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
-      }
-
-      @keyframes nalarModalIn {
-        from {
-          opacity: 0;
-          transform: translateY(12px) scale(.985);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      @keyframes nalarModalOut {
-        from {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-        to {
-          opacity: 0;
-          transform: translateY(6px) scale(.99);
-        }
-      }
-
-      @keyframes nalarFadeRise {
-        from {
-          opacity: 0;
-          transform: translateY(8px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes nalarStepIn {
-        from {
-          opacity: 0;
-          transform: translateX(-6px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-
-      @keyframes nalarPulseBlock {
-        0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.45); }
-        70% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
-      }
-
-      @keyframes nalarPulseReview {
-        0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.45); }
-        70% { box-shadow: 0 0 0 6px rgba(251, 191, 36, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
-      }
-
-      @keyframes nalarPulseAllow {
-        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.45); }
-        70% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-      }
-
-      .nalar-overlay {
-        animation: nalarFadeIn 240ms cubic-bezier(.16, 1, .3, 1);
-      }
-
-      .nalar-overlay.nalar-closing {
-        animation: nalarFadeOut 180ms ease-in forwards !important;
-      }
-
-      .nalar-modal {
-        isolation: isolate;
-        animation: nalarModalIn 300ms cubic-bezier(.16, 1, .3, 1);
-      }
-
-      .nalar-overlay.nalar-closing .nalar-modal {
-        animation: nalarModalOut 180ms ease-in forwards !important;
-      }
-
-      .nalar-modal::before {
-        position: absolute;
-        inset: 0 0 auto 0;
-        height: 1px;
-        content: "";
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
-        pointer-events: none;
-      }
-
-      .nalar-decision-overlay[data-decision="block"] .nalar-modal::before {
-        background: linear-gradient(90deg, transparent, ${UI.danger}, transparent) !important;
-      }
-      .nalar-decision-overlay[data-decision="review"] .nalar-modal::before {
-        background: linear-gradient(90deg, transparent, ${UI.warning}, transparent) !important;
-      }
-      .nalar-decision-overlay[data-decision="allow"] .nalar-modal::before {
-        background: linear-gradient(90deg, transparent, ${UI.safe}, transparent) !important;
-      }
-
-      .nalar-stagger-1 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 0ms both !important; }
-      .nalar-stagger-2 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 70ms both !important; }
-      .nalar-stagger-3 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 130ms both !important; }
-      .nalar-stagger-4 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 190ms both !important; }
-      .nalar-stagger-5 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 250ms both !important; }
-      .nalar-stagger-6 { animation: nalarFadeRise 240ms cubic-bezier(.16,1,.3,1) 310ms both !important; }
-
-      .nalar-button {
-        transition:
-          background-color 150ms ease,
-          border-color 150ms ease,
-          transform 120ms ease,
-          box-shadow 150ms ease;
-      }
-
-      .nalar-button:hover {
-        border-color: ${UI.accent} !important;
-      }
-
-      .nalar-button:active {
-        transform: scale(0.98);
-      }
-
-      .nalar-button:focus-visible {
-        outline: 2px solid ${UI.accent};
-        outline-offset: 2px;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .nalar-overlay,
-        .nalar-modal,
-        .nalar-stagger-1,
-        .nalar-stagger-2,
-        .nalar-stagger-3,
-        .nalar-stagger-4,
-        .nalar-stagger-5,
-        .nalar-stagger-6 {
-          animation: none !important;
-        }
-
-        .nalar-button {
-          transition: none !important;
-        }
-
-        .nalar-modal::before {
-          animation: none !important;
-        }
-      }
-    `;
-
-    document.documentElement.appendChild(style);
-  }
 
   /*
   |--------------------------------------------------------------------------
@@ -848,7 +676,7 @@
      * Ask user for intent
      */
 
-    const confirmedIntent = await showIntentOverlay(existingIntent);
+    const confirmedIntent = await showIntentOverlay(existingIntent, numericChainId);
 
     if (typeof confirmedIntent !== "string" || !confirmedIntent.trim()) {
       throw new Error("[Nalar] Transaction cancelled.");
@@ -876,7 +704,7 @@
      * Loading UI
      */
 
-    const analysis = showAnalysisOverlay();
+    const analysis = showAnalysisOverlay(numericChainId);
 
     /*
      * Security promise
@@ -995,6 +823,11 @@
         const message = event.data;
 
         if (!message || message.source !== "NALAR_EXTENSION") {
+          return;
+        }
+
+        if (message.type === "TX_PROGRESS") {
+          if (!settled && message.id === id && message.chainId === numericChainId) analysis?.updateProgress?.(message.progress);
           return;
         }
 
@@ -1180,11 +1013,9 @@
   |--------------------------------------------------------------------------
   */
 
-  function showIntentOverlay(existingIntent = "") {
+  function showIntentOverlay(existingIntent = "", chainId) {
     return new Promise((resolve) => {
       removeNalarElement(IDS.intent);
-
-      installStyles();
 
       const overlay = document.createElement("div");
 
@@ -1195,8 +1026,10 @@
       applyOverlayStyle(overlay);
 
       const modal = createModal();
+      modal.classList.add("nalar-intent-modal");
 
       const header = document.createElement("div");
+      header.className = "nalar-intent-header";
 
       header.style.padding = "24px 26px 20px";
       header.style.borderBottom = `1px solid ${UI.border}`;
@@ -1242,6 +1075,7 @@
       header.appendChild(description);
 
       const body = document.createElement("div");
+      body.className = "nalar-intent-body";
 
       Object.assign(body.style, {
         padding: "22px 28px 20px",
@@ -1250,8 +1084,12 @@
       const siteLabel = createLabel("REQUEST FROM");
 
       const site = document.createElement("div");
+      site.className = "nalar-request-context";
 
       site.textContent = window.location.hostname || "Current website";
+      site.title = window.location.origin;
+      const network = NALAR_CONFIG.SUPPORTED_CHAINS[parseNumericChainId(chainId)];
+      if (network) site.textContent += ` · ${network.name}`;
 
       Object.assign(site.style, {
         marginTop: "8px",
@@ -1280,6 +1118,7 @@
       body.appendChild(site);
 
       const intentLabel = createLabel("YOUR INTENT");
+      intentLabel.id = "__nalar_intent_label__";
 
       intentLabel.style.marginTop = "22px";
 
@@ -1287,14 +1126,16 @@
 
       textarea.value = typeof existingIntent === "string" ? existingIntent : "";
 
-      textarea.placeholder = "Example: Swap 0.001 tBNB to NDEMO";
+      textarea.placeholder = network ? `e.g. Send ${network.nativeAsset} to a friend` : "Describe the action you expect";
+      textarea.setAttribute("aria-labelledby", intentLabel.id);
+      textarea.setAttribute("aria-describedby", "__nalar_intent_help__");
 
       textarea.className = "nalar-intent-textarea";
 
       Object.assign(textarea.style, {
         display: "block",
         width: "100%",
-        minHeight: "128px",
+        minHeight: "96px",
         marginTop: "8px",
         resize: "vertical",
         padding: "14px",
@@ -1309,8 +1150,7 @@
       });
 
       textarea.addEventListener("focus", () => {
-        textarea.style.borderColor = "rgba(255,255,255,.26)";
-        textarea.style.boxShadow = "0 0 0 3px rgba(255,255,255,.045)";
+        textarea.style.borderColor = UI.accent;
       });
 
       textarea.addEventListener("blur", () => {
@@ -1321,8 +1161,24 @@
       body.appendChild(intentLabel);
 
       body.appendChild(textarea);
+      const privacy = document.createElement("p");
+      privacy.id = "__nalar_intent_help__";
+      privacy.className = "nalar-intent-helper";
+      privacy.textContent = "Stored per site; sent with transaction details for analysis.";
+      body.appendChild(privacy);
+      const validation = document.createElement("p");
+      validation.id = "__nalar_intent_error__";
+      validation.className = "nalar-intent-validation";
+      validation.setAttribute("role", "alert");
+      body.appendChild(validation);
+      textarea.addEventListener("input", () => {
+        textarea.removeAttribute("aria-invalid");
+        textarea.setAttribute("aria-describedby", privacy.id);
+        validation.textContent = "";
+      });
 
       const footer = document.createElement("div");
+      footer.className = "nalar-intent-footer";
 
       Object.assign(footer.style, {
         display: "grid",
@@ -1350,6 +1206,9 @@
         const value = textarea.value.trim();
 
         if (!value) {
+          validation.textContent = "Describe what you expect this transaction to do.";
+          textarea.setAttribute("aria-invalid", "true");
+          textarea.setAttribute("aria-describedby", `${privacy.id} ${validation.id}`);
           textarea.focus();
           return;
         }
@@ -1406,8 +1265,6 @@
   function showNetworkFailureOverlay({ title, description, onRetry, onCancel, onSwitchTestnet }) {
     removeNalarElement(IDS.network);
     removeNalarElement(IDS.analysis);
-    installStyles();
-
     const overlay = document.createElement("div");
     overlay.id = IDS.network;
     overlay.className = "nalar-overlay nalar-network-overlay";
@@ -1415,10 +1272,10 @@
     const modal = createModal();
     modal.classList.add("nalar-network-modal");
     Object.assign(modal.style, { width: "min(440px, 100%)", padding: "24px" });
-    modal.appendChild(createBrandEyebrow("NALAR PROTOCOL · NETWORK CHECK"));
+    modal.appendChild(createBrandEyebrow("NALAR · TRANSACTION CHECK"));
 
     const heading = document.createElement("h2");
-    heading.textContent = title;
+    heading.textContent = String(title).toLowerCase().replace(/^./, (letter) => letter.toUpperCase()).replace(/\b(bnb|mcp|rpc|nalar)\b/g, (name) => name.toUpperCase());
     Object.assign(heading.style, { margin: "14px 0 8px", fontSize: "20px", color: UI.text });
     modal.appendChild(heading);
 
@@ -1448,6 +1305,7 @@
     }
     const cancel = createButton("Cancel", false);
     cancel.onclick = () => { overlay.remove(); onCancel(); };
+    modal.addEventListener("keydown", (event) => { if (event.key === "Escape") cancel.click(); });
     actions.appendChild(cancel);
     modal.appendChild(actions);
     overlay.appendChild(modal);
@@ -1459,8 +1317,6 @@
     removeNalarElement(IDS.analysis);
     removeNalarElement(IDS.decision);
     removeNalarElement(IDS.intent);
-
-    installStyles();
 
     const overlay = document.createElement("div");
     overlay.id = IDS.network;
@@ -1663,6 +1519,7 @@
     };
 
     footer.appendChild(cancelBtn);
+    modal.addEventListener("keydown", (event) => { if (event.key === "Escape") cancelBtn.click(); });
     footer.appendChild(switchBtn);
 
     modal.appendChild(footer);
@@ -1686,11 +1543,8 @@
   |--------------------------------------------------------------------------
   */
 
-  function showAnalysisOverlay() {
+  function showAnalysisOverlay(chainId) {
     removeNalarElement(IDS.analysis);
-
-    installStyles();
-
     const overlay = document.createElement("div");
     overlay.id = IDS.analysis;
     overlay.className = "nalar-overlay";
@@ -1698,149 +1552,79 @@
 
     const modal = createModal();
     modal.classList.add("nalar-analysis-modal");
-    Object.assign(modal.style, {
-      width: "min(460px, 100%)",
-      padding: "26px",
-    });
-
-    const eyebrow = createBrandEyebrow("NALAR PROTOCOL · SECURITY");
+    modal.setAttribute("aria-busy", "true");
+    modal.appendChild(createBrandEyebrow("NALAR PROTOCOL · SECURITY"));
 
     const title = document.createElement("h2");
-    title.textContent = "Analyzing transaction";
-    Object.assign(title.style, {
-      margin: "10px 0 0",
-      fontSize: "20px",
-      lineHeight: "1.1",
-      letterSpacing: "-.025em",
-      color: UI.text,
-      fontWeight: "700",
-    });
-
-    const subtitle = document.createElement("p");
-    subtitle.textContent = "Checking the request before your wallet is asked to sign.";
-    Object.assign(subtitle.style, {
-      margin: "8px 0 0",
-      fontSize: "12.5px",
-      lineHeight: "1.55",
-      color: UI.soft,
-    });
-
-    const counter = document.createElement("div");
-    Object.assign(counter.style, {
-      marginTop: "18px",
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-      fontSize: "10px",
-      letterSpacing: ".08em",
-      color: UI.muted,
-      fontWeight: "700",
-    });
-    counter.textContent = `01 / ${String(ANALYSIS_STEPS.length).padStart(2, "0")}`;
-
-    const list = document.createElement("div");
-    list.style.marginTop = "8px";
-
-    const rows = ANALYSIS_STEPS.map((label, index) => {
-      const row = document.createElement("div");
-      row.className = "nalar-analysis-step";
-      row.setAttribute("data-state", index === 0 ? "active" : "pending");
-      Object.assign(row.style, {
-        display: "grid",
-        gridTemplateColumns: "22px 18px 1fr",
-        alignItems: "center",
-        gap: "8px",
-        padding: "9px 0",
-        borderBottom: index === ANALYSIS_STEPS.length - 1 ? "none" : `1px solid ${UI.border}`,
-        opacity: index === 0 ? "1" : "0.6",
-      });
-
-      const num = document.createElement("span");
-      num.className = "nalar-step-num";
-      num.textContent = String(index + 1).padStart(2, "0");
-      num.style.color = index === 0 ? UI.accent : UI.dim;
-
-      const indicator = document.createElement("div");
-      indicator.className = "nalar-analysis-indicator";
-      Object.assign(indicator.style, {
-        width: "18px",
-        height: "18px",
-        display: "grid",
-        placeItems: "center",
-        fontSize: "11px",
-        fontWeight: "600",
-        color: index === 0 ? UI.accent : UI.dim,
-      });
-      indicator.textContent = index === 0 ? "●" : "○";
-
-      const text = document.createElement("div");
-      text.className = "nalar-step-text";
-      text.textContent = label;
-      text.style.fontSize = "12.5px";
-      text.style.color = index === 0 ? UI.text : UI.dim;
-
-      row.appendChild(num);
-      row.appendChild(indicator);
-      row.appendChild(text);
-
-      list.appendChild(row);
-
-      return { num, indicator, text, row };
-    });
-
-    modal.appendChild(eyebrow);
+    title.textContent = "Checking transaction";
     modal.appendChild(title);
-    modal.appendChild(subtitle);
-    modal.appendChild(counter);
-    modal.appendChild(list);
+
+    const context = document.createElement("p");
+    context.className = "nalar-request-context";
+    const network = NALAR_CONFIG.SUPPORTED_CHAINS[parseNumericChainId(chainId)];
+    context.textContent = window.location.hostname || "Current website";
+    if (network) context.textContent += ` · ${network.name}`;
+    modal.appendChild(context);
+
+    const rail = document.createElement("div");
+    rail.className = "nalar-progress-rail";
+    rail.setAttribute("role", "progressbar");
+    rail.setAttribute("aria-label", "Transaction analysis in progress");
+    const indicator = document.createElement("span");
+    rail.appendChild(indicator);
+    modal.appendChild(rail);
+
+    const status = document.createElement("p");
+    status.className = "nalar-analysis-status";
+    status.setAttribute("role", "status");
+    status.textContent = "Waiting for the security check. Your transaction has not been sent to the wallet.";
+    modal.appendChild(status);
+
+    const steps = document.createElement("ol");
+    steps.className = "nalar-analysis-steps";
+    steps.hidden = true;
+    const rows = new Map();
+    Object.entries(NALAR_CONFIG.ANALYSIS_STEPS ?? {}).forEach(([stage, label]) => {
+      const row = document.createElement("li");
+      row.setAttribute("data-status", "pending");
+      const marker = document.createElement("span");
+      marker.className = "nalar-step-marker";
+      marker.setAttribute("aria-hidden", "true");
+      marker.textContent = "○";
+      const name = document.createElement("span");
+      name.textContent = label;
+      const state = document.createElement("span");
+      state.className = "nalar-step-state";
+      state.textContent = "Waiting";
+      row.appendChild(marker); row.appendChild(name); row.appendChild(state);
+      steps.appendChild(row);
+      rows.set(stage, { row, marker, state, status: "pending" });
+    });
+    modal.appendChild(steps);
 
     overlay.appendChild(modal);
     document.documentElement.appendChild(overlay);
-
-    let current = 0;
-
-    const timer = setInterval(() => {
-      if (!document.getElementById(IDS.analysis)) {
-        clearInterval(timer);
-        return;
-      }
-
-      rows.forEach((item, index) => {
-        if (index < current) {
-          item.indicator.textContent = "✓";
-          item.indicator.style.color = UI.safe;
-          item.text.style.color = UI.soft;
-          item.num.style.color = UI.muted;
-          item.row.setAttribute("data-state", "done");
-          item.row.style.opacity = "0.75";
-        } else if (index === current) {
-          item.indicator.textContent = "●";
-          item.indicator.style.color = UI.accent;
-          item.text.style.color = UI.text;
-          item.num.style.color = UI.accent;
-          item.row.setAttribute("data-state", "active");
-          item.row.style.opacity = "1";
-        } else {
-          item.indicator.textContent = "○";
-          item.indicator.style.color = UI.dim;
-          item.text.style.color = UI.dim;
-          item.num.style.color = UI.dim;
-          item.row.setAttribute("data-state", "pending");
-          item.row.style.opacity = "0.45";
-        }
-      });
-
-      counter.textContent = `${String(current + 1).padStart(2, "0")} / ${String(ANALYSIS_STEPS.length).padStart(2, "0")}`;
-
-      current += 1;
-
-      // hold on last step until backend responds
-      if (current >= rows.length) {
-        current = rows.length - 1;
-      }
-    }, 450);
-
     return {
+      updateProgress(event) {
+        if (!overlay.isConnected || event?.chainId !== parseNumericChainId(chainId)) return;
+        const entry = rows.get(event.stage);
+        if (!entry || !["running", "completed", "failed", "unavailable"].includes(event.status)) return;
+        if (event.address) {
+          if (entry.status === "running" && /^0x[a-fA-F0-9]{40}$/.test(event.address)) {
+            status.textContent = `${event.status === "completed" ? "Checked" : NALAR_CONFIG.ANALYSIS_STEPS[event.stage]} · ${event.address}`;
+            linkifyAddresses(status, parseNumericChainId(chainId));
+          }
+          return;
+        }
+        if (event.status === "running" ? entry.status !== "pending" : entry.status !== "running") return;
+        steps.hidden = false;
+        entry.status = event.status;
+        entry.row.setAttribute("data-status", event.status);
+        entry.marker.textContent = { running: "●", completed: "✓", failed: "×", unavailable: "–" }[event.status];
+        entry.state.textContent = { running: "In progress", completed: "Completed", failed: "Failed", unavailable: "Unavailable" }[event.status];
+        status.textContent = event.status === "running" ? NALAR_CONFIG.ANALYSIS_STEPS[event.stage] : "Your transaction has not been sent to the wallet.";
+      },
       remove(callback) {
-        clearInterval(timer);
         dismissNalarElement(IDS.analysis, callback);
       },
     };
@@ -1855,8 +1639,6 @@
   function showDecisionOverlay(security, decision, onContinue, onCancel, chainId) {
     removeNalarElement(IDS.decision);
 
-    installStyles();
-
     const overlay = document.createElement("div");
 
     overlay.id = IDS.decision;
@@ -1870,7 +1652,7 @@
     const modal = createModal();
 
     Object.assign(modal.style, {
-      width: "min(560px, 100%)",
+      width: "min(620px, 100%)",
       maxHeight: "calc(100vh - 32px)",
       display: "flex",
       flexDirection: "column",
@@ -1878,7 +1660,7 @@
 
     const riskLevel = String(security?.riskLevel ?? "UNKNOWN");
 
-    const riskScore = Number.isFinite(Number(security?.riskScore)) ? Number(security?.riskScore) : 0;
+    const riskScore = Number.isFinite(security?.riskScore) ? security.riskScore : null;
 
     const status = getDecisionStatus(decision);
 
@@ -1898,11 +1680,11 @@
       flex: "1 1 auto",
     });
 
-    // 2. Why Nalar Stopped Card (prominent above fold)
-    body.appendChild(createWhyStoppedCard(explanation, security, decision));
-
-    // 3. Intent vs Actual Comparison
+    // Show the action and its key reason before the supporting details.
     body.appendChild(createIntentVsActualComparison(explanation, security, decision));
+    body.appendChild(createWhyStoppedCard(explanation, security, decision));
+    const affected = createAffectedSection(security);
+    if (affected) body.appendChild(affected);
 
     // 4. What This Means For You
     const meansSection = createWhatThisMeansSection(explanation, security, decision);
@@ -1984,9 +1766,10 @@
 
     const headingWrap = document.createElement("div");
 
-    const eyebrow = createBrandEyebrow("NALAR PROTOCOL · SECURITY");
+    const eyebrow = createBrandEyebrow("NALAR · TRANSACTION CHECK");
 
     const heading = document.createElement("h2");
+    heading.className = "nalar-verdict-title";
     heading.textContent = status.title;
     Object.assign(heading.style, {
       margin: "4px 0 0",
@@ -1998,6 +1781,7 @@
     });
 
     const subtitle = document.createElement("p");
+    subtitle.className = "nalar-verdict-description";
     subtitle.textContent = status.subtitle;
     Object.assign(subtitle.style, {
       margin: "4px 0 0",
@@ -2010,28 +1794,36 @@
     headingWrap.appendChild(heading);
     headingWrap.appendChild(subtitle);
 
-    const riskPill = document.createElement("div");
-    riskPill.className = "nalar-risk-pill";
-    riskPill.setAttribute("data-level", riskLevel.toLowerCase());
-    riskPill.textContent = `Risk ${riskScore} · ${riskLevel}`;
+    const verdict = document.createElement("div");
+    verdict.className = "nalar-verdict-code";
+    verdict.textContent = decision;
+    headingWrap.insertBefore(verdict, heading);
 
-    const pillColor = riskColor(riskLevel);
-    Object.assign(riskPill.style, {
-      padding: "5px 10px",
-      borderRadius: "6px",
-      fontSize: "11px",
-      fontWeight: "700",
-      fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
-      letterSpacing: ".02em",
-      color: pillColor,
-      background: decision === "BLOCK" ? UI.dangerBg : decision === "REVIEW" ? UI.warningBg : UI.safeBg,
-      border: `1px solid ${pillColor}44`,
-      whiteSpace: "nowrap",
-    });
+    const risk = document.createElement("div");
+    risk.className = "nalar-risk-readout";
+    risk.setAttribute("data-level", riskLevel.toLowerCase());
+    const level = document.createElement("div");
+    level.className = "nalar-risk-caption";
+    level.textContent = ({ LOW: "Low risk", MEDIUM: "Caution", HIGH: "High risk", CRITICAL: "Critical risk" })[riskLevel.toUpperCase()] ?? "Risk unknown";
+    risk.appendChild(level);
+    if (riskScore !== null) {
+      const score = document.createElement("div");
+      score.className = "nalar-risk-number";
+      score.textContent = String(riskScore);
+      const scale = document.createElement("span");
+      scale.textContent = " / 100";
+      score.appendChild(scale);
+      risk.appendChild(score);
+    } else {
+      const unavailable = document.createElement("span");
+      unavailable.className = "nalar-risk-unavailable";
+      unavailable.textContent = "Score unavailable";
+      risk.appendChild(unavailable);
+    }
 
     header.appendChild(mark);
     header.appendChild(headingWrap);
-    header.appendChild(riskPill);
+    header.appendChild(risk);
 
     return header;
   }
@@ -2076,16 +1868,9 @@
       return `You asked to ${userIntent}, but this transaction asks for ${actualAction} instead.`;
     }
 
-    // 2. Critical security finding (e.g. excessive sell tax >= 20%, honeypot, blacklisting)
+    // 2. Use normalized findings; raw tax values do not establish percentages.
     const analyses = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
     for (const a of analyses) {
-      const state = Array.isArray(a?.contractPrivileges?.state) ? a.contractPrivileges.state : [];
-      const sellTax = state.find((s) => s?.code === "CURRENT_SELL_TAX");
-      if (sellTax && Number(sellTax.value) >= 2000) {
-        const pct = (Number(sellTax.value) / 100).toFixed(0);
-        return `The token contract reports a configured ${pct}% sell tax. If enforced during a sale, you could receive less than expected.`;
-      }
-
       const findings = Array.isArray(a?.findings) ? a.findings : [];
       const criticalFinding = findings.find((f) => String(f?.severity).toUpperCase() === "CRITICAL" || String(f?.severity).toUpperCase() === "HIGH");
       if (criticalFinding?.title) {
@@ -2126,7 +1911,7 @@
       background: isBlock ? UI.dangerBg : isReview ? UI.warningBg : UI.surface,
     });
 
-    const labelText = isBlock ? "WHY THIS WAS STOPPED" : isReview ? "WHY REVIEW IS REQUIRED" : "SECURITY ASSESSMENT";
+    const labelText = "Why this verdict";
     const sectionLabel = createLabel(labelText);
     sectionLabel.style.color = isBlock ? UI.danger : isReview ? UI.warning : UI.muted;
 
@@ -2137,6 +1922,7 @@
     const reasonEl = document.createElement("div");
     reasonEl.className = "nalar-why-stopped-primary";
     reasonEl.textContent = primaryReasonText;
+    markExplanationSource(sectionLabel, explanation, primaryReasonText);
 
     Object.assign(reasonEl.style, {
       marginTop: "8px",
@@ -2151,6 +1937,11 @@
     const impactText = typeof explanation?.whyStopped?.userImpact === "string" && explanation.whyStopped.userImpact.trim() ? explanation.whyStopped.userImpact.trim() : null;
 
     if (impactText && impactText !== primaryReasonText) {
+      const impactLabel = document.createElement("div");
+      impactLabel.className = "nalar-impact-label";
+      impactLabel.textContent = "Impact";
+      markExplanationSource(impactLabel, explanation, impactText);
+      card.appendChild(impactLabel);
       const impactEl = document.createElement("div");
       impactEl.className = "nalar-why-stopped-impact";
       impactEl.textContent = impactText;
@@ -2164,6 +1955,15 @@
     }
 
     return card;
+  }
+
+  function markExplanationSource(label, explanation, text) {
+    if (explanation?.meta?.generator !== "AI" || ![explanation?.whyStopped?.primaryReason, explanation?.whyStopped?.userImpact, explanation?.whatThisMeans, explanation?.comparison?.summary, explanation?.summary, explanation?.userIntent?.description, explanation?.userIntent?.summary, explanation?.actualTransaction?.summary, ...(Array.isArray(explanation?.evidence) ? explanation.evidence.map((item) => item?.explanation) : [])].some((value) => typeof value === "string" && value.trim() === text)) return;
+    const badge = document.createElement("span");
+    badge.className = "nalar-ai-label";
+    badge.textContent = "[AI]";
+    badge.title = "AI-written explanation. The security verdict comes from deterministic rules.";
+    label.appendChild(badge);
   }
 
   function createIntentVsActualComparison(explanation, security, decision) {
@@ -2193,7 +1993,7 @@
       marginBottom: "12px",
     });
 
-    const headerLabel = createLabel("YOUR REQUEST VS ACTUAL");
+    const headerLabel = createLabel("Intent vs transaction");
     headerRow.appendChild(headerLabel);
 
     let badgeText = "✓ MATCHES";
@@ -2206,7 +2006,7 @@
       badgeColor = UI.danger;
       badgeBg = UI.dangerBg;
       badgeBorder = "rgba(248, 113, 113, 0.28)";
-    } else if (isUncertain) {
+    } else if (isUncertain || !isMatch) {
       badgeText = "? UNVERIFIED";
       badgeColor = UI.warning;
       badgeBg = UI.warningBg;
@@ -2216,6 +2016,7 @@
     const matchBadge = document.createElement("div");
     matchBadge.className = "nalar-badge";
     matchBadge.setAttribute("data-match", String(isMatch));
+    matchBadge.setAttribute("data-state", isMismatch ? "mismatch" : isMatch ? "match" : "uncertain");
     matchBadge.textContent = badgeText;
 
     Object.assign(matchBadge.style, {
@@ -2277,6 +2078,7 @@
     const intentLabel = document.createElement("div");
     intentLabel.className = "nalar-comparison-label";
     intentLabel.textContent = "YOUR REQUEST";
+    if (explanation?.meta?.generator === "AI") markExplanationSource(intentLabel, explanation, userIntentText);
     Object.assign(intentLabel.style, {
       fontSize: "9px",
       fontWeight: "700",
@@ -2313,6 +2115,7 @@
     const actualLabel = document.createElement("div");
     actualLabel.className = "nalar-comparison-label";
     actualLabel.textContent = "ACTUAL TRANSACTION";
+    if (explanation?.meta?.generator === "AI") markExplanationSource(actualLabel, explanation, actualTxText);
     Object.assign(actualLabel.style, {
       fontSize: "9px",
       fontWeight: "700",
@@ -2334,6 +2137,18 @@
 
     actualBox.appendChild(actualLabel);
     actualBox.appendChild(actualVal);
+    for (const [label, value] of [["Input", explanation?.actualTransaction?.input], ["Output", explanation?.actualTransaction?.output]]) {
+      if (typeof value !== "string" || !value.trim()) continue;
+      const amount = document.createElement("div");
+      amount.className = "nalar-transaction-amount";
+      const key = document.createElement("span");
+      key.textContent = label;
+      const display = document.createElement("span");
+      display.textContent = value;
+      amount.appendChild(key);
+      amount.appendChild(display);
+      actualBox.appendChild(amount);
+    }
     grid.appendChild(actualBox);
 
     card.appendChild(grid);
@@ -2405,6 +2220,56 @@
     return card;
   }
 
+  function createAffectedSection(security) {
+    const effects = security?.effects ?? {};
+    const entries = [
+      ...(Array.isArray(effects.approvals) ? effects.approvals : []).map((approval) => ({
+        label: approval.type === "ERC721_OPERATOR" ? `NFT operator permission${approval.approved === false ? " · revoked" : ""}` : approval.unlimited === true ? "Unlimited token allowance" : "Token allowance",
+        asset: approval.token,
+        party: approval.spender ?? approval.operator,
+        partyLabel: "Spender / operator",
+      })),
+      ...(Array.isArray(effects.swaps) ? effects.swaps : []).map((swap) => ({
+        label: "Token swap", asset: swap.tokenIn, output: swap.tokenOut, party: swap.recipient, partyLabel: "Recipient",
+      })),
+      ...(Array.isArray(effects.mints) ? effects.mints : []).map((mint) => ({
+        label: `NFT mint${Number.isFinite(mint.quantity) ? ` · ${mint.quantity}` : ""}`, asset: mint.contract, party: mint.recipient, partyLabel: "Recipient",
+      })),
+    ];
+    if (!entries.length) return null;
+    const section = document.createElement("section");
+    section.className = "nalar-affected-section";
+    section.appendChild(createLabel("Affected assets & permissions"));
+    const more = entries.length > 2 ? document.createElement("details") : null;
+    if (more) {
+      more.className = "nalar-affected-more";
+      const summary = document.createElement("summary");
+      summary.textContent = `${entries.length - 2} more affected ${entries.length === 3 ? "entry" : "entries"}`;
+      more.appendChild(summary);
+    }
+    entries.forEach((entry, index) => {
+      const row = document.createElement("div");
+      row.className = "nalar-effect-row";
+      const label = document.createElement("strong");
+      label.textContent = entry.label;
+      row.appendChild(label);
+      for (const [name, value] of [[entry.output ? "Send asset" : "Asset", entry.asset], ["Receive asset", entry.output], [entry.partyLabel, entry.party]]) {
+        if (typeof value !== "string" || !value) continue;
+        const field = document.createElement("div");
+        const key = document.createElement("span");
+        key.textContent = name;
+        const address = document.createElement("span");
+        address.textContent = value;
+        field.appendChild(key);
+        field.appendChild(address);
+        row.appendChild(field);
+      }
+      (index < 2 ? section : more).appendChild(row);
+    });
+    if (more) section.appendChild(more);
+    return section;
+  }
+
   function createWhatThisMeansSection(explanation, security, decision) {
     const isBlock = decision === "BLOCK";
     const isReview = decision === "REVIEW";
@@ -2440,7 +2305,7 @@
 
     const label = document.createElement("div");
     label.className = "nalar-means-label";
-    label.textContent = "WHAT THIS MEANS";
+    label.textContent = "What this means";
     Object.assign(label.style, {
       fontSize: "9px",
       fontWeight: "700",
@@ -2453,6 +2318,7 @@
     const body = document.createElement("div");
     body.className = "nalar-means-text";
     body.textContent = text;
+    markExplanationSource(label, explanation, text);
     Object.assign(body.style, {
       fontSize: "12px",
       lineHeight: "1.55",
@@ -2467,7 +2333,8 @@
     const evidenceItems = Array.isArray(explanation?.evidence) && explanation.evidence.length > 0 ? explanation.evidence : null;
     const reports = Array.isArray(security?.scamAnalyses) ? security.scamAnalyses : Array.isArray(security?.transactionScamContext?.analyses) ? security.transactionScamContext.analyses : [];
     const threats = Array.isArray(security?.transactionThreats) ? security.transactionThreats : [];
-    const count = evidenceItems ? evidenceItems.length : threats.length + reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0);
+    const hasAddressReports = reports.some((report) => /^0x[a-fA-F0-9]{40}$/.test(report?.token ?? "") && report?.contract);
+    const count = (evidenceItems?.length ?? 0) + threats.length + reports.reduce((acc, r) => acc + (Array.isArray(r?.findings) ? r.findings.length : 0), 0);
 
     const wrapper = document.createElement("details");
     wrapper.className = "nalar-evidence-details nalar-stagger-5";
@@ -2479,7 +2346,7 @@
     });
 
     const summary = document.createElement("summary");
-    summary.textContent = `Security evidence (${count > 0 ? `${count} ${count === 1 ? "item" : "items"}` : "unavailable"})`;
+    summary.textContent = `Security evidence (${count > 0 ? `${count} ${count === 1 ? "item" : "items"}` : hasAddressReports ? "no findings" : "unavailable"})`;
 
     Object.assign(summary.style, {
       cursor: "pointer",
@@ -2502,15 +2369,28 @@
       background: UI.surface,
     });
 
+    if (reports.length && (evidenceItems || threats.length)) {
+      const heading = document.createElement("h3");
+      heading.className = "nalar-evidence-group-title";
+      heading.textContent = "Transaction-wide findings";
+      content.appendChild(heading);
+    }
+
     if (evidenceItems) {
       evidenceItems.forEach((item, index) => {
         const row = document.createElement("div");
+        row.className = "nalar-evidence-record";
+        row.setAttribute("data-kind", evidenceKind(item));
+        if (String(item?.label ?? "").toLowerCase() === evidenceKind(item).toLowerCase()) row.setAttribute("data-kind-label", "redundant");
+        row.setAttribute("role", "group");
+        row.setAttribute("aria-label", evidenceKind(item));
         Object.assign(row.style, {
           padding: "7px 0",
           borderTop: index > 0 ? `1px solid ${UI.border}` : "none",
         });
 
         const topLine = document.createElement("div");
+        topLine.className = "nalar-evidence-line";
         Object.assign(topLine.style, {
           display: "flex",
           justifyContent: "space-between",
@@ -2519,6 +2399,7 @@
         });
 
         const labelEl = document.createElement("span");
+        labelEl.className = "nalar-evidence-label";
         labelEl.textContent = item?.label ?? "Evidence";
         Object.assign(labelEl.style, {
           fontSize: "11px",
@@ -2527,6 +2408,7 @@
         });
 
         const rightSide = document.createElement("div");
+        rightSide.className = "nalar-evidence-value";
         Object.assign(rightSide.style, {
           display: "flex",
           alignItems: "center",
@@ -2534,6 +2416,7 @@
         });
 
         const valEl = document.createElement("span");
+        valEl.className = "nalar-evidence-fact";
         valEl.textContent = item?.value ?? "Unavailable";
         Object.assign(valEl.style, {
           fontSize: "11px",
@@ -2554,7 +2437,9 @@
 
         if (item?.explanation) {
           const expEl = document.createElement("div");
+          expEl.className = "nalar-evidence-explanation";
           expEl.textContent = item.explanation;
+          if (explanation?.meta?.generator === "AI") markExplanationSource(expEl, explanation, item.explanation);
           Object.assign(expEl.style, {
             marginTop: "3px",
             fontSize: "11px",
@@ -2566,14 +2451,14 @@
 
         content.appendChild(row);
       });
-    } else {
-      reports.forEach((analysis, rIdx) => {
-        const sub = document.createElement("div");
-        if (rIdx > 0) {
-          sub.style.marginTop = "10px";
-          sub.style.paddingTop = "10px";
-          sub.style.borderTop = `1px solid ${UI.border}`;
-        }
+    }
+    if (reports.length || threats.length) {
+      reports.forEach((analysis) => {
+        const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
+        if (!findings.length && (!/^0x[a-fA-F0-9]{40}$/.test(analysis?.token ?? "") || !analysis?.contract)) return;
+        const sub = document.createElement("section");
+        sub.className = "nalar-address-evidence";
+        sub.setAttribute("aria-label", `Analysis for ${analysis?.token ?? "unavailable address"}`);
 
         const head = document.createElement("div");
         Object.assign(head.style, {
@@ -2583,17 +2468,17 @@
           marginBottom: "8px",
         });
 
-        const token = document.createElement("div");
+        const token = document.createElement("h3");
+        token.className = "nalar-evidence-group-title";
         token.textContent = analysis?.token ?? "Unknown";
         token.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-        token.style.fontSize = "11px";
         token.style.color = UI.text;
 
         const badge = document.createElement("div");
-        badge.textContent = `${analysis?.riskLevel ?? "UNKNOWN"} · ${analysis?.riskScore ?? 0}`;
+        badge.textContent = `${analysis?.riskLevel ?? "UNKNOWN"}${Number.isFinite(analysis?.riskScore) ? ` · ${analysis.riskScore}` : ""}`;
         Object.assign(badge.style, {
           color: riskColor(analysis?.riskLevel),
-          fontSize: "10px",
+          fontSize: "12px",
           fontWeight: "700",
         });
 
@@ -2601,7 +2486,30 @@
         head.appendChild(badge);
         sub.appendChild(head);
 
-        const findings = Array.isArray(analysis?.findings) ? analysis.findings : [];
+        const address = String(analysis?.token ?? "").toLowerCase();
+        const roles = [];
+        if (address && String(security?.transactionSummary?.target ?? "").toLowerCase() === address) roles.push("Transaction contract");
+        (security?.effects?.approvals ?? []).forEach((approval) => {
+          if (String(approval.token ?? "").toLowerCase() === address) roles.push("Approval asset");
+          if (String(approval.spender ?? approval.operator ?? "").toLowerCase() === address) roles.push("Spender / operator");
+        });
+        (security?.effects?.swaps ?? []).forEach((swap) => {
+          if (String(swap.tokenIn ?? "").toLowerCase() === address) roles.push("Input asset");
+          if (String(swap.tokenOut ?? "").toLowerCase() === address) roles.push("Output asset");
+          if ((swap.hopTokens ?? []).some((token) => String(token).toLowerCase() === address)) roles.push("Swap path");
+        });
+        if (roles.length) {
+          const role = document.createElement("p");
+          role.className = "nalar-address-role";
+          role.textContent = [...new Set(roles)].join(" · ");
+          sub.appendChild(role);
+        }
+        if (!findings.length) {
+          const empty = document.createElement("p");
+          empty.textContent = "No specific findings were returned for this address. This is not a safety guarantee.";
+          sub.appendChild(empty);
+        }
+
         findings.forEach((finding) => {
           const severity = String(finding?.severity ?? "INFO").toUpperCase();
           const isThreat = severity === "CRITICAL" || severity === "HIGH";
@@ -2614,23 +2522,29 @@
             lineHeight: "1.5",
             color: isThreat ? UI.danger : severity === "MEDIUM" ? UI.warning : UI.muted,
           });
-          fRow.textContent = `· ${finding?.title ?? finding?.code ?? "Security finding"}`;
+          fRow.appendChild(createFindingRecord(finding));
           sub.appendChild(fRow);
         });
 
         content.appendChild(sub);
       });
 
+      if (reports.length && threats.length) {
+        const heading = document.createElement("h3");
+        heading.className = "nalar-evidence-group-title";
+        heading.textContent = "Transaction-wide threats";
+        content.appendChild(heading);
+      }
       threats.forEach((finding) => {
         const row = document.createElement("div");
         row.className = "nalar-finding";
-        row.textContent = finding?.title ?? finding?.code ?? "Security finding";
+        row.appendChild(createFindingRecord(finding));
         Object.assign(row.style, { padding: "5px 0", fontSize: "11px", lineHeight: "1.5", color: UI.soft });
         content.appendChild(row);
       });
     }
 
-    if (!count) {
+    if (!count && !hasAddressReports) {
       const unavailable = document.createElement("p");
       unavailable.textContent = "No detailed evidence was returned for this transaction.";
       Object.assign(unavailable.style, { margin: "4px 0", fontSize: "11px", color: UI.soft });
@@ -2643,6 +2557,39 @@
       try { window.NALAR_MOTION?.enter(content); } catch {}
     });
     return wrapper;
+  }
+
+  function evidenceKind(item) {
+    // Classify presentation, not severity or security conclusions. Sources stay intact.
+    if (["UNLIMITED_ALLOWANCE", "UNEXPECTED_SPENDER", "UNEXPECTED_NFT_OPERATOR", "SUSPICIOUS_APPROVAL_TARGET", "APPROVAL_TO_CONTRACT"].includes(item?.code)) return "Token approval";
+    const source = String(item?.source ?? "UNKNOWN").toUpperCase();
+    return ({ SIMULATION: "Simulation", CONTRACT: "Contract analysis", ABI: "Contract analysis", PROXY: "Contract analysis", IMPLEMENTATION: "Contract analysis", ONCHAIN: "On-chain evidence", "ON-CHAIN": "On-chain evidence", ADDRESS_HISTORY: "Address history", REPUTATION: "Reputation", TOKEN_APPROVAL: "Token approval", INTENT: "Intent comparison", POLICY: "Policy evaluation", AGENT: "Agent analysis" })[source] ?? "Security finding";
+  }
+
+  function createFindingRecord(finding) {
+    const record = document.createElement("div");
+    record.className = "nalar-evidence-record";
+    record.setAttribute("data-kind", evidenceKind(finding));
+    record.setAttribute("role", "group");
+    record.setAttribute("aria-label", evidenceKind(finding));
+    const title = document.createElement("strong");
+    title.className = "nalar-evidence-label";
+    title.textContent = finding?.title ?? finding?.code ?? "Security finding";
+    const source = document.createElement("span");
+    source.className = "nalar-badge-source";
+    source.textContent = finding?.source ?? "UNKNOWN";
+    const line = document.createElement("div");
+    line.className = "nalar-evidence-line";
+    line.appendChild(title);
+    line.appendChild(source);
+    record.appendChild(line);
+    if (finding?.description) {
+      const description = document.createElement("div");
+      description.className = "nalar-evidence-explanation";
+      description.textContent = finding.description;
+      record.appendChild(description);
+    }
+    return record;
   }
 
   function createTechnicalSection(explanation, security, chainId) {
@@ -2686,12 +2633,18 @@
     const tx = security?.transactionSummary ?? {};
     const sim = security?.simulation ?? {};
     const approval = Array.isArray(security?.effects?.approvals) ? security.effects.approvals[0] : null;
+    const swap = Array.isArray(security?.effects?.swaps) ? security.effects.swaps[0] : null;
+    const mint = Array.isArray(security?.effects?.mints) ? security.effects.mints[0] : null;
 
     const rows = [
       ["Network", getChainName(chainId)],
       ["Chain ID", chainId],
       ["Target address", tx.target ?? security?.transaction?.to ?? "N/A"],
       ...(approval ? [["Spender / operator", approval.spender ?? approval.operator ?? "N/A"]] : []),
+      ...(approval?.token ? [["Approval token", approval.token]] : []),
+      ...(approval?.amount !== undefined ? [["Allowance (base units)", approval.amount]] : []),
+      ...(typeof approval?.approved === "boolean" ? [["Operator enabled", String(approval.approved)]] : []),
+      ...(swap?.recipient || mint?.recipient ? [["Recipient", swap?.recipient ?? mint?.recipient]] : []),
       ["Action", humanizeAction(actual.action)],
       ["Function name", actual.functionName ?? "N/A"],
       ["Selector", actual.selector ?? "N/A"],
@@ -2699,6 +2652,7 @@
       ["BNB MCP status", security?.bnbIntelligence?.available === true ? "Available" : "Unavailable"],
       ["Risk score", Number.isFinite(security?.riskScore) ? `${security.riskScore} / 100 (${security?.riskLevel ?? "UNKNOWN"})` : "Unavailable"],
       ["Analysis completed", typeof security?.checkedAt === "string" && !Number.isNaN(Date.parse(security.checkedAt)) ? new Date(security.checkedAt).toLocaleString() : "Unavailable"],
+      ...(typeof security?.transaction?.data === "string" ? [["Calldata", security.transaction.data]] : []),
     ];
 
     rows.forEach(([label, value]) => {
@@ -2786,7 +2740,7 @@
     actions.appendChild(cancel);
 
     if (!isBlock) {
-      const continueButton = createButton(decision === "REVIEW" ? "Review & Continue" : "Continue", true);
+      const continueButton = createButton(decision === "REVIEW" ? "Review & continue" : "Continue to wallet", true);
 
       continueButton.onclick = () => {
         dismissNalarElement(IDS.decision, () => {
@@ -2821,18 +2775,20 @@
       alignItems: "center",
       justifyContent: "center",
       padding: "16px",
-      background: "rgba(5, 8, 17, 0.82)",
-      backdropFilter: "blur(12px) saturate(0.9)",
-      WebkitBackdropFilter: "blur(12px) saturate(0.9)",
+      background: "rgba(25, 33, 40, 0.55)",
       fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
       boxSizing: "border-box",
     });
   }
 
   function createModal() {
+    const returnFocus = document.activeElement;
     const modal = document.createElement("div");
 
     modal.className = "nalar-modal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.tabIndex = -1;
 
     Object.assign(modal.style, {
       position: "relative",
@@ -2842,11 +2798,31 @@
       borderRadius: "12px",
       background: UI.bg,
       color: UI.text,
-      boxShadow: "0 32px 80px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(255, 255, 255, 0.06) inset",
+      boxShadow: "0 16px 48px rgba(15, 25, 32, 0.18)",
     });
 
     queueMicrotask(() => {
       if (!modal.isConnected) return;
+      modal.setAttribute("aria-label", modal.querySelector("h2")?.textContent || "NALAR transaction check");
+      const focusable = () => [...modal.querySelectorAll('button:not(:disabled), textarea, select, summary, a[href]')].filter((element) => element.getClientRects().length);
+      if (!modal.contains(document.activeElement)) modal.focus({ preventScroll: true });
+      modal.addEventListener("keydown", (event) => {
+        if (event.key !== "Tab") return;
+        const items = focusable();
+        const first = items[0] || modal;
+        const last = items.at(-1) || modal;
+        if (event.shiftKey && (document.activeElement === first || document.activeElement === modal)) {
+          event.preventDefault(); last.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === modal)) {
+          event.preventDefault(); first.focus();
+        }
+      });
+      const observer = new MutationObserver(() => {
+        if (modal.isConnected) return;
+        observer.disconnect();
+        if (returnFocus?.isConnected && !document.querySelector(".nalar-overlay")) returnFocus.focus();
+      });
+      observer.observe(document.documentElement, { childList: true });
       try { window.NALAR_MOTION?.enter(modal); } catch {}
     });
 
@@ -2922,12 +2898,12 @@
       border: `1px solid ${primary ? UI.accent : UI.borderStrong}`,
       borderRadius: "8px",
       background: primary ? UI.accent : UI.surface,
-      color: primary ? "#FFFFFF" : UI.text,
+      color: primary ? "var(--nalar-ui-on-accent)" : UI.text,
       fontSize: "12.5px",
       fontWeight: "600",
       letterSpacing: "-0.01em",
       cursor: "pointer",
-      boxShadow: primary ? "0 2px 10px rgba(0, 102, 255, 0.28)" : "none",
+      boxShadow: "none",
     });
 
     return button;
@@ -3337,23 +3313,23 @@
     switch (decision) {
       case "BLOCK":
         return {
-          title: "BLOCKED",
+          title: "Transaction blocked",
           subtitle: "Nalar stopped this transaction before your wallet signed it.",
           label: "Nalar stopped this transaction before your wallet signed it.",
         };
 
       case "REVIEW":
         return {
-          title: "REVIEW REQUIRED",
+          title: "Review required",
           subtitle: "Nalar recommends reviewing this transaction before proceeding.",
           label: "Nalar recommends reviewing this transaction before proceeding.",
         };
 
       default:
         return {
-          title: "SAFE TO CONTINUE",
-          subtitle: "Transaction appears consistent with your intent.",
-          label: "Transaction appears consistent with your intent.",
+          title: "Ready to continue",
+          subtitle: "No blocking condition was found in the available checks.",
+          label: "No blocking condition was found in the available checks.",
         };
     }
   }

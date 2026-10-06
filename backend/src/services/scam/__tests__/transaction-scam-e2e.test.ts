@@ -106,6 +106,39 @@ function createCriticalSellProvider(): BlockchainEvidenceProvider {
 }
 
 describe("Transaction scam E2E", () => {
+  test("audits approval addresses and intermediate tokens once, without inventing a sell context", async () => {
+    const inspected: string[] = [];
+    const simulated: string[] = [];
+    const progress: string[] = [];
+    const provider = createCleanProvider();
+    provider.inspectContract = async ({ chainId, address }) => {
+      expect(chainId).toBe(56);
+      inspected.push(address.toLowerCase());
+      const evidence = buildBaseEvidence(address);
+      if (address === ROUTER) evidence.state = [{ code: "CURRENT_SELL_TAX", label: "sellTax", value: "9800", unit: "BPS", status: "KNOWN", evidenceSource: "ONCHAIN" }];
+      return evidence;
+    };
+    provider.simulateSell = async ({ token }) => {
+      simulated.push(token);
+      return { attempted: false, success: null, error: null };
+    };
+    const analyses = await auditSwapTokens({
+      chainId: 56, owner: USER, router: ROUTER,
+      swaps: [{ ...swap, hopTokens: [TOKEN_IN, USER, TOKEN_OUT] }],
+      addresses: [ROUTER, TOKEN_IN, ROUTER], provider,
+      onProgress: async (address, status) => { progress.push(`${address}:${status}`); },
+    });
+    expect(new Set(inspected).size).toBe(4);
+    expect(inspected).toHaveLength(4);
+    expect(simulated.sort()).toEqual([TOKEN_IN, TOKEN_OUT].sort());
+    expect(progress).toHaveLength(8);
+    expect(analyses.find((analysis) => analysis.token === ROUTER)).toMatchObject({ riskLevel: "CRITICAL", honeypot: false, sellSimulation: { attempted: false } });
+    expect(analyses.find((analysis) => analysis.token === USER)?.findings).toHaveLength(0);
+    const approvalOnly = await auditSwapTokens({ chainId: 56, owner: USER, router: ROUTER, swaps: [], addresses: [ROUTER], provider });
+    expect(approvalOnly).toHaveLength(1);
+    expect(approvalOnly[0]?.riskLevel).toBe("CRITICAL");
+  });
+
   test("audits both tokenIn and tokenOut", async () => {
     const analyses = await auditSwapTokens({
       chainId: 97,

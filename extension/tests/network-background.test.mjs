@@ -7,26 +7,73 @@ const source = (name) => readFileSync(new URL(`../${name}`, import.meta.url), 'u
 const from = '0x53E993819F2Bc45A029615e8634BDdEEab4F7817';
 const to = '0xe56E18ff683AbF6E1aA01804FaCaeB3694FDdd35';
 
-function background(storage, fetch) {
+function background(storage, fetch, progress = []) {
   let listener;
   const context = vm.createContext({
     chrome: {
       runtime: { onMessage: { addListener(value) { listener = value; } } },
+      tabs: { sendMessage: async (tabId, message, options) => { progress.push({ tabId, message, options }); } },
       storage: { local: {
         get: async (keys) => Object.fromEntries(keys.map((key) => [key, storage[key]])),
         set: async (values) => Object.assign(storage, values),
       } },
     },
-    fetch, AbortController, setTimeout, clearTimeout, console,
+    fetch, AbortController, TextDecoder, setTimeout, clearTimeout, console,
   });
   context.importScripts = () => vm.runInContext(source('config.js'), context);
   vm.runInContext(source('background.js'), context);
-  return (message) => new Promise((resolve) => listener(message, {}, resolve));
+  return (message) => new Promise((resolve) => listener(message, { tab: { id: 7 }, frameId: 2 }, resolve));
 }
 
 const request = (chainId) => ({
   type: 'CHECK_TRANSACTION', origin: 'https://dapp.example', chainId,
   transaction: { chainId, from, to, value: '0x0', data: '0x' },
+});
+
+test('streamed progress belongs to the current request and does not replace final result validation', async () => {
+  const progress = [];
+  const result = { ok: true, decision: 'BLOCK', riskScore: 90, intentMatch: false, comparison: { overall: 'MISMATCH', matches: false }, simulation: { success: true }, explanation: { summary: 'Permission requested.' } };
+  const frame = `event: progress\ndata: ${JSON.stringify({ stage: 'decode', status: 'running', chainId: 56 })}\n\nevent: result\ndata: ${JSON.stringify(result)}\n\n`;
+  const bytes = new TextEncoder().encode(frame);
+  const send = background({ selectedNetwork: 56, intents: { 'https://dapp.example': 'Swap BNB' } }, async () => new Response(new ReadableStream({
+    start(controller) { controller.enqueue(bytes.slice(0, 21)); controller.enqueue(bytes.slice(21)); controller.close(); },
+  }), { headers: { 'Content-Type': 'text/event-stream' } }), progress);
+  const response = await send({ ...request(56), id: 44 });
+  assert.equal(response.security.decision, 'BLOCK');
+  assert.equal(progress.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(progress[0])), { tabId: 7, options: { frameId: 2 }, message: { type: 'TX_PROGRESS', id: 44, chainId: 56, progress: { stage: 'decode', status: 'running', chainId: 56 } } });
+});
+
+test('truncated, duplicate, malformed or wrong-chain security streams never produce ALLOW', async () => {
+  for (const frame of [
+    'event: progress\ndata: {"stage":"intent","status":"completed","chainId":56}\n\n',
+    'event: result\ndata: {}\n\nevent: result\ndata: {}\n\n',
+    'event: progress\ndata: not-json\n\n',
+    'event: progress\ndata: {"stage":"decode","status":"running","chainId":97}\n\n',
+  ]) {
+    const send = background({ selectedNetwork: 56, intents: { 'https://dapp.example': 'Swap BNB' } }, async () => new Response(frame, { headers: { 'Content-Type': 'text/event-stream' } }));
+    const response = await send(request(56));
+    assert.equal(response.security, null);
+    assert.equal(response.errorCode, 'ANALYSIS_UNAVAILABLE');
+  }
+});
+
+test('streamed backend errors and interrupted reads hold the transaction', async () => {
+  for (const code of ['NETWORK_CONNECTION_FAILED', 'ANALYSIS_UNAVAILABLE', 'UNSUPPORTED_CHAIN']) {
+    const send = background({ selectedNetwork: 56, intents: { 'https://dapp.example': 'Swap BNB' } }, async () => new Response(
+      `event: result\ndata: ${JSON.stringify({ ok: false, error: code, receivedChainId: 56 })}\n\n`,
+      { headers: { 'Content-Type': 'text/event-stream' } },
+    ));
+    const result = await send(request(56));
+    assert.equal(result.security, null);
+    assert.equal(result.errorCode, code === 'UNSUPPORTED_CHAIN' ? 'NETWORK_NOT_SUPPORTED' : code);
+  }
+  const send = background({ selectedNetwork: 56, intents: { 'https://dapp.example': 'Swap BNB' } }, async () => new Response(new ReadableStream({
+    start(controller) { controller.error(Object.assign(new Error('deadline'), { name: 'AbortError' })); },
+  }), { headers: { 'Content-Type': 'text/event-stream' } }));
+  const result = await send(request(56));
+  assert.equal(result.security, null);
+  assert.equal(result.errorCode, 'ANALYSIS_TIMEOUT');
 });
 
 test('selected Mainnet reaches existing backend with chain 56', async () => {

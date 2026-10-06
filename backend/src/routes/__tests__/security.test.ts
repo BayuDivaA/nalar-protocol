@@ -188,6 +188,38 @@ const ERC20_SPENDER = "0x3333333333333333333333333333333333333333";
 const MAX_UINT256 = "115792089237316195423570985008687907853269984665640564039457584007913129639935";
 
 describe("POST /api/transactions/security-check", () => {
+  test("streams real stage events before returning the existing security result", async () => {
+    const response = await app.fetch(new Request("http://localhost/api/transactions/security-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify({ intent: "Mint 1 NFT for 0.02 BNB", transaction: { chainId: 97, from: USER, to: DEMO_NFT, value: "20000000000000000", data: "0x6871ee40" } }),
+    }));
+    expect(response.headers.get("content-type")).toContain("text/event-stream");
+    const events = (await response.text()).trim().split(/\r?\n\r?\n/).map((frame) => ({
+      type: frame.match(/^event: (.+)$/m)?.[1],
+      data: JSON.parse(frame.match(/^data: (.+)$/m)?.[1] ?? "null"),
+    }));
+    const progress = events.filter((event) => event.type === "progress").map((event) => event.data);
+    expect(progress[0]).toMatchObject({ stage: "intent", status: "running", chainId: 97 });
+    expect(progress.find((event) => event.stage === "simulate" && event.status === "completed")).toBeDefined();
+    expect(progress.find((event) => event.stage === "explain" && event.status === "completed")).toBeDefined();
+    expect(events.at(-1)).toMatchObject({ type: "result", data: { ok: true, decision: "ALLOW", riskScore: 0 } });
+  });
+
+  test("failed simulation stops progress and streams BLOCK without completing later checks", async () => {
+    mock.module("../../services/simulator", () => ({ simulateTransaction: async () => ({ success: false, gasEstimate: null, returnData: null, error: "Execution reverted." }) }));
+    const response = await app.fetch(new Request("http://localhost/api/transactions/security-check", {
+      method: "POST", headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+      body: JSON.stringify({ intent: "Mint 1 NFT", transaction: { chainId: 97, from: USER, to: DEMO_NFT, value: "0", data: "0x6871ee40" } }),
+    }));
+    const events = (await response.text()).trim().split(/\r?\n\r?\n/).map((frame) => ({
+      type: frame.match(/^event: (.+)$/m)?.[1], data: JSON.parse(frame.match(/^data: (.+)$/m)?.[1] ?? "null"),
+    }));
+    expect(events.some((event) => event.type === "progress" && event.data.stage === "simulate" && event.data.status === "failed")).toBe(true);
+    expect(events.some((event) => event.type === "progress" && ["investigate", "decide", "explain"].includes(event.data.stage))).toBe(false);
+    expect(events.at(-1)).toMatchObject({ type: "result", data: { ok: true, decision: "BLOCK", riskScore: 100 } });
+  });
+
   beforeEach(() => {
     process.env.BNB_INVESTIGATOR_ENABLED = "false";
 
@@ -566,6 +598,8 @@ describe("POST /api/transactions/security-check", () => {
     let isContract: boolean | null = true;
     const contractSpy = spyOn(client, "isContract").mockImplementation(async () => ({ content: [{ type: "text", text: JSON.stringify({ isContract }) }] }));
     const blockSpy = spyOn(client, "getLatestBlock").mockResolvedValue({ content: [{ type: "text", text: "{}" }] });
+    const tokenSpy = spyOn(client, "getErc20TokenInfo").mockResolvedValue({ content: [{ type: "text", text: "{}" }] });
+    const stateSpy = spyOn(client, "readContract").mockResolvedValue({ content: [{ type: "text", text: "null" }] });
 
     try {
       for (const status of [true, false, null]) {
@@ -590,6 +624,8 @@ describe("POST /api/transactions/security-check", () => {
     } finally {
       contractSpy.mockRestore();
       blockSpy.mockRestore();
+      tokenSpy.mockRestore();
+      stateSpy.mockRestore();
       if (previous === undefined) delete process.env.BNB_INVESTIGATOR_ENABLED;
       else process.env.BNB_INVESTIGATOR_ENABLED = previous;
     }

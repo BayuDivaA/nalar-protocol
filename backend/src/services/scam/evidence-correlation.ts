@@ -5,10 +5,6 @@ function hasFinding(findings: readonly ScamFinding[], code: ScamFinding["code"])
   return findings.some((finding) => finding.code === code);
 }
 
-function findState(state: readonly ContractStateEvidence[], code: ContractStateEvidence["code"]): ContractStateEvidence | undefined {
-  return state.find((item) => item.code === code);
-}
-
 /**
  * Correlates independent deterministic evidence into stronger security signals.
  *
@@ -29,15 +25,15 @@ export function correlateSecurityEvidence(input: { findings: readonly ScamFindin
    *   owner has verified control over a currently excessive sell tax.
    */
   if (hasFinding(input.findings, "OWNER_CONTROLLED_TAX") && hasFinding(input.findings, "EXCESSIVE_SELL_TAX")) {
-    const sellTax = findState(input.state, "CURRENT_SELL_TAX");
+    const sellTaxFinding = input.findings.find((finding) => finding.code === "EXCESSIVE_SELL_TAX");
 
     correlated.push({
       code: "OWNER_CONTROLLED_EXCESSIVE_SELL_TAX",
       severity: "CRITICAL",
       title: "Owner controls an excessive sell tax",
       description: "Verified owner control over the sell-tax mechanism is combined with an observed excessive current sell tax.",
-      evidence: sellTax
-        ? `${sellTax.label}=${String(sellTax.value)} ${sellTax.unit ?? ""}. The contract evidence also establishes owner control over the tax mechanism.`
+      evidence: sellTaxFinding?.evidence
+        ? `${sellTaxFinding.evidence}. The contract evidence also establishes owner control over the tax mechanism.`
         : "Verified owner control over the sell-tax mechanism was combined with an excessive current sell-tax finding.",
       source: "ONCHAIN",
     });
@@ -54,9 +50,9 @@ export function correlateSecurityEvidence(input: { findings: readonly ScamFindin
    *
    * This is a state signal, not automatically a scam verdict.
    */
-  const tradingState = findState(input.state, "TRADING_ENABLED");
+  const tradingState = input.state.find((item) => item.code === "TRADING_ENABLED" && item.status === "KNOWN" && item.value === false);
 
-  if (hasFinding(input.findings, "TRADING_CAPABILITY") && tradingState?.status === "KNOWN" && tradingState.value === false) {
+  if (hasFinding(input.findings, "TRADING_CAPABILITY") && tradingState && !hasFinding(input.findings, "TRADING_CURRENTLY_DISABLED")) {
     correlated.push({
       code: "TRADING_CURRENTLY_DISABLED",
       severity: "MEDIUM",

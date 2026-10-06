@@ -15,6 +15,31 @@ function capabilityAbi() {
 }
 
 describe("Privilege evidence analysis", () => {
+  test("does not let an unknown, unitless, or malformed tax hide an explicit on-chain observation", () => {
+    const findings = analyzePrivilegeEvidence({ capabilities: [], accessControl: [], state: [
+      { code: "CURRENT_SELL_TAX", label: "sellTax", value: null, status: "UNKNOWN", evidenceSource: "ONCHAIN" },
+      { code: "CURRENT_SELL_TAX", label: "sellTax", value: "9800", status: "KNOWN", evidenceSource: "ONCHAIN" },
+      { code: "CURRENT_SELL_TAX", label: "sellTax", value: "invalid", unit: "BPS", status: "KNOWN", evidenceSource: "ONCHAIN" },
+      { code: "CURRENT_SELL_TAX", label: "sellTax", value: "9800", unit: "BPS", status: "KNOWN", evidenceSource: "ONCHAIN" },
+      { code: "CURRENT_BUY_TAX", label: "buyTax", value: "95", unit: "PERCENT", status: "KNOWN", evidenceSource: "ONCHAIN" },
+    ] });
+    expect(findings.map(({ code, severity }) => ({ code, severity }))).toEqual([
+      { code: "EXCESSIVE_SELL_TAX", severity: "CRITICAL" }, { code: "EXCESSIVE_BUY_TAX", severity: "CRITICAL" },
+    ]);
+    expect(findings.some(({ code }) => code === "OWNER_CONTROLLED_TAX")).toBe(false);
+  });
+
+  test("reports observed restrictions without inferring them from unknown or string booleans", () => {
+    const findings = analyzePrivilegeEvidence({ capabilities: [], accessControl: [], state: [
+      { code: "PAUSED", label: "paused", value: true, unit: "BOOLEAN", status: "KNOWN", evidenceSource: "ONCHAIN" },
+      { code: "TRADING_ENABLED", label: "tradingEnabled", value: false, unit: "BOOLEAN", status: "KNOWN", evidenceSource: "ONCHAIN" },
+      { code: "PAUSED", label: "paused", value: "true", unit: "BOOLEAN", status: "KNOWN", evidenceSource: "ONCHAIN" },
+      { code: "TRADING_ENABLED", label: "tradingEnabled", value: false, status: "UNKNOWN", evidenceSource: "ONCHAIN" },
+    ] });
+    expect(findings.map(({ code }) => code)).toEqual(["TRANSFER_RESTRICTED", "TRADING_CURRENTLY_DISABLED"]);
+    expect(findings.every(({ severity }) => severity === "MEDIUM")).toBe(true);
+  });
+
   test("keeps capability evidence separate from access evidence", () => {
     const findings = analyzePrivilegeEvidence({
       capabilities: detectContractCapabilities(capabilityAbi()),

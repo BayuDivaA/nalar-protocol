@@ -82,7 +82,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message?.type === "CHECK_TRANSACTION") {
-    handleSecurityCheck(message.transaction, message.chainId, message.origin)
+    handleSecurityCheck(message.transaction, message.chainId, message.origin, async (progress) => {
+      if (Number.isInteger(sender.tab?.id)) {
+        await chrome.tabs.sendMessage(sender.tab.id, { type: "TX_PROGRESS", id: message.id, chainId: progress.chainId, progress }, { frameId: sender.frameId ?? 0 }).catch(() => {});
+      }
+    })
       .then((security) => {
         sendResponse({
           security,
@@ -183,7 +187,7 @@ function parseNumericChainId(chainId) {
   return null;
 }
 
-async function handleSecurityCheck(transaction, chainId, origin) {
+async function handleSecurityCheck(transaction, chainId, origin, onProgress = async () => {}) {
   const numericChainId = parseNumericChainId(chainId);
 
   if (numericChainId === null) {
@@ -240,6 +244,7 @@ async function handleSecurityCheck(transaction, chainId, origin) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "text/event-stream",
       },
       signal: controller.signal,
       body: JSON.stringify({
@@ -253,7 +258,46 @@ async function handleSecurityCheck(transaction, chainId, origin) {
         },
       }),
     });
-    responseText = await response.text();
+    if (response.headers?.get("Content-Type")?.includes("text/event-stream")) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let result;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+          if (buffer.length > 2_000_000) throw new Error("Security response is too large.");
+          let boundary;
+          while ((boundary = /\r?\n\r?\n/.exec(buffer))) {
+            const frame = buffer.slice(0, boundary.index);
+            buffer = buffer.slice(boundary.index + boundary[0].length);
+            const type = frame.match(/^event: (.+)$/m)?.[1];
+            const dataLines = frame.split(/\r?\n/).filter((line) => line.startsWith("data:")).map((line) => line.slice(5).trimStart());
+            if (!dataLines.length) continue;
+            const payload = JSON.parse(dataLines.join("\n"));
+            if (type === "progress") {
+              if (result !== undefined || payload?.chainId !== numericChainId ||
+                  !Object.hasOwn(NALAR_CONFIG.ANALYSIS_STEPS, payload?.stage) ||
+                  !["running", "completed", "failed", "unavailable"].includes(payload?.status) ||
+                  (payload.address !== undefined && !/^0x[a-fA-F0-9]{40}$/.test(payload.address))) throw new Error("Invalid analysis progress.");
+              await onProgress(payload);
+            } else if (type === "result") {
+              if (result !== undefined) throw new Error("Duplicate security result.");
+              result = payload;
+            }
+          }
+          if (done) break;
+        }
+        if (result === undefined || buffer.trim()) throw new Error("Security stream ended without a complete result.");
+        responseText = JSON.stringify(result);
+      } finally {
+        await reader.cancel();
+        reader.releaseLock();
+      }
+    } else {
+      responseText = await response.text();
+    }
   } catch (error) {
     if (error && (error.name === "AbortError" || error.code === 20)) {
       const err = new Error("Security analysis timed out. The blockchain investigation took longer than expected.");
@@ -314,7 +358,10 @@ async function handleSecurityCheck(transaction, chainId, origin) {
   }
 
   if (!parsed || parsed.ok === false) {
-    throw new Error(parsed?.error ?? "Security analysis could not be completed.");
+    const err = new Error(parsed?.error ?? "Security analysis could not be completed.");
+    err.code = parsed?.error === "UNSUPPORTED_CHAIN" ? "NETWORK_NOT_SUPPORTED" : parsed?.error === "NETWORK_CONNECTION_FAILED" ? parsed.error : "ANALYSIS_UNAVAILABLE";
+    err.receivedChainId = parsed?.receivedChainId ?? numericChainId;
+    throw err;
   }
 
   if (parsed.ok !== true || !["ALLOW", "REVIEW", "BLOCK"].includes(parsed.decision) ||

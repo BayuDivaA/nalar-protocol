@@ -337,6 +337,8 @@ recipient
 
 Nalar has scam intelligence for token-related transactions.
 
+Cakupan audit berasal dari transaksi aktif: token input/output dan perantara swap, token approval, kontrak transfer yang terdekode, serta spender/operator yang dikonfirmasi sebagai kontrak oleh investigasi MCP. Address dideduplikasi per request dan chain. Audit kontrak tambahan tidak mengarang simulasi jual tanpa konteks swap. Ini bukan pemindaian seluruh address atau seluruh data scam di jaringan; registry reputasi, liquidity dan holder concentration hanya digunakan bila provider benar-benar memasok bukti tersebut.
+
 Jika ABI, RPC, atau MCP menyediakan bukti yang dapat dibaca, sistem dapat memeriksa informasi kontrak seperti:
 
 - owner
@@ -401,6 +403,8 @@ HIGH
 CRITICAL
 
 The scam risk can be merged into the deterministic risk engine.
+
+Analisis state membaca semua observasi yang tersedia, bukan berhenti pada entri pertama yang UNKNOWN atau tidak memiliki satuan. Nilai numerik malformed tidak menghapus temuan valid lainnya. Konfigurasi buy/sell tax dengan satuan eksplisit, paused=true dan tradingEnabled=false dapat menghasilkan temuan; state OWNER sendiri tidak membuktikan kontrol terhadap capability. Inspeksi kontrak tidak lengkap, implementasi proxy atau access capability tidak diketahui, restriction yang teramati, serta liquidity rendah/holder concentration tinggi yang benar-benar dilaporkan provider meminta REVIEW jika tidak ada kondisi yang sudah mewajibkan BLOCK. Approval tetap memakai baseline risk existing; risiko scam digabung dengan max, bukan dihitung sebagai tambahan approval kedua.
 
 ---
 
@@ -493,6 +497,8 @@ bnbIntelligence
 Optional fields must be handled safely.
 
 Respons gagal (`ok: false`) menggunakan error seperti `UNSUPPORTED_CHAIN`, `NETWORK_CONNECTION_FAILED`, atau `ANALYSIS_UNAVAILABLE` dan tidak berisi keputusan ALLOW. Beberapa field pada respons sukses juga bersifat opsional, khususnya pada jalur simulation failure; jangan mengasumsikan `scamAnalyses` selalu ada.
+
+Request dengan `Accept: text/event-stream` mendapat event `progress` (stage, status, chainId, optional address) dan satu event final `result` dengan payload JSON existing. Request biasa tetap mendapat JSON. Loading extension mengikuti event ini, bukan timer; stream terputus, malformed atau chain yang berbeda tidak menghasilkan keputusan aman. Deployment backend harus diperbarui agar progres per tahap tersedia; server JSON-only tetap memakai loading indeterminate. Hasil menampilkan kelompok evidence per address, dan teks AI ditandai `[AI]` berdasarkan `explanation.meta.generator`, terpisah dari verdict engine.
 
 ---
 
@@ -700,8 +706,8 @@ Alamat EVM yang ditampilkan dapat dibuka di explorer sesuai Chain ID aktif. Jang
 Frontend Next.js yang ada memiliki route:
 
 - `/`: landing page Nalar Protocol dengan animasi alur pemeriksaan, decision explorer, arsitektur, dan tautan ke demo/install.
-- `/demo`: demo security-check dengan skenario safe mint dan malicious NFT approval; contoh transaksi pada halaman ini memakai Chain ID 97.
-- `/demo/external-dapp`: dApp contoh yang memanggil `eth_sendTransaction` agar alur intersepsi extension dapat dicoba.
+- `/demo`: satu alur mint NFT pada BNB Testnet. Halaman membaca nama koleksi dan harga dari kontrak, lalu mengirim request transaksi ke wallet agar intersepsi extension dapat dicoba.
+- `/demo/external-dapp`: mengarahkan pengguna ke `/demo`.
 - `/install`: petunjuk memasang extension sebagai unpacked Chromium extension dari arsip GitHub.
 
 Landing page yang sudah ada menjelaskan:
@@ -724,6 +730,40 @@ Landing page mengarahkan pengguna ke:
 dan `/install`.
 
 Do not replace or destroy the existing demo.
+
+### Website feature: On-chain Explainer
+
+Status: diimplementasikan sebagai tool read-only pada `/address`, terpisah dari extension. Tool ini menerjemahkan data address dan tx hash di BNB Chain ke bahasa awam; bukan pemeriksaan keamanan atau pemberi keputusan transaksi. Ringkasan awal berbahasa Inggris, dengan pilihan tampilan Bahasa Indonesia.
+
+**Cakupan awal**
+
+- Pengguna dapat memasukkan address EVM atau tx hash pada BNB Mainnet (Chain ID 56) atau BNB Testnet (Chain ID 97). Jaringan dipilih secara eksplisit sebelum pemeriksaan; data dari dua jaringan tidak boleh tercampur.
+- Tidak perlu menghubungkan wallet atau menyiapkan intent/transaksi. Jaringan lain dan format address non-EVM ditandai belum didukung, bukan diberi hasil spekulatif.
+- Address kontrak/token dapat dijelaskan dari keberadaan kode, ABI yang tersedia, daftar fungsi (maksimal 24 entri yang ditampilkan), state read-only, dan bukti BNB MCP bila tersedia. ABI bukan source code penuh dan daftar fungsi tidak membuktikan implementasi atau izin akses. Data yang tidak tersedia tetap ditandai tidak diketahui.
+- Untuk address tanpa kode yang terbaca, jelaskan hanya fakta tersebut dan data lain yang benar-benar tersedia. Jangan menyimpulkan bahwa address itu pasti milik pengguna biasa, identitas pemiliknya, atau aman untuk menerima dana.
+- Tx hash menampilkan pihak pengirim/penerima dari transaksi aktual, nilai BNB langsung, selector dan argumen fungsi bila ABI tersedia, status receipt bila sudah ada, block, waktu, biaya, serta tautan explorer. Input transaksi adalah permintaan, bukan bukti semua efek token. BNB MCP hanya memperkaya bila hash dan konteks transaksi cocok.
+
+**Alur pengguna**
+
+1. Pengguna membuka On-chain Explainer dari landing page, memilih jaringan, lalu memasukkan address atau tx hash.
+2. Sistem memvalidasi format dan membaca bukti secara read-only dari jaringan yang dipilih. BNB MCP dapat memperkaya bukti bila tersedia; kegagalannya tidak boleh ditutupi.
+3. Halaman menampilkan pengantar faktual, sumber tiap fakta, waktu pembacaan, hal yang belum diketahui, dan explorer pada jaringan yang benar. Untuk kontrak, daftar fungsi ABI dapat dibuka; output mentah MCP tidak ditampilkan.
+4. AI menerjemahkan bukti ke bahasa sehari-hari dalam Inggris dan Indonesia. Chat lanjutan hanya menjawab berdasarkan bukti untuk objek dan jaringan yang sedang dipilih. Jika bukti tidak cukup, AI menyatakannya terus terang.
+5. Saat pengguna mengganti address, tx hash, atau jaringan, konteks penjelasan dan chat lama tidak boleh terbawa sebagai bukti untuk pemeriksaan baru.
+
+**Batas penjelasan**
+
+- Tidak ada `ALLOW`, `REVIEW`, `BLOCK`, risk score, label `SAFE`/`SCAM`, atau saran pasti untuk membeli, mengirim, maupun menandatangani transaksi.
+- Status verifikasi source menunjukkan tingkat kecocokan source dengan bytecode menurut penyedia data, bukan audit atau jaminan kontrak aman. Address tanpa kode saat diperiksa juga bukan bukti pasti bahwa address tersebut EOA.
+- Konfigurasi kontrak tidak boleh diterjemahkan menjadi perilaku atau kerugian yang pasti. Contoh: nilai mentah `sellTax() = 9800` tidak boleh disebut `98%` sebelum satuan dan penerapannya terbukti.
+- Meskipun dapat membaca tx hash yang sudah ada, fitur ini tidak melakukan simulasi, tidak membandingkan intent dengan transaksi, dan tidak menghasilkan keputusan keamanan. Pengguna yang ingin memeriksa sebelum signing diarahkan ke extension.
+
+**Kondisi gagal dan privasi**
+
+- Address tidak valid, jaringan tidak didukung, RPC/MCP tidak tersedia, bukti kosong, atau AI gagal harus menghasilkan pesan yang menjelaskan keterbatasan dan langkah berikutnya; tidak boleh menghasilkan fakta atau kesimpulan palsu. Ringkasan fakta yang sudah terverifikasi boleh tetap ditampilkan saat AI gagal.
+- Sebelum penggunaan, jelaskan bahwa address dan pertanyaan chat diproses oleh layanan website. Riwayat chat tidak disimpan permanen tanpa persetujuan pengguna; kebijakan retensi perlu ditetapkan sebelum rilis.
+
+**Kriteria keberhasilan v1:** pengguna dapat memahami fakta yang tersedia beserta sumbernya, melihat batas pengetahuan sistem, dan mengajukan pertanyaan lanjutan tanpa menerima verdict keamanan. Alur extension, backend security-check, dan keputusan deterministiknya tetap tidak berubah.
 
 ---
 

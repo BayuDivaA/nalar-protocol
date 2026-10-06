@@ -9,6 +9,27 @@
 
   console.info("[Nalar] Extension bridge installed.");
 
+  // Presentation only: share the popup's existing preference with Nalar overlays.
+  let theme;
+  const systemTheme = window.matchMedia("(prefers-color-scheme: light)");
+  const applyTheme = () => document.documentElement?.setAttribute("data-nalar-theme", theme ?? (systemTheme.matches ? "light" : "dark"));
+  chrome.storage.local.get(["nalarTheme"]).then((result) => {
+    theme = ["light", "dark"].includes(result.nalarTheme) ? result.nalarTheme : undefined;
+    applyTheme();
+  }).catch(applyTheme);
+  document.addEventListener("DOMContentLoaded", applyTheme, { once: true });
+  systemTheme.addEventListener("change", applyTheme);
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !changes.nalarTheme) return;
+    theme = ["light", "dark"].includes(changes.nalarTheme.newValue) ? changes.nalarTheme.newValue : undefined;
+    applyTheme();
+  });
+
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message?.type !== "TX_PROGRESS") return;
+    window.postMessage({ source: "NALAR_EXTENSION", type: "TX_PROGRESS", id: message.id, chainId: message.chainId, progress: message.progress }, "*");
+  });
+
   window.addEventListener("message", async (event) => {
     if (event.source !== window) {
       return;

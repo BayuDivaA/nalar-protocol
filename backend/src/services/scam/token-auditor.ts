@@ -19,7 +19,7 @@ function unavailableEvidence(): ContractEvidence {
   };
 }
 
-export async function auditToken(input: { chainId: number; token: Address; owner: Address; router: Address; swap?: SwapEffect; provider?: BlockchainEvidenceProvider; investigator?: ScamInvestigator }): Promise<TokenScamAnalysis> {
+export async function auditToken(input: { chainId: number; token: Address; owner: Address; router: Address; swap?: SwapEffect; skipSellSimulation?: boolean; provider?: BlockchainEvidenceProvider; investigator?: ScamInvestigator }): Promise<TokenScamAnalysis> {
   const provider: BlockchainEvidenceProvider = input.provider ?? bscEvidenceProvider;
   const findings: ScamFinding[] = [];
 
@@ -37,12 +37,12 @@ export async function auditToken(input: { chainId: number; token: Address; owner
     findings.push({ code: "UNVERIFIED_CONTRACT", severity: "INFO", title: "Contract source is unverified", description: "No verified ABI or source match was available for this contract.", source: "CONTRACT" });
   }
 
-  if (!inspectionUnavailable && (evidence.verified === null || evidence.codeAvailable === null)) {
+  if (!inspectionUnavailable && (evidence.verified === null || evidence.codeAvailable !== true)) {
     findings.push({
       code: "CONTRACT_EVIDENCE_UNAVAILABLE",
       severity: "MEDIUM",
       title: "Contract evidence is incomplete",
-      description: "Verification or bytecode evidence is unavailable; this is not evidence that the token is safe.",
+      description: "Verification or deployed bytecode could not be established; this is not evidence that the token is safe.",
       source: "ONCHAIN",
     });
   }
@@ -170,7 +170,7 @@ export async function auditToken(input: { chainId: number; token: Address; owner
 
   let sellSimulation: SellSimulation = { attempted: false, success: null, error: null };
 
-  if (provider.simulateSell) {
+  if (!input.skipSellSimulation && provider.simulateSell) {
     try {
       sellSimulation = await provider.simulateSell({ chainId: input.chainId, token: input.token, owner: input.owner, router: input.router, swap: input.swap });
     } catch (error) {
@@ -187,7 +187,7 @@ export async function auditToken(input: { chainId: number; token: Address; owner
       evidence: sellSimulation.error ?? undefined,
       source: "SIMULATION",
     });
-  } else if (sellSimulation.success === null) {
+  } else if (!input.skipSellSimulation && sellSimulation.success === null) {
     findings.push({
       code: "SELL_SIMULATION_UNAVAILABLE",
       severity: "INFO",
@@ -213,7 +213,7 @@ export async function auditToken(input: { chainId: number; token: Address; owner
   };
 }
 
-export async function auditSwapTokens(input: { chainId: number; owner: Address; router: Address; swaps: readonly SwapEffect[]; provider?: BlockchainEvidenceProvider; investigator?: ScamInvestigator }): Promise<TokenScamAnalysis[]> {
+export async function auditSwapTokens(input: { chainId: number; owner: Address; router: Address; swaps: readonly SwapEffect[]; addresses?: readonly Address[]; onProgress?: (address: Address, status: "running" | "completed") => Promise<void>; provider?: BlockchainEvidenceProvider; investigator?: ScamInvestigator }): Promise<TokenScamAnalysis[]> {
   const uniqueTokens = new Map<
     string,
     {
@@ -242,17 +242,25 @@ export async function auditSwapTokens(input: { chainId: number; owner: Address; 
     }
   }
 
+  for (const token of [...input.swaps.flatMap((swap) => swap.hopTokens), ...(input.addresses ?? [])]) {
+    if (!uniqueTokens.has(token.toLowerCase())) uniqueTokens.set(token.toLowerCase(), { token });
+  }
+
   return Promise.all(
-    [...uniqueTokens.values()].map(({ token, swap }) =>
-      auditToken({
+    [...uniqueTokens.values()].map(async ({ token, swap }) => {
+      await input.onProgress?.(token, "running");
+      const analysis = await auditToken({
         chainId: input.chainId,
         token,
         owner: input.owner,
         router: input.router,
         swap,
+        skipSellSimulation: !swap,
         provider: input.provider,
         investigator: input.investigator,
-      }),
-    ),
+      });
+      await input.onProgress?.(token, "completed");
+      return analysis;
+    }),
   );
 }

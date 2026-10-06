@@ -7,7 +7,7 @@ window.NALAR_MOTION = {
   enter(element) {
     if (!element || reduced()) return;
     element.classList.add("nalar-motion-driven");
-    animate(element, { opacity: [0, 1], transform: ["translateY(6px)", "translateY(0)"] }, { duration: 0.22, ease });
+    animate(element, { opacity: [0, 1], transform: ["translateY(4px)", "translateY(0)"] }, { duration: 0.15, ease });
   },
   status(element, active) {
     if (!element || reduced()) return;

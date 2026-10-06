@@ -46,9 +46,10 @@
         </section>
 
         <section class="security-state" aria-live="polite">
+          <div class="section-label security-kicker">Transaction checks</div>
           <div class="security-summary">
-            <h1 id="securityHeading">Ready before signing</h1>
-            <p id="securityDescription">Transactions are checked before wallet signing.</p>
+            <h1 id="securityHeading">Checking network</h1>
+            <p id="securityDescription">Verifying your wallet network.</p>
           </div>
           <div id="networkError" class="network-error" role="alert" hidden>
             <div class="connection-heading">
@@ -65,10 +66,10 @@
 
         <section class="intent">
           <div class="intent-heading">
-            <label class="section-label" for="intent">Your intent</label>
+            <label class="section-label" for="intent">Your request</label>
             <div id="siteName" class="site-name" title="Current site">Loading...</div>
           </div>
-          <textarea id="intent" rows="3" aria-describedby="privacyNote" placeholder="e.g. Swap 0.001 tBNB for NDEMO"></textarea>
+          <textarea id="intent" rows="3" aria-describedby="privacyNote" placeholder="Describe the action you expect"></textarea>
           <div class="intent-actions">
             <button id="clearIntent" class="clear-intent" type="button" aria-label="Remove saved intent for this site">Clear</button>
             <button id="save" class="save" type="button">Save intent</button>

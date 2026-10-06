@@ -50,7 +50,16 @@ try {
   const target = (await targets()).find((t) => t.url === popupUrl && !previous.has(t.id));
   assert.ok(target, 'Chrome must open the actual extension action popup');
   popup = await connect(target);
-  await popup.evaluate('new Promise(resolve => setTimeout(resolve, 500))');
+  await popup.evaluate(`new Promise((resolve, reject) => {
+    const deadline = Date.now() + 8000;
+    const check = () => {
+      if (document.getElementById('siteName').textContent !== 'Loading...') return resolve();
+      if (Date.now() > deadline) return reject(new Error('Popup settings did not initialize'));
+      setTimeout(check, 100);
+    };
+    check();
+  })`);
+  await popup.evaluate('new Promise(resolve => setTimeout(resolve, 250))');
   const dimensions = await popup.evaluate(`new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve({
     width: innerWidth, height: innerHeight,
     contentWidth: document.documentElement.scrollWidth,

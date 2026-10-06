@@ -6,6 +6,7 @@ import { logAiStatus } from "./lib/ai-config";
 import { healthRoute } from "./routes/health";
 import { transactionRoute } from "./routes/transactions";
 import { securityRoute } from "./routes/security";
+import { addressExplainerRoute } from "./routes/address-explainer";
 
 logAiStatus();
 
@@ -52,5 +53,6 @@ app.route("/health", healthRoute);
 app.route("/api/health", healthRoute);
 app.route("/api/transactions", transactionRoute);
 app.route("/api/transactions/security-check", securityRoute);
+app.route("/api/address/explain", addressExplainerRoute);
 
 export default app;

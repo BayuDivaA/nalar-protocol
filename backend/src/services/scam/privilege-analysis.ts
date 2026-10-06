@@ -139,38 +139,56 @@ function capabilityFinding(capability: ContractCapability, controls: readonly Ac
 function numericStateValue(state: ContractStateEvidence): number | null {
   if (state.status !== "KNOWN" || (typeof state.value !== "string" && typeof state.value !== "bigint")) return null;
 
-  const value = typeof state.value === "bigint" ? state.value : BigInt(state.value);
-  return value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : null;
+  try {
+    const value = typeof state.value === "bigint" ? state.value : BigInt(state.value);
+    return value >= 0n && value <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(value) : null;
+  } catch {
+    return null;
+  }
 }
 
-function sellTaxFindings(state: readonly ContractStateEvidence[]): ScamFinding[] {
-  const sellTax = state.find((item) => item.code === "CURRENT_SELL_TAX");
+function taxFindings(state: readonly ContractStateEvidence[]): ScamFinding[] {
+  return state.flatMap((tax): ScamFinding[] => {
+    if (tax.code !== "CURRENT_SELL_TAX" && tax.code !== "CURRENT_BUY_TAX") return [];
 
-  if (!sellTax || (sellTax.unit !== "BPS" && sellTax.unit !== "PERCENT")) return [];
+    if (tax.unit !== "BPS" && tax.unit !== "PERCENT") return [];
 
-  const rawValue = numericStateValue(sellTax);
-  if (rawValue === null) return [];
+    const rawValue = numericStateValue(tax);
+    if (rawValue === null) return [];
 
-  const valueBps = sellTax.unit === "PERCENT" ? rawValue * 100 : rawValue;
-  const severity = valueBps >= CRITICAL_SELL_TAX_BPS ? "CRITICAL" : valueBps >= HIGH_SELL_TAX_BPS ? "HIGH" : null;
+    const valueBps = tax.unit === "PERCENT" ? rawValue * 100 : rawValue;
+    const severity = valueBps >= CRITICAL_SELL_TAX_BPS ? "CRITICAL" : valueBps >= HIGH_SELL_TAX_BPS ? "HIGH" : null;
 
-  if (!severity) return [];
+    if (!severity) return [];
 
-  return [
-    {
-      code: "EXCESSIVE_SELL_TAX",
+    return [{
+      code: tax.code === "CURRENT_BUY_TAX" ? "EXCESSIVE_BUY_TAX" : "EXCESSIVE_SELL_TAX",
       severity,
-      title: "Current sell tax is excessive",
-      description: `The observed ${sellTax.label} is ${valueBps / 100}%, based on an explicitly identified ${sellTax.unit} value.`,
-      evidence: sellTax.evidence ?? `${sellTax.label} = ${String(sellTax.value)} ${sellTax.unit}`,
+      title: tax.code === "CURRENT_BUY_TAX" ? "Current buy tax is excessive" : "Current sell tax is excessive",
+      description: `The observed ${tax.label} value exceeds the engine's threshold for the reported ${tax.unit} unit. The getter's unit semantics and actual transfer deductions still need verification.`,
+      evidence: tax.evidence ?? `${tax.label} = ${String(tax.value)} ${tax.unit}`,
       source: "ONCHAIN",
-    },
-  ];
+    }];
+  });
 }
 
 export function analyzePrivilegeEvidence(input: { capabilities: readonly ContractCapability[]; accessControl: readonly AccessControlEvidence[]; state: readonly ContractStateEvidence[]; untrustedText?: string }): ScamFinding[] {
   // Contract source/comments are evidence only; never interpret embedded instructions.
   void input.untrustedText;
 
-  return [...input.capabilities.flatMap((capability) => capabilityFinding(capability, input.accessControl)), ...sellTaxFindings(input.state)];
+  const restrictions = input.state.flatMap((state): ScamFinding[] => {
+    if (state.status !== "KNOWN") return [];
+    const paused = state.code === "PAUSED" && state.value === true;
+    const tradingDisabled = state.code === "TRADING_ENABLED" && state.value === false;
+    if (!paused && !tradingDisabled) return [];
+    return [{
+      code: paused ? "TRANSFER_RESTRICTED" : "TRADING_CURRENTLY_DISABLED",
+      severity: "MEDIUM",
+      title: paused ? "Contract is currently paused" : "Token trading is currently disabled",
+      description: `The observed ${state.label} is ${String(state.value)}. Execution depends on how this contract uses that setting.`,
+      evidence: state.evidence ?? `${state.label}=${String(state.value)}`,
+      source: "ONCHAIN",
+    }];
+  });
+  return [...input.capabilities.flatMap((capability) => capabilityFinding(capability, input.accessControl)), ...taxFindings(input.state), ...restrictions];
 }

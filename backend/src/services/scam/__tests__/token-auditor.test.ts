@@ -24,6 +24,13 @@ function provider(overrides: Partial<Awaited<ReturnType<BlockchainEvidenceProvid
 }
 
 describe("Token auditor", () => {
+  test("does not treat an address without deployed bytecode as a clean token inspection", async () => {
+    const analysis = await auditToken({ chainId: 56, token: TOKEN, owner: USER, router: ROUTER, provider: provider({ verified: false, codeAvailable: false }), skipSellSimulation: true });
+    expect(analysis.findings.some((finding) => finding.code === "CONTRACT_EVIDENCE_UNAVAILABLE")).toBe(true);
+    expect(analysis.riskLevel).toBe("MEDIUM");
+    expect(analysis.findings.some((finding) => finding.code === "SELL_SIMULATION_UNAVAILABLE")).toBe(false);
+  });
+
   test("returns low risk for verified, capability-free evidence", async () => {
     const analysis = await auditToken({ chainId: 97, token: TOKEN, owner: USER, router: ROUTER, provider: provider() });
 

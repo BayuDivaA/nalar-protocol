@@ -42,13 +42,19 @@ export async function getExplainerReport(
   const query = input.query.trim();
   const subject = /^0x[0-9a-fA-F]{64}$/.test(query) ? { txHash: query } : /^0x[0-9a-fA-F]{40}$/.test(query) ? { address: query } : null;
   if (!subject) throw new AddressApiError("INVALID_INPUT", "Enter a BNB Chain address (40 hex characters) or transaction hash (64 hex characters).");
-  const response = await fetch(`${API_URL}/api/address/explain`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chainId: input.chainId, ...subject, question: input.question, history: input.history }),
-    cache: "no-store",
-    signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/api/address/explain`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chainId: input.chainId, ...subject, question: input.question, history: input.history }),
+      cache: "no-store",
+      signal,
+    });
+  } catch (cause) {
+    if (signal?.aborted) throw cause;
+    throw new AddressApiError("CONNECTION_FAILED", "Nalar's analysis service could not be reached. Check your connection and retry.");
+  }
   const data: unknown = await response.json().catch(() => null);
   if (!response.ok) {
     const error = data && typeof data === "object" ? (data as { error?: string; message?: string }) : null;

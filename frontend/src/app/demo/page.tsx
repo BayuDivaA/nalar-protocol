@@ -1,16 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatEther, isAddress, isHash, toHex, type Address, type Hex } from "viem";
+import { formatEther, isAddress, isAddressEqual, isHash, toHex, type Address, type Hex, type ReplacementReason } from "viem";
 import { bscTestnet } from "viem/chains";
 
 import { DemoArtwork, DemoFrame } from "@/src/components/DemoFrame";
-import { assertDemoChain, buildDemoTransaction, demoClient, getDemoWallet, readDemoCollection, readMintedToken, type DemoCollection, type MintMode, type WalletProvider } from "@/src/lib/nft-demo";
+import { assertDemoChain, buildDemoTransaction, demoClient, demoReceiptStatus, getDemoWallet, readDemoCollection, readMintedToken, type DemoCollection, type MintMode, type WalletProvider } from "@/src/lib/nft-demo";
 
 const demoAddress = process.env.NEXT_PUBLIC_DEMO_NFT_ADDRESS;
 const trapAddress = process.env.NEXT_PUBLIC_DEMO_MINT_TRAP_ADDRESS;
 const explorer = bscTestnet.blockExplorers.default.url;
-type SubmittedRequest = { hash: Hex; owner: Address; collection: Address; mode: MintMode; status: "pending" | "confirmed" | "reverted" };
+type SubmittedRequest = { hash: Hex; owner: Address; collection: Address; mode: MintMode; status: "pending" | ReturnType<typeof demoReceiptStatus> };
 const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
 const message = (cause: unknown) => cause instanceof Error ? cause.message : "The wallet request could not be completed.";
 
@@ -33,6 +33,9 @@ export default function DemoPage() {
   const checkId = useRef(0);
   const requestLock = useRef(false);
   const busy = stage !== "idle" || transaction?.status === "pending";
+  const visibleToken = account && collection && transaction && !wrongNetwork
+    && isAddressEqual(account, transaction.owner)
+    && isAddressEqual(collection.address, transaction.collection) ? token : null;
 
   const refresh = useCallback(async () => {
     const id = ++checkId.current;
@@ -100,18 +103,23 @@ export default function DemoPage() {
     finally { requestLock.current = false; setStage("idle"); }
   }
 
-  async function confirm(record: SubmittedRequest, wait: boolean) {
+  async function confirm(record: SubmittedRequest, timeout: number) {
     const provider = getDemoWallet();
     const id = checkId.current;
     await assertDemoChain(provider);
     const client = demoClient(provider);
-    const receipt = wait
-      ? await client.waitForTransactionReceipt({ hash: record.hash, timeout: 90_000, pollingInterval: 2_000 })
-      : await client.getTransactionReceipt({ hash: record.hash });
+    let replacement: ReplacementReason | undefined;
+    const receipt = await client.waitForTransactionReceipt({
+      hash: record.hash,
+      timeout,
+      pollingInterval: 2_000,
+      onReplaced: ({ reason }) => { replacement = reason; },
+    });
     await assertDemoChain(provider);
     if (id !== checkId.current) throw new Error("Wallet context changed. Return to Testnet and check confirmation.");
-    setTransaction({ ...record, status: receipt.status === "success" ? "confirmed" : "reverted" });
-    if (receipt.status !== "success") return;
+    const status = demoReceiptStatus(receipt, replacement);
+    setTransaction({ ...record, hash: receipt.transactionHash, status });
+    if (status !== "confirmed") return;
     try {
       const [latest, mintedToken] = await Promise.all([
         readDemoCollection(provider, demoAddress, trapAddress),
@@ -123,7 +131,9 @@ export default function DemoPage() {
       setToken(mintedToken);
       if (!mintedToken) setError("Transaction confirmed, but a mint to this account was not found in its receipt. Inspect it on BscScan.");
     } catch {
-      if (id === checkId.current) setError("Transaction confirmed. Collection data could not be refreshed; retry the contract check.");
+      if (id === checkId.current) setError(record.mode === "normal"
+        ? "Transaction confirmed, but NFT details could not be loaded. Use Reload NFT details to retry."
+        : "Approval confirmed, but collection data could not be refreshed. Recheck the contract.");
     }
   }
 
@@ -156,7 +166,7 @@ export default function DemoPage() {
       const record: SubmittedRequest = { hash: hash as Hex, owner: account, collection: latest.address, mode, status: "pending" };
       setTransaction(record);
       setStage("confirming");
-      await confirm(record, true);
+      await confirm(record, 90_000);
     } catch (cause) {
       if (submitted) setError("Confirmation is not available yet. Check the submitted transaction before trying again.");
       else if (id === checkId.current) setError(message(cause));
@@ -171,8 +181,8 @@ export default function DemoPage() {
     requestLock.current = true;
     setStage("confirming");
     setError(null);
-    try { await confirm(transaction, false); }
-    catch { setError("No confirmation found yet. Check BscScan or retry after returning to BNB Testnet."); }
+    try { await confirm(transaction, 12_000); }
+    catch { setError("The receipt or NFT details could not be read. Check BscScan or retry after returning to BNB Testnet."); }
     finally { requestLock.current = false; setStage("idle"); }
   }
 
@@ -201,10 +211,12 @@ export default function DemoPage() {
     return collection && collection.minted >= collection.maximum ? "Collection sold out" : "Mint 1 NFT";
   }
   function receiptLabel() {
+    if (transaction?.status === "cancelled") return "Transaction cancelled. Original request not confirmed.";
+    if (transaction?.status === "replaced") return "Transaction replaced. Original request not confirmed.";
     if (transaction?.status === "reverted") return "Transaction reverted";
     if (transaction?.status !== "confirmed") return "Submitted · awaiting confirmation";
-    if (token) return `Edition #${token.id} minted`;
-    return transaction.mode === "trap" ? "Approval confirmed — no NFT minted" : "Transaction confirmed";
+    if (visibleToken) return `Edition #${visibleToken.id} minted`;
+    return transaction.mode === "trap" ? "Approval confirmed. No NFT minted." : "Transaction confirmed";
   }
 
   return (
@@ -216,7 +228,7 @@ export default function DemoPage() {
       </div>
 
       <div className="demo-grid">
-        <DemoArtwork image={token?.image ?? collection?.image} name={token?.name ?? collection?.name} minted={collection?.minted} maximum={collection?.maximum} tokenId={token?.id} />
+        <DemoArtwork image={visibleToken?.image ?? collection?.image} name={visibleToken?.name ?? collection?.name} minted={collection?.minted} maximum={collection?.maximum} tokenId={visibleToken?.id} />
         <section className="demo-panel" aria-labelledby="collection-title">
           <div className="demo-panel-topline"><span>THE MINT DESK</span><span>TESTNET ONLY</span></div>
           <h2 id="collection-title">{collection?.name ?? "Nalar Editions"}</h2>
@@ -248,9 +260,11 @@ export default function DemoPage() {
           {error && <div className="demo-notice is-error" role="alert"><p>{error}</p>{!busy && <button type="button" onClick={() => void refresh()}>Recheck contract</button>}</div>}
           {transaction && <div className={`demo-notice ${transaction.status === "confirmed" ? "is-success" : "is-pending"}`} role="status">
             <strong>{receiptLabel()}</strong>
+            <p>Submitted by <ContractLink address={transaction.owner} /></p>
             {transaction.status === "confirmed" && transaction.mode === "trap" && <p>The trap now has permission for this collection. This is not a mint receipt.</p>}
             <a href={`${explorer}/tx/${transaction.hash}`} target="_blank" rel="noreferrer" title={transaction.hash}>View transaction ↗</a>
             {transaction.status === "pending" && stage === "idle" && <button type="button" onClick={checkConfirmation}>Check confirmation</button>}
+            {transaction.status === "confirmed" && transaction.mode === "normal" && !token && stage === "idle" && <button type="button" onClick={checkConfirmation}>Reload NFT details</button>}
           </div>}
 
           <details className="demo-details"><summary>Inspect the actual request</summary><dl className="demo-facts">

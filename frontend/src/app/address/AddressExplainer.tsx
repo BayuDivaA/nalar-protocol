@@ -175,14 +175,14 @@ export default function AddressExplainer({ initialQuery, initialChainId, autoIns
                 </select>
               </label>
               <label className="address-field address-value-field">Address or tx hash
-                <input value={query} onChange={(event) => { resetContext(); setQuery(event.target.value); }} type="text" placeholder="0x…" maxLength={66} autoComplete="off" spellCheck={false} required aria-invalid={error?.startsWith("Enter a valid") ?? false} />
+                <input value={query} onChange={(event) => { resetContext(); setQuery(event.target.value); }} type="text" placeholder="0x… wallet, contract, or tx hash" maxLength={66} autoComplete="off" autoCapitalize="none" spellCheck={false} required aria-describedby="address-privacy" aria-invalid={error?.startsWith("Enter a valid") ?? false} />
               </label>
               <button type="submit" className="address-search-button" disabled={loading}>{loading ? "Reading…" : "Explain data"}</button>
             </div>
-            <p className="address-privacy">The public address or hash and your questions are sent to Nalar; AI responses may be processed by its configured model provider. Never enter private keys or personal information.</p>
+            <p id="address-privacy" className="address-privacy">The public address or hash and your questions are sent to Nalar; AI responses may be processed by its configured model provider. Never enter private keys or personal information.</p>
           </form>
 
-          {error && <div className="address-alert" role="alert"><strong>Could not read on-chain data</strong><span>{error}</span>{!error.startsWith("Enter a valid") && <button type="button" onClick={() => void inspect(query, chainId)}>Retry</button>}</div>}
+          {error && <div className="address-alert" role="alert"><strong>{error.startsWith("Enter a valid") ? "Check the address or hash" : "Could not complete the lookup"}</strong><span>{error}</span>{!error.startsWith("Enter a valid") && <button type="button" onClick={() => void inspect(query, chainId)}>Retry</button>}</div>}
           {loading && <div className="address-loading" role="status"><span className="address-loading-line" aria-hidden="true" />Reading on-chain observations for {chainId === 56 ? "BNB Mainnet" : "BNB Testnet"}…</div>}
 
           {!report && !loading && !error && <div className="address-empty"><p>Enter a public wallet address, contract address, or transaction hash. Nalar will show what is observed and what remains unknown.</p></div>}

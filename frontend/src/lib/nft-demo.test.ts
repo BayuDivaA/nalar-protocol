@@ -1,7 +1,7 @@
 // @ts-expect-error Bun supplies the test module at runtime.
 import { expect, test } from "bun:test";
 import { decodeFunctionData, encodeFunctionData, type Address } from "viem";
-import { assertDemoChain, buildDemoTransaction, collectionAbi, type DemoCollection } from "./nft-demo";
+import { assertDemoChain, buildDemoTransaction, collectionAbi, demoReceiptStatus, type DemoCollection } from "./nft-demo";
 
 const address = "0x1111111111111111111111111111111111111111" as Address;
 const operator = "0x2222222222222222222222222222222222222222" as Address;
@@ -47,4 +47,13 @@ test("Mainnet and unknown network context are rejected; Testnet is accepted", as
   await assertDemoChain({ request: async () => "0x61" });
   await expect(assertDemoChain({ request: async () => "0x38" })).rejects.toThrow("BNB Testnet");
   await expect(assertDemoChain({ request: async () => null })).rejects.toThrow("BNB Testnet");
+});
+
+test("a successful cancellation or different replacement never confirms the original mint or approval", () => {
+  expect(demoReceiptStatus({ status: "success" }, "cancelled")).toBe("cancelled");
+  expect(demoReceiptStatus({ status: "success" }, "replaced")).toBe("replaced");
+  expect(demoReceiptStatus({ status: "success" }, "repriced")).toBe("confirmed");
+  expect(demoReceiptStatus({ status: "reverted" }, "repriced")).toBe("reverted");
+  expect(demoReceiptStatus({ status: "success" })).toBe("confirmed");
+  expect(demoReceiptStatus({ status: "reverted" })).toBe("reverted");
 });

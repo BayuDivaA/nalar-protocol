@@ -1,0 +1,19 @@
+{
+  "chainId": 97,
+  "deployedAt": "2026-10-08",
+  "deployer": "0x53E993819F2Bc45A029615e8634BDdEEab4F7817",
+  "collection": {
+    "address": "0xD88C0157ad7ca50c6E423DADBAfB83b4d8ae13bf",
+    "transactionHash": "0x7a8236c05ee1e5000371da2e7423bdbb7dd7fbaa6d58151b85b4b40817329283",
+    "blockNumber": 135592488,
+    "maxSupply": 888,
+    "mintPriceWei": "0"
+  },
+  "approvalTrap": {
+    "address": "0x58a142Dc12Cf8D6a3681D71747Da2fBf3C02e3c6",
+    "transactionHash": "0x34027f0a21922279233683e65b20a651222edc3f4a2788affbcfbaabdd21e49f",
+    "blockNumber": 135592498,
+    "scope": "Collection-wide approval for the demo collection only. This request does not mint."
+  },
+  "totalDeploymentCostWei": "395497625000000"
+}

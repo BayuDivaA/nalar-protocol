@@ -1,4 +1,4 @@
-import { createPublicClient, custom, decodeEventLog, decodeFunctionData, encodeFunctionData, isAddress, isAddressEqual, parseAbi, zeroAddress, type Address, type Hex, type TransactionReceipt } from "viem";
+import { createPublicClient, custom, decodeEventLog, decodeFunctionData, encodeFunctionData, isAddress, isAddressEqual, parseAbi, zeroAddress, type Address, type Hex, type ReplacementReason, type TransactionReceipt } from "viem";
 import { bscTestnet } from "viem/chains";
 
 export const collectionAbi = parseAbi([
@@ -94,6 +94,11 @@ export function buildDemoTransaction(collection: DemoCollection, mode: MintMode)
     throw new Error("The trap returned an unexpected transaction. No request was sent.");
   }
   return { to: trap.target, value: trap.value, data: trap.data };
+}
+
+export function demoReceiptStatus(receipt: Pick<TransactionReceipt, "status">, replacement?: ReplacementReason) {
+  if (replacement === "cancelled" || replacement === "replaced") return replacement;
+  return receipt.status === "success" ? "confirmed" : "reverted";
 }
 
 export async function readMintedToken(provider: WalletProvider, address: Address, receipt: TransactionReceipt, owner: Address) {

@@ -72,13 +72,13 @@
 }
 
 .address-entry-network { border-right: 1px solid var(--border); }
-.address-entry-controls label:focus-within { background: var(--raised); }
-.address-entry-controls label:has(:focus-visible) { box-shadow: inset 0 -2px 0 var(--accent); }
+:is(.address-entry-controls, .address-search-fields) label:focus-within { background: var(--raised); }
+:is(.address-entry-controls, .address-search-fields) label:has(:focus-visible) { box-shadow: inset 0 -2px 0 var(--accent); }
 .address-entry-network::after,
 .address-network-field::after {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
+  right: 16px;
+  bottom: 25px;
   width: 7px;
   height: 7px;
   border-right: 1.5px solid var(--text-secondary);
@@ -88,9 +88,7 @@
   transform: rotate(45deg);
   transition: transform 150ms ease;
 }
-.address-network-field:focus-within::after { transform: translateY(2px) rotate(45deg); }
-.address-entry-network::after { right: 16px; bottom: 25px; }
-.address-entry-network:has(select:open)::after { transform: rotate(225deg); }
+:is(.address-entry-network, .address-network-field):has(select:open)::after { transform: rotate(225deg); }
 
 .address-entry-controls select,
 .address-entry-controls input {
@@ -108,16 +106,16 @@
   line-height: 1.5;
   text-transform: none;
 }
-.address-entry-controls select { appearance: none; padding-right: 20px; cursor: pointer; }
+:is(.address-entry-controls, .address-search-fields) select { appearance: none; padding-right: 20px; cursor: pointer; }
 .address-entry-controls input { font-family: var(--font-mono); font-weight: 400; }
 
 @supports (appearance: base-select) {
-  .address-entry-controls select,
-  .address-entry-controls select::picker(select) { appearance: base-select; }
+  :is(.address-entry-controls, .address-search-fields) select,
+  :is(.address-entry-controls, .address-search-fields) select::picker(select) { appearance: base-select; }
 
-  .address-entry-controls select { align-items: center; padding-block: 0; }
-  .address-entry-controls select::picker-icon { display: none; }
-  .address-entry-controls select::picker(select) {
+  :is(.address-entry-controls, .address-search-fields) select { align-items: center; padding-block: 0; }
+  :is(.address-entry-controls, .address-search-fields) select::picker-icon { display: none; }
+  :is(.address-entry-controls, .address-search-fields) select::picker(select) {
     min-inline-size: 200px;
     max-inline-size: calc(100vw - 32px);
     margin-block-start: 8px;
@@ -132,11 +130,11 @@
     transform: translateY(-4px);
     transition: opacity 150ms ease, transform 150ms ease, display 150ms allow-discrete, overlay 150ms allow-discrete;
   }
-  .address-entry-controls select:open::picker(select) { opacity: 1; transform: translateY(0); }
+  :is(.address-entry-controls, .address-search-fields) select:open::picker(select) { opacity: 1; transform: translateY(0); }
   @starting-style {
-    .address-entry-controls select:open::picker(select) { opacity: 0; transform: translateY(-4px); }
+    :is(.address-entry-controls, .address-search-fields) select:open::picker(select) { opacity: 0; transform: translateY(-4px); }
   }
-  .address-entry-controls option {
+  :is(.address-entry-controls, .address-search-fields) option {
     min-height: 44px;
     gap: 16px;
     padding: 10px 12px;
@@ -144,11 +142,11 @@
     outline: none;
     cursor: pointer;
   }
-  .address-entry-controls option:hover,
-  .address-entry-controls option:focus-visible { background: var(--raised); }
-  .address-entry-controls option:focus-visible { box-shadow: inset 2px 0 0 var(--accent); }
-  .address-entry-controls option:checked { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-  .address-entry-controls option::checkmark { order: 1; margin-inline-start: auto; color: var(--accent); }
+  :is(.address-entry-controls, .address-search-fields) option:hover,
+  :is(.address-entry-controls, .address-search-fields) option:focus-visible { background: var(--raised); }
+  :is(.address-entry-controls, .address-search-fields) option:focus-visible { box-shadow: inset 2px 0 0 var(--accent); }
+  :is(.address-entry-controls, .address-search-fields) option:checked { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+  :is(.address-entry-controls, .address-search-fields) option::checkmark { order: 1; margin-inline-start: auto; color: var(--accent); }
 }
 
 .address-entry-form input::placeholder,
@@ -273,20 +271,18 @@
   min-width: 0;
   gap: 0;
   margin-top: 20px;
-  padding: 5px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: var(--surface);
-  transition: border-color 150ms ease;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--text-secondary) 50%, var(--border-strong));
+  border-radius: 8px;
+  background: var(--bg);
 }
-.address-search-fields:focus-within { border-color: var(--accent); }
 .address-field {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0;
   min-width: 0;
-  padding: 7px 16px 8px;
+  padding: 8px 12px 4px;
   color: var(--text-muted);
   font-size: 10px;
   letter-spacing: .04em;
@@ -297,17 +293,18 @@
 .address-field input {
   width: 100%;
   min-width: 0;
-  height: 23px;
+  height: 44px;
   border: 0;
+  outline: none;
   background: transparent;
   color: var(--text-primary);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0;
+  line-height: 1.5;
   text-transform: none;
 }
-.address-field select { appearance: none; padding-right: 20px; cursor: pointer; }
 .address-field input { font-family: var(--font-mono); font-size: 13px; font-weight: 400; }
 .address-question-form input {
   min-width: 0;
@@ -320,6 +317,7 @@
   font: inherit;
   font-size: 14px;
 }
+.address-question-form input:focus-visible { border-color: var(--accent); outline: none; }
 .address-search-button,
 .address-question-form button {
   display: inline-flex;
@@ -452,7 +450,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .address-entry-controls select::picker(select) { transition: none; transform: none; }
+  :is(.address-entry-controls, .address-search-fields) select::picker(select) { transition: none; transform: none; }
   .address-loading-line { animation: none; }
   .address-entry-controls,
   .address-search-fields,

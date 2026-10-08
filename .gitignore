@@ -69,3 +69,4 @@ Thumbs.db
 extension/node_modules/
 extension/dist/
 extension/test/
+anti-slop/

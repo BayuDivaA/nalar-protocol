@@ -38,7 +38,7 @@ Use the existing system sans stack, with a bold collection heading and sentence-
 
 ## Layout
 
-The first viewport contains the collection title, a large artwork sheet and an adjacent mint desk. Request selection, live collection facts, intent and primary action form one reading path. The judge's short testing instructions sit beneath, not in a row of generic feature cards. On phones the actionable desk precedes the artwork, and details remain collapsed.
+The request selector sits above the artwork and mint desk so the chosen case sets the context for both. The desk shows mint price and availability for a normal mint, or request value, permission scope and operator for the approval trap. Both target the same real NFT collection; the trap is the permission recipient, not a second NFT collection. Intent and primary action follow those facts. The judge's short testing instructions sit beneath, not in a row of generic feature cards. On phones the choices stack, the actionable desk precedes the artwork, and details remain collapsed.
 
 ## Elevation & Depth
 

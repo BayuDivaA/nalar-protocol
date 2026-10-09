@@ -38,8 +38,8 @@ test('key reason precedes supporting sections and preserves the complete explana
     context.show({ explanation }, decision, () => {}, () => {}, 97);
     const overlay = context.document.documentElement.children.at(-1);
     const body = overlay.children[0].children[1];
-    assert.deepEqual(body.children.map((child) => child.className), ['intent', 'nalar-why-stopped-card nalar-stagger-2', 'affected', 'meaning', 'evidence', 'technical']);
-    const why = body.children[1];
+    assert.deepEqual(body.children.map((child) => child.className), ['nalar-why-stopped-card nalar-stagger-2', 'intent', 'affected', 'meaning', 'evidence', 'technical']);
+    const why = body.children[0];
     assert.equal(why.children[0].textContent, 'Why this verdict');
     assert.equal(why.children[1].textContent, reason);
     assert.equal(why.children[2].textContent, 'Impact');
@@ -660,6 +660,10 @@ test('evidence ledger distinguishes supported categories and keeps all normalize
   assert.match(uiText(evidence), /Simulation.*Passed.*Mint capability.*Unlimited allowance.*Existing finding description/s);
   assert.doesNotMatch(uiText(evidence), /UNKNOWN · 0/);
   assert.equal(evidence.open, undefined, 'Evidence stays collapsed initially');
+  const lists = (node) => [...(node.tag === 'ol' ? [node] : []), ...node.children.flatMap(lists)];
+  const evidenceLists = lists(evidence);
+  assert.deepEqual(evidenceLists.map((list) => list.children.length), [1, 1, 1], 'Number findings within each transaction/address group');
+  assert.ok(evidenceLists.every((list) => list.children.every((item) => item.tag === 'li')), 'Use native list items for readable and accessible numbering');
   const empty = context.evidence({}, { scamAnalyses: [{ token: 'metadata-only-token', riskScore: 12, findings: [] }] });
   assert.match(uiText(empty), /unavailable/);
   assert.doesNotMatch(uiText(empty), /metadata-only-token/);

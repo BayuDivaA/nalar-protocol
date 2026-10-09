@@ -1680,9 +1680,9 @@
       flex: "1 1 auto",
     });
 
-    // Show the action and its key reason before the supporting details.
-    body.appendChild(createIntentVsActualComparison(explanation, security, decision));
+    // Put the key explanation directly below the verdict, before supporting details.
     body.appendChild(createWhyStoppedCard(explanation, security, decision));
+    body.appendChild(createIntentVsActualComparison(explanation, security, decision));
     const affected = createAffectedSection(security);
     if (affected) body.appendChild(affected);
 
@@ -2377,12 +2377,14 @@
     }
 
     if (evidenceItems) {
+      const list = document.createElement("ol");
+      list.className = "nalar-evidence-list";
+      content.appendChild(list);
       evidenceItems.forEach((item, index) => {
-        const row = document.createElement("div");
+        const row = document.createElement("li");
         row.className = "nalar-evidence-record";
         row.setAttribute("data-kind", evidenceKind(item));
         if (String(item?.label ?? "").toLowerCase() === evidenceKind(item).toLowerCase()) row.setAttribute("data-kind-label", "redundant");
-        row.setAttribute("role", "group");
         row.setAttribute("aria-label", evidenceKind(item));
         Object.assign(row.style, {
           padding: "7px 0",
@@ -2449,7 +2451,7 @@
           row.appendChild(expEl);
         }
 
-        content.appendChild(row);
+        list.appendChild(row);
       });
     }
     if (reports.length || threats.length) {
@@ -2510,10 +2512,13 @@
           sub.appendChild(empty);
         }
 
+        const list = document.createElement("ol");
+        list.className = "nalar-evidence-list";
+        if (findings.length) sub.appendChild(list);
         findings.forEach((finding) => {
           const severity = String(finding?.severity ?? "INFO").toUpperCase();
           const isThreat = severity === "CRITICAL" || severity === "HIGH";
-          const fRow = document.createElement("div");
+          const fRow = document.createElement("li");
           fRow.className = "nalar-finding";
           fRow.setAttribute("data-severity", severity.toLowerCase());
           Object.assign(fRow.style, {
@@ -2523,7 +2528,7 @@
             color: isThreat ? UI.danger : severity === "MEDIUM" ? UI.warning : UI.muted,
           });
           fRow.appendChild(createFindingRecord(finding));
-          sub.appendChild(fRow);
+          list.appendChild(fRow);
         });
 
         content.appendChild(sub);
@@ -2535,12 +2540,15 @@
         heading.textContent = "Transaction-wide threats";
         content.appendChild(heading);
       }
+      const list = document.createElement("ol");
+      list.className = "nalar-evidence-list";
+      if (threats.length) content.appendChild(list);
       threats.forEach((finding) => {
-        const row = document.createElement("div");
+        const row = document.createElement("li");
         row.className = "nalar-finding";
         row.appendChild(createFindingRecord(finding));
         Object.assign(row.style, { padding: "5px 0", fontSize: "11px", lineHeight: "1.5", color: UI.soft });
-        content.appendChild(row);
+        list.appendChild(row);
       });
     }
 

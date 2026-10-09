@@ -989,23 +989,22 @@
 .nalar-decision-overlay[data-decision="block"] .nalar-why-stopped-card,
 .nalar-decision-overlay[data-decision="review"] .nalar-why-stopped-card,
 .nalar-decision-overlay[data-decision="allow"] .nalar-why-stopped-card {
-  margin: 0 !important;
-  padding: 16px 0 !important;
+  margin: 16px 0 !important;
+  padding: 16px !important;
   border: 0 !important;
-  border-bottom: 1px solid var(--nalar-ui-border-strong) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
+  border-radius: var(--nalar-radius-md) !important;
+  background: var(--nalar-ui-accent-soft) !important;
 }
 .nalar-why-stopped-primary { font-size: 15px !important; line-height: 1.6 !important; font-weight: 600 !important; white-space: pre-line; }
 .nalar-impact-label { margin-top: 12px; font-size: 12px; line-height: 18px; font-weight: 600; color: var(--nalar-ui-muted); }
 .nalar-why-stopped-impact { font-size: 14px !important; white-space: pre-line; }
 .nalar-comparison-card {
   margin: 0 !important;
-  padding: 16px 0 !important;
+  padding: 16px 12px !important;
   border: 0 !important;
   border-bottom: 1px solid var(--nalar-ui-border-strong) !important;
   border-radius: 0 !important;
-  background: transparent !important;
+  background: var(--nalar-ui-bg-deep) !important;
 }
 .nalar-comparison-header {
   padding: 0 !important;
@@ -1025,7 +1024,7 @@
 }
 .nalar-means-callout {
   margin: 0 !important;
-  padding: 16px 0 !important;
+  padding: 16px 12px !important;
   border: 0 !important;
   border-bottom: 1px solid var(--nalar-ui-border-strong) !important;
   border-radius: 0 !important;
@@ -1052,7 +1051,7 @@
 .nalar-address-link:hover { text-decoration: underline !important; }
 .nalar-address-link:focus-visible { outline: 2px solid var(--nalar-ui-accent) !important; outline-offset: 2px !important; }
 .nalar-decision-body span, .nalar-decision-body div { min-width: 0; overflow-wrap: anywhere; }
-.nalar-affected-section { padding: 16px 0; border-bottom: 1px solid var(--nalar-ui-border-strong); }
+.nalar-affected-section { padding: 16px 12px; border-bottom: 1px solid var(--nalar-ui-border-strong); }
 .nalar-effect-row { margin-top: 12px; }
 .nalar-effect-row strong { display: block; margin-bottom: 4px; font-size: 14px; line-height: 20px; font-weight: 600; }
 .nalar-effect-row > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; line-height: 20px; }
@@ -1105,6 +1104,7 @@
   font-size: 14px !important; line-height: 20px !important; font-weight: 600 !important;
   letter-spacing: 0 !important; color: var(--nalar-ui-text) !important;
 }
+.nalar-why-stopped-card .nalar-section-label { color: var(--nalar-ui-accent) !important; }
 .nalar-comparison-header { flex-wrap: wrap; gap: 8px; margin-bottom: 12px !important; }
 .nalar-comparison-value { font-size: 16px !important; font-weight: 550 !important; line-height: 1.45 !important; }
 .nalar-comp-expected .nalar-comparison-value { font-size: 14px !important; font-weight: 400 !important; color: var(--nalar-ui-soft) !important; }
@@ -1116,12 +1116,18 @@
 .nalar-badge[data-state="uncertain"] { color: var(--nalar-ui-warning) !important; }
 .nalar-means-text { font-size: 14px !important; line-height: 1.65 !important; white-space: pre-line; }
 .nalar-evidence-details, .nalar-tech-details { margin: 0 !important; padding: 0 !important; border-bottom: 1px solid var(--nalar-ui-border-strong) !important; }
+.nalar-decision-body > .nalar-evidence-details,
+.nalar-decision-body > .nalar-tech-details { padding-inline: 12px !important; }
+.nalar-tech-details { background: var(--nalar-ui-bg-deep); }
 .nalar-evidence-details summary, .nalar-tech-details summary { font-size: 14px !important; padding: 12px 0 !important; }
 .nalar-evidence-content > div { padding: 12px 0 !important; }
 .nalar-evidence-content span:not(.nalar-badge-source), .nalar-evidence-content p,
 .nalar-finding { font-size: 14px !important; line-height: 1.6 !important; }
 .nalar-evidence-content div { overflow-wrap: anywhere; }
 .nalar-evidence-record { padding: 12px 0; border-top: 0 !important; border-bottom: 1px solid var(--nalar-ui-border); }
+.nalar-evidence-list { margin: 0; padding: 0 0 0 24px; list-style: decimal outside; }
+.nalar-evidence-list > li { padding-left: 4px !important; }
+.nalar-evidence-list > li::marker { color: var(--nalar-ui-accent); font: 600 12px/1.6 var(--nalar-font-mono); }
 .nalar-evidence-record[data-kind-label="redundant"]::before { display: none; }
 .nalar-evidence-record::before { content: attr(data-kind); display: block; margin-bottom: 4px; font-size: 12px; line-height: 18px; color: var(--nalar-ui-muted); }
 .nalar-evidence-line { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; }

@@ -56,7 +56,7 @@ Token dipetakan ke variabel popup dan `--nalar-ui-*` existing pada overlay. Jang
 | `--control-border` | `#718692` | Batas input atau kontrol yang harus terlihat |
 | `--accent` | `#126F91` | Tindakan utama, link, ACTIVE, progres, dan fokus |
 | `--accent-hover` | `#0C5774` | Hover tombol utama |
-| `--accent-soft` | `#EAF3F7` | Pemilihan ringan, bukan latar seluruh section |
+| `--accent-soft` | `#EAF3F7` | Pemilihan ringan dan penekanan alasan utama |
 | `--allow` | `#2B7657` | Indikator ALLOW |
 | `--review` | `#8A6418` | Indikator REVIEW |
 | `--block` | `#B54343` | Indikator BLOCK |
@@ -79,7 +79,7 @@ Aksen mempertahankan keluarga warna landing page. Warna lebih gelap dipilih kare
 | `--control-border` | `#7C8D99` | Batas kontrol |
 | `--accent` | `#94CCDC` | Link, ACTIVE, progres, fokus, dan tombol |
 | `--accent-hover` | `#B5DFE9` | Hover tombol utama |
-| `--accent-soft` | `#2B414B` | Pilihan ringan |
+| `--accent-soft` | `#2B414B` | Pilihan ringan dan penekanan alasan utama |
 | `--allow` | `#9BC8B0` | Indikator ALLOW |
 | `--review` | `#E2C58C` | Indikator REVIEW |
 | `--block` | `#EDADAD` | Indikator BLOCK |
@@ -141,6 +141,8 @@ Spacing scale: 4, 8, 12, 16, 24, 32 px.
 - Backdrop overlay berupa scrim netral untuk memisahkan DApp dan dialog. Tidak memakai blur dekoratif.
 
 Pemisah mengikuti makna: pengaturan, keputusan, penjelasan, bukti, dan tindakan. Hindari border berlapis pada section yang sudah berada dalam dialog.
+
+Pada hasil analisa, alasan utama memakai satu bidang accent-soft tanpa bingkai. Comparison dan detail teknis memakai bg sekunder; asset, dampak, dan evidence tetap netral. Perbedaan warna membantu urutan baca, bukan memberi makna risiko atau menggantikan heading dan divider.
 
 ## 6. Popup browser
 
@@ -245,8 +247,8 @@ Checklist mencakup intent, decode, simulation, effects, investigasi MCP, state o
 Hierarki hasil:
 
 1. Verdict: decision, judul dominan, level risiko dan skor yang benar-benar tersedia.
-2. Intent vs transaction: permintaan pengguna dan tindakan aktual, dengan status comparison existing.
-3. Why this verdict: alasan utama dari penjelasan existing, langsung setelah comparison.
+2. Why this verdict: alasan utama dari penjelasan existing, langsung setelah verdict agar segera terbaca.
+3. Intent vs transaction: permintaan pengguna dan tindakan aktual, dengan status comparison existing.
 4. Affected assets & permissions: token allowance, NFT operator, swap atau mint dari effects existing, bila tersedia.
 5. What this means, bila isi yang berbeda dan relevan tersedia.
 6. Security evidence: catatan temuan bersumber, terlipat secara default.
@@ -265,7 +267,7 @@ Tandai teks penjelasan `[AI]` hanya ketika `explanation.meta.generator` menyatak
 | Hasil tidak tersedia | Checks unavailable | Penjelasan kegagalan dan tindakan pemulihan yang tersedia |
 
 ALLOW tidak dipresentasikan sebagai jaminan transaksi aman. Simulasi yang berhasil tidak membuktikan seluruh hasil saat transaksi ditambang.
-Verdict menjadi elemen visual terkuat, intent lapisan kedua. Skor dibaca bersama level existing (LOW, MEDIUM, HIGH, CRITICAL); UI tidak menghitung threshold baru. UNKNOWN memakai neutral, bukan success. Tidak ada gauge atau animasi angka. Tanpa skor, tampilkan “Score unavailable”, bukan nol.
+Verdict menjadi elemen visual terkuat, diikuti alasan utama dan intent. Skor dibaca bersama level existing (LOW, MEDIUM, HIGH, CRITICAL); UI tidak menghitung threshold baru. UNKNOWN memakai neutral, bukan success. Tidak ada gauge atau animasi angka. Tanpa skor, tampilkan “Score unavailable”, bukan nol.
 
 ### Alasan utama
 
@@ -312,6 +314,7 @@ Assets dan permission memakai efek request aktif: token, spender/operator, asset
 Untuk request dengan banyak effects, tampilkan dua entri pertama dan disclosure dengan jumlah entri sisanya. Semua entri tetap tersedia; batch panjang tidak boleh mendorong alasan utama jauh ke bawah tanpa penanda.
 
 Security evidence terlipat secara default, sementara alasan utama tetap terlihat di atasnya.
+Setiap kelompok transaksi/address memakai daftar bernomor yang dimulai dari 1. Nomor menunjukkan urutan baca, bukan tingkat risiko atau prioritas temuan. Heading address dan sumber bukti tetap dipertahankan.
 Tidak ada raw MCP response, raw JSON, daftar transactionHashes, dump gas, atau respons tool di bagian ini.
 BNB MCP tidak otomatis diberi label “Connected” hanya karena pernah digunakan.
 

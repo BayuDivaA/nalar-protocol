@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatEther, isAddress, isAddressEqual, isHash, toHex, type Address, type Hex, type ReplacementReason } from "viem";
+import { BaseError, formatEther, isAddress, isAddressEqual, isHash, toHex, type Address, type Hex, type ReplacementReason } from "viem";
 import { bscTestnet } from "viem/chains";
 
 import { DemoArtwork, DemoFrame } from "@/src/components/DemoFrame";
@@ -12,7 +12,7 @@ const trapAddress = process.env.NEXT_PUBLIC_DEMO_MINT_TRAP_ADDRESS;
 const explorer = bscTestnet.blockExplorers.default.url;
 type SubmittedRequest = { hash: Hex; owner: Address; collection: Address; mode: MintMode; status: "pending" | ReturnType<typeof demoReceiptStatus> };
 const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
-const message = (cause: unknown) => cause instanceof Error ? cause.message : "The wallet request could not be completed.";
+const message = (cause: unknown) => cause instanceof BaseError ? cause.shortMessage : cause instanceof Error ? cause.message : "The request could not be completed. Retry.";
 
 function ContractLink({ address }: { address: Address }) {
   return <a href={`${explorer}/address/${address}`} target="_blank" rel="noreferrer" title={address} aria-label={`View ${address} on BNB Testnet BscScan`}>{shortAddress(address)} ↗</a>;
@@ -33,6 +33,7 @@ export default function DemoPage() {
   const checkId = useRef(0);
   const requestLock = useRef(false);
   const busy = stage !== "idle" || transaction?.status === "pending";
+  const requestValue = mode === "normal" ? collection?.price : collection?.trap?.value;
   const visibleToken = account && collection && transaction && !wrongNetwork
     && isAddressEqual(account, transaction.owner)
     && isAddressEqual(collection.address, transaction.collection) ? token : null;
@@ -61,7 +62,7 @@ export default function DemoPage() {
         setAccount(Array.isArray(accounts) && isAddress(accounts[0] ?? "") ? accounts[0] : null);
       }
     } catch (cause) {
-      if (id === checkId.current) setError(cause instanceof Error ? cause.message : "Could not read the NFT contract. Retry.");
+      if (id === checkId.current) setError(message(cause));
     } finally {
       if (id === checkId.current) setChecking(false);
     }
@@ -227,22 +228,25 @@ export default function DemoPage() {
         <p>A real NFT mint. A permission trap dressed as one. Try both with NALAR and see what your wallet is actually being asked to do.</p>
       </div>
 
+      <fieldset className="demo-cases" disabled={busy}>
+        <legend>Choose the transaction to test</legend>
+        <label className={mode === "normal" ? "is-selected" : ""}><input type="radio" name="mint-mode" value="normal" checked={mode === "normal"} onChange={() => chooseMode("normal")} /><span><strong>Normal mint</strong><small>Creates one NFT in your wallet.</small></span><span className="demo-case-tag">MINT</span></label>
+        <label className={mode === "trap" ? "is-selected" : ""}><input type="radio" name="mint-mode" value="trap" checked={mode === "trap"} onChange={() => chooseMode("trap")} disabled={!collection?.trap} /><span><strong>Approval trap</strong><small>Requests NFT permission instead.</small></span><span className="demo-case-tag">PERMISSION</span></label>
+      </fieldset>
+
       <div className="demo-grid">
         <DemoArtwork image={visibleToken?.image ?? collection?.image} name={visibleToken?.name ?? collection?.name} minted={collection?.minted} maximum={collection?.maximum} tokenId={visibleToken?.id} />
         <section className="demo-panel" aria-labelledby="collection-title">
-          <div className="demo-panel-topline"><span>THE MINT DESK</span><span>TESTNET ONLY</span></div>
-          <h2 id="collection-title">{collection?.name ?? "Nalar Editions"}</h2>
+          <div className="demo-panel-topline"><span>{mode === "normal" ? "MINT REQUEST" : "APPROVAL REQUEST"}</span><span>TESTNET ONLY</span></div>
+          <h2 id="collection-title">{collection?.name ?? "Nalar Editions"}{mode === "trap" && " · Approval test"}</h2>
           <dl className="demo-facts">
-            <div><dt>Mint price</dt><dd>{collection ? `${formatEther(collection.price)} tBNB` : "Read from contract"}</dd></div>
-            <div><dt>Available</dt><dd>{collection ? `${collection.maximum - collection.minted} of ${collection.maximum}` : "Read from contract"}</dd></div>
+            <div><dt>{mode === "normal" ? "Mint price" : "Request value"}</dt><dd>{requestValue !== undefined ? `${formatEther(requestValue)} tBNB` : "Read from contract"}</dd></div>
+            {mode === "normal" ? <div><dt>Available</dt><dd>{collection ? `${collection.maximum - collection.minted} of ${collection.maximum}` : "Read from contract"}</dd></div> : <div><dt>Permission scope</dt><dd>All your NFTs in this collection</dd></div>}
+            <div><dt>Collection contract</dt><dd>{collection ? <ContractLink address={collection.address} /> : "Unavailable"}</dd></div>
+            {mode === "trap" && collection?.trap && <div><dt>Operator / trap</dt><dd><ContractLink address={collection.trap.operator} /></dd></div>}
             <div><dt>Your wallet</dt><dd>{account ? <ContractLink address={account} /> : "Not connected"}</dd></div>
           </dl>
 
-          <fieldset className="demo-cases" disabled={busy}>
-            <legend>Choose a request</legend>
-            <label className={mode === "normal" ? "is-selected" : ""}><input type="radio" name="mint-mode" value="normal" checked={mode === "normal"} onChange={() => chooseMode("normal")} /><span><strong>Normal mint</strong><small>Creates one NFT in your wallet.</small></span><span className="demo-case-tag">MINT</span></label>
-            <label className={mode === "trap" ? "is-selected" : ""}><input type="radio" name="mint-mode" value="trap" checked={mode === "trap"} onChange={() => chooseMode("trap")} disabled={!collection?.trap} /><span><strong>Approval trap</strong><small>Requests NFT permission instead.</small></span><span className="demo-case-tag">PERMISSION</span></label>
-          </fieldset>
           {!checking && collection && !collection.trap && <p className="demo-helper">The trap contract is not configured for this deployment.</p>}
 
           <div className="demo-intent">
@@ -255,7 +259,7 @@ export default function DemoPage() {
           <button type="button" className="demo-primary" onClick={account ? submit : connect} disabled={checking || busy || !collection || (account !== null && (mode === "trap" ? !acknowledged : collection.minted >= collection.maximum))}>
             {requestLabel()}<span aria-hidden="true">↗</span>
           </button>
-          <p className="demo-helper" aria-live="polite">{stage === "wallet" ? "Review the request in NALAR and your wallet. Nothing is signed automatically." : "Normal mint: mint price + gas. Approval trap: gas only. Both send real wallet requests."}</p>
+          <p className="demo-helper" aria-live="polite">{stage === "wallet" ? "Review the request in NALAR and your wallet. Nothing is signed automatically." : mode === "normal" ? "Mint price + Testnet gas. The NFT is minted only after confirmation." : "Testnet gas only. This grants permission, not an NFT. Do not sign unless you intend to test it."}</p>
           {wrongNetwork && <button type="button" className="demo-secondary" onClick={switchNetwork} disabled={stage !== "idle"}>Switch to BNB Testnet</button>}
           {error && <div className="demo-notice is-error" role="alert"><p>{error}</p>{!busy && <button type="button" onClick={() => void refresh()}>Recheck contract</button>}</div>}
           {transaction && <div className={`demo-notice ${transaction.status === "confirmed" ? "is-success" : "is-pending"}`} role="status">
@@ -267,13 +271,13 @@ export default function DemoPage() {
             {transaction.status === "confirmed" && transaction.mode === "normal" && !token && stage === "idle" && <button type="button" onClick={checkConfirmation}>Reload NFT details</button>}
           </div>}
 
-          <details className="demo-details"><summary>Inspect the actual request</summary><dl className="demo-facts">
+          <details className="demo-details"><summary>{mode === "normal" ? "NFT contract & mint request" : "Approval contracts & permission request"}</summary><dl className="demo-facts">
             <div><dt>Network</dt><dd>BNB Testnet · 97</dd></div>
             <div><dt>Target collection</dt><dd>{collection ? <ContractLink address={collection.address} /> : "Unavailable"}</dd></div>
             <div><dt>Function</dt><dd><code>{mode === "normal" ? "safeMint()" : "setApprovalForAll"}</code></dd></div>
             {mode === "trap" && collection?.trap && <><div><dt>Operator / trap</dt><dd><ContractLink address={collection.trap.operator} /></dd></div><div><dt>Approved</dt><dd>true · all NFTs in this collection</dd></div></>}
-            <div><dt>Request value</dt><dd>{collection ? `${formatEther(mode === "normal" ? collection.price : collection.trap?.value ?? 0n)} tBNB` : "Unavailable"}</dd></div>
-          </dl><p className="demo-helper">The normal request is encoded from the collection ABI. The trap request is read from its deployed contract and validated before sending. NALAR—not this page—determines the security verdict.</p></details>
+            <div><dt>Request value</dt><dd>{requestValue !== undefined ? `${formatEther(requestValue)} tBNB` : "Unavailable"}</dd></div>
+          </dl><p className="demo-helper">The normal request is encoded from the collection ABI. The trap request is read from its deployed contract and validated before sending. Only NALAR determines the security verdict.</p></details>
         </section>
       </div>
       <section className="demo-guide" aria-labelledby="demo-guide-title"><h2 id="demo-guide-title">Test the action, not the button.</h2><ol><li><strong>Activate NALAR</strong><p>Install the extension, select BNB Testnet, and use a wallet with tBNB for gas.</p></li><li><strong>Mint an edition</strong><p>Copy the intent, choose Normal mint, then inspect the request before signing.</p></li><li><strong>Compare the trap</strong><p>Keep the same intent. Choose Approval trap and inspect the collection-wide permission it requests instead.</p></li></ol></section>

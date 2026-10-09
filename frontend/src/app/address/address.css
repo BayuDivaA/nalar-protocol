@@ -355,9 +355,15 @@
 .address-alert strong { color: var(--text-primary); }
 .address-alert button { padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: 5px; background: transparent; color: var(--text-primary); cursor: pointer; }
 .address-alert button:hover { border-color: var(--accent); }
-.address-loading { display: flex; align-items: center; gap: 12px; color: var(--text-secondary); font-size: 13px; }
-.address-loading-line { width: 21px; height: 2px; background: var(--accent); transform-origin: left; animation: address-read 1.15s ease-in-out infinite alternate; }
-@keyframes address-read { from { transform: scaleX(.3); opacity: .45; } to { transform: scaleX(1); opacity: 1; } }
+.address-loading { max-width: 620px; color: var(--text-secondary); font-size: 13px; }
+.address-loading-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; }
+.address-loading-heading strong { color: var(--text-primary); font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
+.address-loading-heading > span { color: var(--text-muted); font-size: 12px; }
+.address-loading > p { margin: 12px 0 24px; line-height: 1.6; }
+.address-loading-rail { height: 2px; width: 100%; overflow: hidden; background: var(--border); }
+.address-loading-line { display: block; width: 25%; height: 100%; background: var(--accent); animation: address-read 1.8s cubic-bezier(.4, 0, .2, 1) infinite; }
+.address-loading-subject { display: block; margin-top: 12px; color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; overflow-wrap: anywhere; }
+@keyframes address-read { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(400%); opacity: 0; } }
 .address-empty { color: var(--text-muted); }
 .address-empty p { max-width: 47ch; margin: 0; font-size: 14px; line-height: 1.6; }
 
@@ -370,15 +376,40 @@
 .address-observed-at { margin: 10px 0 27px; color: var(--text-muted); font-size: 11px; }
 .address-report-grid { display: grid; grid-template-columns: minmax(0, 1.16fr) minmax(0, .84fr); gap: 60px; border-top: 1px solid var(--border); }
 .address-primary-column { min-width: 0; }
+.address-activity,
+.address-contract-interface { padding: 34px 0; border-bottom: 1px solid var(--border); }
+.address-call { margin-top: 22px; }
+.address-call > span { display: block; color: var(--text-muted); font-size: 12px; }
+.address-call code { display: block; margin-top: 8px; color: var(--text-primary); font-family: var(--font-mono); font-size: 20px; line-height: 1.5; overflow-wrap: anywhere; }
+.address-call p,
+.address-contract-interface > p,
+.address-call-inputs > p,
+.address-recorded-result > p { margin: 12px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.65; }
+.address-activity-values { margin: 16px 0 0; }
+.address-activity-values > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: baseline; gap: 12px; padding: 8px 0; }
+.address-activity-values dt { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.address-activity-values dd { margin: 0; color: var(--text-primary); font-family: var(--font-mono); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.address-activity-values a { color: var(--accent); }
+.address-activity-values a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.address-call-inputs { margin-top: 16px; border-top: 1px solid var(--border); }
+.address-call-inputs summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: var(--text-primary); cursor: pointer; font-size: 13px; }
+.address-call-inputs summary span { color: var(--text-muted); }
+.address-recorded-result { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+.address-recorded-result h4 { margin: 0; color: var(--text-primary); font-size: 14px; font-weight: 600; }
+.address-event-list { margin: 18px 0 0; padding: 0; list-style: none; }
+.address-event-list > li { padding: 16px 0; border-top: 1px solid var(--border); }
+.address-event-list strong { color: var(--text-primary); font-size: 13px; font-weight: 600; }
+.address-event-list .address-activity-values { margin-top: 8px; }
+.address-ai-label { margin-left: 8px; color: var(--text-muted); font-size: 11px; font-weight: 400; }
 .address-explanation,
 .address-questions { padding: 34px 0; }
 .address-questions { border-top: 1px solid var(--border); }
 .address-section-heading { align-items: center; }
 .address-section-heading h3 { margin: 0; font-size: 17px; font-weight: 620; letter-spacing: -.02em; }
-.address-language-toggle { padding: 5px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 12px; white-space: nowrap; }
+.address-language-toggle { min-height: 44px; padding: 5px 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font-size: 12px; white-space: nowrap; }
 .address-language-toggle:hover { text-decoration: underline; text-underline-offset: 3px; }
 .address-factual-intro { margin: 22px 0 0; color: var(--text-primary); font-size: 17px; line-height: 1.6; }
-.address-ai-copy { max-width: 65ch; margin: 17px 0 0; color: var(--text-secondary); font-size: 15px; line-height: 1.72; white-space: pre-wrap; }
+.address-ai-copy { max-width: 65ch; margin: 17px 0 0; color: var(--text-secondary); font-size: 15px; line-height: 1.72; white-space: pre-wrap; overflow-wrap: anywhere; }
 .address-citation,
 .address-ai-unavailable { margin: 15px 0 0; color: var(--text-muted); font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
 .address-questions > p { margin: 12px 0 0; color: var(--text-muted); font-size: 13px; }
@@ -402,7 +433,7 @@
 .address-fact-meta { flex-wrap: wrap; color: var(--text-muted); font-size: 10px; }
 .address-fact p { margin: 9px 0 0; color: var(--text-secondary); font-size: 11px; line-height: 1.5; }
 .address-functions { border-top: 1px solid var(--border); padding: 17px 0; }
-.address-functions summary { display: flex; justify-content: space-between; gap: 12px; color: var(--text-primary); cursor: pointer; font-size: 12px; font-weight: 600; list-style: none; }
+.address-functions summary { display: flex; align-items: center; justify-content: space-between; min-height: 44px; gap: 12px; color: var(--text-primary); cursor: pointer; font-size: 12px; font-weight: 600; list-style: none; }
 .address-functions summary::-webkit-details-marker { display: none; }
 .address-functions summary::before { content: "+"; color: var(--accent); font-family: var(--font-mono); }
 .address-functions[open] summary::before { content: "−"; }
@@ -451,7 +482,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   :is(.address-entry-controls, .address-search-fields) select::picker(select) { transition: none; transform: none; }
-  .address-loading-line { animation: none; }
+  .address-loading-line { animation: none; transform: none; opacity: 1; }
   .address-entry-controls,
   .address-search-fields,
   .address-entry-network::after,

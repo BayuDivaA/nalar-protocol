@@ -1,8 +1,9 @@
-import { decodeFunctionData, formatEther, getAddress, isAddress, toFunctionSelector, type Address, type PublicClient } from "viem";
+import { decodeEventLog, decodeFunctionData, encodeFunctionData, formatEther, getAddress, isAddress, parseAbi, toEventSelector, toFunctionSelector, zeroAddress, type Address, type PublicClient } from "viem";
 
 import { getChainConfig } from "../config/networks";
 import { env } from "../config/env";
 import { getPublicClient } from "../lib/viem";
+import { securityAbi } from "../lib/abis";
 import { resolveContractAbi } from "./contract-resolver";
 import { BnbChainMcpClient, type BnbMcpClient } from "./scam/bnb-mcp-client";
 import type { AddressFact } from "./address-inspector";
@@ -31,6 +32,14 @@ type Options = {
   mcpClientFactory?: () => BnbMcpClient;
   mcpEnabled?: boolean;
 };
+
+const eventInterfaces = [
+  { standard: "ERC-721", abi: parseAbi(["event Transfer(address indexed from,address indexed to,uint256 indexed tokenId)", "event Approval(address indexed owner,address indexed approved,uint256 indexed tokenId)"]) },
+  { standard: "ERC-20", abi: parseAbi(["event Transfer(address indexed from,address indexed to,uint256 value)", "event Approval(address indexed owner,address indexed spender,uint256 value)"]) },
+  { standard: "operator approval", abi: parseAbi(["event ApprovalForAll(address indexed owner,address indexed operator,bool approved)"]) },
+  { standard: "ERC-1155", abi: parseAbi(["event TransferSingle(address indexed operator,address indexed from,address indexed to,uint256 id,uint256 value)"]) },
+].map((item) => ({ ...item, topics: item.abi.map(toEventSelector) }));
+const localFunctions = securityAbi.map((item) => ({ item, selector: toFunctionSelector(item) }));
 
 async function bounded<T>(promise: Promise<T>): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -119,6 +128,37 @@ export async function inspectTransaction(input: { chainId: number; txHash: strin
       add("execution", "Execution status", receipt.status === "success" ? "Executed" : "Reverted", "RPC", "Execution status does not say whether the action was desirable.");
       add("fee", "Network fee paid", `${formatEther(receipt.gasUsed * receipt.effectiveGasPrice)} ${network.nativeSymbol}`);
       add("logs", "Event records", String(receipt.logs.length), "RPC", "Events are records emitted by contracts, not a complete explanation of effects.");
+      if (receipt.status === "success") {
+        let shown = 0;
+        // ponytail: inspect at most 200 logs and show 12 records; paginate if larger receipts need a full explorer view.
+        for (const [index, log] of receipt.logs.slice(0, 200).entries()) {
+          if (shown === 12) break;
+          if (log.removed || (log.transactionHash && log.transactionHash.toLowerCase() !== hash.toLowerCase()) || !isAddress(log.address)) continue;
+          for (const { abi, standard, topics } of eventInterfaces) {
+            if (!log.topics[0] || !topics.includes(log.topics[0])) continue;
+            try {
+              const decoded = decodeEventLog({ abi, data: log.data, topics: log.topics, strict: true });
+              const args = decoded.args as Record<string, Address | bigint | boolean>;
+              const action = decoded.eventName.startsWith("Transfer") ? args.from === zeroAddress ? "Mint" : args.to === zeroAddress ? "Burn" : "Transfer" : "Approval";
+              const note = "Decoded from a matching receipt using a standard event layout. The contract emitted this record; balances, ownership and its implementation were not independently verified.";
+              const prefix = `event_${index}`;
+              add(`${prefix}_action`, "Recorded action", `${action} record (${standard} layout)`, "RPC", note);
+              add(`${prefix}_contract`, "Contract that emitted the record", log.address, "RPC", undefined, log.address);
+              for (const [name, value] of Object.entries(args)) {
+                const key = name === "tokenId" || name === "id" ? "token_id" : name === "value" ? "amount" : name;
+                const label = key === "token_id" ? "Token ID" : key === "amount" ? "Amount (raw units)" : name === "approved" && typeof value === "boolean" ? "Operator permission enabled" : name;
+                add(`${prefix}_${key}`, label, String(value), "RPC", key === "amount" ? "Amount in raw units. Token decimals and resulting balance changes are not established here." : undefined, typeof value === "string" && isAddress(value) ? getAddress(value) : undefined);
+              }
+              shown += 1;
+              break;
+            } catch {
+              // An unmatched layout provides no decoded evidence.
+            }
+          }
+        }
+        if (shown === 12 || receipt.logs.length > 200) unknowns.push("Only up to 12 recognized transfer or approval records are shown; this is not a complete trace of transaction effects.");
+        if (receipt.logs.length > 0 && shown === 0) unknowns.push("The receipt contains events, but no supported transfer or approval layout could be decoded.");
+      }
     } catch {
       unknowns.push("The transaction receipt could not be read; its execution result is not established.");
     }
@@ -142,6 +182,10 @@ export async function inspectTransaction(input: { chainId: number; txHash: strin
           const abiFunction = resolution.contract.abi.find((item) => item.type === "function" && toFunctionSelector(item) === tx.input.slice(0, 10));
           abiStatus = "available";
           add("function", "Called function", decoded.functionName, resolution.contract.source === "sourcify" ? "SOURCIFY" : "PROTOCOL", "A decoded request, not proof of every resulting token movement.");
+          if (abiFunction?.type === "function") {
+            add("function_signature", "Function and parameter types", `${abiFunction.name}(${abiFunction.inputs.map((item) => item.type).join(", ")})`, "ABI");
+            add("function_mode", "Interface-declared call type", abiFunction.stateMutability === "view" || abiFunction.stateMutability === "pure" ? "Reads data" : abiFunction.stateMutability === "payable" ? "Can receive native currency and change state" : "May change state", "ABI", "Declared by the interface, not a source-code review or proof of what happened.");
+          }
           const args = Array.isArray(decoded.args) ? decoded.args : [];
           args.slice(0, 8).forEach((value, index) => {
             const name = abiFunction?.type === "function" ? abiFunction.inputs[index]?.name || `item_${index + 1}` : `item_${index + 1}`;
@@ -150,7 +194,29 @@ export async function inspectTransaction(input: { chainId: number; txHash: strin
           });
           if (args.length > 8) unknowns.push("Only the first eight decoded inputs are shown here.");
         } else {
-          unknowns.push("A contract interface was not available, so the function inputs could not be decoded.");
+          unknowns.push("The target's full contract interface was not available; a local signature match cannot establish its implementation.");
+          if (!resolution.found) {
+            const candidates = localFunctions.filter((item) => item.selector === tx.input.slice(0, 10));
+            if (candidates.length === 1) {
+              const candidate = candidates[0]!.item;
+              try {
+                const localAbi = [candidate] as const;
+                const decoded = decodeFunctionData({ abi: localAbi, data: tx.input });
+                if (encodeFunctionData({ abi: localAbi, functionName: decoded.functionName, args: decoded.args }).toLowerCase() === tx.input.toLowerCase()) {
+                  const note = "Calldata matches a locally known interface. A four-byte selector can collide; this does not verify the target's ABI, implementation or behavior.";
+                  add("function_candidate", "Call signature match (not verified)", `${candidate.name}(${candidate.inputs.map((item) => item.type).join(", ")})`, "ABI", note);
+                  (decoded.args ?? []).slice(0, 8).forEach((value, index) => {
+                    const name = candidate.inputs[index]?.name || `item_${index + 1}`;
+                    const rendered = readableArg(value);
+                    add(`candidate_argument_${name}`, `Matched input: ${name}`, rendered, "ABI", note, isAddress(rendered) ? getAddress(rendered) : undefined);
+                  });
+                  unknowns.push("The call signature was matched locally, but the target's full interface and implementation remain unverified.");
+                }
+              } catch {
+                // Do not label malformed calldata as a recognized call.
+              }
+            }
+          }
         }
       } catch {
         unknowns.push("The function inputs could not be decoded from the available contract interface.");

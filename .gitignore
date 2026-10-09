@@ -4,14 +4,13 @@
 .env
 .env.*
 !.env.example
-backup/
+!.env.*.example
 
 # =========================
 # Node / Bun
 # =========================
 node_modules/
 .bun/
-bun.lockb
 
 # =========================
 # Build / Output
@@ -63,8 +62,8 @@ Thumbs.db
 *.temp
 *.swp
 .vercel
-.env*
 .claude
+backup/
 
 extension/node_modules/
 extension/dist/

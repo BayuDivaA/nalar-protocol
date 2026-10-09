@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import Link from "next/link";
 import Image from "next/image";
 import { AddressApiError, getExplainerReport, type AddressExplanation, type ExplainerReport } from "@/src/lib/address-api";
+import TransactionActivity from "./TransactionActivity";
 
 import "./address.css";
 
@@ -115,7 +116,7 @@ export default function AddressExplainer({ initialQuery, initialChainId, autoIns
         chainId: report.chainId,
         query: report.kind === "address" ? report.address : report.hash,
         question: prompt,
-        history: conversation.slice(-3).map((item) => ({ question: item.question, answer: item.answer.english })),
+        history: conversation.slice(-3).map((item) => ({ question: item.question, answer: item.answer.english.slice(0, 1200) })),
       }, abort.signal);
       if (currentId !== requestId.current) return;
       setReport(result);
@@ -183,7 +184,12 @@ export default function AddressExplainer({ initialQuery, initialChainId, autoIns
           </form>
 
           {error && <div className="address-alert" role="alert"><strong>{error.startsWith("Enter a valid") ? "Check the address or hash" : "Could not complete the lookup"}</strong><span>{error}</span>{!error.startsWith("Enter a valid") && <button type="button" onClick={() => void inspect(query, chainId)}>Retry</button>}</div>}
-          {loading && <div className="address-loading" role="status"><span className="address-loading-line" aria-hidden="true" />Reading on-chain observations for {chainId === 56 ? "BNB Mainnet" : "BNB Testnet"}…</div>}
+          {loading && <div className="address-loading" role="status" aria-live="polite" aria-atomic="true" aria-busy="true">
+            <div className="address-loading-heading"><strong>Reading {query.trim().length === 66 ? "transaction" : "address"}</strong><span>{chainId === 56 ? "BNB Mainnet" : "BNB Testnet"}</span></div>
+            <p>Retrieving on-chain observations and preparing your explanation.</p>
+            <div className="address-loading-rail" aria-hidden="true"><span className="address-loading-line" /></div>
+            <span className="address-loading-subject" title={query.trim()}>{shortAddress(query.trim())}</span>
+          </div>}
 
           {!report && !loading && !error && <div className="address-empty"><p>Enter a public wallet address, contract address, or transaction hash. Nalar will show what is observed and what remains unknown.</p></div>}
 
@@ -197,15 +203,18 @@ export default function AddressExplainer({ initialQuery, initialChainId, autoIns
 
               <div className="address-report-grid">
                 <div className="address-primary-column">
+                  {report.kind === "transaction" && <TransactionActivity report={report} language={language} />}
                   <section className="address-explanation" aria-labelledby="address-explanation-heading">
-                    <div className="address-section-heading"><h3 id="address-explanation-heading">In plain language</h3><button type="button" className="address-language-toggle" onClick={() => setLanguage((current) => current === "english" ? "indonesian" : "english")} aria-label={language === "english" ? "Translate explanations to Bahasa Indonesia" : "Show explanations in English"}>{language === "english" ? "Bahasa Indonesia" : "English"}</button></div>
+                    <div className="address-section-heading"><h3 id="address-explanation-heading">{language === "english" ? "In plain language" : "Penjelasan sederhana"}{summary && <span className="address-ai-label">[AI]</span>}</h3><button type="button" className="address-language-toggle" onClick={() => setLanguage((current) => current === "english" ? "indonesian" : "english")} aria-label={language === "english" ? "Translate explanations to Bahasa Indonesia" : "Show explanations in English"}>{language === "english" ? "Bahasa Indonesia" : "English"}</button></div>
                     <p className="address-factual-intro">{factualIntro}</p>
                     {summary ? <><p className="address-ai-copy">{summary.answer[language]}</p><p className="address-citation">Explained from observations {summary.answer.factIds.map((id) => `#${id}`).join(" · ")} · {checkedTime(summary.checkedAt, language)}</p></> : <p className="address-ai-unavailable">AI explanation is unavailable right now. The observed facts are still shown here.</p>}
                   </section>
 
+                  {report.kind === "address" && <section className="address-contract-interface" aria-labelledby="contract-interface-heading"><div className="address-section-heading"><h3 id="contract-interface-heading">{language === "english" ? "What this contract exposes" : "Fungsi yang tersedia di kontrak"}</h3></div><p>{language === "english" ? "An address lookup shows available entry points, not a history of executed calls. Use a transaction hash to inspect a particular execution." : "Pemeriksaan address menunjukkan fungsi yang tersedia, bukan riwayat fungsi yang dijalankan. Masukkan hash transaksi untuk melihat eksekusi tertentu."}</p>{report.functions.length > 0 ? <details className="address-functions"><summary>{language === "english" ? "Functions and inputs" : "Fungsi dan input"} <span>{report.functionCount} listed · {report.functions.length} shown</span></summary><p>{language === "english" ? "From the available interface. Names and inputs do not prove implementation or caller permissions." : "Dari interface yang tersedia. Nama dan input tidak membuktikan isi implementasi atau izin pemanggil."}</p><ul>{report.functions.map((item) => <li key={item.signature}><code title={item.signature}>{item.signature}</code><span>{item.mode === "read" ? "Reads data" : item.mode === "payable" ? "Can receive BNB" : "May change state"}</span>{item.inputs.length > 0 && <small>Inputs: {item.inputs.map((input) => `${input.name} (${input.type})`).join(", ")}</small>}{item.outputs.length > 0 && <small>Returns: {item.outputs.map((output) => `${output.name} (${output.type})`).join(", ")}</small>}</li>)}</ul></details> : <p>{language === "english" ? "No complete contract interface was retrieved. Nalar cannot list its functions from this lookup." : "Interface lengkap kontrak belum terbaca. Nalar belum bisa menampilkan daftar fungsinya dari pemeriksaan ini."}</p>}</section>}
+
                   <section className="address-questions" aria-labelledby="address-questions-heading">
                     <div className="address-section-heading"><h3 id="address-questions-heading">Ask a follow-up</h3><span>ABOUT THIS {report.kind === "address" ? "ADDRESS" : "TRANSACTION"}</span></div>
-                    <p>{report.kind === "address" ? "For example: “What do these contract functions do?”" : "For example: “Who received this transaction?”"}</p>
+                    <p>{report.kind === "address" ? "For example: “What do these contract functions do?”" : "For example: “What function was called, and what did it record?”"}</p>
                     {conversation.length > 0 && <div className="address-conversation" aria-live="polite">{conversation.map((item, index) => <div className="address-conversation-item" key={`${item.checkedAt}-${index}`}><p className="address-question-text">{item.question}</p><p>{item.answer[language]}</p><small>Based on {item.answer.factIds.map((id) => `#${id}`).join(", ")} · {checkedTime(item.checkedAt, language)}</small></div>)}</div>}
                     <form onSubmit={submitQuestion} className="address-question-form"><label className="sr-only" htmlFor="address-question-input">Question about this {report.kind}</label><input id="address-question-input" value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={500} placeholder="Ask about these observations…" disabled={asking} /><button type="submit" disabled={asking || !question.trim()}>{asking ? "Checking…" : "Ask"}</button></form>
                     {chatError && <p className="address-chat-error" role="alert">{chatError}</p>}
@@ -215,9 +224,8 @@ export default function AddressExplainer({ initialQuery, initialChainId, autoIns
                 <aside className="address-evidence" aria-labelledby="address-evidence-heading">
                   <div className="address-section-heading"><h3 id="address-evidence-heading">Observed facts</h3><span>{report.facts.length} READINGS</span></div>
                   <dl className="address-fact-list">{report.facts.map((fact) => <div className="address-fact" key={fact.id}><dt>{fact.label}</dt><dd>{fact.addressUrl ? <a href={fact.addressUrl} target="_blank" rel="noreferrer" title={fact.value} aria-label={`Open ${fact.value} on ${report.network} explorer`}>{shortAddress(fact.value)} ↗</a> : <span title={fact.value} className="address-fact-value">{fact.value}</span>}</dd><div className="address-fact-meta"><span>{sourceName(fact.source)}</span><time dateTime={fact.checkedAt}>{checkedTime(fact.checkedAt, language)}</time></div>{fact.note && <p>{fact.note}</p>}</div>)}</dl>
-                  {report.kind === "address" && report.functions.length > 0 && <details className="address-functions"><summary>Contract functions <span>{report.functionCount} listed · {report.functions.length} shown</span></summary><p>From the available interface. Names and inputs do not prove what the code does or who can call it.</p><ul>{report.functions.map((item) => <li key={item.signature}><code title={item.signature}>{item.signature}</code><span>{item.mode === "read" ? "Reads data" : item.mode === "payable" ? "Can receive BNB" : "May change state"}</span>{item.outputs.length > 0 && <small>Returns {item.outputs.map((output) => output.type).join(", ")}</small>}</li>)}</ul></details>}
                   {report.unknowns.length > 0 && <div className="address-unknowns"><h4>Not established</h4><ul>{report.unknowns.map((unknown) => <li key={unknown}>{unknown}</li>)}</ul></div>}
-                  <p className="address-source-note">RPC: {report.sources.rpc} · ABI: {report.sources.abi} · BNB MCP: {report.sources.mcp.replace("_", " ")}</p>
+                  <p className="address-source-note">RPC: {report.sources.rpc} · Contract interface: {report.sources.abi === "available" ? "retrieved" : "not retrieved"} · BNB MCP: {report.sources.mcp.replace("_", " ")}</p>
                 </aside>
               </div>
               <p className="address-disclaimer">This read-only page translates available chain data. It is not a contract audit, identity verification, or transaction safety decision. Function names and a successful execution receipt do not establish every effect.</p>

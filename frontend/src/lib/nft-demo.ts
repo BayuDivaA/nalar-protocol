@@ -1,7 +1,8 @@
-import { createPublicClient, custom, decodeEventLog, decodeFunctionData, encodeFunctionData, isAddress, isAddressEqual, parseAbi, zeroAddress, type Address, type Hex, type ReplacementReason, type TransactionReceipt } from "viem";
+import { ContractFunctionExecutionError, ContractFunctionRevertedError, ContractFunctionZeroDataError, createPublicClient, custom, decodeEventLog, decodeFunctionData, encodeFunctionData, isAddress, isAddressEqual, parseAbi, zeroAddress, type Address, type Hex, type ReplacementReason, type TransactionReceipt } from "viem";
 import { bscTestnet } from "viem/chains";
 
 export const collectionAbi = parseAbi([
+  "function supportsInterface(bytes4 interfaceId) view returns (bool)",
   "function name() view returns (string)",
   "function getMintPrice() view returns (uint256)",
   "function MAX_SUPPLY() view returns (uint256)",
@@ -51,6 +52,11 @@ export async function readDemoCollection(provider: WalletProvider, address: stri
   const client = demoClient(provider);
   const code = await client.getBytecode({ address });
   if (!code || code === "0x") throw new Error("No collection contract found at this address on BNB Testnet.");
+  const compatible = await client.readContract({ address, abi: collectionAbi, functionName: "supportsInterface", args: ["0x80ac58cd"] }).catch((cause: unknown) => {
+    if (cause instanceof ContractFunctionExecutionError && (cause.cause instanceof ContractFunctionRevertedError || cause.cause instanceof ContractFunctionZeroDataError)) return false;
+    throw cause;
+  });
+  if (!compatible) throw new Error("The configured demo address is not a compatible NFT collection. The site needs the deployed Nalar Editions address before you can mint.");
   const [name, price, minted, maximum, image] = await Promise.all([
     client.readContract({ address, abi: collectionAbi, functionName: "name" }),
     client.readContract({ address, abi: collectionAbi, functionName: "getMintPrice" }),

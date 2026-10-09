@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 
 import { parseAddressExplanation } from "../address-explanation";
 import type { AddressInspection } from "../address-inspector";
+import type { TransactionInspection } from "../transaction-inspector";
 
 const inspection: AddressInspection = {
   chainId: 56,
@@ -37,5 +38,23 @@ describe("Address explanation output guard", () => {
   test("rejects malformed and uncited output", () => {
     expect(parseAddressExplanation("not json", inspection)).toBeNull();
     expect(parseAddressExplanation(JSON.stringify({ english: "A value was read.", indonesian: "Ada nilai yang terbaca.", factIds: [] }), inspection)).toBeNull();
+  });
+
+  test("accepts a longer structured explanation without changing the bilingual response shape", () => {
+    const english = `Observed value\n\n${"The contract reports 9800; its unit and effect are not established. ".repeat(24)}`;
+    const result = parseAddressExplanation(JSON.stringify({ english, indonesian: "Nilai tercatat\n\nKontrak mencatat 9800. Satuan dan dampaknya belum diketahui.", factIds: ["state_current_sell_tax"] }), inspection);
+    expect(english.length).toBeGreaterThan(1200);
+    expect(result?.english).toBe(english.trim());
+    expect(result?.factIds).toEqual(["state_current_sell_tax"]);
+  });
+
+  test("a local signature match cannot be explained as a verified called function", () => {
+    const transaction: TransactionInspection = { kind: "transaction", chainId: 97, network: "BNB Testnet", hash: `0x${"a".repeat(64)}`, explorerUrl: "https://testnet.bscscan.com", checkedAt: inspection.checkedAt, facts: [{ id: "function_candidate", label: "Signature match", value: "safeMint()", source: "ABI", checkedAt: inspection.checkedAt }], unknowns: [], sources: { rpc: "available", abi: "unavailable", mcp: "not_checked" } };
+    expect(parseAddressExplanation(JSON.stringify({ english: "The request ran safeMint().", indonesian: "Permintaan menjalankan safeMint().", factIds: ["function_candidate"] }), transaction)).toBeNull();
+    expect(parseAddressExplanation(JSON.stringify({ english: "The data matches safeMint(), but the target implementation is not verified.", indonesian: "Data cocok dengan safeMint(), tetapi implementasi tujuan belum terverifikasi.", factIds: ["function_candidate"] }), transaction)).not.toBeNull();
+  });
+
+  test("does not expose model writing instructions as an explanation", () => {
+    expect(parseAddressExplanation(JSON.stringify({ english: "Never present a signature match as an established called function.", indonesian: "Kontrak mencatat 9800.", factIds: ["state_current_sell_tax"] }), inspection)).toBeNull();
   });
 });

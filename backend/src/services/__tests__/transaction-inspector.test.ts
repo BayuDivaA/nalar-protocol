@@ -1,7 +1,7 @@
 // @ts-expect-error Bun supplies the test module at runtime.
 import { describe, expect, test } from "bun:test";
 
-import { encodeFunctionData, parseAbi, type PublicClient } from "viem";
+import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, parseAbi, type PublicClient } from "viem";
 
 import { inspectTransaction } from "../transaction-inspector";
 import type { BnbMcpClient } from "../scam/bnb-mcp-client";
@@ -26,6 +26,17 @@ function client(chainId: number, receipt: boolean = true): PublicClient {
 }
 
 const resolveAbi = async ({ chainId }: { chainId: number }) => ({ found: true as const, contract: { address: token as `0x${string}`, chainId, abi, source: "sourcify" as const, verified: true } });
+
+const transferAbi = parseAbi(["event Transfer(address indexed from,address indexed to,uint256 indexed tokenId)"]);
+const mintLog = { address: token, data: "0x", topics: encodeEventTopics({ abi: transferAbi, eventName: "Transfer", args: { from: "0x0000000000000000000000000000000000000000", to: from, tokenId: 3n } }) };
+
+function mintClient(status = "success", logs: unknown[] = [mintLog]): PublicClient {
+  return {
+    ...client(97),
+    getTransaction: async () => ({ hash, from, to: token, value: 20_000_000_000_000_000n, input: "0x6871ee40", blockNumber: 123n, nonce: 7 }),
+    getTransactionReceipt: async () => ({ transactionHash: hash, status, blockNumber: 123n, gasUsed: 30_000n, effectiveGasPrice: 1_000_000_000n, logs }),
+  } as unknown as PublicClient;
+}
 
 describe("Transaction inspection", () => {
   test.each([56, 97] as const)("reads chain %i transaction and decoded call without a security verdict", async (chainId) => {
@@ -87,5 +98,46 @@ describe("Transaction inspection", () => {
     const report = await inspectTransaction({ chainId: 56, txHash: hash }, { clientFactory: () => client(56), resolveAbi: wrongAbi, mcpEnabled: false });
     expect(report.facts.some((fact) => fact.id === "function")).toBe(false);
     expect(report.unknowns.join(" ")).toContain("interface");
+  });
+
+  test("missing full ABI still exposes a qualified local call match and the recorded NFT mint", async () => {
+    const report = await inspectTransaction({ chainId: 97, txHash: hash }, { clientFactory: () => mintClient(), resolveAbi: async () => ({ found: false }), mcpEnabled: false });
+    expect(report.sources.abi).toBe("unavailable");
+    expect(report.facts.find((fact) => fact.id === "function_candidate")?.value).toBe("safeMint()");
+    expect(report.facts.some((fact) => fact.id === "function")).toBe(false);
+    expect(report.facts.find((fact) => fact.id === "event_0_action")?.value).toBe("Mint record (ERC-721 layout)");
+    expect(report.facts.find((fact) => fact.id === "event_0_token_id")?.value).toBe("3");
+    expect(report.facts.find((fact) => fact.id === "event_0_to")?.addressUrl).toBe(`https://testnet.bscscan.com/address/${from}`);
+    expect(report.unknowns.join(" ")).toContain("implementation");
+  });
+
+  test("local signatures reject non-canonical calldata rather than inventing a function", async () => {
+    const custom = { ...mintClient(), getTransaction: async () => ({ hash, from, to: token, value: 0n, input: "0x6871ee4000", blockNumber: null, nonce: 7 }) } as unknown as PublicClient;
+    const report = await inspectTransaction({ chainId: 97, txHash: hash }, { clientFactory: () => custom, resolveAbi: async () => ({ found: false }), mcpEnabled: false });
+    expect(report.facts.some((fact) => fact.id === "function_candidate")).toBe(false);
+    expect(report.facts.some((fact) => fact.id.startsWith("event_"))).toBe(false);
+  });
+
+  test("reverted execution does not report a mint even if an RPC supplies logs", async () => {
+    const report = await inspectTransaction({ chainId: 97, txHash: hash }, { clientFactory: () => mintClient("reverted"), resolveAbi: async () => ({ found: false }), mcpEnabled: false });
+    expect(report.facts.find((fact) => fact.id === "execution")?.value).toBe("Reverted");
+    expect(report.facts.some((fact) => fact.id.startsWith("event_"))).toBe(false);
+  });
+
+  test("ERC20 Transfer amounts stay in raw units and are not treated as NFT IDs", async () => {
+    const erc20 = parseAbi(["event Transfer(address indexed from,address indexed to,uint256 value)"]);
+    const log = { address: spender, topics: encodeEventTopics({ abi: erc20, eventName: "Transfer", args: { from, to: token } }), data: encodeAbiParameters([{ type: "uint256" }], [25n]) };
+    const report = await inspectTransaction({ chainId: 97, txHash: hash }, { clientFactory: () => mintClient("success", [log]), resolveAbi: async () => ({ found: false }), mcpEnabled: false });
+    expect(report.facts.find((fact) => fact.id === "event_0_amount")?.value).toBe("25");
+    expect(report.facts.find((fact) => fact.id === "event_0_amount")?.note).toContain("raw units");
+    expect(report.facts.some((fact) => fact.id === "event_0_token_id")).toBe(false);
+    expect(report.facts.find((fact) => fact.id === "event_0_contract")?.value).toBe(spender);
+  });
+
+  test("malformed events are skipped and large event lists are bounded", async () => {
+    const report = await inspectTransaction({ chainId: 97, txHash: hash }, { clientFactory: () => mintClient("success", [{ ...mintLog, topics: ["0x1234"] }, ...Array.from({ length: 20 }, () => mintLog)]), resolveAbi: async () => ({ found: false }), mcpEnabled: false });
+    expect(report.facts.some((fact) => fact.id.startsWith("event_0_"))).toBe(false);
+    expect(report.facts.filter((fact) => /event_\d+_action/.test(fact.id))).toHaveLength(12);
+    expect(report.unknowns.join(" ")).toContain("12");
   });
 });
